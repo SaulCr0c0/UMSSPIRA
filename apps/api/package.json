@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "node dist/main"
+    "start": "node dist/main",
+    "test": "pnpm run build && node --test \"dist/**/*.spec.js\""
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
