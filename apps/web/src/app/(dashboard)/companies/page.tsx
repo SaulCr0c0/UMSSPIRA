@@ -1,7 +1,12 @@
-export default function CompaniesPage() {
+import { CompanyDetails } from "./company-details";
+
+export default function CompanyProfilePage() {
   return (
-    <main>
-      <h1>Companies</h1>
-    </main>
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Componente HU-03: Detalles, Descripción y Contacto */}
+        <CompanyDetails />
+      </div>
+    </div>
   );
 }
