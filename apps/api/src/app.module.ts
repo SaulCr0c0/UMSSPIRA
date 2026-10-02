@@ -1,7 +1,17 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { CompaniesModule } from './modules/companies/companies.module';
 
 @Module({
-  imports: [], // Aquí irán CompaniesModule y JobPostingsModule
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '../../.env',
+    }),
+    AuthModule,
+    CompaniesModule,
+  ],
   controllers: [],
   providers: [],
 })
