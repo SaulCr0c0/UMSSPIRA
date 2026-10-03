@@ -7,7 +7,18 @@ const config: Config = {
     "./src/modules/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/shared/**/*.{js,ts,jsx,tsx,mdx}"
   ],
-  theme: { extend: {} },
+ theme: {
+    extend: {
+      colors: {
+        palladian: '#EEE9DF',
+        oatmeal: '#C9C1B1',
+        'blue-fantastic': '#2C3B4D',
+        'burning-flame': '#FFB162',
+        'truffle-trouble': '#A35139',
+        abyssal: '#1B2632',
+      },
+    },
+  },
   plugins: [],
 };
 export default config;
