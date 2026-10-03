@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ReportsController } from './reports.controller';
+import { ReportsService } from './reports.service';
 import { GraduatesReportModule } from './graduates/pdf/graduates-report.module';
 
-// Módulo padre de los reportes: agrupa el módulo de cada reporte y es el único que se registra en AppModule
 @Module({
   imports: [GraduatesReportModule],
+  controllers: [ReportsController],
+  providers: [ReportsService],
+  exports: [ReportsService],
 })
 export class ReportsModule {}
