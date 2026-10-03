@@ -15,6 +15,7 @@ services:
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
+    volumes:
       - db_data:/var/lib/postgresql/data
       - ./supabase/migrations/0001_esquema_principal.sql:/docker-entrypoint-initdb.d/0001_esquema_principal.sql:ro
 
