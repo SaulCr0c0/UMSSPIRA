@@ -17,6 +17,7 @@ const EXPECTED_LABELS = [
 describe('GraduateAffinityView', () => {
   const mockGetAffinityConfig = affinityService.getAffinityConfig as jest.Mock;
   const mockRecalculateAffinity = affinityService.recalculateAffinity as jest.Mock;
+  const mockGetAffinityVector = affinityService.getAffinityVector as jest.Mock;
 
   const recalculatedAreas = [
     { area: 'software-development', affinity: 85 },
@@ -33,6 +34,13 @@ describe('GraduateAffinityView', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockGetAffinityVector.mockResolvedValue({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-30T12:00:00.000Z',
+      areas: recalculatedAreas,
+    });
+
     mockGetAffinityConfig.mockResolvedValue({
       axes: [
         { area: 'software-development', weight: 4 },
@@ -53,7 +61,9 @@ describe('GraduateAffinityView', () => {
   it('deshabilita Recalcular y lo habilita al detectar un cambio nuevo', async () => {
     render(<GraduateAffinityView />);
 
-    expect(screen.getByRole('button', { name: 'Recalcular' })).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Recalcular' })).toBeDisabled();
+    });
 
     simulateProfileChange();
 

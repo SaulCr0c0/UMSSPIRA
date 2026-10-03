@@ -33,13 +33,15 @@ const AREA_SHORT_LABELS: Record<AreaId, string> = {
   'quality-assurance': 'QA & Testing',
   'cybersecurity-networks': 'Ciberseg.',
   'it-management': 'Gestión',
-};
+};  
 
 interface AffinityRadarProps {
   affinityData?: AffinityAreaScore[];
   hasData?: boolean;
   variant?: 'full' | 'mini'; // "full" = interactivo; "mini" = solo lectura para tarjetas
   highlighted?: boolean; // Solo aplica a mini: pinta el radar en rojo (tarjeta destacada)
+  isLoading?: boolean;
+  changedAreaIds?: string[];
 }
 
 export default function AffinityRadar({ 
@@ -52,11 +54,12 @@ export default function AffinityRadar({
   const isMini = variant === 'mini';
 
   // Único criterio de estado vacío
-  const isRadarEmpty = !hasData || affinityData.length === 0;
+  const isRadarEmpty = !hasData     || affinityData.length === 0;
 
   // Mapear los datos al orden fijo y aplicar utilidades de porcentaje
   const chartData = AXES_ORDER.map((id) => {
-    const found = affinityData.find((a) => a.area === id);
+    const found = affinityData.find((a) => a.area === id || a.area === AREA_LABELS[id] || a.area?.toLowerCase() === id.toLowerCase()
+);
     const rawValue = found ? found.affinity : 0;
     
     return {
