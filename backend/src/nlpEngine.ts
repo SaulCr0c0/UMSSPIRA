@@ -150,9 +150,13 @@ export async function searchCandidates(
     // HuggingFace sentence transformer similarity typically ranges [0.1, 0.95] for relevant queries
     const scaledScore = Math.min(100, Math.max(0, similarity * 100));
 
+    const mayorConcentracion = calculateMayorConcentracion(jobDescription, candidate);
+
     results.push({
       ...candidate,
       nlpScore: Number(scaledScore.toFixed(2)),
+      mayorConcentracion,
+      concentrationArea: mayorConcentracion,
     });
   }
 
@@ -239,4 +243,123 @@ export function calculateCandidateAffinityVector(candidate: Candidate): VectorCa
     areas: areasResult,
     topSkillsByArea,
   };
+}
+
+/**
+ * Calculates the dynamic "Mayor concentración" area based on the recruiter's search query (NLP query)
+ * and the candidate's skills / technical area affinities.
+ */
+export function calculateMayorConcentracion(
+  jobDescription: string,
+  candidate: Candidate
+): string {
+  const query = (jobDescription || "").toLowerCase().trim();
+
+  // Keyword maps per technical area for search intent matching
+  const areaKeywords: Record<string, string[]> = {
+    "desarrollo de software": [
+      "typescript", "react", "node.js", "nodejs", "postgresql", "next.js", "tailwind",
+      "java", "spring", "boot", "microservicios", "rest", "api", "desarrollo", "software",
+      "frontend", "backend", "fullstack", "full stack", "web", "programador", "developer"
+    ],
+    "cloud & devops": [
+      "aws", "docker", "kubernetes", "ci/cd", "cicd", "terraform", "linux", "cloud",
+      "infraestructura", "devops", "nube", "sysadmin", "sre", "despliegue"
+    ],
+    "ciencia de datos & ia": [
+      "python", "machine", "learning", "sql", "power bi", "powerbi", "pandas", "tensorflow",
+      "analítica", "datos", "ia", "ai", "data science", "data", "inteligencia artificial", "bi"
+    ],
+    "aseguramiento de calidad (QA)": [
+      "jest", "cypress", "selenium", "pruebas", "qa", "junit", "testing", "calidad",
+      "automatizadas", "automation", "tester"
+    ],
+    "ciberseguridad y redes": [
+      "ethical hacking", "firewalls", "redes", "cisco", "pentesting", "iso 27001",
+      "ciberseguridad", "seguridad", "telecomunicaciones", "network", "hacking"
+    ],
+    "gestion de ti & gobernanza": [
+      "scrum", "itil", "gestión", "proyectos", "cobit", "jira", "gobernanza", "liderazgo",
+      "project manager", "gerencia", "agile"
+    ]
+  };
+
+  // Base area affinities from candidate object or calculated vector
+  const baseAreas = calculateCandidateAffinityVector(candidate).areas;
+
+  let bestAreaKey = "desarrollo de software";
+  let maxScore = -1;
+
+  for (const item of baseAreas) {
+    const areaKey = item.area.toLowerCase();
+    const candidateBaseAffinity = item.affinity; // 0 to 100
+    const keywords = areaKeywords[areaKey] || [];
+
+    // Count matches between query terms and area keywords
+    let queryMatches = 0;
+    if (query.length > 0) {
+      for (const kw of keywords) {
+        if (query.includes(kw.toLowerCase())) {
+          queryMatches += 1;
+        }
+      }
+    }
+
+    // Candidate skill match in area
+    const skillMatches = candidate.skills ? candidate.skills.filter((skill) =>
+      keywords.some((kw) => skill.toLowerCase().includes(kw) || kw.includes(skill.toLowerCase()))
+    ).length : 0;
+
+    // Combined score: if query explicitly mentions keywords for this area, boost it significantly
+    // so the candidate's concentration shifts to match the recruiter's search intent when applicable.
+    const queryBoost = queryMatches > 0 ? (queryMatches * 50) + 100 : 0;
+    const totalAreaScore = candidateBaseAffinity + (skillMatches * 10) + queryBoost;
+
+    if (totalAreaScore > maxScore) {
+      maxScore = totalAreaScore;
+      bestAreaKey = areaKey;
+    }
+  }
+
+  // Format human-friendly area label based on query context
+  switch (bestAreaKey) {
+    case "ciberseguridad y redes":
+      if (query.includes("red") || query.includes("telecom")) {
+        return "Redes y Telecomunicaciones";
+      }
+      if (query.includes("ciber") || query.includes("hack") || query.includes("seguridad")) {
+        return "Ciberseguridad";
+      }
+      return "Ciberseguridad y Redes";
+
+    case "aseguramiento de calidad (qa)":
+      if (query.includes("qa") || query.includes("test") || query.includes("prueba")) {
+        return "QA & Testing";
+      }
+      return "Aseguramiento de Calidad (QA)";
+
+    case "ciencia de datos & ia":
+      if (query.includes("python") || query.includes("ia") || query.includes("ai") || query.includes("dato") || query.includes("data")) {
+        return "Datos & IA";
+      }
+      return "Ciencia de Datos & IA";
+
+    case "desarrollo de software":
+      if (query.includes("backend") || query.includes("api") || query.includes("microserv")) {
+        return "Desarrollo Backend & Arquitectura";
+      }
+      if (query.includes("front") || query.includes("ux") || query.includes("ui") || query.includes("react")) {
+        return "Desarrollo Frontend & UX";
+      }
+      return "Desarrollo de Software";
+
+    case "cloud & devops":
+      return "Cloud & DevOps";
+
+    case "gestion de ti & gobernanza":
+      return "Gestión de TI & Gobernanza";
+
+    default:
+      return "Desarrollo de Software";
+  }
 }

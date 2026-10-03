@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Search, Sparkles, Cpu, RefreshCw, Zap, Award } from 'lucide-react';
 import type { RadarDataPoint } from './radar-chart';
+import { computeMayorConcentracion } from '../utils/concentration';
 
 export interface SearchCandidateResult {
   graduateId: string;
@@ -14,6 +15,8 @@ export interface SearchCandidateResult {
   affinity: number;
   featured: boolean;
   nlpScore?: number;
+  mayorConcentracion?: string;
+  concentrationArea?: string;
   areas?: RadarDataPoint[];
 }
 
@@ -48,7 +51,15 @@ export const NlpSearch: React.FC<NlpSearchProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        onSearchCompleted(data.results, jobDescription);
+        const results = (data.results || []).map((cand: SearchCandidateResult) => {
+          const conc = computeMayorConcentracion(jobDescription, cand);
+          return {
+            ...cand,
+            mayorConcentracion: conc,
+            concentrationArea: conc,
+          };
+        });
+        onSearchCompleted(results, jobDescription);
       } else {
         throw new Error('Backend HTTP error');
       }
@@ -67,8 +78,14 @@ export const NlpSearch: React.FC<NlpSearchProps> = ({
 
         const rawScore = (matches / Math.max(3, keywords.length)) * 100 + cand.affinity * 0.4;
         const nlpScore = Number(Math.min(99.4, Math.max(48.0, rawScore)).toFixed(2));
+        const conc = computeMayorConcentracion(jobDescription, cand as any);
 
-        return { ...cand, nlpScore };
+        return {
+          ...cand,
+          nlpScore,
+          mayorConcentracion: conc,
+          concentrationArea: conc,
+        };
       });
 
       results.sort((a, b) => (b.nlpScore ?? 0) - (a.nlpScore ?? 0));

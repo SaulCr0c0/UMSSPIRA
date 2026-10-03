@@ -19,6 +19,7 @@ export interface CandidateCardProps {
   location?: string;
   sisCode?: string;
   concentrationArea?: string;
+  mayorConcentracion?: string;
   onSelectCandidate?: (graduateId: string) => void;
 }
 
@@ -36,12 +37,14 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
   areas = [],
   location = 'Cochabamba / Remoto',
   sisCode = '201704982',
-  concentrationArea = 'Desarrollo Backend & Arquitectura',
+  concentrationArea,
+  mayorConcentracion,
   onSelectCandidate,
 }) => {
   const [showBackingModal, setShowBackingModal] = useState(false);
 
   const scoreDisplay = nlpScore !== undefined ? nlpScore : affinity;
+  const displayConcentration = mayorConcentracion || concentrationArea || 'Desarrollo de Software';
 
   // Fallback areas if empty
   const defaultAreas: RadarDataPoint[] = [
@@ -125,7 +128,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <div className="w-full bg-white/90 rounded-lg p-2 mt-1 border border-slate-200 text-center text-xs">
           <span className="text-[10px] text-slate-400 block font-medium">Mayor concentración:</span>
           <strong className="text-truffle-trouble font-bold text-[11px]">
-            {concentrationArea}
+            {displayConcentration}
           </strong>
         </div>
       </div>
@@ -182,7 +185,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           }}
           className="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center space-x-1"
         >
-          <span>Ver Perfil</span>
+          <span>Ver Detalle</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
