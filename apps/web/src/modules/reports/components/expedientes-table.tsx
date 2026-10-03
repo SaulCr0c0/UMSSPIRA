@@ -38,13 +38,19 @@ function StatusBadge({ status }: { status: GraduateRecord['status'] }) {
 
 export function ExpedientesTable({ records, onViewReason }: ExpedientesTableProps) {
   if (records.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-        <p className="font-semibold text-slate-700">
-          No se encontraron egresados Observados o Verificados en el sistema.
+      return (
+      <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-[#e8e1d2] bg-[#fbf8f1] px-6 py-16 text-center">
+        <h3 className="max-w-xl text-xl font-bold text-slate-900 sm:text-2xl">
+          No se encontraron egresados Observados o Verificados en el sistema
+        </h3>
+        <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600">
+          No se han registrado postulantes ni egresados bajo los criterios de filtrado
+          seleccionados para el periodo establecido. Intente ajustando el rango de
+          titulación o restableciendo los parámetros de auditoría.
         </p>
       </div>
     );
+
   }
 
   return (
