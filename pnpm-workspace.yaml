@@ -1,7 +1,12 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'backend'
 allowBuilds:
   '@nestjs/core': false
   '@parcel/watcher': true
   unrs-resolver: false
+  onnxruntime-node: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
