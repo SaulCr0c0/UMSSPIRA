@@ -1,6 +1,6 @@
 // packages/shared-types/src/auth.ts
 
-export type UserRole = "administrador" | "egresado";
+export type UserRole = "administrador" | "titulado";
 
 export type LoginInput = {
   email: string;
