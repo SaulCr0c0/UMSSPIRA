@@ -12,7 +12,7 @@ export function ActivePanel({ requirements, onDeactivate }: { requirements: Requ
       <div className="active-panel-hero">
         <span aria-hidden="true" className="active-panel-hero-icon"><AwardIcon /></span>
         <h2 id="active-title" className="active-panel-title">Tu participación como mentor está activa</h2>
-        <p className="active-panel-intro">Tu participación está habilitada. La configuración de áreas, intereses y disponibilidad estará disponible próximamente.</p>
+        <p className="active-panel-intro">Tu participación está habilitada. Ya puedes elegir tus áreas técnicas; pronto estarán disponibles más opciones de configuración.</p>
       </div>
       <MentorConfiguration />
     </div>

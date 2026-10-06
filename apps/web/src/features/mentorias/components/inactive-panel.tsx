@@ -7,6 +7,7 @@ import { StatusBadge } from './status-badge';
 import { PrimaryButton } from './mentor-button';
 import { RequirementsList } from './requirements-list';
 import { MentorConfiguration } from './mentor-configuration';
+import { MentorAreasEditor } from './mentor-areas-editor';
 
 const previews = [
   { title: 'Configura tus áreas', description: 'Define las áreas técnicas en las que puedes brindar orientación.', icon: BrainCogIcon },
@@ -43,6 +44,7 @@ export function InactivePanel({ requirements, activating, onActivate }: Inactive
             <article className="inactive-preview-card" key={title}>
               <span className="active-panel-option-icon" aria-hidden="true"><Icon /></span>
               <h4>{title}</h4><p>{description}</p>
+              {title === 'Configura tus áreas' && <MentorAreasEditor />}
             </article>
           ))}</div>
         </section>
@@ -64,4 +66,3 @@ export function InactivePanel({ requirements, activating, onActivate }: Inactive
     </section>
   );
 }
-

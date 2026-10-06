@@ -215,9 +215,238 @@
   height: 1rem;
 }
 
+.mentor-areas-editor {
+  margin-top: 1rem;
+  border-top: 1px solid var(--oatmeal-70);
+  padding-top: 1rem;
+}
+
+.mentor-areas-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.mentor-areas-heading .active-panel-option-title {
+  margin-top: 0;
+}
+
+.mentor-areas-count {
+  margin-top: 1rem;
+  color: var(--ink-70);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.mentor-areas-list {
+  display: grid;
+  gap: .5rem;
+  margin: .75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mentor-area-option {
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  border: 1px solid var(--oatmeal-70);
+  border-radius: .5rem;
+  background: white;
+  padding: .625rem .75rem;
+  color: var(--ink);
+  text-align: left;
+}
+
+.mentor-area-option:hover:not(:disabled) {
+  border-color: var(--navy);
+}
+
+.mentor-area-option:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.mentor-area-option:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.mentor-area-option.is-selected {
+  border-color: var(--success);
+  background: rgb(35 112 68 / 5%);
+}
+
+.mentor-area-option-copy {
+  display: grid;
+  gap: .125rem;
+}
+
+.mentor-area-name {
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.mentor-area-description {
+  color: var(--ink-70);
+  font-size: .6875rem;
+  line-height: 1.25;
+}
+
+.mentor-area-option-state {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .25rem;
+  color: var(--ink-70);
+  font-size: .625rem;
+  font-weight: 600;
+}
+
+.mentor-area-option.is-selected .mentor-area-option-state {
+  color: var(--success);
+}
+
+.mentor-areas-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-top: .875rem;
+}
+
+.mentor-areas-message,
+.mentor-areas-error {
+  margin-top: .75rem;
+  color: var(--ink-70);
+  font-size: .75rem;
+}
+
+.mentor-areas-error {
+  color: #a12b25;
+}
+
+.mentor-areas-page-title {
+  margin-top: .5rem;
+  font-family: Georgia, Cambria, serif;
+  font-size: 2.25rem;
+  line-height: 1.15;
+}
+
+.mentor-areas-page-card {
+  margin-top: 1.5rem;
+  border: 1px solid var(--oatmeal-70);
+  border-radius: .75rem;
+  background: white;
+  padding: 1.25rem;
+}
+
+.mentor-areas-page-banner {
+  max-width: 38rem;
+  margin: 0 auto 1.5rem;
+  border-radius: .5rem;
+  background: var(--palladian-50);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.mentor-areas-page-banner-badge {
+  display: inline-block;
+  margin-bottom: .5rem;
+  border-radius: 999px;
+  background: rgb(242 166 90 / 25%);
+  padding: .25rem .625rem;
+  color: var(--truffle-dark);
+  font-size: .625rem;
+  font-weight: 700;
+}
+
+.mentor-areas-page-banner h2 {
+  font-size: .9375rem;
+  font-weight: 700;
+}
+
+.mentor-areas-page-banner p {
+  margin-top: .375rem;
+  color: var(--ink-70);
+  font-size: .6875rem;
+  line-height: 1.4;
+}
+
+.mentor-areas-page-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+
+.mentor-areas-page-list-heading h2 {
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.mentor-areas-page-list-heading .mentor-areas-count {
+  flex: 0 0 auto;
+  margin: 0;
+  border-radius: 999px;
+  background: rgb(242 166 90 / 20%);
+  padding: .25rem .5rem;
+}
+
+.mentor-areas-page .mentor-areas-list {
+  gap: .375rem;
+  margin-top: 0;
+}
+
+.mentor-areas-page .mentor-area-option {
+  min-height: 3.5rem;
+  padding-inline: .875rem;
+}
+
+.mentor-areas-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--oatmeal-70);
+  padding-top: 1rem;
+}
+
+.mentor-areas-back {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  color: var(--navy);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.mentor-areas-saved {
+  margin-top: .75rem;
+  color: var(--success);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.mentor-areas-page .mentor-areas-error {
+  display: grid;
+  gap: .75rem;
+}
+
 @media (min-width: 640px) {
   .active-panel-content {
     padding: 1.75rem 2.25rem 0;
+  }
+
+  .mentor-areas-page-card {
+    padding: 1.5rem;
   }
 
   .active-panel-title {
@@ -241,6 +470,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .active-panel-option-areas {
+    grid-column: 1 / -1;
+  }
+
+  .mentor-areas-page-title {
+    font-size: 2.75rem;
+  }
 
 }
 

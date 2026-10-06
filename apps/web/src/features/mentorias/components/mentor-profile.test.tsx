@@ -34,7 +34,8 @@ it('muestra error sin un perfil falso y permite reintentar la carga', async () =
   render(<MentorProfile />);
   expect(await screen.findByRole('alert')).toHaveTextContent('Backend no disponible');
   expect(screen.getByRole('button', { name: 'Activar como mentor' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Configurar áreas' })).toBeVisible();
+  expect(screen.getAllByRole('link', { name: 'Configurar áreas' })).toHaveLength(2);
+  expect(screen.getAllByRole('link', { name: 'Configurar áreas' })[0]).toHaveAttribute('href', '/mentorias/perfil/areas');
   expect(screen.getByRole('button', { name: 'Configurar intereses' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Configurar disponibilidad' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Agregar información' })).toBeVisible();
@@ -49,10 +50,16 @@ it('mantiene la estructura y bloquea la activación durante la carga', () => {
   getProfile.mockReturnValue(new Promise(() => {}));
   render(<MentorProfile />);
   expect(screen.getByRole('status')).toHaveTextContent('Cargando participación');
-  expect(screen.getByRole('button', { name: 'Configurar áreas' })).toBeVisible();
+  expect(screen.getAllByRole('link', { name: 'Configurar áreas' })).toHaveLength(2);
+  expect(screen.getAllByRole('link', { name: 'Configurar áreas' })[0]).toHaveAttribute('href', '/mentorias/perfil/areas');
   expect(screen.getByRole('button', { name: 'Activar como mentor' })).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'Activar como mentor' }));
   expect(updateParticipation).not.toHaveBeenCalled();
+});
+
+it('permite abrir la pantalla de áreas desde la tarjeta de participación inactiva', () => {
+  render(<InactivePanel requirements={{ egresado: false }} activating={false} onActivate={jest.fn()} />);
+  expect(screen.getByRole('link', { name: 'Configurar áreas' })).toHaveAttribute('href', '/mentorias/perfil/areas');
 });
 
 it('mantiene la confirmación abierta si falla la desactivación', async () => {

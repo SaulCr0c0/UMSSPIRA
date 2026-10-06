@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,6 +13,19 @@ import { UpdateParticipationDto } from './dto/update-participation.dto';
 import { Mentor } from './mentor.model';
 
 const PG_UNIQUE_VIOLATION = '23505';
+const MAX_MENTOR_AREAS = 5;
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+interface MentorArea {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+}
+
+export interface MentorAreasState {
+  areas: MentorArea[];
+  selectedIds: string[];
+}
 
 export interface ModuleStatus {
   module: string;
@@ -56,6 +70,100 @@ export class MentorshipService {
       throw new NotFoundException('El usuario no tiene perfil de mentor');
     }
     return profile;
+  }
+
+  async getMyAreas(userId: string): Promise<MentorAreasState> {
+    const [{ data: areaRows, error: areasError }, { data: mentorAreaRows, error: mentorAreasError }] =
+      await Promise.all([
+        supabase
+          .from('area')
+          .select('id, nombre, descripcion')
+          .eq('esta_activo', true)
+          .order('nombre', { ascending: true }),
+        supabase
+          .from('mentor_area')
+          .select('id_area')
+          .eq('id_mentor', userId),
+      ]);
+    if (areasError) this.fail(areasError);
+    if (mentorAreasError) this.fail(mentorAreasError);
+
+    const areas = new Map<string, MentorArea>();
+    const seenAreaNames = new Set<string>();
+    for (const row of areaRows ?? []) {
+      const key = String(row.nombre).trim().toLocaleLowerCase('es');
+      if (key && !seenAreaNames.has(key)) {
+        const area = { id: row.id as string, nombre: row.nombre as string, descripcion: row.descripcion as string | null };
+        areas.set(area.id, area);
+        seenAreaNames.add(key);
+      }
+    }
+
+    const selectedIds = [...new Set((mentorAreaRows ?? [])
+      .map(row => row.id_area as string)
+      .filter(id => areas.has(id)))];
+    return { areas: [...areas.values()], selectedIds };
+  }
+
+  async updateMyAreas(userId: string, body: unknown): Promise<MentorAreasState> {
+    if (!body || typeof body !== 'object' || !('areaIds' in body) || !Array.isArray(body.areaIds)) {
+      throw new BadRequestException('Debes enviar una lista de áreas.');
+    }
+    const areaIds: unknown[] = body.areaIds;
+    if (areaIds.length > MAX_MENTOR_AREAS) {
+      throw new BadRequestException(`Puedes seleccionar hasta ${MAX_MENTOR_AREAS} áreas.`);
+    }
+    if (areaIds.some(id => typeof id !== 'string' || !UUID_V4.test(id))
+      || new Set(areaIds).size !== areaIds.length) {
+      throw new BadRequestException('La lista de áreas contiene identificadores inválidos o duplicados.');
+    }
+
+    if (areaIds.length > 0) {
+      const { count, error } = await supabase
+        .from('area')
+        .select('id', { count: 'exact', head: true })
+        .in('id', areaIds as string[])
+        .eq('esta_activo', true);
+      if (error) this.fail(error);
+      if (count !== areaIds.length) {
+        throw new BadRequestException('Solo puedes elegir áreas activas del catálogo.');
+      }
+    }
+
+    const today = this.today();
+    const { error: mentorError } = await supabase
+      .from('mentor')
+      .upsert({
+        id: userId,
+        esta_activo: false,
+        fecha_creacion: today,
+        fecha_actualizacion: today,
+      }, { onConflict: 'id', ignoreDuplicates: true });
+    if (mentorError) this.fail(mentorError);
+
+    if (areaIds.length > 0) {
+      const { error: saveError } = await supabase
+        .from('mentor_area')
+        .upsert(
+          (areaIds as string[]).map(id => ({ id_mentor: userId, id_area: id, fecha_creacion: today })),
+          { onConflict: 'id_mentor,id_area', ignoreDuplicates: true },
+        );
+      if (saveError) this.fail(saveError);
+
+      const { error: removeError } = await supabase
+        .from('mentor_area')
+        .delete()
+        .eq('id_mentor', userId)
+        .not('id_area', 'in', `(${(areaIds as string[]).join(',')})`);
+      if (removeError) this.fail(removeError);
+    } else {
+      const { error: removeError } = await supabase
+        .from('mentor_area')
+        .delete()
+        .eq('id_mentor', userId);
+      if (removeError) this.fail(removeError);
+    }
+    return this.getMyAreas(userId);
   }
 
   /**

@@ -10,11 +10,13 @@ import {
   Post,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { UpdateParticipationDto } from './dto/update-participation.dto';
 import { Mentor } from './mentor.model';
-import { MentorshipService, ModuleStatus } from './mentorship.service';
+import { MentorTestAuthGuard } from './mentor-test-auth.guard';
+import { MentorshipService, MentorAreasState, ModuleStatus } from './mentorship.service';
 
 /** Se asume que el guard de autenticación del equipo inyecta req.user.id. */
 type AuthenticatedRequest = Request & { user?: { id?: string } };
@@ -36,6 +38,7 @@ export class MentorshipController {
   }
 
   @Get('mi-perfil')
+  @UseGuards(MentorTestAuthGuard)
   getMyProfile(@Req() req: AuthenticatedRequest): Promise<Mentor> {
     return this.mentorshipService.getMyProfile(this.userId(req));
   }
@@ -48,16 +51,33 @@ export class MentorshipController {
 
   @Post('eligibility')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(MentorTestAuthGuard)
   checkEligibility(@Req() req: AuthenticatedRequest): Promise<{ eligible: boolean }> {
     return this.mentorshipService.checkEligibility(this.userId(req));
   }
 
   @Patch('mi-perfil/participacion')
+  @UseGuards(MentorTestAuthGuard)
   setParticipation(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateParticipationDto,
   ): Promise<Mentor> {
     return this.mentorshipService.setParticipation(this.userId(req), dto);
+  }
+
+  @Get('mi-perfil/areas')
+  @UseGuards(MentorTestAuthGuard)
+  getMyAreas(@Req() req: AuthenticatedRequest): Promise<MentorAreasState> {
+    return this.mentorshipService.getMyAreas(this.userId(req));
+  }
+
+  @Patch('mi-perfil/areas')
+  @UseGuards(MentorTestAuthGuard)
+  updateMyAreas(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: unknown,
+  ): Promise<MentorAreasState> {
+    return this.mentorshipService.updateMyAreas(this.userId(req), body);
   }
 
   // TODO: restringir a administradores con el guard de roles del proyecto.

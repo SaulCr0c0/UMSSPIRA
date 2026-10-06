@@ -1,12 +1,23 @@
-import React from 'react';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { setAccessToken } from '@/shared/services/auth-session';
+
+// /login ya no muestra una pantalla intermedia; conserva el acceso de prueba local.
+const LOCAL_MENTOR_TEST_TOKEN = 'umsspira-local-mentor-test-only';
 
 export default function LoginPage() {
-  return (
-    <main className="placeholder-page">
-      <div className="placeholder-content">
-        <h1 className="placeholder-title">Iniciar Sesión</h1>
-        <p className="placeholder-description">Página de login en construcción.</p>
-      </div>
-    </main>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      setAccessToken(LOCAL_MENTOR_TEST_TOKEN);
+      router.replace('/mentorias/perfil/areas');
+      return;
+    }
+    router.replace('/mentorias/perfil');
+  }, [router]);
+
+  return null;
 }
