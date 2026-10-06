@@ -15,6 +15,12 @@ import { useDashboardIndicators } from '../../../modules/reports/hooks/use-dashb
 import { useGraduates } from '../../../modules/reports/hooks/use-graduates';
 import type { Graduate } from '../../../modules/reports/data/graduates.mock';
 
+// HU4: Exportación a PDF (Dadier Cadima)
+import {
+  GraduatesReportExport,
+  type GraduateStatus,
+} from '../../../modules/reports/graduates/pdf';
+
 const ITEMS_PER_PAGE = 10;
 
 export default function ReportsPage() {
@@ -32,6 +38,13 @@ export default function ReportsPage() {
   // Estados de paginación y modal (HU3)
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGraduate, setSelectedGraduate] = useState<Graduate | null>(null);
+
+  // Mapeo del filtro de la UI hacia el contrato de exportación de la HU4
+  const pdfExportStatus = useMemo<GraduateStatus | undefined>(() => {
+    if (selectedStatus === 'VERIFICADO') return 'verified';
+    if (selectedStatus === 'OBSERVADO') return 'observed';
+    return undefined; // Despliega selector múltiple si está en "TODOS"
+  }, [selectedStatus]);
 
   // Filtrado reactivo en memoria
   const filteredGraduates = useMemo(() => {
@@ -104,17 +117,25 @@ export default function ReportsPage() {
         )
       )}
 
-      {/* Controles de Búsqueda y Filtrado (HU2) */}
+      {/* Controles de Búsqueda, Filtrado (HU2) y Exportación PDF (HU4) */}
       <section className="flex flex-col gap-4 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <GraduatesSearch
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
-          onReset={handleResetFilters}
-        />
-        <GraduatesStatusFilter
-          selectedStatus={selectedStatus}
-          onStatusChange={handleStatusChange}
-        />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <GraduatesSearch
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            onReset={handleResetFilters}
+          />
+          <GraduatesStatusFilter
+            selectedStatus={selectedStatus}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
+        <div className="flex items-center self-end sm:self-auto">
+          <GraduatesReportExport
+            status={pdfExportStatus}
+            onBackToListStart={() => setCurrentPage(1)}
+          />
+        </div>
       </section>
 
       {/* Tabla con Paginación o Estado Vacío (HU1 + HU3) */}
