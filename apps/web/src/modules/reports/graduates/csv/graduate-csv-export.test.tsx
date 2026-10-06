@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { GraduateCsvExport } from './GraduateCsvExport';
+import { GraduateCsvExport } from './graduate-csv-export';
 
 const fetchMock = jest.fn();
 const createObjectUrlMock = jest.fn(() => 'blob:graduate-csv');
@@ -35,7 +35,7 @@ afterAll(() => {
   jest.restoreAllMocks();
 });
 
-test('muestra CSV, PDF y la cantidad de egresados a exportar', () => {
+test('muestra CSV, PDF y la cantidad de titulados a exportar', () => {
   render(<GraduateCsvExport totalRecords={72} onPdfExport={jest.fn()} />);
 
   fireEvent.click(screen.getByRole('button', { name: /exportar/i }));
@@ -43,7 +43,7 @@ test('muestra CSV, PDF y la cantidad de egresados a exportar', () => {
   expect(screen.getByRole('menuitem', { name: /csv/i })).toBeInTheDocument();
   expect(screen.getByRole('menuitem', { name: /pdf/i })).toBeInTheDocument();
   expect(
-    screen.getByText('72 egresados verificados serán exportados.'),
+    screen.getByText('72 titulados verificados serán exportados.'),
   ).toBeInTheDocument();
 });
 
@@ -54,7 +54,7 @@ test('confirma, conserva los filtros activos y descarga el CSV', async () => {
     headers: {
       get: jest.fn((name: string) =>
         name.toLowerCase() === 'content-disposition'
-          ? 'attachment; filename="nomina-egresados-verificados-01102026.csv"'
+          ? 'attachment; filename="nomina-titulados-verificados-01102026.csv"'
           : null,
       ),
     },
@@ -74,7 +74,7 @@ test('confirma, conserva los filtros activos y descarga el CSV', async () => {
   expect(screen.getByRole('dialog')).toBeInTheDocument();
   expect(
     screen.getByText(
-      'Se exportarán 72 egresados verificados con los filtros activos.',
+      'Se exportarán 72 titulados verificados con los filtros activos.',
     ),
   ).toBeInTheDocument();
 
@@ -95,14 +95,14 @@ test('confirma, conserva los filtros activos y descarga el CSV', async () => {
   ).toBeInTheDocument();
 });
 
-test('no llama al backend cuando no existen egresados verificados', () => {
+test('no llama al backend cuando no existen titulados verificados', () => {
   render(<GraduateCsvExport totalRecords={0} />);
 
   fireEvent.click(screen.getByRole('button', { name: /exportar/i }));
   fireEvent.click(screen.getByRole('menuitem', { name: /csv/i }));
 
   expect(screen.getByRole('alert')).toHaveTextContent(
-    'No hay egresados verificados para exportar',
+    'No hay titulados verificados para exportar',
   );
   expect(fetchMock).not.toHaveBeenCalled();
 });

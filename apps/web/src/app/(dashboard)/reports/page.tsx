@@ -15,11 +15,14 @@ import { useDashboardIndicators } from '../../../modules/reports/hooks/use-dashb
 import { useGraduates } from '../../../modules/reports/hooks/use-graduates';
 import type { Graduate } from '../../../modules/reports/data/graduates.mock';
 
-// HU4: Exportación a PDF (Dadier Cadima)
+// HU 4: Exportação institucional em PDF (Dadier Cadima)
 import {
   GraduatesReportExport,
   type GraduateStatus,
 } from '../../../modules/reports/graduates/pdf';
+
+// HU 5: Exportação de nómina em CSV (Miguel Vargas / Anelis Córdova)
+import { GraduateCsvExport } from '../../../modules/reports/graduates/csv/graduate-csv-export';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -31,22 +34,21 @@ export default function ReportsPage() {
   } = useDashboardIndicators();
   const { data: graduates, loading: loadingGraduates } = useGraduates();
 
-  // Estados de filtrado (HU2)
+  // Estados de filtragem (HU 2)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilterOption>('TODOS');
 
-  // Estados de paginación y modal (HU3)
+  // Estados de paginação e modal (HU 3)
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGraduate, setSelectedGraduate] = useState<Graduate | null>(null);
 
-  // Mapeo del filtro de la UI hacia el contrato de exportación de la HU4
-  const pdfExportStatus = useMemo<GraduateStatus | undefined>(() => {
-    if (selectedStatus === 'VERIFICADO') return 'verified';
+  // Mapeamento de status para o contrato de exportação em PDF da HU 4
+  const pdfExportStatus = useMemo<GraduateStatus>(() => {
     if (selectedStatus === 'OBSERVADO') return 'observed';
-    return undefined; // Despliega selector múltiple si está en "TODOS"
+    return 'verified';
   }, [selectedStatus]);
 
-  // Filtrado reactivo en memoria
+  // Filtragem reativa na memória (HU 2)
   const filteredGraduates = useMemo(() => {
     if (!graduates) return [];
 
@@ -64,7 +66,12 @@ export default function ReportsPage() {
     });
   }, [graduates, selectedStatus, searchTerm]);
 
-  // Manejadores reactivos que resetean la paginación al alterar filtros
+  // Total de titulados verificados sob os filtros atuais para a HU 5
+  const verifiedGraduatesCount = useMemo(() => {
+    return filteredGraduates.filter((item) => item.status === 'VERIFICADO').length;
+  }, [filteredGraduates]);
+
+  // Handlers reativos
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1);
@@ -81,7 +88,7 @@ export default function ReportsPage() {
     setCurrentPage(1);
   };
 
-  // Rebanado (slice) de la lista para paginación estricta de 10 elementos
+  // Fatiamento estrito a 10 registros por página (HU 3)
   const paginatedGraduates = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredGraduates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -117,7 +124,7 @@ export default function ReportsPage() {
         )
       )}
 
-      {/* Controles de Búsqueda, Filtrado (HU2) y Exportación PDF (HU4) */}
+      {/* Controles de Busca, Filtro (HU 2) e Botão Único de Exportação (HU 4 + HU 5) */}
       <section className="flex flex-col gap-4 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <GraduatesSearch
@@ -130,15 +137,26 @@ export default function ReportsPage() {
             onStatusChange={handleStatusChange}
           />
         </div>
+
         <div className="flex items-center self-end sm:self-auto">
+          {/* Componente HU 4 orquestrando a UI unificada através do renderTrigger */}
           <GraduatesReportExport
             status={pdfExportStatus}
             onBackToListStart={() => setCurrentPage(1)}
+            renderTrigger={({ exportPdf, isGenerating }) => (
+              <div className="w-48">
+                <GraduateCsvExport
+                  totalRecords={verifiedGraduatesCount}
+                  filters={{ search: searchTerm }}
+                  onPdfExport={() => exportPdf(pdfExportStatus)}
+                />
+              </div>
+            )}
           />
         </div>
       </section>
 
-      {/* Tabla con Paginación o Estado Vacío (HU1 + HU3) */}
+      {/* Tabela com Paginação ou Estado Vazio (HU 1 + HU 3) */}
       {filteredGraduates.length === 0 ? (
         <EmptyState onRefresh={handleResetFilters} />
       ) : (
@@ -156,7 +174,7 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Modal de Detalle de Observación (HU3) */}
+      {/* Modal de Detalhes da Observação (HU 3) */}
       {selectedGraduate && (
         <ObservationModal
           graduate={selectedGraduate}

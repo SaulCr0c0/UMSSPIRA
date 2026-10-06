@@ -38,7 +38,7 @@ export function GraduateCsvExport({
     if (totalRecords <= 0) {
       setFeedback({
         type: 'error',
-        text: 'No hay egresados verificados para exportar',
+        text: 'No hay titulados verificados para exportar',
       });
       return;
     }
@@ -117,7 +117,7 @@ export function GraduateCsvExport({
           <div className="border-b border-[#C9C1B1] px-4 py-3">
             <p className="font-semibold text-[#1B2632]">Formato de exportación</p>
             <p className="mt-1 text-sm text-[#2C3B4D]">
-              {totalRecords} egresados verificados serán exportados.
+              {totalRecords} titulados verificados serán exportados.
             </p>
           </div>
 
@@ -190,7 +190,7 @@ export function GraduateCsvExport({
                   Exportar nómina en CSV
                 </h2>
                 <p className="mt-2 text-[#2C3B4D]">
-                  Se exportarán {totalRecords} egresados verificados con los
+                  Se exportarán {totalRecords} titulados verificados con los
                   filtros activos.
                 </p>
               </div>
