@@ -36,7 +36,7 @@ it('muestra error sin un perfil falso y permite reintentar la carga', async () =
   expect(screen.getByRole('button', { name: 'Activar como mentor' })).toBeDisabled();
   expect(screen.getAllByRole('link', { name: 'Configurar áreas' })).toHaveLength(2);
   expect(screen.getAllByRole('link', { name: 'Configurar áreas' })[0]).toHaveAttribute('href', '/mentorias/perfil/areas');
-  expect(screen.getByRole('button', { name: 'Configurar intereses' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Configurar intereses' })).toHaveAttribute('href', '/mentorias/perfil/intereses');
   expect(screen.getByRole('button', { name: 'Configurar disponibilidad' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Agregar información' })).toBeVisible();
   expect(screen.getAllByText('Por consultar')).toHaveLength(1);
