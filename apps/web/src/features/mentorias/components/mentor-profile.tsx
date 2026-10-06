@@ -7,6 +7,7 @@ import { useMentorParticipation } from '../hooks/use-mentor-participation';
 import { ActivePanel } from './active-panel';
 import { InactivePanel } from './inactive-panel';
 import { SecondaryButton } from './mentor-button';
+import { MentorSavedAreas } from './mentor-saved-areas';
 
 export function MentorProfile() {
   const { profile, loading, saving, error, changeParticipation, retry } = useMentorParticipation();
@@ -23,6 +24,7 @@ export function MentorProfile() {
     ) : (
       <InactivePanel requirements={profile?.requirements ?? null} activating={saving} onActivate={() => { void changeParticipation(true); }} />
     )}
+    {profile && !loading && <MentorSavedAreas />}
     <ConfirmModal
       open={confirmDeactivate}
       icon={CirclePauseIcon}

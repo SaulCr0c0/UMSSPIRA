@@ -11,6 +11,12 @@ export interface MentorArea {
 export interface MentorAreasState {
   areas: MentorArea[];
   selectedIds: string[];
+  /** Opcional hasta que la API entregue los intereses dependientes. */
+  intereses?: { id_area: string; nombre: string }[];
+}
+
+export class MentorAreasError extends Error {
+  constructor(message: string, public readonly status: number) { super(message); }
 }
 
 async function request(path: string, options: RequestInit = {}): Promise<unknown> {
@@ -48,13 +54,13 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
       }
     }
     const messages: Record<number, string> = {
-      401: 'La API rechazó la sesión de prueba. Confirma ENABLE_MENTOR_TEST_AUTH=true en apps/api/.env y reinicia la API.',
-      403: 'Solo los mentores habilitados pueden configurar sus áreas técnicas.',
+      401: 'Inicia sesión para configurar tus áreas técnicas.',
+      403: 'No tienes permisos para acceder a esta sección',
       404: 'No se encontró el perfil de mentor.',
     };
-    throw new Error(
+    throw new MentorAreasError(
       messages[response.status]
-      || `No se pudieron guardar las áreas (HTTP ${response.status})${serverMessage ? `: ${serverMessage}` : '.'}`,
+      || `No se pudieron guardar las áreas (HTTP ${response.status})${serverMessage ? `: ${serverMessage}` : '.'}`, response.status,
     );
   }
   return response.json();
@@ -90,7 +96,15 @@ function parseAreasState(value: unknown): MentorAreasState {
     }
     if (selectableIds.has(id)) selectedIds.add(id);
   }
-  return { areas, selectedIds: Array.from(selectedIds) };
+  let intereses: MentorAreasState['intereses'];
+  if ('intereses' in value) {
+    if (!Array.isArray(value.intereses) || value.intereses.some(item => !item || typeof item !== 'object'
+      || typeof item.id_area !== 'string' || typeof item.nombre !== 'string')) {
+      throw new Error('El backend devolvió los intereses dependientes con un formato inválido.');
+    }
+    intereses = value.intereses.map(item => ({ id_area: item.id_area, nombre: item.nombre }));
+  }
+  return { areas, selectedIds: Array.from(selectedIds), ...(intereses === undefined ? {} : { intereses }) };
 }
 
 export async function getMentorAreas(signal?: AbortSignal): Promise<MentorAreasState> {
