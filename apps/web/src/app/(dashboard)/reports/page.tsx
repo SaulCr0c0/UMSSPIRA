@@ -1,57 +1,45 @@
-"use client";
+'use client';
 
-import KpiCard from "../../../modules/reports/components/KpiCard";
-import { useDashboardIndicators } from "../../../modules/reports/hooks/useDashboardIndicators";
+import { KpiCard } from '../../../modules/reports/components/kpi-card';
+import { GraduatesTable } from '../../../modules/reports/components/graduates-table';
+import { useDashboardIndicators } from '../../../modules/reports/hooks/useDashboardIndicators';
+import { useGraduates } from '../../../modules/reports/hooks/use-graduates';
 
 export default function ReportsPage() {
-  const { data, loading, error } = useDashboardIndicators();
+  const { data: indicators, loading: loadingIndicators, error: errorIndicators } = useDashboardIndicators();
+  const { data: graduates, loading: loadingGraduates } = useGraduates();
 
-  if (loading) {
+  if (loadingIndicators || loadingGraduates) {
     return (
       <div className="p-6">
-        <p>Cargando indicadores...</p>
+        <p className="text-gray-500">Cargando módulo de reportes...</p>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return null;
   }
 
   return (
-    <main className="p-6">
-      <h1 className="mb-6 text-2xl font-bold">
-        Dashboard de indicadores
-      </h1>
+    <main className="space-y-8 p-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard de Indicadores</h1>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Egresados registrados"
-          value={data.totalGraduates}
-        />
+      {errorIndicators ? (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
+          {errorIndicators}
+        </div>
+      ) : (
+        indicators && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <KpiCard title="Titulados registrados" value={indicators.totalGraduates} />
+            <KpiCard title="Titulados verificados" value={indicators.verifiedGraduates} />
+            <KpiCard title="Titulados observados" value={indicators.observedGraduates} />
+            <KpiCard title="Mentores activos" value={indicators.activeMentors} />
+          </div>
+        )
+      )}
 
-        <KpiCard
-          title="Egresados verificados"
-          value={data.verifiedGraduates}
-        />
-
-        <KpiCard
-          title="Egresados observados"
-          value={data.observedGraduates}
-        />
-
-        <KpiCard
-          title="Mentores activos"
-          value={data.activeMentors}
-        />
+      <div>
+        <GraduatesTable graduates={graduates} />
       </div>
     </main>
   );
