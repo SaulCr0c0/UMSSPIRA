@@ -9,8 +9,13 @@ import {
   GraduatesStatusFilter,
   type StatusFilterOption,
 } from '../../../modules/reports/components/graduates-status-filter';
+import { Pagination } from '../../../modules/reports/components/pagination';
+import { ObservationModal } from '../../../modules/reports/components/observation-modal';
 import { useDashboardIndicators } from '../../../modules/reports/hooks/use-dashboard-indicators';
 import { useGraduates } from '../../../modules/reports/hooks/use-graduates';
+import type { Graduate } from '../../../modules/reports/data/graduates.mock';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ReportsPage() {
   const {
@@ -20,19 +25,22 @@ export default function ReportsPage() {
   } = useDashboardIndicators();
   const { data: graduates, loading: loadingGraduates } = useGraduates();
 
+  // Estados de filtrado (HU2)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilterOption>('TODOS');
 
-  // Filtrado reactivo en cliente (HU2)
+  // Estados de paginación y modal (HU3)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedGraduate, setSelectedGraduate] = useState<Graduate | null>(null);
+
+  // Filtrado reactivo en memoria
   const filteredGraduates = useMemo(() => {
     if (!graduates) return [];
 
     return graduates.filter((graduate) => {
-      // 1. Filtro por estado
       const matchesStatus =
         selectedStatus === 'TODOS' || graduate.status === selectedStatus;
 
-      // 2. Filtro predictivo por nombre o código SIS
       const normalizedQuery = searchTerm.toLowerCase().trim();
       const matchesSearch =
         !normalizedQuery ||
@@ -43,10 +51,28 @@ export default function ReportsPage() {
     });
   }, [graduates, selectedStatus, searchTerm]);
 
+  // Manejadores reactivos que resetean la paginación al alterar filtros
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (status: StatusFilterOption) => {
+    setSelectedStatus(status);
+    setCurrentPage(1);
+  };
+
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedStatus('TODOS');
+    setCurrentPage(1);
   };
+
+  // Rebanado (slice) de la lista para paginación estricta de 10 elementos
+  const paginatedGraduates = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredGraduates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredGraduates, currentPage]);
 
   if (loadingIndicators || loadingGraduates) {
     return (
@@ -57,11 +83,10 @@ export default function ReportsPage() {
   }
 
   return (
-    <main className="space-y-8 p-6">
+    <main className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Dashboard de Indicadores
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard de Indicadores</h1>
+        <p className="text-sm text-gray-500">Padrón y reportería institucional de titulados</p>
       </div>
 
       {errorIndicators ? (
@@ -71,44 +96,51 @@ export default function ReportsPage() {
       ) : (
         indicators && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KpiCard
-              title="Titulados registrados"
-              value={indicators.totalGraduates}
-            />
-            <KpiCard
-              title="Titulados verificados"
-              value={indicators.verifiedGraduates}
-            />
-            <KpiCard
-              title="Titulados observados"
-              value={indicators.observedGraduates}
-            />
-            <KpiCard
-              title="Mentores activos"
-              value={indicators.activeMentors}
-            />
+            <KpiCard title="Titulados registrados" value={indicators.totalGraduates} />
+            <KpiCard title="Titulados verificados" value={indicators.verifiedGraduates} />
+            <KpiCard title="Titulados observados" value={indicators.observedGraduates} />
+            <KpiCard title="Mentores activos" value={indicators.activeMentors} />
           </div>
         )
       )}
 
-      {/* Barra de herramientas: Búsqueda predictiva y filtro por estado (HU2) */}
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm">
+      {/* Controles de Búsqueda y Filtrado (HU2) */}
+      <section className="flex flex-col gap-4 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <GraduatesSearch
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
           onReset={handleResetFilters}
         />
         <GraduatesStatusFilter
           selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
+          onStatusChange={handleStatusChange}
         />
       </section>
 
-      {/* Renderizado condicional: Tabla o estado vacío */}
+      {/* Tabla con Paginación o Estado Vacío (HU1 + HU3) */}
       {filteredGraduates.length === 0 ? (
         <EmptyState onRefresh={handleResetFilters} />
       ) : (
-        <GraduatesTable graduates={filteredGraduates} />
+        <div className="space-y-2">
+          <GraduatesTable
+            graduates={paginatedGraduates}
+            onViewReason={setSelectedGraduate}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredGraduates.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
+      {/* Modal de Detalle de Observación (HU3) */}
+      {selectedGraduate && (
+        <ObservationModal
+          graduate={selectedGraduate}
+          onClose={() => setSelectedGraduate(null)}
+        />
       )}
     </main>
   );

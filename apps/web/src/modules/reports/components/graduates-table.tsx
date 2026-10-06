@@ -1,134 +1,168 @@
 'use client';
 
-import { useState } from 'react';
+import { Eye } from 'lucide-react';
 import type { Graduate } from '../data/graduates.mock';
-import { EmptyState } from './empty-state';
-
-const PAGE_SIZE = 10;
-
-const TABLE_COLUMNS = [
-  'Número de registro',
-  'Nombre completo',
-  'Código SIS',
-  'Teléfono',
-  'Correo electrónico',
-  'Fecha de ingreso',
-  'Fecha de titulación',
-  'Duración de estudio',
-  'Fecha de revisión',
-  'Motivo de rechazo',
-  'Estado',
-];
 
 interface GraduatesTableProps {
   graduates: Graduate[];
+  onViewReason: (graduate: Graduate) => void;
 }
 
-export function GraduatesTable({ graduates }: GraduatesTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const total = graduates.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  if (total === 0) {
-    return <EmptyState />;
-  }
-
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const visibleGraduates = graduates.slice(startIndex, startIndex + PAGE_SIZE);
-  const fromRecord = startIndex + 1;
-  const toRecord = Math.min(startIndex + PAGE_SIZE, total);
+function StatusBadge({ status }: { status: Graduate['status'] }) {
+  const isVerified = status === 'VERIFICADO';
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[#1B2632]">Vista General de Titulados</h2>
-      </div>
+    <span
+      className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
+        isVerified ? 'bg-[#1e293b] text-white' : 'bg-[#dc2626] text-white'
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#1B2632] text-white">
-            <tr>
-              {TABLE_COLUMNS.map((col) => (
-                <th
-                  key={col}
-                  className="whitespace-nowrap px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide"
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {visibleGraduates.map((grad, index) => (
-              <tr
-                key={grad.id || grad.registrationNumber}
-                className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-              >
-                <td className="whitespace-nowrap px-4 py-3 text-center text-gray-700">
-                  {grad.registrationNumber}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
-                  {grad.fullName}
-                </td>
-                <td className="px-4 py-3 text-center text-gray-700">{grad.sisCode}</td>
-                <td className="px-4 py-3 text-center text-gray-700">{grad.phone}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700">{grad.email}</td>
-                <td className="px-4 py-3 text-center text-gray-700">{grad.admissionDate}</td>
-                <td className="px-4 py-3 text-center text-gray-700">{grad.degreeDate ?? '—'}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-center text-gray-700">
-                  {grad.studyDuration}
-                </td>
-                <td className="px-4 py-3 text-center text-gray-700">{grad.reviewDate}</td>
-                <td className="px-4 py-3 text-center text-gray-700">
-                  {grad.rejectionReason ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span
-                    className={`inline-block rounded px-2.5 py-1 text-xs font-semibold ${
-                      grad.status === 'VERIFICADO'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {grad.status}
-                  </span>
-                </td>
+export function GraduatesTable({ graduates, onViewReason }: GraduatesTableProps) {
+  return (
+    <>
+      {/* Vista de escritorio / tablet (Scroll horizontal controlado) */}
+      <div className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1550px] border-collapse text-left text-sm">
+            <thead className="bg-[#1e293b] text-xs font-bold uppercase tracking-wide text-white">
+              <tr>
+                <th className="px-4 py-4">Nro</th>
+                <th className="px-4 py-4">Número de registro</th>
+                <th className="px-4 py-4">Nombre completo</th>
+                <th className="px-4 py-4">Código SIS</th>
+                <th className="px-4 py-4">Teléfono</th>
+                <th className="px-4 py-4">Correo electrónico</th>
+                <th className="px-4 py-4">Fecha de ingreso</th>
+                <th className="px-4 py-4">Fecha de titulación</th>
+                <th className="px-4 py-4">Duración de estudio</th>
+                <th className="px-4 py-4">Fecha de revisión</th>
+                <th className="px-4 py-4">Motivo de rechazo</th>
+                <th className="px-4 py-4">Estado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {graduates.map((record, index) => (
+                <tr className="align-top hover:bg-slate-50/80" key={record.id}>
+                  <td className="whitespace-nowrap px-4 py-4">{index + 1}</td>
+                  <td className="whitespace-nowrap px-4 py-4 font-semibold text-slate-800">
+                    {record.registrationNumber}
+                  </td>
+                  <td className="min-w-52 px-4 py-4 font-medium text-slate-900">
+                    {record.fullName}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.sisCode}</td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.phone}</td>
+                  <td className="px-4 py-4">{record.email}</td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.admissionDate}</td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.degreeDate ?? '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.studyDuration}</td>
+                  <td className="whitespace-nowrap px-4 py-4">{record.reviewDate}</td>
+                  <td className="whitespace-nowrap px-4 py-4">
+                    {record.status === 'VERIFICADO' ? (
+                      <span aria-label="Sin motivo de rechazo" className="text-slate-400">
+                        —
+                      </span>
+                    ) : (
+                      <button
+                        className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                        onClick={() => onViewReason(record)}
+                        type="button"
+                      >
+                        <Eye aria-hidden="true" size={15} />
+                        Ver motivo
+                      </button>
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4">
+                    <StatusBadge status={record.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center justify-between gap-3 py-2 sm:flex-row">
-        <p className="text-sm text-gray-600">
-          Mostrando {fromRecord} - {toRecord} de {total} registros
-        </p>
-
-        <nav className="flex items-center gap-2" aria-label="Paginación">
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      {/* Vista móvil (Tarjetas colapsables semánticas) */}
+      <div className="space-y-3 md:hidden">
+        {graduates.map((record) => (
+          <article
+            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+            key={record.id}
           >
-            Anterior
-          </button>
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {record.registrationNumber}
+                </p>
+                <h3 className="mt-1 font-bold text-slate-900">{record.fullName}</h3>
+                <p className="mt-1 text-sm text-slate-600">Código SIS: {record.sisCode}</p>
+              </div>
+              <StatusBadge status={record.status} />
+            </div>
 
-          <span className="text-xs text-gray-600">
-            Página {currentPage} de {totalPages}
-          </span>
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-3 py-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">Teléfono</dt>
+                <dd className="mt-0.5 break-words text-slate-800">{record.phone}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">
+                  Correo electrónico
+                </dt>
+                <dd className="mt-0.5 break-all text-slate-800">{record.email}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">
+                  Fecha de ingreso
+                </dt>
+                <dd className="mt-0.5 text-slate-800">{record.admissionDate}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">
+                  Fecha de titulación
+                </dt>
+                <dd className="mt-0.5 text-slate-800">{record.degreeDate ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">
+                  Duración de estudio
+                </dt>
+                <dd className="mt-0.5 text-slate-800">{record.studyDuration}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase text-slate-500">
+                  Fecha de revisión
+                </dt>
+                <dd className="mt-0.5 text-slate-800">{record.reviewDate}</dd>
+              </div>
+            </dl>
 
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-          >
-            Siguiente
-          </button>
-        </nav>
+            <div className="border-t border-slate-100 pt-3">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                Motivo de rechazo
+              </p>
+              {record.status === 'VERIFICADO' ? (
+                <span className="text-sm text-slate-400">—</span>
+              ) : (
+                <button
+                  className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  onClick={() => onViewReason(record)}
+                  type="button"
+                >
+                  <Eye aria-hidden="true" size={16} />
+                  Ver motivo
+                </button>
+              )}
+            </div>
+          </article>
+        ))}
       </div>
-    </section>
+    </>
   );
 }
