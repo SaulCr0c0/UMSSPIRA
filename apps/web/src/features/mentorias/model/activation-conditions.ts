@@ -1,4 +1,4 @@
-import { BadgeCheckIcon, ContactIcon, type LucideIcon } from 'lucide-react';
+import { BadgeCheckIcon, type LucideIcon } from 'lucide-react';
 import type { ConditionId, Requirements } from '@umsspira/shared-types';
 
 interface ActivationCondition {
@@ -20,15 +20,6 @@ export const activationConditions = [
     pendingDescription: 'Tu condición de titulado aún está pendiente de aprobación.',
     metStatus: 'Aprobado',
     pendingStatus: 'Pendiente de aprobación',
-  },
-  {
-    id: 'perfil',
-    icon: ContactIcon,
-    title: 'Perfil mínimo completo',
-    metDescription: 'Tu perfil cuenta con la información mínima requerida.',
-    pendingDescription: 'Tu perfil aún no cuenta con la información mínima requerida.',
-    metStatus: 'Completo',
-    pendingStatus: 'Incompleto',
   },
 ] satisfies ActivationCondition[];
 

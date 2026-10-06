@@ -6,7 +6,7 @@ import { getMentorProfile, updateMentorParticipation } from '../services/mentori
 jest.mock('../services/mentorias-api');
 const getProfile = jest.mocked(getMentorProfile);
 const updateParticipation = jest.mocked(updateMentorParticipation);
-const inactive = { isActive: false, requirements: { egresado: true, perfil: true } };
+const inactive = { isActive: false, requirements: { egresado: true } };
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -45,7 +45,7 @@ it('no fabrica datos si la carga falla y permite reintentar', async () => {
 });
 
 it('no envía una activación con requisitos incompletos', async () => {
-  getProfile.mockResolvedValue({ ...inactive, requirements: { egresado: false, perfil: true } });
+  getProfile.mockResolvedValue({ ...inactive, requirements: { egresado: false } });
   const { result } = renderHook(() => useMentorParticipation());
   await waitFor(() => expect(result.current.loading).toBe(false));
   await act(async () => { await result.current.changeParticipation(true); });

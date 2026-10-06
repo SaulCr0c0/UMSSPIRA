@@ -7,7 +7,7 @@ import { getMentorProfile, updateMentorParticipation } from '../services/mentori
 jest.mock('../services/mentorias-api');
 const getProfile = jest.mocked(getMentorProfile);
 const updateParticipation = jest.mocked(updateMentorParticipation);
-const inactive = { isActive: false, requirements: { egresado: true, perfil: true } };
+const inactive = { isActive: false, requirements: { egresado: true } };
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -38,7 +38,7 @@ it('muestra error sin un perfil falso y permite reintentar la carga', async () =
   expect(screen.getByRole('button', { name: 'Configurar intereses' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Configurar disponibilidad' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Agregar información' })).toBeVisible();
-  expect(screen.getAllByText('Por consultar')).toHaveLength(2);
+  expect(screen.getAllByText('Por consultar')).toHaveLength(1);
   expect(screen.queryByText('Titulado aprobado')).not.toBeInTheDocument();
   expect(screen.queryByText('Inactivo')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
@@ -66,7 +66,7 @@ it('mantiene la confirmación abierta si falla la desactivación', async () => {
   expect(screen.getByText('Tu participación como mentor está activa')).toBeInTheDocument();
 });
 
-it.each([{ egresado: false, perfil: true }, { egresado: true, perfil: false }])('bloquea la activación con requisitos pendientes: %j', requirements => {
+it.each([{ egresado: false }])('bloquea la activación con requisitos pendientes: %j', requirements => {
   const onActivate = jest.fn();
   render(<InactivePanel requirements={requirements} activating={false} onActivate={onActivate} />);
   const button = screen.getByRole('button', { name: 'Activar como mentor' });
