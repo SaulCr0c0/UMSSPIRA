@@ -44,7 +44,7 @@
               "  const keys = ['number','fullName','sisCode','phone','email','admissionDate','graduationDate','careerDuration','statusDate'];",
               "  body.graduates.forEach((g) => pm.expect(g).to.have.all.keys(keys));",
               "});",
-              "pm.test('Duración en años y meses', () => pm.expect(body.graduates[0].careerDuration).to.match(/^(\\d+ años?(, \\d+ mes(es)?)?|\\d+ mes(es)?|No disponible)$/));"
+              "pm.test('Duración en años y meses', () => pm.expect(body.graduates[0].careerDuration).to.match(/^(\\d+ años?(,? \\d+ mes(es)?)?|\\d+ mes(es)?|No disponible)$/));"
             ]
           }
         }
@@ -89,7 +89,7 @@
               "  const keys = ['number','fullName','sisCode','phone','email','admissionDate','graduationDate','careerDuration','statusDate'];",
               "  body.graduates.forEach((g) => pm.expect(g).to.have.all.keys(keys));",
               "});",
-              "pm.test('Duración en años y meses', () => pm.expect(body.graduates[0].careerDuration).to.match(/^(\\d+ años?(, \\d+ mes(es)?)?|\\d+ mes(es)?|No disponible)$/));"
+              "pm.test('Duración en años y meses', () => pm.expect(body.graduates[0].careerDuration).to.match(/^(\\d+ años?(,? \\d+ mes(es)?)?|\\d+ mes(es)?|No disponible)$/));"
             ]
           }
         }
