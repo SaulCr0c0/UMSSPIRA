@@ -58,22 +58,6 @@ self.addEventListener('fetch', (event) => {
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                   <title>Sin conexión</title>
-                  <style>
-                    body {
-                      font-family: Arial, sans-serif;
-                      margin: 0;
-                      padding: 40px 20px;
-                      text-align: center;
-                    }
-
-                    h1 {
-                      margin-bottom: 12px;
-                    }
-
-                    p {
-                      margin-bottom: 20px;
-                    }
-                  </style>
                 </head>
                 <body>
                   <h1>Sin conexión</h1>
