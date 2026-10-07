@@ -58,6 +58,74 @@ describe('MailService', () => {
     expect(sentMessage.html).toContain('&lt;script&gt;alert(&quot;hack&quot;)&lt;/script&gt;');
   });
 
+    describe('correos del dictamen', () => {
+    it('envía la aprobación con el código y la vigencia de 24 horas', async () => {
+      await mailService.sendReviewApproved({
+        to: 'titulado@umss.edu.bo',
+        fullName: 'Ana Pérez',
+        code: '048213',
+        expiresInHours: 24,
+      });
+
+      const sent = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sent.to).toBe('titulado@umss.edu.bo');
+      expect(sent.subject).toBe('Tu solicitud fue aprobada');
+      expect(sent.html).toContain('048213');
+      expect(sent.html).toContain('24 horas');
+      expect(sent.html).toContain('Hola, Ana Pérez:');
+      expect(sent.text).toContain('048213');
+      expect(sent.text).toContain('24 horas');
+    });
+
+    it('usa un saludo genérico si no se conoce el nombre', async () => {
+      await mailService.sendReviewApproved({
+        to: 'titulado@umss.edu.bo',
+        code: '123456',
+        expiresInHours: 24,
+      });
+
+      const sent = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sent.text).toContain('Hola:');
+      expect(sent.text).not.toContain('Hola,');
+    });
+
+    it('envía las observaciones y escapa el HTML de la nota', async () => {
+      await mailService.sendReviewObserved({
+        to: 'titulado@umss.edu.bo',
+        observation: '<b>Falta</b> el título & el sello',
+      });
+
+      const sent = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sent.subject).toBe('Tu solicitud tiene observaciones');
+      expect(sent.html).not.toContain('<b>Falta</b>');
+      expect(sent.html).toContain('&lt;b&gt;Falta&lt;/b&gt; el título &amp; el sello');
+      expect(sent.text).toContain('<b>Falta</b> el título & el sello');
+    });
+
+    it('envía el rechazo con su justificación', async () => {
+      await mailService.sendReviewRejected({
+        to: 'titulado@umss.edu.bo',
+        justification: 'El documento no corresponde a la carrera indicada.',
+      });
+
+      const sent = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sent.subject).toBe('Tu solicitud no fue aprobada');
+      expect(sent.html).toContain('El documento no corresponde a la carrera indicada.');
+      expect(sent.text).toContain('El documento no corresponde a la carrera indicada.');
+    });
+
+    it('lanza ServiceUnavailableException si el envío falla', async () => {
+      mockTransporter.sendMail.mockRejectedValue(new Error('SMTP Connection refused'));
+
+      await expect(
+        mailService.sendReviewRejected({
+          to: 'titulado@umss.edu.bo',
+          justification: 'Motivo',
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+  
   it('lanza ServiceUnavailableException si el envio SMTP falla', async () => {
     mockTransporter.sendMail.mockRejectedValue(new Error('SMTP Connection refused'));
 
