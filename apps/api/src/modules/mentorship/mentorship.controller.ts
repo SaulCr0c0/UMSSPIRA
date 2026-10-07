@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -75,6 +76,14 @@ export class MentorshipController {
     @Body() dto: UpdateMentorProfileInformationDto,
   ): Promise<MentorProfileInformationState> {
     return this.mentorshipService.updateMyProfileInformation(this.userId(req), dto);
+  }
+
+  @Delete(['mi-perfil/informacion', 'my-profile/information'])
+  @UseGuards(MentorTestAuthGuard)
+  deleteMyProfileInformation(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<MentorProfileInformationState> {
+    return this.mentorshipService.deleteMyProfileInformation(this.userId(req));
   }
 
   @Post('profiles/reset')
