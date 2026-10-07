@@ -1,6 +1,6 @@
 // apps/api/src/modules/activation/repositories/activation-code.repository.ts
 import { Inject, Injectable } from '@nestjs/common';
-import type { Redis } from 'ioredis';
+import type Redis from 'ioredis';
 import { ACTIVATION_REDIS } from '../activation.constants';
 
 @Injectable()
