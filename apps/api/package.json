@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
+    "test": "node --test test/mentorship-profile-information.test.cjs",
     "test:interests": "npm run build && node --test test/mentorship-interests.e2e.cjs",
+    "test:profile-info": "npm run build && node --test test/mentorship-profile-information.test.cjs",
     "lint": "eslint src --ext .ts",
     "start": "node dist/main"
   },

@@ -60,7 +60,10 @@ export interface MentorAreasState {
 export interface MentorProfileInformationState {
   exists: boolean;
   profile: {
+    descripcion?: string | null;
     experiencia: string | null;
+    informacion_relevante?: string | null;
+    foto_perfil?: string | null;
     anios_exp: number | null;
     fecha_actualizacion: string | null;
   } | null;
@@ -133,10 +136,18 @@ export class MentorshipService {
       return { exists: false, profile: null };
     }
 
+    if (!profile.experiencia) {
+      return { exists: false, profile: null };
+    }
+
+    const parsed = this.parseExperiencia(profile.experiencia);
     return {
-      exists: true,
+      exists: Boolean(parsed.experiencia || parsed.descripcion),
       profile: {
-        experiencia: profile.experiencia,
+        descripcion: parsed.descripcion,
+        experiencia: parsed.experiencia,
+        informacion_relevante: parsed.informacion_relevante,
+        foto_perfil: parsed.foto_perfil,
         anios_exp: profile.anios_exp,
         fecha_actualizacion: profile.fecha_actualizacion,
       },
@@ -152,8 +163,15 @@ export class MentorshipService {
       throw new NotFoundException('El usuario no tiene perfil de mentor');
     }
 
-    const changes: Partial<Mentor> = {
+    const payloadObj = {
+      descripcion: dto.descripcion ?? null,
       experiencia: dto.experiencia.trim(),
+      informacion_relevante: dto.informacion_relevante ?? null,
+      foto_perfil: dto.foto_perfil ?? null,
+    };
+
+    const changes: Partial<Mentor> = {
+      experiencia: JSON.stringify(payloadObj),
       fecha_actualizacion: this.today(),
     };
     if (dto.anios_exp !== undefined) {
@@ -164,10 +182,62 @@ export class MentorshipService {
     return {
       exists: true,
       profile: {
-        experiencia: profile.experiencia,
+        descripcion: payloadObj.descripcion,
+        experiencia: payloadObj.experiencia,
+        informacion_relevante: payloadObj.informacion_relevante,
+        foto_perfil: payloadObj.foto_perfil,
         anios_exp: profile.anios_exp,
         fecha_actualizacion: profile.fecha_actualizacion,
       },
+    };
+  }
+
+  /** DELETE /mentorship/my-profile/information */
+  async deleteMyProfileInformation(userId: string): Promise<MentorProfileInformationState> {
+    const profile = await this.findById(userId);
+    if (!profile) {
+      throw new NotFoundException('El usuario no tiene perfil de mentor');
+    }
+
+    const changes: Partial<Mentor> = {
+      experiencia: null,
+      fecha_actualizacion: this.today(),
+    };
+
+    await this.update(userId, changes);
+    return {
+      exists: false,
+      profile: null,
+    };
+  }
+
+  private parseExperiencia(raw: string | null): {
+    descripcion: string | null;
+    experiencia: string | null;
+    informacion_relevante: string | null;
+    foto_perfil: string | null;
+  } {
+    if (!raw) {
+      return { descripcion: null, experiencia: null, informacion_relevante: null, foto_perfil: null };
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          descripcion: typeof parsed.descripcion === 'string' ? parsed.descripcion : null,
+          experiencia: typeof parsed.experiencia === 'string' ? parsed.experiencia : null,
+          informacion_relevante: typeof parsed.informacion_relevante === 'string' ? parsed.informacion_relevante : null,
+          foto_perfil: typeof parsed.foto_perfil === 'string' ? parsed.foto_perfil : null,
+        };
+      }
+    } catch {
+      // Formato texto plano anterior
+    }
+    return {
+      descripcion: null,
+      experiencia: raw,
+      informacion_relevante: null,
+      foto_perfil: null,
     };
   }
 
