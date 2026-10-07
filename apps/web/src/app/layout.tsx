@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "../shared/identidad/tokens.css";
 import ServiceWorkerRegister from "./service-worker-register";
 import { SiteHeader } from "@/shared/components/site-header";
 import { SiteFooter } from "@/shared/components/site-footer";

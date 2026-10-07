@@ -1,6 +1,8 @@
-﻿import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss'
+import identidad from './src/shared/identidad/tailwind-preset'
 
 const config: Config = {
+  presets: [identidad],
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
