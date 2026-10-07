@@ -1,10 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
-import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
+import logoUmss from '@/shared/assets/images/umsspiralogo.png';
 
 export default function PublicNavbar() {
   const [activeTab, setActiveTab] = useState<string | null>('Inicio');
@@ -24,12 +23,12 @@ export default function PublicNavbar() {
   ];
 
   return (
-    <header className="w-full bg-[#0F172A] text-white shadow-md font-sans relative z-50">
+    <header className="w-full bg-white border-b border-slate-100 shadow-sm font-sans relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        {/* Logo Institucional (Mismo estilo que tu navbar anterior) */}
+        {/* Logo Institucional y Facultad */}
         <div className="flex items-center space-x-3">
-          <div className="relative block w-44 h-20 cursor-pointer">
+          <div className="relative block w-44 h-16 cursor-pointer">
             <Image 
               src={logoUmss} 
               alt="Logo UMSSPIRA" 
@@ -38,14 +37,14 @@ export default function PublicNavbar() {
               priority
             />
           </div>
-          <div className="hidden lg:block border-l border-slate-700 pl-3 text-[11px] text-slate-300 font-medium leading-tight">
-            <span className="block font-bold text-white">UMSS - FCYT</span>
+          <div className="hidden lg:block border-l border-slate-200 pl-3 text-[11px] text-slate-600 font-medium leading-tight">
+            <span className="block font-bold text-slate-900">UMSS - FCYT</span>
             <span>INGENIERÍA INFORMÁTICA</span>
             <span className="block">INGENIERÍA DE SISTEMAS</span>
           </div>
         </div>
 
-        {/* Menú de Navegación con los mismos efectos y tipografía del navbar anterior */}
+        {/* Menú de Navegación con efectos sobre fondo blanco */}
         <nav className="hidden md:flex items-center space-x-2 text-base font-medium">
           {navItems.map((item) => {
             const isActive = activeTab === item.name;
@@ -53,10 +52,10 @@ export default function PublicNavbar() {
               <button
                 key={item.name}
                 onClick={(e) => handleItemClick(item.name, e)}
-                className={`flex items-center px-3 py-2 rounded-xl transition-all relative cursor-pointer ${
+                className={`flex items-center px-3.5 py-2 rounded-xl transition-all relative cursor-pointer ${
                   isActive 
-                    ? 'bg-[#1E293B] text-white' 
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-slate-100 text-slate-900 font-semibold shadow-sm' 
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <span>{item.name}</span>
@@ -72,7 +71,7 @@ export default function PublicNavbar() {
         <div className="flex items-center space-x-3 pr-2">
           <button 
             onClick={(e) => e.preventDefault()}
-            className="px-4 py-2 text-sm font-semibold text-white border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
+            className="px-4 py-2 text-sm font-semibold text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
           >
             Iniciar sesión
           </button>
