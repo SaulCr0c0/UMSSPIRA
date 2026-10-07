@@ -14,6 +14,7 @@ import { ObservationModal } from '../../../modules/reports/components/observatio
 import { useDashboardIndicators } from '../../../modules/reports/hooks/use-dashboard-indicators';
 import { useGraduates } from '../../../modules/reports/hooks/use-graduates';
 import type { Graduate } from '../../../modules/reports/data/graduates.mock';
+import { RotateCcw } from 'lucide-react';
 
 // HU 4: Exportação institucional em PDF (Dadier Cadima)
 import {
@@ -136,6 +137,16 @@ export default function ReportsPage() {
             selectedStatus={selectedStatus}
             onStatusChange={handleStatusChange}
           />
+
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            title="Limpiar filtros"
+            aria-label="Limpiar filtros"
+            className="flex h-[50px] w-[50px] items-center justify-center rounded-md border border-[#C9C1B1] bg-white text-gray-600 transition-colors hover:bg-gray-100"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="flex items-center self-end sm:self-auto">
