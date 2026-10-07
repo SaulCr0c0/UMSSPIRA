@@ -1,9 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-let client: SupabaseClient | null = null;
+let anonClient: SupabaseClient | null = null;
+let serviceClient: SupabaseClient | null = null;
 
+// Cliente con la clave anonima (respeta RLS). Lo usan autenticacion y guardas.
 export function getSupabase(): SupabaseClient {
-  if (client) return client;
+  if (anonClient) return anonClient;
 
   const url = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY;
@@ -14,8 +16,53 @@ export function getSupabase(): SupabaseClient {
     );
   }
 
-  client = createClient(url, anonKey, {
+  anonClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return client;
+  return anonClient;
 }
+
+// Error propio para distinguir una configuracion incompleta de un fallo de Supabase.
+export class SupabaseConfigError extends Error {
+  constructor() {
+    super(
+      'Faltan las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY (o SUPABASE_ANON_KEY)',
+    );
+    this.name = 'SupabaseConfigError';
+  }
+}
+
+/**
+ * Cliente para el backend con la clave de servicio (no pasa por RLS).
+ * Si no hay clave de servicio, usa la anonima. Se crea bajo demanda para no
+ * detener la API al importar el archivo.
+ */
+export function getSupabaseClient(): SupabaseClient {
+  if (serviceClient) {
+    return serviceClient;
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new SupabaseConfigError();
+  }
+
+  serviceClient = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return serviceClient;
+}
+
+/**
+ * Acceso compatible con `supabase.from(...)` (forma usada por otros modulos del monorepo).
+ * Delega en getSupabaseClient(), por lo que tampoco detiene la API al importar el archivo.
+ */
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    const client = getSupabaseClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
