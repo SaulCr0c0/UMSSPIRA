@@ -243,12 +243,12 @@ export class MentorshipService {
 
   /**
    * Regla 6.1.1: ¿es egresado aprobado?
-   * Supuesto: la tabla `egresado` solo contiene egresados aprobados y su `id`
+   * Supuesto: la tabla `titulado` solo contiene egresados aprobados y su `id`
    * es el UUID del usuario. Consulta de SOLO LECTURA.
    */
   async isApprovedGraduate(userId: string): Promise<boolean> {
     const { count, error } = await supabase
-      .from('egresado')
+      .from('titulado')
       .select('id', { count: 'exact', head: true })
       .eq('id', userId);
     if (error) this.fail(error);
