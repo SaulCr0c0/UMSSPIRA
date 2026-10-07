@@ -1,4 +1,5 @@
-﻿import { BrainCogIcon, CalendarDaysIcon, ContactIcon, MessagesSquareIcon } from 'lucide-react';
+import Link from 'next/link';
+import { BrainCogIcon, CalendarDaysIcon, ContactIcon, MessagesSquareIcon } from 'lucide-react';
 import { SecondaryButton } from './mentor-button';
 import { MentorAreasEditor } from './mentor-areas-editor';
 
@@ -9,22 +10,42 @@ const options = [
   { title: 'Información del perfil', description: 'Presenta tu descripción, experiencia e información relevante para la mentoría.', icon: ContactIcon, action: 'Agregar información' },
 ];
 
-/** Estructura visual permanente; estas acciones todavía no tienen endpoints. */
+/** Estructura visual permanente; estas acciones configuran el perfil del mentor. */
 export function MentorConfiguration() {
-  return <section className="active-panel-settings" aria-labelledby="mentor-configuration-title">
-    <h3 id="mentor-configuration-title" className="active-panel-section-title">Configuración del perfil</h3>
-    <div className="active-panel-options">
-      {options.map(({ title, description, icon: Icon, action }) => <article key={title} className={`active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}>
-        <div className="active-panel-option-top">
-          <span aria-hidden="true" className="active-panel-option-icon"><Icon /></span>
-          {title !== 'Áreas técnicas' && <span className="active-panel-option-status">Próximamente</span>}
-        </div>
-        <h4 id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined} className="active-panel-option-title">{title}</h4>
-        <p className="active-panel-option-description">{description}</p>
-        {title === 'Áreas técnicas'
-          ? <MentorAreasEditor />
-          : <div className="active-panel-option-action"><SecondaryButton disabled>{action}</SecondaryButton></div>}
-      </article>)}
-    </div>
-  </section>;
+  return (
+    <section className="active-panel-settings" aria-labelledby="mentor-configuration-title">
+      <h3 id="mentor-configuration-title" className="active-panel-section-title">Configuración del perfil</h3>
+      <div className="active-panel-options">
+        {options.map(({ title, description, icon: Icon, action }) => (
+          <article key={title} className={`active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}>
+            <div className="active-panel-option-top">
+              <span aria-hidden="true" className="active-panel-option-icon"><Icon /></span>
+              {title !== 'Áreas técnicas' && title !== 'Información del perfil' && (
+                <span className="active-panel-option-status">Próximamente</span>
+              )}
+            </div>
+            <h4 id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined} className="active-panel-option-title">{title}</h4>
+            <p className="active-panel-option-description">{description}</p>
+            {title === 'Áreas técnicas' ? (
+              <MentorAreasEditor />
+            ) : title === 'Información del perfil' ? (
+              <div className="active-panel-option-action">
+                <Link
+                  href="/mentorias/perfil/informacion"
+                  role="button"
+                  className="mentor-button mentor-button-secondary"
+                >
+                  {action}
+                </Link>
+              </div>
+            ) : (
+              <div className="active-panel-option-action">
+                <SecondaryButton disabled>{action}</SecondaryButton>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
