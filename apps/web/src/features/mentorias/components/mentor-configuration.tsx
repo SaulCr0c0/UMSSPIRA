@@ -1,4 +1,5 @@
 ﻿import { BrainCogIcon, CalendarDaysIcon, ContactIcon, MessagesSquareIcon } from 'lucide-react';
+import Link from 'next/link';
 import { SecondaryButton } from './mentor-button';
 
 const options = [
@@ -8,7 +9,7 @@ const options = [
   { title: 'Información del perfil', description: 'Presenta tu descripción, experiencia e información relevante para la mentoría.', icon: ContactIcon, action: 'Agregar información' },
 ];
 
-/** Estructura visual permanente; estas acciones todavía no tienen endpoints. */
+/** Accesos a las opciones de configuración del perfil de mentor. */
 export function MentorConfiguration() {
   return <section className="active-panel-settings" aria-labelledby="mentor-configuration-title">
     <h3 id="mentor-configuration-title" className="active-panel-section-title">Configuración del perfil</h3>
@@ -16,11 +17,15 @@ export function MentorConfiguration() {
       {options.map(({ title, description, icon: Icon, action }) => <article key={title} className="active-panel-option">
         <div className="active-panel-option-top">
           <span aria-hidden="true" className="active-panel-option-icon"><Icon /></span>
-          <span className="active-panel-option-status">Próximamente</span>
+          {title !== 'Disponibilidad' && <span className="active-panel-option-status">Próximamente</span>}
         </div>
         <h4 className="active-panel-option-title">{title}</h4>
         <p className="active-panel-option-description">{description}</p>
-        <div className="active-panel-option-action"><SecondaryButton disabled>{action}</SecondaryButton></div>
+        <div className="active-panel-option-action">
+          {title === 'Disponibilidad'
+            ? <Link href="/mentorias/perfil/disponibilidad" className="mentor-button mentor-button-secondary">{action}</Link>
+            : <SecondaryButton disabled>{action}</SecondaryButton>}
+        </div>
       </article>)}
     </div>
   </section>;
