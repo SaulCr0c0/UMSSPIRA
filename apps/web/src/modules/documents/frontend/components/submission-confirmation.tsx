@@ -53,12 +53,12 @@ export function SubmissionConfirmation({
   return (
     <section
       aria-labelledby="submission-confirmation-title"
-      className="mx-auto w-full max-w-xl rounded-lg border border-[#C9C1B1] bg-white p-6 text-[#1B2632] sm:p-8"
+      className="mx-auto w-full max-w-xl rounded-lg border border-oatmeal bg-white p-6 text-abyssal-blue sm:p-8"
     >
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFB162]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-burning-flame"
         >
           <svg
             viewBox="0 0 24 24"
@@ -77,19 +77,19 @@ export function SubmissionConfirmation({
         </h1>
       </div>
 
-      <dl className="mt-6 divide-y divide-[#C9C1B1] border-y border-[#C9C1B1]">
+      <dl className="mt-6 divide-y divide-oatmeal border-y border-oatmeal">
         {details.map(([label, value]) => (
           <div
             key={label}
             className="flex flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-4"
           >
-            <dt className="text-sm text-[#1B2632]/70">{label}</dt>
+            <dt className="text-sm text-abyssal-blue/70">{label}</dt>
             <dd className="text-sm font-medium sm:text-right">{value}</dd>
           </div>
         ))}
       </dl>
 
-      <p className="mt-6 rounded-md bg-[#EEE9DF] p-4 text-sm">
+      <p className="mt-6 rounded-md bg-palladian p-4 text-sm">
         El equipo administrativo revisará tu documento y te responderá por correo en un
         plazo de {responseDeadlineHours} horas.
       </p>
