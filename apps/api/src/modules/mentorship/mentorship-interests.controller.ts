@@ -9,6 +9,8 @@ import {
   Req,
   UnauthorizedException,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AddInterestsDto } from './dto/add-interests.dto';
@@ -45,6 +47,13 @@ export class MentorshipInterestsController {
 
   /** POST /mentorship/intereses */
   @Post('intereses')
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
   addInterests(
     @Req() req: AuthenticatedRequest,
     @Body() dto: AddInterestsDto,

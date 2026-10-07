@@ -17,24 +17,38 @@ export function MentorConfiguration() {
       <h3 id="mentor-configuration-title" className="active-panel-section-title">Configuración del perfil</h3>
       <div className="active-panel-options">
         {options.map(({ title, description, icon: Icon, action }) => (
-          <article key={title} className={`active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}>
+          <article
+            key={title}
+            className={`mentor-card active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}
+          >
             <div className="active-panel-option-top">
-              <span aria-hidden="true" className="active-panel-option-icon"><Icon /></span>
+              <span aria-hidden="true" className="mentor-card-icon">
+                <Icon className="icon-lg" />
+              </span>
               {title !== 'Áreas técnicas' && title !== 'Información del perfil' && (
-                <span className="active-panel-option-status">Próximamente</span>
+                <span className="active-panel-option-status">
+                  {action === 'Configurar intereses' ? 'Intereses de mentoría' : 'Próximamente'}
+                </span>
               )}
             </div>
-            <h4 id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined} className="active-panel-option-title">{title}</h4>
-            <p className="active-panel-option-description">{description}</p>
+            <h4
+              id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined}
+              className="mentor-card-title active-panel-option-title"
+            >
+              {title}
+            </h4>
+            <p className="mentor-card-description">{description}</p>
             {title === 'Áreas técnicas' ? (
               <MentorAreasEditor />
+            ) : action === 'Configurar intereses' ? (
+              <div className="active-panel-option-action">
+                <Link href="/mentorias/perfil/intereses" className="mentor-button mentor-button-secondary">
+                  {action}
+                </Link>
+              </div>
             ) : title === 'Información del perfil' ? (
               <div className="active-panel-option-action">
-                <Link
-                  href="/mentorias/perfil/informacion"
-                  role="button"
-                  className="mentor-button mentor-button-secondary"
-                >
+                <Link href="/mentorias/perfil/informacion" className="mentor-button mentor-button-secondary">
                   {action}
                 </Link>
               </div>

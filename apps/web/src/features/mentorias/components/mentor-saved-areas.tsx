@@ -15,7 +15,7 @@ export function MentorSavedAreas() {
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => controller.abort();
   }, [retry]);
-  return <section className="mentor-saved-areas" aria-labelledby="saved-areas-title"><h2 id="saved-areas-title">Tus áreas técnicas</h2>
+  return <section className="mentor-card mentor-saved-areas" aria-labelledby="saved-areas-title"><h2 id="saved-areas-title">Tus áreas técnicas</h2>
     {error ? <p>No se pudieron consultar tus áreas. <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar consulta de áreas</button></p>
       : areas === null ? <p>Cargando áreas guardadas…</p> : areas.length ? <ul>{areas.map(area => <li key={area.id}>{area.nombre}</li>)}</ul>
       : <p>Aún no tienes áreas técnicas guardadas.</p>}
