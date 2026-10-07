@@ -30,7 +30,7 @@ export function MentorInterestsDemo() {
       {catalog.map(area => <label key={area.id} className="demo-area-option"><input type="checkbox" checked={areaDraft.includes(area.id)} onChange={event => setAreaDraft(event.target.checked ? [...areaDraft, area.id] : areaDraft.filter(id => id !== area.id))} /> {area.name}</label>)}
       <SecondaryButton onClick={() => setEditingAreas(false)}>Cancelar</SecondaryButton>{' '}
       <PrimaryButton onClick={() => { setConfiguration(normalizeInterests(catalog, { ...configuration, areaIds: areaDraft })); setEditingAreas(false); }}>Confirmar áreas de prueba</PrimaryButton>
-    </div></section> : <MentorInterests catalog={catalog} initialConfiguration={configuration} onNavigate={navigate} onSave={async next => {
+    </div></section> : <MentorInterests catalog={catalog} initialConfiguration={configuration} profile={{ isActive: true, requirements: { egresado: true } }} onNavigate={navigate} onSave={async next => {
       if (failSave) throw new Error('No se pudieron guardar los intereses. Vuelve a intentar.');
       const confirmed = normalizeInterests(catalog, next);
       setConfiguration(confirmed);
