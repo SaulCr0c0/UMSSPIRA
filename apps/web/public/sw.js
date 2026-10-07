@@ -141,3 +141,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(staleWhileRevalidate(request, ASSETS_CACHE, MAX_ASSETS_ENTRIES));
   }
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
