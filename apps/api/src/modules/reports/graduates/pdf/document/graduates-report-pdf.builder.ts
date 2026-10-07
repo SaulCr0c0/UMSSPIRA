@@ -28,6 +28,9 @@ const TITLE_STATUS: Record<GraduateStatus, string> = {
 };
 
 
+// Media línea de los títulos (7.5 pt × 1.2 / 2): centra verticalmente los títulos de una sola línea
+const HEADER_HALF_LINE = 4.5;
+
 // Títulos de las 9 columnas, iguales a la lista Titulados registrados
 function buildHeaderRow(status: GraduateStatus): TableCell[] {
   const statusDateTitle = status === 'verified' ? 'Fecha de\nverificación' : 'Fecha de\nobservación';
@@ -42,13 +45,15 @@ function buildHeaderRow(status: GraduateStatus): TableCell[] {
     'Duración\nde carrera',
     statusDateTitle,
   ];
-  return titles.map((text, index) => ({
+  return titles.map((text) => ({
     text,
     bold: true,
     color: '#FFFFFF',
     fontSize: 7.5,
     lineHeight: 1.2, // separa las dos líneas de los títulos largos
-    alignment: index === 1 || index === 3 || index === 4 ? 'left' : 'center',
+    alignment: 'center',
+    // Los títulos de una línea bajan media línea para quedar centrados junto a los de dos
+    margin: text.includes('\n') ? [0, 0, 0, 0] : [0, HEADER_HALF_LINE, 0, 0],
   }));
 }
 
