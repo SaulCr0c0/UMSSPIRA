@@ -1,54 +1,55 @@
 import {
   BadRequestException,
-  ConflictException,
   GoneException,
+  HttpException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { redisClient } from '../../../shared/lib/redis';
 import { RegistrationsRepository } from '../repositories/registrations.repository';
 import { CreateRegistrationDataDto } from '../contracts/dto';
+import { DuplicatesService } from './duplicates.service';
 
-const SESSION_TTL_SECONDS = 2 * 60 * 60; 
-const sessionKey = (token: string) => `registration-session:${token}`;
+// Vigencia de los datos temporales del formulario en Redis: 2 horas (CA-01.1 y CA-01.6)
+export const SESSION_TTL_SECONDS = 2 * 60 * 60;
+export const sessionKey = (token: string) => `registration-session:${token}`;
 
 export const EXPIRED_MESSAGE =
   'El tiempo para completar tu registro venció. Debes llenar el formulario desde el inicio.';
+export const DATA_SOURCE_UNAVAILABLE_MESSAGE =
+  'No se pudo verificar la información en este momento, intenta nuevamente';
 
 @Injectable()
 export class RegistrationsService {
-  constructor(private readonly registrationsRepository: RegistrationsRepository) {}
+  private readonly logger = new Logger(RegistrationsService.name);
+
+  constructor(
+    private readonly registrationsRepository: RegistrationsRepository,
+    private readonly duplicatesService: DuplicatesService,
+  ) {}
 
   async listCareers() {
-    return this.registrationsRepository.listCareers();
+    return this.withDataSource(() => this.registrationsRepository.listCareers());
   }
 
   async createRegistrationSession(dto: CreateRegistrationDataDto) {
     const correo = dto.correo.toLowerCase();
     const complementoCi = dto.complementoCi ?? '';
 
-    await this.assertCareerExists(dto.carreraId);
+    await this.withDataSource(async () => {
+      await this.assertCareerExists(dto.carreraId);
+      await this.duplicatesService.assertNoActiveApplication({
+        ci: dto.ci,
+        complementoCi,
+        expedidoEn: dto.expedidoEn,
+        correo,
+        codigoSis: dto.codigoSis,
+      });
+    });
 
-    const identityMatch = await this.registrationsRepository.findActiveApplicationByIdentity(
-      dto.ci,
-      complementoCi,
-      dto.expedidoEn,
-    );
-    if (identityMatch) {
-      this.conflict('ci', 'El documento de identidad ingresado ya cuenta con una solicitud registrada');
-    }
-
-    const emailMatch = await this.registrationsRepository.findActiveApplicationByEmail(correo);
-    if (emailMatch) {
-      this.conflict('correo', 'Este correo electrónico ya está registrado en otra solicitud');
-    }
-
-    const sisMatch = await this.registrationsRepository.findActiveApplicationBySisCode(dto.codigoSis);
-    if (sisMatch) {
-      this.conflict('codigoSis', 'Este Código SIS ya está registrado en otra solicitud');
-    }
-
+    // CA-01.1: los datos se conservan temporalmente en Redis mientras se verifica el correo
     const sessionToken = randomUUID();
     try {
       await redisClient.set(
@@ -57,12 +58,14 @@ export class RegistrationsService {
         'EX',
         SESSION_TTL_SECONDS,
       );
-    } catch {
+    } catch (error) {
+      this.logger.error(`No se pudo guardar la sesion de registro: ${(error as Error).message}`);
       throw new ServiceUnavailableException('No se pudo guardar el registro, intenta nuevamente');
     }
     return { sessionToken, expiresInSeconds: SESSION_TTL_SECONDS };
   }
 
+  // CA-01.6: si la sesion ya no existe en Redis, el registro vencio (410 Gone)
   async getRegistrationSession(token: string) {
     const { raw, ttl } = await this.readSession(sessionKey(token));
     if (!raw) {
@@ -76,13 +79,10 @@ export class RegistrationsService {
       const raw = await redisClient.get(key);
       const ttl = await redisClient.ttl(key);
       return { raw, ttl };
-    } catch {
+    } catch (error) {
+      this.logger.error(`No se pudo consultar la sesion de registro: ${(error as Error).message}`);
       throw new ServiceUnavailableException('No se pudo consultar el registro, intenta nuevamente');
     }
-  }
-
-  private conflict(field: string, message: string): never {
-    throw new ConflictException({ statusCode: 409, message, field, errors: [{ field, message }] });
   }
 
   private async assertCareerExists(carreraId: string) {
@@ -93,6 +93,23 @@ export class RegistrationsService {
         message: 'Revisa los campos del formulario',
         errors: [{ field: 'carreraId', message: 'Carrera no válida' }],
       });
+    }
+  }
+
+  /**
+   * Ejecuta una consulta a la base de datos. Los errores de negocio (400, 409) se
+   * propagan tal cual; cualquier otro fallo (Supabase caido o sin configurar) se
+   * registra en el log y se responde con 503 sin exponer detalles internos.
+   */
+  private async withDataSource<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(`Fallo al consultar la base de datos: ${(error as Error).message}`);
+      throw new ServiceUnavailableException(DATA_SOURCE_UNAVAILABLE_MESSAGE);
     }
   }
 }

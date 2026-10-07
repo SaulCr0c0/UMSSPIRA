@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { RegistrationsService } from '../services/registrations.service';
 import { CreateRegistrationDataDto } from '../contracts/dto';
 import { validationExceptionFactory } from '../contracts/validation-exception.factory';
+import { RegistrationsExceptionFilter } from './registrations-exception.filter';
 
 @Controller('registrations')
+@UseFilters(RegistrationsExceptionFilter)
 @UsePipes(
   new ValidationPipe({
     whitelist: true,
