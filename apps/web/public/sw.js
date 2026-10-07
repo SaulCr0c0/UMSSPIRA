@@ -42,8 +42,59 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       })
-      .catch(() => {
-        return caches.match(event.request);
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        if (event.request.mode === 'navigate') {
+          return new Response(
+            `
+              <!DOCTYPE html>
+              <html lang="es">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Sin conexión</title>
+                  <style>
+                    body {
+                      font-family: Arial, sans-serif;
+                      margin: 0;
+                      padding: 40px 20px;
+                      text-align: center;
+                    }
+
+                    h1 {
+                      margin-bottom: 12px;
+                    }
+
+                    p {
+                      margin-bottom: 20px;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <h1>Sin conexión</h1>
+                  <p>No fue posible cargar esta página porque no hay conexión a Internet.</p>
+                  <p>Cuando se restablezca la conexión, intenta nuevamente.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+              },
+            }
+          );
+        }
+
+        return new Response('', {
+          status: 503,
+          statusText: 'Servicio no disponible',
+        });
       })
   );
 });
