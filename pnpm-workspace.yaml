@@ -4,5 +4,5 @@ packages:
 allowBuilds:
   '@nestjs/core': false
   '@parcel/watcher': true
-  canvas: true
+  canvas: false
   unrs-resolver: false
