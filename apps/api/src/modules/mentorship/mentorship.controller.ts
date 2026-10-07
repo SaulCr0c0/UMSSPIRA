@@ -10,11 +10,22 @@ import {
   Post,
   Req,
   UnauthorizedException,
+  UsePipes,
+  ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { UpdateMentorAreasDto } from './dto/update-mentor-areas.dto';
+import { UpdateMentorProfileInformationDto } from './dto/update-mentor-profile-information.dto';
 import { UpdateParticipationDto } from './dto/update-participation.dto';
 import { Mentor } from './mentor.model';
-import { MentorshipService, ModuleStatus } from './mentorship.service';
+import {
+  MentorAreasState,
+  MentorProfileInformationState,
+  MentorshipService,
+  ModuleStatus,
+} from './mentorship.service';
+import { MentorTestAuthGuard } from './mentor-test-auth.guard';
 
 /** Se asume que el guard de autenticación del equipo inyecta req.user.id. */
 type AuthenticatedRequest = Request & { user?: { id?: string } };
@@ -36,8 +47,34 @@ export class MentorshipController {
   }
 
   @Get('mi-perfil')
+  @UseGuards(MentorTestAuthGuard)
   getMyProfile(@Req() req: AuthenticatedRequest): Promise<Mentor> {
     return this.mentorshipService.getMyProfile(this.userId(req));
+  }
+
+  @Get(['mi-perfil/informacion', 'my-profile/information'])
+  @UseGuards(MentorTestAuthGuard)
+  getMyProfileInformation(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<MentorProfileInformationState> {
+    return this.mentorshipService.getMyProfileInformation(this.userId(req));
+  }
+
+  @Patch(['mi-perfil/informacion', 'my-profile/information'])
+  @UseGuards(MentorTestAuthGuard)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+    }),
+  )
+  updateMyProfileInformation(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateMentorProfileInformationDto,
+  ): Promise<MentorProfileInformationState> {
+    return this.mentorshipService.updateMyProfileInformation(this.userId(req), dto);
   }
 
   @Post('profiles/reset')
@@ -48,16 +85,34 @@ export class MentorshipController {
 
   @Post('eligibility')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(MentorTestAuthGuard)
   checkEligibility(@Req() req: AuthenticatedRequest): Promise<{ eligible: boolean }> {
     return this.mentorshipService.checkEligibility(this.userId(req));
   }
 
   @Patch('mi-perfil/participacion')
+  @UseGuards(MentorTestAuthGuard)
   setParticipation(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateParticipationDto,
   ): Promise<Mentor> {
     return this.mentorshipService.setParticipation(this.userId(req), dto);
+  }
+
+  // El frontend llama a /mentorship/mi-perfil/areas; my-profile/areas queda como alias.
+  @Get(['mi-perfil/areas', 'my-profile/areas'])
+  @UseGuards(MentorTestAuthGuard)
+  getMyAreas(@Req() req: AuthenticatedRequest): Promise<MentorAreasState> {
+    return this.mentorshipService.getMyAreas(this.userId(req));
+  }
+
+  @Patch(['mi-perfil/areas', 'my-profile/areas'])
+  @UseGuards(MentorTestAuthGuard)
+  updateMyAreas(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateMentorAreasDto,
+  ): Promise<MentorAreasState> {
+    return this.mentorshipService.updateMyAreas(this.userId(req), dto);
   }
 
   // TODO: restringir a administradores con el guard de roles del proyecto.

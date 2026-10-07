@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, type ComponentType, type ReactNode } from 're
 import { XIcon } from 'lucide-react';
 
 interface ConfirmModalProps {
+  className?: string;
   open: boolean;
   icon: ComponentType<{ className?: string }>;
   eyebrow?: string;
@@ -21,6 +22,7 @@ const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function ConfirmModal({
+  className = '',
   open,
   icon: Icon,
   eyebrow,
@@ -83,7 +85,7 @@ export function ConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="confirm-modal-overlay">
+    <div className={`confirm-modal-overlay ${className}`}>
       <div aria-hidden="true" className="confirm-modal-backdrop" onClick={() => { if (!confirming) onCancel(); }} />
       <div
         ref={dialogRef}
