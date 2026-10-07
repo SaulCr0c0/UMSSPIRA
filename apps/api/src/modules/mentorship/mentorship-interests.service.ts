@@ -108,7 +108,7 @@ export class MentorshipInterestsService {
     await this.requireMentor(mentorId);
 
     // Regla 6: solo IDs del catálogo (validación defensiva, sin ValidationPipe global).
-    const ids = this.normalizeIds(dto.ids);
+    const ids = this.normalizeIds(dto?.ids);
 
     // Regla 5: sin duplicados dentro del mismo request (409).
     const repetidos = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
@@ -291,7 +291,7 @@ export class MentorshipInterestsService {
     if (invalid.length > 0) {
       throw new BadRequestException(`Ids de interés inválidos: ${invalid.join(', ')}`);
     }
-    return ids;
+    return ids.map((id) => id.toLowerCase());
   }
 
   private toResumen(area: Area): AreaResumen {

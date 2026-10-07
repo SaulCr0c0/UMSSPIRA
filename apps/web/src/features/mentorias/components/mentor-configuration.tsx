@@ -1,6 +1,7 @@
 ﻿import { BrainCogIcon, CalendarDaysIcon, ContactIcon, MessagesSquareIcon } from 'lucide-react';
 import { SecondaryButton } from './mentor-button';
 import { MentorAreasEditor } from './mentor-areas-editor';
+import Link from 'next/link';
 
 const options = [
   { title: 'Áreas técnicas', description: 'Define las áreas técnicas en las que puedes brindar orientación.', icon: BrainCogIcon, action: 'Configurar áreas' },
@@ -14,16 +15,18 @@ export function MentorConfiguration() {
   return <section className="active-panel-settings" aria-labelledby="mentor-configuration-title">
     <h3 id="mentor-configuration-title" className="active-panel-section-title">Configuración del perfil</h3>
     <div className="active-panel-options">
-      {options.map(({ title, description, icon: Icon, action }) => <article key={title} className={`active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}>
+      {options.map(({ title, description, icon: Icon, action }) => <article key={title} className={`mentor-card active-panel-option${title === 'Áreas técnicas' ? ' active-panel-option-areas' : ''}`}>
         <div className="active-panel-option-top">
-          <span aria-hidden="true" className="active-panel-option-icon"><Icon /></span>
-          {title !== 'Áreas técnicas' && <span className="active-panel-option-status">Próximamente</span>}
+          <span aria-hidden="true" className="mentor-card-icon"><Icon className="icon-lg" /></span>
+          {title !== 'Áreas técnicas' && <span className="active-panel-option-status">{action === 'Configurar intereses' ? 'Intereses de mentoría' : 'Próximamente'}</span>}
         </div>
-        <h4 id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined} className="active-panel-option-title">{title}</h4>
-        <p className="active-panel-option-description">{description}</p>
+        <h4 id={title === 'Áreas técnicas' ? 'mentor-areas-title' : undefined} className="mentor-card-title active-panel-option-title">{title}</h4>
+        <p className="mentor-card-description">{description}</p>
         {title === 'Áreas técnicas'
           ? <MentorAreasEditor />
-          : <div className="active-panel-option-action"><SecondaryButton disabled>{action}</SecondaryButton></div>}
+          : <div className="active-panel-option-action">{action === 'Configurar intereses'
+            ? <Link href="/mentorias/perfil/intereses" className="mentor-button mentor-button-secondary">{action}</Link>
+            : <SecondaryButton disabled>{action}</SecondaryButton>}</div>}
       </article>)}
     </div>
   </section>;
