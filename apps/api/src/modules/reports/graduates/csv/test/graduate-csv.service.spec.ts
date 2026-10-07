@@ -15,16 +15,17 @@ function createRecord(
 ): GraduateCsvRecord {
   return {
     numero: 1,
+    numeroRegistro: '#REG-2024-0001',
     nombreCompleto: 'Ana Muñoz Pérez',
-    carrera: 'Ingeniería de Sistemas',
     codigoSis: '202012345',
     telefono: '70707070',
     correoElectronico: 'ana.munoz@example.com',
     fechaIngreso: '01/02/2020',
-    duracionCarrera: '5 años',
-    fechaEgreso: '15/12/2024',
     fechaTitulacion: '20/03/2025',
-    fechaVerificacion: '01/10/2026',
+    duracionEstudio: '5 años',
+    fechaRevision: '01/10/2026',
+    motivoRechazo: '',
+    estado: 'VERIFICADO',
     ...overrides,
   };
 }
@@ -39,13 +40,22 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-test('genera un CSV con BOM UTF-8, 11 encabezados y nombre dinámico', () => {
+function createResponse(headers: Record<string, string>) {
+  return {
+    setHeader(name: string, value: string): void {
+      headers[name] = value;
+    },
+  };
+}
+
+test('genera un CSV con BOM UTF-8 y las mismas 12 columnas de la tabla web', () => {
   const service = new GraduateCsvService();
   const generationDate = new Date(2026, 9, 1, 12, 0, 0);
 
   const { buffer, filename } = service.generate(
     [createRecord()],
     generationDate,
+    'VERIFICADO',
   );
 
   assert.deepEqual(Array.from(buffer.subarray(0, 3)), [0xef, 0xbb, 0xbf]);
@@ -54,41 +64,72 @@ test('genera un CSV con BOM UTF-8, 11 encabezados y nombre dinámico', () => {
   const content = buffer.toString('utf8');
   assert.ok(content.startsWith('\uFEFF'));
 
-  const contentWithoutBom = content.slice(1);
-  const [header] = contentWithoutBom.split('\r\n');
-  assert.equal(header.split(',').length, 11);
+  const [header] = content.slice(1).split('\r\n');
+  assert.equal(header.split(',').length, 12);
   assert.equal(
     header,
-    'Número,Nombre completo,Carrera,Código SIS,Teléfono,Correo electrónico,Fecha de ingreso,Duración de la carrera,Fecha de egreso,Fecha de titulación,Fecha de verificación',
+    'Nro,Número de registro,Nombre completo,Código SIS,Teléfono,Correo electrónico,Fecha de ingreso,Fecha de titulación,Duración de estudio,Fecha de revisión,Motivo de rechazo,Estado',
   );
+  assert.ok(content.includes('#REG-2024-0001'));
   assert.ok(content.includes('Ana Muñoz Pérez'));
-  assert.ok(content.includes('Ingeniería de Sistemas'));
+  assert.ok(content.includes('VERIFICADO'));
   assert.ok(content.endsWith('\r\n'));
+});
+
+test('genera nombre de archivo acorde al estado observado', () => {
+  const service = new GraduateCsvService();
+  const generationDate = new Date(2026, 9, 1, 12, 0, 0);
+
+  const { filename } = service.generate(
+    [createRecord({ estado: 'OBSERVADO' })],
+    generationDate,
+    'OBSERVADO',
+  );
+
+  assert.equal(filename, 'nomina-egresados-observados-01102026.csv');
 });
 
 test('escapa comas, comillas y saltos de línea sin perder caracteres especiales', () => {
   const service = new GraduateCsvService();
   const record = createRecord({
     nombreCompleto: 'Muñoz, Ana "Ñusta"\nSegunda línea',
-    carrera: 'Ingeniería, Sistemas',
+    motivoRechazo: 'Documento, con "observación"\nsegunda línea',
   });
 
-  const { buffer } = service.generate([record], new Date(2026, 9, 1));
+  const { buffer } = service.generate(
+    [record],
+    new Date(2026, 9, 1),
+    'VERIFICADO',
+  );
   const content = buffer.toString('utf8');
 
   assert.ok(content.includes('"Muñoz, Ana ""Ñusta""\nSegunda línea"'));
-  assert.ok(content.includes('"Ingeniería, Sistemas"'));
+  assert.ok(
+    content.includes('"Documento, con ""observación""\nsegunda línea"'),
+  );
   assert.ok(content.includes('Ñusta'));
 });
 
-test('rechaza la exportación cuando no existen egresados verificados', () => {
+test('rechaza una exportación vacía con mensaje acorde al estado', () => {
   const service = new GraduateCsvService();
 
-  assert.throws(() => service.generate([]), (error: unknown) => {
-    assert.ok(error instanceof BadRequestException);
-    assert.equal(error.message, 'No hay egresados verificados para exportar');
-    return true;
-  });
+  assert.throws(
+    () => service.generate([], new Date(), 'VERIFICADO'),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(error.message, 'No hay egresados verificados para exportar');
+      return true;
+    },
+  );
+
+  assert.throws(
+    () => service.generate([], new Date(), 'OBSERVADO'),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(error.message, 'No hay egresados observados para exportar');
+      return true;
+    },
+  );
 });
 
 test('devuelve el mensaje esperado cuando ocurre un error de generación', () => {
@@ -101,81 +142,147 @@ test('devuelve el mensaje esperado cuando ocurre un error de generación', () =>
     },
   });
 
-  assert.throws(() => service.generate([record]), (error: unknown) => {
-    assert.ok(error instanceof InternalServerErrorException);
-    assert.equal(
-      error.message,
-      'No se pudo generar el archivo CSV. Intente nuevamente.',
-    );
-    return true;
-  });
+  assert.throws(
+    () => service.generate([record], new Date(), 'VERIFICADO'),
+    (error: unknown) => {
+      assert.ok(error instanceof InternalServerErrorException);
+      assert.equal(
+        error.message,
+        'No se pudo generar el archivo CSV. Intente nuevamente.',
+      );
+      return true;
+    },
+  );
 });
 
-test('la fuente temporal conserva los 105 registros ficticios de HU4', () => {
+test('usa el mock consolidado de HU1/HU2/HU3', () => {
   const dataSource = new MockGraduateReportDataSource();
-  const verified = dataSource.findAll({ status: 'verificado' });
-  const observed = dataSource.findAll({ status: 'observado' });
+  const verified = dataSource.findAll({ status: 'VERIFICADO' });
+  const observed = dataSource.findAll({ status: 'OBSERVADO' });
+  const all = dataSource.findAll({});
 
-  assert.equal(verified.length, 82);
-  assert.equal(observed.length, 23);
-  assert.equal(verified.length + observed.length, 105);
+  assert.equal(verified.length, 15);
+  assert.equal(observed.length, 15);
+  assert.equal(all.length, 30);
+  assert.equal(verified.length + observed.length, all.length);
 });
 
-test('filtra verificados por carrera sin aplicar paginación', () => {
+test('aplica la misma búsqueda visible por nombre o código SIS', () => {
   const dataSource = new MockGraduateReportDataSource();
-  const systems = dataSource.findAll({
-    status: 'verificado',
-    career: 'Ingeniería de Sistemas',
+
+  const byName = dataSource.findAll({
+    status: 'OBSERVADO',
+    search: 'gomez',
   });
-  const informatics = dataSource.findAll({
-    status: 'verificado',
-    career: 'Ingeniería Informática',
+  const bySis = dataSource.findAll({
+    status: 'OBSERVADO',
+    search: '201800002',
   });
 
-  assert.equal(systems.length, 72);
-  assert.equal(informatics.length, 10);
-  assert.equal(systems[0].numero, 1);
-  assert.equal(systems[systems.length - 1].numero, 72);
+  assert.equal(byName.length, 1);
+  assert.equal(byName[0].numeroRegistro, '#REG-2023-0002');
+  assert.equal(byName[0].nombreCompleto, 'Gomez, Maria');
+  assert.ok(byName[0].motivoRechazo.length > 0);
+  assert.equal(bySis.length, 1);
+  assert.equal(bySis[0].codigoSis, '201800002');
 });
 
-test('aplica búsqueda por nombre o apellido ignorando tildes y mayúsculas', () => {
-  const dataSource = new MockGraduateReportDataSource();
-  const records = dataSource.findAll({
-    status: 'verificado',
-    career: 'Ingeniería Informática',
-    search: 'alcocer',
-  });
-
-  assert.equal(records.length, 1);
-  assert.equal(records[0].nombreCompleto, 'Alcócer Vargas, Daniela Sofía');
-  assert.equal(records[0].fechaEgreso, '');
-  assert.equal(records[0].fechaIngreso, '13/02/2017');
-});
-
-test('el endpoint CSV exporta todos los verificados filtrados y configura la descarga', async () => {
+test('el endpoint CSV exporta solo los observados seleccionados', async () => {
   const dataSource = new MockGraduateReportDataSource();
   const service = new GraduateCsvService();
   const controller = new GraduateCsvController(dataSource, service);
   const headers: Record<string, string> = {};
-  const response = {
-    setHeader(name: string, value: string): void {
-      headers[name] = value;
-    },
-  };
 
   const file = controller.exportCsv(
-    'Ingeniería de Sistemas',
+    'OBSERVADO',
     undefined,
-    response,
+    undefined,
+    createResponse(headers),
   );
+
   const buffer = await streamToBuffer(file.getStream());
   const content = buffer.toString('utf8').slice(1).trimEnd();
   const lines = content.split('\r\n');
 
-  assert.equal(lines.length, 73);
+  assert.equal(lines.length, 16);
+  assert.ok(content.includes(',OBSERVADO'));
+  assert.ok(!content.includes(',VERIFICADO'));
   assert.equal(headers['Content-Type'], 'text/csv; charset=utf-8');
   assert.match(
     headers['Content-Disposition'],
+    /^attachment; filename="nomina-egresados-observados-\d{8}\.csv"$/,
+  );
+});
+
+test('el endpoint CSV exporta los verificados cuando ese estado está activo', async () => {
+  const dataSource = new MockGraduateReportDataSource();
+  const service = new GraduateCsvService();
+  const controller = new GraduateCsvController(dataSource, service);
+  const headers: Record<string, string> = {};
+
+  const file = controller.exportCsv(
+    'VERIFICADO',
+    undefined,
+    undefined,
+    createResponse(headers),
+  );
+
+  const buffer = await streamToBuffer(file.getStream());
+  const content = buffer.toString('utf8').slice(1).trimEnd();
+  const lines = content.split('\r\n');
+
+  assert.equal(lines.length, 16);
+  assert.ok(content.includes(',VERIFICADO'));
+  assert.ok(!content.includes(',OBSERVADO'));
+  assert.match(
+    headers['Content-Disposition'],
     /^attachment; filename="nomina-egresados-verificados-\d{8}\.csv"$/,
+  );
+});
+
+test('el endpoint CSV con TODOS exporta exactamente todos los registros del mock', async () => {
+  const dataSource = new MockGraduateReportDataSource();
+  const service = new GraduateCsvService();
+  const controller = new GraduateCsvController(dataSource, service);
+  const headers: Record<string, string> = {};
+
+  const file = controller.exportCsv(
+    'TODOS',
+    undefined,
+    undefined,
+    createResponse(headers),
+  );
+
+  const buffer = await streamToBuffer(file.getStream());
+  const content = buffer.toString('utf8').slice(1).trimEnd();
+  const lines = content.split('\r\n');
+
+  assert.equal(lines.length, 31);
+  assert.ok(content.includes(',VERIFICADO'));
+  assert.ok(content.includes(',OBSERVADO'));
+  assert.match(
+    headers['Content-Disposition'],
+    /^attachment; filename="nomina-egresados-\d{8}\.csv"$/,
+  );
+});
+
+test('rechaza un estado de exportación desconocido', () => {
+  const dataSource = new MockGraduateReportDataSource();
+  const service = new GraduateCsvService();
+  const controller = new GraduateCsvController(dataSource, service);
+
+  assert.throws(
+    () =>
+      controller.exportCsv(
+        'APROBADO',
+        undefined,
+        undefined,
+        createResponse({}),
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(error.message, 'Estado de exportación inválido');
+      return true;
+    },
   );
 });

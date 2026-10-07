@@ -26,6 +26,14 @@ import { GraduateCsvExport } from '../../../modules/reports/graduates/csv/gradua
 
 const ITEMS_PER_PAGE = 10;
 
+function normalizeText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
 export default function ReportsPage() {
   const {
     data: indicators,
@@ -36,11 +44,13 @@ export default function ReportsPage() {
 
   // Estados de filtragem (HU 2)
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<StatusFilterOption>('TODOS');
+  const [selectedStatus, setSelectedStatus] =
+    useState<StatusFilterOption>('TODOS');
 
-  // Estados de paginação e modal (HU 3)
+  // Estados de paginação y modal (HU 3)
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedGraduate, setSelectedGraduate] = useState<Graduate | null>(null);
+  const [selectedGraduate, setSelectedGraduate] =
+    useState<Graduate | null>(null);
 
   // Mapeamento de status para o contrato de exportação em PDF da HU 4
   const pdfExportStatus = useMemo<GraduateStatus>(() => {
@@ -48,28 +58,26 @@ export default function ReportsPage() {
     return 'verified';
   }, [selectedStatus]);
 
-  // Filtragem reativa na memória (HU 2)
+  // Filtragem reativa na memória (HU 2).
+  // Este mesmo estado e termo são enviados à HU 5 para que o CSV contenha
+  // exatamente o mesmo conjunto da vista prévia, sem limitar-se à paginação.
   const filteredGraduates = useMemo(() => {
     if (!graduates) return [];
+
+    const normalizedQuery = normalizeText(searchTerm);
 
     return graduates.filter((graduate) => {
       const matchesStatus =
         selectedStatus === 'TODOS' || graduate.status === selectedStatus;
 
-      const normalizedQuery = searchTerm.toLowerCase().trim();
       const matchesSearch =
         !normalizedQuery ||
-        graduate.fullName.toLowerCase().includes(normalizedQuery) ||
-        graduate.sisCode.includes(normalizedQuery);
+        normalizeText(graduate.fullName).includes(normalizedQuery) ||
+        normalizeText(graduate.sisCode).includes(normalizedQuery);
 
       return matchesStatus && matchesSearch;
     });
   }, [graduates, selectedStatus, searchTerm]);
-
-  // Total de titulados verificados sob os filtros atuais para a HU 5
-  const verifiedGraduatesCount = useMemo(() => {
-    return filteredGraduates.filter((item) => item.status === 'VERIFICADO').length;
-  }, [filteredGraduates]);
 
   // Handlers reativos
   const handleSearchChange = (term: string) => {
@@ -105,8 +113,12 @@ export default function ReportsPage() {
   return (
     <main className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard de Indicadores</h1>
-        <p className="text-sm text-gray-500">Padrón y reportería institucional de titulados</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard de Indicadores
+        </h1>
+        <p className="text-sm text-gray-500">
+          Padrón y reportería institucional de titulados
+        </p>
       </div>
 
       {errorIndicators ? (
@@ -116,15 +128,24 @@ export default function ReportsPage() {
       ) : (
         indicators && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KpiCard title="Titulados registrados" value={indicators.totalGraduates} />
-            <KpiCard title="Titulados verificados" value={indicators.verifiedGraduates} />
-            <KpiCard title="Titulados observados" value={indicators.observedGraduates} />
+            <KpiCard
+              title="Titulados registrados"
+              value={indicators.totalGraduates}
+            />
+            <KpiCard
+              title="Titulados verificados"
+              value={indicators.verifiedGraduates}
+            />
+            <KpiCard
+              title="Titulados observados"
+              value={indicators.observedGraduates}
+            />
             <KpiCard title="Mentores activos" value={indicators.activeMentors} />
           </div>
         )
       )}
 
-      {/* Controles de Busca, Filtro (HU 2) e Botão Único de Exportação (HU 4 + HU 5) */}
+      {/* Controles de Busca, Filtro (HU 2) e Botón Único de Exportación (HU 4 + HU 5) */}
       <section className="flex flex-col gap-4 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <GraduatesSearch
@@ -143,11 +164,14 @@ export default function ReportsPage() {
           <GraduatesReportExport
             status={pdfExportStatus}
             onBackToListStart={() => setCurrentPage(1)}
-            renderTrigger={({ exportPdf, isGenerating }) => (
+            renderTrigger={({ exportPdf }) => (
               <div className="w-48">
                 <GraduateCsvExport
-                  totalRecords={verifiedGraduatesCount}
-                  filters={{ search: searchTerm }}
+                  totalRecords={filteredGraduates.length}
+                  filters={{
+                    status: selectedStatus,
+                    search: searchTerm,
+                  }}
                   onPdfExport={() => exportPdf(pdfExportStatus)}
                 />
               </div>

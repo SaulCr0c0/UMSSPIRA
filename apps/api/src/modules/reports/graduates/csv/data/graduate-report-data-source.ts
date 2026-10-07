@@ -1,9 +1,12 @@
-import { GraduateCsvRecord } from '../types/graduate-csv-record.type';
+import {
+  GraduateCsvRecord,
+  GraduateCsvStatus,
+} from '../types/graduate-csv-record.type';
 
-export type GraduateReportStatus = 'verificado' | 'observado';
+export type GraduateReportStatus = GraduateCsvStatus;
 
 export interface GraduateReportFilters {
-  status: GraduateReportStatus;
+  status?: GraduateReportStatus;
   career?: string;
   search?: string;
 }

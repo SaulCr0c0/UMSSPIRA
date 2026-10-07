@@ -1,13 +1,16 @@
+export type GraduateCsvStatus = 'VERIFICADO' | 'OBSERVADO';
+
 export interface GraduateCsvRecord {
   numero: number;
+  numeroRegistro: string;
   nombreCompleto: string;
-  carrera: string;
   codigoSis: string;
   telefono: string;
   correoElectronico: string;
   fechaIngreso: string;
-  duracionCarrera: string;
-  fechaEgreso: string;
   fechaTitulacion: string;
-  fechaVerificacion: string;
+  duracionEstudio: string;
+  fechaRevision: string;
+  motivoRechazo: string;
+  estado: GraduateCsvStatus;
 }

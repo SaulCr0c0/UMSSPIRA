@@ -1,4 +1,7 @@
+export type GraduateCsvStatus = 'TODOS' | 'VERIFICADO' | 'OBSERVADO';
+
 export interface GraduateCsvFilters {
+  status?: GraduateCsvStatus;
   career?: string;
   search?: string;
 }
@@ -11,21 +14,34 @@ export interface GraduateCsvDownload {
 const DEFAULT_ERROR_MESSAGE =
   'No se pudo generar el archivo CSV. Intente nuevamente.';
 
-function buildDefaultFilename(date: Date = new Date()): string {
+function buildDefaultFilename(
+  status: GraduateCsvStatus = 'TODOS',
+  date: Date = new Date(),
+): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return `nomina-egresados-verificados-${day}${month}${year}.csv`;
+  const suffix =
+    status === 'VERIFICADO'
+      ? '-verificados'
+      : status === 'OBSERVADO'
+        ? '-observados'
+        : '';
+
+  return `nomina-egresados${suffix}-${day}${month}${year}.csv`;
 }
 
-function getFilename(contentDisposition: string | null): string {
+function getFilename(
+  contentDisposition: string | null,
+  status: GraduateCsvStatus,
+): string {
   if (!contentDisposition) {
-    return buildDefaultFilename();
+    return buildDefaultFilename(status);
   }
 
   const match = /filename="?([^";]+)"?/i.exec(contentDisposition);
-  return match?.[1] ?? buildDefaultFilename();
+  return match?.[1] ?? buildDefaultFilename(status);
 }
 
 async function getErrorMessage(response: Response): Promise<string> {
@@ -47,6 +63,9 @@ export async function requestGraduateCsv(
   apiBaseUrl: string = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
 ): Promise<GraduateCsvDownload> {
   const params = new URLSearchParams();
+  const status = filters.status ?? 'TODOS';
+
+  params.set('status', status);
 
   if (filters.career?.trim()) {
     params.set('career', filters.career.trim());
@@ -58,7 +77,7 @@ export async function requestGraduateCsv(
 
   const query = params.toString();
   const baseUrl = apiBaseUrl.replace(/\/$/, '');
-  const url = `${baseUrl}/graduates-report/csv${query ? `?${query}` : ''}`;
+  const url = `${baseUrl}/graduates-report/csv?${query}`;
   const response = await fetch(url, { method: 'GET' });
 
   if (!response.ok) {
@@ -67,7 +86,10 @@ export async function requestGraduateCsv(
 
   return {
     blob: await response.blob(),
-    filename: getFilename(response.headers.get('Content-Disposition')),
+    filename: getFilename(
+      response.headers.get('Content-Disposition'),
+      status,
+    ),
   };
 }
 
