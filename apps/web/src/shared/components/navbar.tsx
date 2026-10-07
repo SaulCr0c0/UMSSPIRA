@@ -7,6 +7,8 @@ import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
 
+import { MobileMenu } from '@/shared/components/mobile-menu';
+
 export const Navbar: React.FC = () => {
   // =====================================================================
   // 🎛️ PANEL DE CONTROL DE TAMAÑOS Y DISPOSICIÓN INDEPENDIENTE
@@ -218,6 +220,8 @@ export const Navbar: React.FC = () => {
               </div>
             )}
           </div>
+
+          <MobileMenu /> {/* ← TU PARTE (HU-8.5): botón ☰ y panel lateral en móvil */}
         </div>
 
       </div>
