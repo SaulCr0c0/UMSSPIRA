@@ -32,14 +32,29 @@ Esto instala las dependencias de **todos** los workspaces (`apps/api`, `apps/web
 
 ## Variables de entorno
 
-El servicio de base de datos usa un archivo `.env` en la raíz del repositorio:
+La API lee **un solo** archivo de entorno en `apps/api/`, elegido al arrancar:
 
-Si crean uno pasan la informacion al grupo 
-para evitar problemas de seguridad.
+| Archivo | Uso | ¿Se sube a Git? |
+| --- | --- | --- |
+| `.env` | Proyecto de Supabase **en la nube** (fuente de verdad) | No — contiene secretos |
+| `.env.localstack` | Stack **local** de Docker, como respaldo sin red | No — lo genera cada quien |
+| `.env.localstack.example` | Plantilla con las instrucciones | Sí |
 
-Por ahora solo hay uno que es de la contrasenia
-de la base de datos, se les pasara por el grupo 
-de whatsapp.
+Para usar el respaldo local, una sola vez por máquina:
+
+```bash
+cp apps/api/.env.localstack.example apps/api/.env.localstack
+npx supabase status   # copiar el valor de SECRET_KEY dentro del archivo creado
+```
+
+```bash
+pnpm dev                      # usa apps/api/.env (nube)
+pnpm --filter api dev:local   # usa apps/api/.env.localstack (stack local de Docker)
+```
+
+Las claves de la nube (`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`) las comparte el equipo por el grupo de WhatsApp. **Nunca** se commitean: `.env` ya está en `.gitignore`.
+
+El frontend usa `apps/web/.env.local` con `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3000`).
 
 ## Levantar servicios locales (Docker)
 
@@ -47,7 +62,7 @@ de whatsapp.
 docker compose up -d
 ```
 
-Levanta y crea la base de datos, con esto ya tienen corriendo la base de datos de manera local. 
+Levanta los servicios de soporte (hoy solo **Redis**). La base de datos **no** vive en Docker: es Supabase, y se configura en `apps/api/.env` (ver *Variables de entorno*). El stack local de Supabase es opcional y solo sirve como respaldo.
 
 Para poder ejecutar y configurar la base de datos de manera local se puede utilizar dos extensiones o el 
 el cliente de postgresql
