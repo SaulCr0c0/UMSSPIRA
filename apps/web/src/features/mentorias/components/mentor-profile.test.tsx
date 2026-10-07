@@ -37,7 +37,7 @@ it('muestra error sin un perfil falso y permite reintentar la carga', async () =
   expect(screen.getAllByRole('link', { name: 'Configurar áreas' })).toHaveLength(2);
   expect(screen.getAllByRole('link', { name: 'Configurar áreas' })[0]).toHaveAttribute('href', '/mentorias/perfil/areas');
   expect(screen.getByRole('link', { name: 'Configurar intereses' })).toHaveAttribute('href', '/mentorias/perfil/intereses');
-  expect(screen.getByRole('button', { name: 'Configurar disponibilidad' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Configurar disponibilidad' })).toHaveAttribute('href', '/mentorias/perfil/disponibilidad');
   expect(screen.getByRole('link', { name: 'Agregar información' })).toHaveAttribute('href', '/mentorias/perfil/informacion');
   expect(screen.getAllByText('Por consultar')).toHaveLength(1);
   expect(screen.queryByText('Titulado aprobado')).not.toBeInTheDocument();

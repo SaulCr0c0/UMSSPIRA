@@ -25,7 +25,7 @@ export function MentorConfiguration() {
               <span aria-hidden="true" className="mentor-card-icon">
                 <Icon className="icon-lg" />
               </span>
-              {title !== 'Áreas técnicas' && title !== 'Información del perfil' && (
+              {title !== 'Áreas técnicas' && title !== 'Información del perfil' && title !== 'Disponibilidad' && (
                 <span className="active-panel-option-status">
                   {action === 'Configurar intereses' ? 'Intereses de mentoría' : 'Próximamente'}
                 </span>
@@ -43,6 +43,12 @@ export function MentorConfiguration() {
             ) : action === 'Configurar intereses' ? (
               <div className="active-panel-option-action">
                 <Link href="/mentorias/perfil/intereses" className="mentor-button mentor-button-secondary">
+                  {action}
+                </Link>
+              </div>
+              ) : title === 'Disponibilidad' ? (
+              <div className="active-panel-option-action">
+                <Link href="/mentorias/perfil/disponibilidad" className="mentor-button mentor-button-secondary">
                   {action}
                 </Link>
               </div>
