@@ -35,9 +35,14 @@ export class GraduatesReportService {
     const source = await this.repository.findApplicationsByStatus(dbStatus, careerId);
     const career = careerId ?? source.carrera.id;
 
-    const applications = source.solicitudes
-      .filter((row) => row.estado === dbStatus && row.detalle_solicitud?.id_carrera === career)
-      .sort(compareApplications);
+    const applications = source.solicitudes.filter(
+      (row) => row.estado === dbStatus && row.detalle_solicitud?.id_carrera === career,
+    );
+    // Los datos de prueba ya vienen en el orden de la tabla de /reports, así el PDF muestra las filas
+    // en el mismo orden que la lista; los de la base de datos se ordenan por fecha y apellido.
+    if (!this.repository.isUsingMock()) {
+      applications.sort(compareApplications);
+    }
 
     if (applications.length === 0) {
       throw new NotFoundException(`No hay titulados ${STATUS_LABEL[status]} para exportar`);
@@ -80,7 +85,7 @@ function toReportRow(row: ApplicationRow, number: number): GraduateReportRow {
     email: detail.email,
     admissionDate: formatDate(detail.fecha_ingreso),
     graduationDate: formatDate(detail.fecha_titulacion),
-    careerDuration: calculateCareerDuration(detail.fecha_ingreso, detail.fecha_titulacion),
+    careerDuration: detail.duracion_carrera ?? calculateCareerDuration(detail.fecha_ingreso, detail.fecha_titulacion),
     statusDate: formatDate(getStatusDate(row)),
   };
 }

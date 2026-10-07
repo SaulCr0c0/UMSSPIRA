@@ -10,6 +10,9 @@ export interface ApplicationDetailRow {
   fecha_ingreso: string | null;
   fecha_titulacion: string | null;
   id_carrera: string;
+  // Sólo en los datos de prueba: el texto de «Duración de estudio» de la tabla de /reports,
+  // para que el PDF muestre lo mismo que la lista. En la base de datos se calcula con las fechas.
+  duracion_carrera?: string | null;
 }
 
 export interface ApplicationRow {
