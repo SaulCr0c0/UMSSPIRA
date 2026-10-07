@@ -1,36 +1,39 @@
-import {
-  IsIn,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsIn, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
+import { Transform } from 'class-transformer'
+
+const MODALIDADES = ['PRESENCIAL', 'HIBRIDO', 'REMOTO'] as const
+
+const NIVELES_EXPERIENCIA = ['SIN_EXPERIENCIA', 'JUNIOR', 'SEMI_SENIOR', 'SENIOR'] as const
 
 export class CreateJobPostingDto {
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @IsString()
-  @IsNotEmpty({ message: 'El tÌtulo es obligatorio' })
-  @MaxLength(150, { message: 'El tÌtulo no puede superar los 150 caracteres' })
-  titulo: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'El t√≠tulo debe ser texto' })
+  @IsNotEmpty({ message: 'El t√≠tulo es obligatorio' })
+  @MaxLength(150, {
+    message: 'El t√≠tulo no puede superar los 150 caracteres'
+  })
+  titulo: string
 
-  @IsString()
+  @IsString({ message: 'La modalidad debe ser texto' })
   @IsNotEmpty({ message: 'La modalidad es obligatoria' })
-  @IsIn(['PRESENCIAL', 'HIBRIDO', 'REMOTO'], {
-    message: 'La modalidad debe ser PRESENCIAL, HIBRIDO o REMOTO',
+  @IsIn(MODALIDADES, {
+    message: 'La modalidad debe ser PRESENCIAL, HIBRIDO o REMOTO'
   })
-  modalidad: 'PRESENCIAL' | 'HIBRIDO' | 'REMOTO';
+  modalidad: 'PRESENCIAL' | 'HIBRIDO' | 'REMOTO'
 
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'El nivel de experiencia debe ser texto' })
   @IsNotEmpty({ message: 'El nivel de experiencia es obligatorio' })
-  nivelExperiencia: string;
-
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @IsString()
-  @IsNotEmpty({ message: 'La descripciÛn tÈcnica es obligatoria' })
-  @MinLength(50, {
-    message: 'La descripciÛn tÈcnica debe tener al menos 50 caracteres',
+  @IsIn(NIVELES_EXPERIENCIA, {
+    message: 'El nivel de experiencia debe ser SIN_EXPERIENCIA, JUNIOR, SEMI_SENIOR o SENIOR'
   })
-  descripcionTecnica: string;
+  nivelExperiencia: 'SIN_EXPERIENCIA' | 'JUNIOR' | 'SEMI_SENIOR' | 'SENIOR'
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'La descripci√≥n t√©cnica debe ser texto' })
+  @IsNotEmpty({ message: 'La descripci√≥n t√©cnica es obligatoria' })
+  @MinLength(50, {
+    message: 'La descripci√≥n t√©cnica debe tener al menos 50 caracteres'
+  })
+  descripcionTecnica: string
 }
