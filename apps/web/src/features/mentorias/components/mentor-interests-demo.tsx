@@ -25,9 +25,6 @@ export function MentorInterestsDemo() {
     else router.push(href);
   }
   return <>
-    <aside className="interests-demo-notice"><strong>Vista de prueba · HU 6.3</strong><p>Datos de ejemplo. Los cambios duran mientras esta página permanezca abierta y no se guardan en la base de datos.</p>
-      <label><input type="checkbox" checked={failSave} onChange={event => setFailSave(event.target.checked)} /> Simular error al guardar</label>
-    </aside>
     {editingAreas ? <section className="interests-summary"><div><h2>Áreas técnicas · Simulación de la HU 6.2</h2>
       <p>Selecciona las áreas disponibles. Al confirmar, se eliminan los intereses de las áreas que retires.</p>
       {catalog.map(area => <label key={area.id} className="demo-area-option"><input type="checkbox" checked={areaDraft.includes(area.id)} onChange={event => setAreaDraft(event.target.checked ? [...areaDraft, area.id] : areaDraft.filter(id => id !== area.id))} /> {area.name}</label>)}
@@ -39,5 +36,8 @@ export function MentorInterestsDemo() {
       setConfiguration(confirmed);
       return confirmed;
     }} />}
+    <aside className="interests-demo-notice"><strong>Vista de prueba · HU 6.3</strong><p>Datos de ejemplo. Los cambios duran mientras esta página permanezca abierta y no se guardan en la base de datos.</p>
+      <label><input type="checkbox" checked={failSave} onChange={event => setFailSave(event.target.checked)} /> Simular error al guardar</label>
+    </aside>
   </>;
 }
