@@ -1,4 +1,6 @@
-@import '../shared/styles/components.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Tokens, reset, iconos y estilos generales */
 
@@ -85,41 +87,4 @@ svg {
 
 .icon-success {
   color: var(--success);
-}
-
-.placeholder-page, .home-page {
-  display: flex;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.placeholder-content {
-  width: 100%;
-  max-width: 28rem;
-}
-
-.placeholder-content > * + * {
-  margin-top: 1rem;
-}
-
-.placeholder-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.placeholder-description {
-  font-size: .875rem;
-  color: #6b7280;
-}
-
-.home-page {
-  background: #f9fafb;
-}
-
-.home-title {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: #2563eb;
 }
