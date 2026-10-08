@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Lock, Globe, MapPin, Mail, Save, Pencil, Loader2, User, ArrowLeft } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import type { Company, UpdateCompanyPayload } from '@umsspira/shared-types';
-
+// IMPORTANTE: Asegúrate de que esta ruta coincida con tu estructura de carpetas
+import { CompanyHeader } from '@/app/(dashboard)/companies/company-header';
 interface EditCompanyFormProps {
   company: Company;
   onCancel: () => void;
@@ -44,17 +45,14 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // CA3 y CA8: Campos obligatorios y verificación de espacios
     if (!formData.nombre?.trim()) newErrors.nombre = 'El nombre es obligatorio';
     if (!formData.descripcion?.trim()) newErrors.descripcion = 'La descripción es obligatoria';
     if (!formData.direccion?.trim()) newErrors.direccion = 'La ubicación es obligatoria';
 
-    // CA7: Límite de descripción
     if (formData.descripcion.length > MAX_DESCRIPTION_LENGTH) {
       newErrors.descripcion = `Máximo ${MAX_DESCRIPTION_LENGTH} caracteres`;
     }
 
-    // CA4: Validar formato del correo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.correo?.trim()) {
       newErrors.correo = 'El correo es obligatorio';
@@ -62,7 +60,6 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
       newErrors.correo = 'Correo electrónico inválido';
     }
 
-    // CA5: Validar formato del teléfono (sin letras)
     const phoneRegex = /^\+?[0-9\s-]{7,15}$/;
     if (!formData.telefono?.trim()) {
       newErrors.telefono = 'El teléfono es obligatorio';
@@ -70,7 +67,6 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
       newErrors.telefono = 'Teléfono inválido (no debe contener letras)';
     }
 
-    // CA6: Validar sitio web
     const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+(\/.*)?$/;
     if (!formData.sitioWeb?.trim()) {
       newErrors.sitioWeb = 'El sitio web es obligatorio';
@@ -84,18 +80,14 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // CA14: Prevenir doble envío
     if (isSubmitting) return;
-
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      // CA10: El NIT/RUC no se incluye en la carga útil enviada
       const { id, nit, ...payload } = formData;
-      
       const cleanedPayload: UpdateCompanyPayload = {
         ...payload,
         nombre: payload.nombre.trim(),
@@ -105,17 +97,14 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
         sitioWeb: payload.sitioWeb.trim(),
         direccion: payload.direccion.trim(),
       };
-
       await onSubmit(cleanedPayload);
     } catch (error) {
-      // CA13: Error al guardar
       setSubmitError('Ocurrió un error al guardar los cambios. Intente nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // CA9: Cancelar edición y restaurar valores originales
   const handleCancel = () => {
     setFormData(company);
     setErrors({});
@@ -124,20 +113,15 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
     onCancel();
   };
 
-  // CA15 y CA16: Aplicar bordes Rojo (inválido) o Verde (válido)
   const getInputBorderStyle = (field: keyof Company) => {
     const val = formData[field] as string;
     const hasError = !!errors[field];
     const isFieldTouched = touched[field];
     const isValidAndNotEmpty = !hasError && val && val.trim().length > 0;
 
-    if (hasError) {
-      return 'border-red-500 ring-1 ring-red-200 bg-red-50/20'; // CA15
-    }
-    if (isFieldTouched && isValidAndNotEmpty) {
-      return 'border-green-500 ring-1 ring-green-100'; // CA16
-    }
-    return 'border-[#C9C1B1]';
+    if (hasError) return 'border-red-500 ring-1 ring-red-200 bg-red-50/20';
+    if (isFieldTouched && isValidAndNotEmpty) return 'border-green-500 ring-1 ring-green-100';
+    return 'border-[#C9C1B1]'; // Oatmeal
   };
 
   const counterColor = (() => {
@@ -149,29 +133,16 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
   return (
     <div className="w-full space-y-6">
-      {/* Banner de cabecera */}
-      <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-r from-[#182632] via-[#2C3B40] to-[#182632] text-white p-6 md:p-8 shadow-sm">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-3 shadow-md flex-shrink-0">
-            <div className="w-full h-full border-2 border-gray-800 rounded-xl flex items-center justify-center text-gray-800">
-              <span className="text-2xl font-bold">🏢</span>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{formData.nombre}</h1>
-            <p className="text-sm text-gray-300 mt-1">
-              Innovación tecnológica para un mejor futuro.
-            </p>
-          </div>
-        </div>
-      </div>
+      
+      {/* AQUÍ ESTÁ LA MAGIA: Llamamos al componente y le pasamos el nombre dinámico */}
+      <CompanyHeader companyName={formData.nombre} />
 
       {/* Navegación posterior */}
       <div className="space-y-2">
         <button
           type="button"
           onClick={handleCancel}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#182632] hover:text-black transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2632] hover:text-black transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Volver
         </button>
@@ -191,7 +162,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
           <div className="p-2 rounded-lg bg-[#EEE9DF] text-[#A35139] border border-[#C9C1B1]">
             <Pencil className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-bold text-[#182632]">
+          <h2 className="text-lg font-bold text-[#1B2632]">
             Editar perfil de la empresa
           </h2>
         </div>
@@ -205,7 +176,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* NIT / RUC (CA1 y CA10) */}
           <div>
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               NIT / RUC <span className="text-red-500">*</span>
             </label>
             <div className="relative mt-1">
@@ -225,25 +196,23 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
           {/* Tamaño de la empresa */}
           <div>
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               Tamaño de la empresa <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.tamano}
               onChange={(e) => handleChange('tamano', e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-[#C9C1B1] rounded-lg text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40"
+              className="w-full px-3 py-2 mt-1 border border-[#C9C1B1] rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40"
             >
               {TAMANO_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
+                <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
           </div>
 
           {/* Sitio web */}
           <div>
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               Sitio web <span className="text-red-500">*</span>
             </label>
             <div className="relative mt-1">
@@ -254,7 +223,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
                 onChange={(e) => handleChange('sitioWeb', e.target.value)}
                 placeholder="www.techsolutions.com"
                 className={cn(
-                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
                   getInputBorderStyle('sitioWeb')
                 )}
               />
@@ -266,7 +235,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
           {/* Ubicación */}
           <div>
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               Ubicación <span className="text-red-500">*</span>
             </label>
             <div className="relative mt-1">
@@ -275,9 +244,9 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
                 type="text"
                 value={formData.direccion}
                 onChange={(e) => handleChange('direccion', e.target.value)}
-                placeholder="Av. San Martín y Costanera, Piso 12..."
+                placeholder="Av. San Martín y Costanera..."
                 className={cn(
-                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
                   getInputBorderStyle('direccion')
                 )}
               />
@@ -289,7 +258,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
           {/* Descripción */}
           <div className="md:col-span-2">
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               Descripción <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -301,16 +270,14 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
               }}
               rows={4}
               className={cn(
-                'w-full px-3 py-2 mt-1 border rounded-lg resize-none text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                'w-full px-3 py-2 mt-1 border rounded-lg resize-none text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
                 getInputBorderStyle('descripcion')
               )}
             />
             <div className="flex justify-between items-center mt-1">
               {errors.descripcion ? (
                 <p className="text-[11px] text-red-500 font-medium">{errors.descripcion}</p>
-              ) : (
-                <span />
-              )}
+              ) : <span />}
               <p className={cn('text-[11px] transition-colors ml-auto', counterColor)}>
                 {formData.descripcion.length}/{MAX_DESCRIPTION_LENGTH}
               </p>
@@ -319,7 +286,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
 
           {/* Contacto */}
           <div className="md:col-span-2">
-            <label className="text-[13px] font-semibold text-[#182632]">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
               Contacto <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
@@ -333,7 +300,7 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
                     onChange={(e) => handleChange('telefono', e.target.value)}
                     placeholder="+591 71234567"
                     className={cn(
-                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
                       getInputBorderStyle('telefono')
                     )}
                   />
@@ -351,9 +318,9 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
                     type="email"
                     value={formData.correo}
                     onChange={(e) => handleChange('correo', e.target.value)}
-                    placeholder="contacto@techsolutions.com"
+                    placeholder="contacto@empresa.com"
                     className={cn(
-                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
                       getInputBorderStyle('correo')
                     )}
                   />
@@ -372,14 +339,14 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
             type="button"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="px-6 py-2 bg-[#E2DBD0] text-[#182632] text-sm font-semibold rounded-lg hover:bg-[#D5CCC0] disabled:opacity-50 transition-colors"
+            className="px-6 py-2 bg-[#E2DBD0] text-[#1B2632] text-sm font-semibold rounded-lg hover:bg-[#D5CCC0] disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-[#FFB162] text-[#182632] text-sm font-semibold rounded-lg hover:bg-[#FFA048] disabled:opacity-50 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-2 bg-[#FFB162] text-[#1B2632] text-sm font-semibold rounded-lg hover:bg-[#FFA048] disabled:opacity-50 transition-colors shadow-sm"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
