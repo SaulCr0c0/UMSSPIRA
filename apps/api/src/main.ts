@@ -21,10 +21,20 @@ config({
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Uno o varios origenes separados por coma:
+  //   WEB_ORIGIN=https://app.vercel.app,https://preview.vercel.app
+  const origenesPermitidos = (process.env.WEB_ORIGIN || 'http://localhost:3001')
+    .split(',')
+    .map((origen) => origen.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.WEB_ORIGIN || 'http://localhost:3001',
+    origin: origenesPermitidos,
     credentials: true,
   });
-  await app.listen(3000);
+
+  // Las plataformas de despliegue asignan el puerto con PORT: hay que respetarlo.
+  await app.listen(Number(process.env.PORT ?? 3000));
 }
 bootstrap();

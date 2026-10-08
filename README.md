@@ -112,6 +112,42 @@ pnpm --filter web dev
 
 Todas las solicitudes usan `http://localhost:3000` y envian/reciben JSON. La elegibilidad requiere un perfil activo, egresado, verificado y aprobado, sin restricciones, con todos los campos minimos validos; la respuesta indica campos faltantes/invalidos y condiciones incumplidas. La desactivacion solo aplica a mentores activos y conserva su configuracion. Si Postman indica que no puede conectarse, confirma que la terminal donde ejecutaste el API sigue abierta y que Nest no mostro errores de inicio. El endpoint raiz `/` no sirve un panel web; la API se prueba con las solicitudes de Postman. Al configurar Supabase, el restablecimiento demo deja de estar disponible.
 
+## Despliegue
+
+La infraestructura vive repartida así:
+
+| Parte | Dónde | Configuración |
+| --- | --- | --- |
+| API (NestJS) | **Render** | `render.yaml` en la raíz del repo (versionado) |
+| Web (Next.js) | **Vercel** | Se configura en el panel; no lleva archivo |
+| Base de datos | **Supabase** (São Paulo) | `supabase/migrations/` + `supabase db push` |
+
+### API en Render
+
+`render.yaml` ya describe el servicio (`umsspira-api`): región `virginia`, plan `free`, rama `dev`, build `pnpm install && pnpm --filter api build` y health check en `/mentorship/status`. Validar cambios con `render blueprints validate render.yaml`.
+
+Al crear el Blueprint, Render **pide en el dashboard** los valores de `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `WEB_ORIGIN` (están con `sync: false` para no commitear secretos). Se rellenan con los mismos valores de `apps/api/.env`.
+
+> **Plan gratuito:** el servicio se duerme tras ~15 min sin tráfico y el primer request tarda ~50 s. Si eso molesta en las demostraciones, subir de plan.
+
+### Web en Vercel
+
+Al importar el repo hay que indicar **Root Directory = `apps/web`** y definir `NEXT_PUBLIC_API_URL` con la URL pública del API **antes del build** (se inlina en el bundle). Sin ella el frontend apunta a `http://localhost:3000`.
+
+### Variables de entorno en producción
+
+| Plataforma | Variable | Valor |
+| --- | --- | --- |
+| Render | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| Render | `SUPABASE_SERVICE_ROLE_KEY` | JWT `service_role` (la `sb_secret_…` **no** sirve para la API REST) |
+| Render | `WEB_ORIGIN` | URL de Vercel. Varios orígenes separados por coma |
+| Vercel | `NEXT_PUBLIC_API_URL` | URL pública del API en Render |
+
+### Antes de mergear una épica
+
+- Las migraciones **nunca se editan** una vez aplicadas: se añade un archivo nuevo.
+- Cada épica puede traer variables de entorno nuevas: añadirlas en Render y Vercel, o la app arranca y falla en runtime.
+
 ## Colección de API (Postman)
 
 Importar estos dos archivos en Postman: la coleccion `collection/mentorship-api.postman_collection.json` y el environment `collection/environments/local.postman_environment.json`.

@@ -125,6 +125,9 @@ export class MentorshipController {
   }
 
   // TODO: restringir a administradores con el guard de roles del proyecto.
+  // Mientras tanto exige autenticacion: sin este guard el endpoint quedaba
+  // abierto a cualquiera para desactivar cualquier mentor.
+  @UseGuards(MentorTestAuthGuard)
   @Patch('deactivate/:userId')
   deactivate(@Param('userId', ParseUUIDPipe) userId: string): Promise<Mentor> {
     return this.mentorshipService.deactivateByAdmin(userId);
