@@ -20,14 +20,23 @@ export interface EmpresaRow {
 @Injectable()
 export class CompaniesService {
   async getHeader(_empresaId: string): Promise<HeaderResponseDto> {
-    return {
-      nombre: 'Empresa Demo S.A.',
-      eslogan: 'Innovacion para el futuro',
-      logoUrl: null,
-      bannerUrl: null,
-    };
+    const sql = `
+      SELECT
+        razon_social as "nombre",
+        eslogan,
+        logo_url as "logoUrl",
+        banner_url as "bannerUrl"
+      FROM empresa
+      WHERE id = $1
+      LIMIT 1
+    `;
+    const rows = await query<HeaderResponseDto>(sql, [_empresaId]);
+    if (rows.length === 0) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    return rows[0];
   }
-  
+
   async updateProfile(
     _empresaId: string,
     dto: UpdateCompanyDto,
@@ -67,7 +76,8 @@ export class CompaniesService {
       values.push(dto.correo);
     }
 
-    if (fields.length === 0) {
+    const hasExtra = dto.telefono !== undefined || dto.direccion !== undefined;
+    if (fields.length === 0 && !hasExtra) {
       throw new BadRequestException('No se enviaron campos para actualizar');
     }
 
@@ -88,9 +98,32 @@ export class CompaniesService {
       throw new NotFoundException('Empresa no encontrada');
     }
 
+    // Telefono y direccion viven en tablas aparte: upsert atomico (una sola sentencia c/u)
+    if (dto.telefono !== undefined) {
+      await query(
+        `WITH upd AS (
+           UPDATE telefono_empresa SET numero = $2 WHERE id_empresa = $1 RETURNING 1
+         )
+         INSERT INTO telefono_empresa (id_empresa, numero, tipo)
+         SELECT $1, $2, 'PRINCIPAL' WHERE NOT EXISTS (SELECT 1 FROM upd)`,
+        [_empresaId, dto.telefono],
+      );
+    }
+    if (dto.direccion !== undefined) {
+      await query(
+        `WITH upd AS (
+           UPDATE direccion_empresa SET direccion = $2 WHERE id_empresa = $1 RETURNING 1
+         )
+         INSERT INTO direccion_empresa (id_empresa, direccion)
+         SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM upd)`,
+        [_empresaId, dto.direccion],
+      );
+    }
+
     return rows[0];
   }
-    /**
+
+  /**
    * TSK-3.4: Obtiene los datos de contacto y detalles institucionales.
    * Hace LEFT JOIN con direccion_empresa y telefono_empresa.
    * Devuelve null en campos que no existan (CA7).
