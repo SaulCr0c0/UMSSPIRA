@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useEmailVerificationStore } from '../store/email-verification.store';
+import { useRegistrationStore } from '@/modules/registration/frontend/store';
 import { useCountdown } from '../hooks/use-countdown';
 import { OtpInput } from './otp-input';
 import { ResendCodeButton } from './resend-code-button';
@@ -30,6 +31,7 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
     maxAttemptsReached,
     cooldownSeconds,
     setEmail,
+    setSessionToken,
     setOtpDigit,
     setFullOtp,
     setIsExpired,
@@ -37,11 +39,25 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
     resendCode,
   } = useEmailVerificationStore();
 
+  const hasRequestedRef = useRef(false);
+
   useEffect(() => {
-    if (initialEmail) {
-      setEmail(initialEmail);
+    const regState = useRegistrationStore.getState();
+    const token = regState.sessionToken;
+    const correo = initialEmail || regState.personalData?.correo;
+
+    if (token) {
+      setSessionToken(token);
     }
-  }, [initialEmail, setEmail]);
+    if (correo) {
+      setEmail(correo);
+    }
+
+    if (token && !isVerified && !hasRequestedRef.current) {
+      hasRequestedRef.current = true;
+      resendCode();
+    }
+  }, [initialEmail, setEmail, setSessionToken, isVerified, resendCode]);
 
   // Temporizador principal de 5 minutos (300 segundos) para la expiración del código (CA-02.1, CA-02.4)
   const { formattedTime, reset: resetOtpTimer } = useCountdown({
