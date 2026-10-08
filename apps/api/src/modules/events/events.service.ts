@@ -15,6 +15,19 @@ import { supabase } from '../../shared/lib/supabase';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateDraftEventDto } from './dto/update-draft-event.dto';
 
+interface EventRow {
+  id: string;
+  id_usuario: string;
+  titulo: string;
+  descripcion: string | null;
+  fecha_inicio: string;
+  fecha_fin: string;
+  cupo_maximo: number;
+  ubicacion: string | null;
+  estado: string;
+  fecha_creacion: string;
+}
+
 const DRAFT_EVENT_STATUS: Extract<EventStatus, 'BORRADOR'> =
   'BORRADOR';
 const PUBLISHED_EVENT_STATUS: Extract<EventStatus, 'PUBLICADO'> =
@@ -85,7 +98,7 @@ export class EventsService {
       );
     }
 
-    return this.mapEventRow(data);
+    return this.mapEventRow(data as EventRow);
   }
 
   async getAdminEvents(userId: string): Promise<EventItem[]> {
@@ -104,7 +117,7 @@ export class EventsService {
     }
 
     return (data ?? []).map((row) =>
-      this.mapEventRow(row),
+      this.mapEventRow(row as EventRow),
     );
   }
 
@@ -176,7 +189,7 @@ export class EventsService {
       );
     }
 
-    return this.mapEventRow(data);
+    return this.mapEventRow(data as EventRow);
   }
 
   async publishAdminDraft(
@@ -216,7 +229,7 @@ export class EventsService {
       );
     }
 
-    return this.mapEventRow(data);
+    return this.mapEventRow(data as EventRow);
   }
 
   /**
@@ -251,7 +264,7 @@ export class EventsService {
     }
 
     return (data ?? []).map((row) =>
-      this.mapEventRow(row),
+      this.mapEventRow(row as EventRow),
     );
   }
 
@@ -274,13 +287,13 @@ export class EventsService {
       );
     }
 
-    return this.mapEventRow(data);
+    return this.mapEventRow(data as EventRow);
   }
 
   private async getOwnedEvent(
     eventId: string,
     userId: string,
-  ): Promise<any> {
+  ): Promise<EventRow> {
     const { data, error } = await supabase
       .from('evento')
       .select('*')
@@ -300,10 +313,10 @@ export class EventsService {
       );
     }
 
-    return data;
+    return data as EventRow;
   }
 
-  private ensureDraft(event: any): void {
+  private ensureDraft(event: EventRow): void {
     if (
       event.estado?.toUpperCase() !==
       DRAFT_EVENT_STATUS
@@ -358,7 +371,7 @@ export class EventsService {
    * Convierte una fila de la tabla "evento"
    * al modelo EventItem utilizado por la API.
    */
-  private mapEventRow(row: any): EventItem {
+  private mapEventRow(row: EventRow): EventItem {
     return {
       id: row.id,
       title: row.titulo,
