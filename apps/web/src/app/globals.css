@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer base {
+  /* ---------- Multimedia fluida ---------- */
+
+  /* Ningún elemento multimedia puede ser más ancho que su contenedor
+     y conservan su proporción al escalar. */
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Tailwind (preflight) no cubre estos elementos incrustados. */
+  iframe,
+  embed,
+  object {
+    max-width: 100%;
+    border: 0;
+  }
+
+  /* Evita el hueco inferior que deja el espacio de línea en imágenes inline. */
+  img,
+  video,
+  canvas {
+    display: block;
+  }
+
+  /* Imágenes que fallan al cargar: el texto alternativo no desborda. */
+  img {
+    overflow-wrap: anywhere;
+  }
+}
