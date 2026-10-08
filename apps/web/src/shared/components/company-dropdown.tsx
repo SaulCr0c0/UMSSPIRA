@@ -2,57 +2,87 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Agregado para cumplir CA16
-import { 
-  User, 
-  Building2, 
-  Briefcase, 
-  FileText, 
-  Users, 
-  LogOut, 
-  ChevronRight 
+import { useRouter } from "next/navigation";
+import {
+  User,
+  Building2,
+  Briefcase,
+  FileText,
+  Users,
+  LogOut,
+  ChevronRight,
 } from "lucide-react";
+import { clearToken, hasValidSession } from "@/shared/services/api-client";
+import { getCompanyHeader } from "@/shared/services/companies";
 
-// CA14: Preparamos el componente para recibir los datos de la empresa autenticada
+// Si el padre pasa companyName se usa tal cual; si no, se pide a la API.
 interface CompanyDropdownProps {
   companyName?: string;
   companyRole?: string;
 }
 
-export function CompanyDropdown({ 
-  companyName = "TechSolutions S.A.", 
-  companyRole = "Empresa empleadora" 
+export function CompanyDropdown({
+  companyName,
+  companyRole = "Empresa empleadora",
 }: CompanyDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [fetchedName, setFetchedName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter(); 
+  const router = useRouter();
 
-  // CA12: Cerrar el menú al hacer clic fuera
+  // CA14: nombre de la empresa autenticada (sin datos de otra empresa por defecto)
+  useEffect(() => {
+    if (companyName || !hasValidSession()) return;
+    let cancelled = false;
+    getCompanyHeader()
+      .then((h) => {
+        if (!cancelled) setFetchedName(h.nombre);
+      })
+      .catch(() => {
+        /* si falla, se muestra el texto neutro "Mi empresa" */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [companyName]);
+
+  const displayName = companyName ?? fetchedName ?? "Mi empresa";
+
+  // CA12: cerrar el menú al hacer clic fuera o con Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
-  // CA16: Función para cerrar sesión y redirigir
+  // CA16: cerrar sesión (borra el token) y redirigir
   const handleLogout = () => {
     setIsOpen(false);
-    // Aquí a futuro irá la limpieza del token (ej. localStorage.removeItem('token'))
-    router.push("/login"); // Redirige a pantalla de no autenticados
+    clearToken();
+    router.push("/login");
   };
 
   return (
-    // CA18: Contenedor relative para evitar superposición
+    // CA18: contenedor relative para evitar superposición
     <div className="relative inline-block" ref={dropdownRef}>
-      
-      {/* CA1, CA11, CA13: Disparador del menú (Avatar) */}
+      {/* CA1, CA11, CA13: disparador del menú (avatar) */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-[#1B2632] hover:bg-[#EEE9DF] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FFB162]"
+        aria-label="Menú de la empresa"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
       >
         <User className="w-5 h-5" />
@@ -60,17 +90,16 @@ export function CompanyDropdown({
 
       {isOpen && (
         <div className="absolute right-0 mt-3 w-[300px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#EEE9DF] z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          
           <div className="absolute -top-2 right-3 w-4 h-4 bg-white border-t border-l border-[#EEE9DF] transform rotate-45"></div>
 
-          {/* CA2: Mostrar la identificación de la empresa */}
+          {/* CA2: identificación de la empresa */}
           <div className="relative flex items-center px-5 py-4 border-b border-[#EEE9DF] bg-white rounded-t-xl">
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#EEE9DF] text-[#2C3B4D] mr-3 shrink-0">
               <Building2 className="w-5 h-5" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[15px] font-bold text-[#1B2632] leading-tight">
-                {companyName}
+            <div className="flex flex-col min-w-0">
+              <span className="text-[15px] font-bold text-[#1B2632] leading-tight truncate">
+                {displayName}
               </span>
               <span className="text-[12px] font-medium text-[#1B2632]/60 mt-0.5">
                 {companyRole}
@@ -78,7 +107,7 @@ export function CompanyDropdown({
             </div>
           </div>
 
-          {/* CA3, CA4, CA6, CA7, CA8, CA9, CA10: Enlaces y cierre al hacer clic */}
+          {/* CA3, CA4, CA6, CA7, CA8, CA9, CA10: enlaces que cierran el menú al hacer clic */}
           <div className="py-2 bg-white">
             <Link
               href="/empresa/perfil"
@@ -129,9 +158,10 @@ export function CompanyDropdown({
             </Link>
           </div>
 
-          {/* CA5: Separación visual de Cerrar Sesión */}
+          {/* CA5: separación visual de Cerrar sesión */}
           <div className="py-2 border-t border-[#EEE9DF] bg-white rounded-b-xl">
             <button
+              type="button"
               className="flex w-full items-center px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={handleLogout}
             >
@@ -141,7 +171,6 @@ export function CompanyDropdown({
               </span>
             </button>
           </div>
-
         </div>
       )}
     </div>
