@@ -46,11 +46,23 @@ function detectDeviceProfile(): DeviceProfile {
   return isLargeScreen && hasMouse ? 'desktop' : 'default';
 }
 
+// Pide al navegador que no borre la caché por su cuenta si falta espacio
+async function requestPersistentStorage(): Promise<boolean> {
+  if (!navigator.storage || !navigator.storage.persist) return false;
+  if (await navigator.storage.persisted()) return true;
+  return navigator.storage.persist();
+}
+
 // Le avisa al SW qué perfil de caché debe usar
 async function sendDeviceProfile(): Promise<DeviceProfile> {
   const profile = detectDeviceProfile();
   const registration = await navigator.serviceWorker.ready;
   registration.active?.postMessage({ type: 'SET_DEVICE_PROFILE', profile });
+
+  // Solo en escritorio se pide almacenamiento persistente
+  if (profile === 'desktop') {
+    await requestPersistentStorage();
+  }
   return profile;
 }
 
