@@ -26,8 +26,7 @@ export default function Home() {
       <Navbar />
 
       {/* Contenido Principal con fondo claro */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-        
+      <main className="flex-1 min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">        
         {/* Banner Principal PWA Shell */}
         <section className="relative w-full rounded-2xl overflow-hidden bg-[#111827] text-white p-8 md:p-12 shadow-lg">
           
@@ -233,6 +232,17 @@ export default function Home() {
         </section>
 
       </main>
+      <footer className="w-full shrink-0 border-t border-slate-200 bg-[#0F172A] text-white">
+        <div className="max-w-7xl mx-auto flex flex-col gap-2 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+          <p className="text-sm font-semibold">
+            UMSSPIRA — Egresados UMSS
+          </p>
+
+          <p className="text-sm text-slate-300">
+            Universidad Mayor de San Simón
+          </p>
+        </div>
+      </footer>
 
     </div>
   );
