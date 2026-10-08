@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   description: BRAND.description,
   manifest: "/manifest.json",
   icons: {
-    icon: "/brand/icons/icon-192.png",
-    apple: "/brand/icons/icon-192.png",
+    icon: "/brand/icons/icon-192.png?v=2",
+    apple: "/brand/icons/icon-192.png?v=2",
   },
 };
 
