@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Briefcase } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { type ErroresFormulario, validarExperiencia } from '@/modules/profile/validation/reglas-perfil';
+import { ApiError } from '@/shared/services/api-client';
 
 export type Experiencia = {
   empresa: string;
@@ -13,7 +14,8 @@ export type Experiencia = {
 };
 type FormularioExperienciaProps = {
   experiencias:Experiencia[];
-  onAgregar: (experiencia: Experiencia) => void;
+  // Guarda la experiencia (en la API); si falla, el formulario muestra el error y conserva los datos
+  onAgregar: (experiencia: Experiencia) => Promise<void> | void;
   // Avisa al acordeón cuántos campos tienen errores sin corregir (contador del encabezado)
   onErroresChange?: (cantidad: number) => void;
 };
@@ -45,6 +47,9 @@ export function FormularioExperiencia({ experiencias, onAgregar, onErroresChange
   const [errores, setErrores] = useState<ErroresFormulario<keyof Datos>>({});
   // Los errores se muestran desde el primer intento de agregar y se recalculan mientras se corrige
   const [intentado, setIntentado] = useState(false);
+  // Error que devolvió el servidor al guardar (400, sin conexión...)
+  const [errorServidor, setErrorServidor] = useState<string>();
+  const [enviando, setEnviando] = useState(false);
 
   const cantidadErrores = Object.keys(errores).length;
   useEffect(() => {
@@ -59,21 +64,34 @@ export function FormularioExperiencia({ experiencias, onAgregar, onErroresChange
 
   const ordenadas = [...experiencias].sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio));
 
-  function agregar(evento: React.FormEvent<HTMLFormElement>) {
+  async function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (enviando) return;
     const encontrados = validarExperiencia(datos, trabajoActual);
     setIntentado(true);
     setErrores(encontrados);
+    setErrorServidor(undefined);
     if (Object.keys(encontrados).length > 0) return;
-    onAgregar({
+
+    const experiencia: Experiencia = {
       empresa: datos.empresa.trim(),
       cargo: datos.cargo.trim(),
       fechaInicio: datos.fechaInicio,
-      fechaFin: trabajoActual ? undefined : datos.fechaFin,
-    });
-    setDatos(VACIO);
-    setTrabajoActual(false);
-    setIntentado(false);
+    };
+    // Trabajo actual: la experiencia va sin fechaFin (ni siquiera vacía)
+    if (!trabajoActual) experiencia.fechaFin = datos.fechaFin;
+
+    setEnviando(true);
+    try {
+      await onAgregar(experiencia);
+      setDatos(VACIO);
+      setTrabajoActual(false);
+      setIntentado(false);
+    } catch (error) {
+      setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la experiencia.');
+    } finally {
+      setEnviando(false);
+    }
   }
   return (
     <div className="flex flex-col gap-5">
@@ -138,12 +156,15 @@ export function FormularioExperiencia({ experiencias, onAgregar, onErroresChange
           Actualmente trabajo aquí
         </label>
 
+      <MensajeError id="error-servidor-experiencia" mensaje={errorServidor} />
+
       <div className="flex justify-end">
           <button
             type="submit"
+            disabled={enviando}
             className="h-11 rounded-lg bg-[#FFB162] px-6 text-sm font-semibold text-[#1B2632] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Agregar experiencia
+            {enviando ? 'Guardando…' : 'Agregar experiencia'}
           </button>
         </div>
       </form>

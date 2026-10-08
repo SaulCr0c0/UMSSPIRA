@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormularioExperiencia } from './experiencia-laboral';
 
 describe('FormularioExperiencia · validaciones', () => {
@@ -27,8 +27,8 @@ describe('FormularioExperiencia · validaciones', () => {
     expect(screen.getByText("La fecha 'Hasta' no puede ser anterior a 'Desde'")).toBeInTheDocument();
   });
 
-  it('agrega como trabajo actual, sin fecha fin, al marcar "Actualmente trabajo aquí"', () => {
-    const onAgregar = jest.fn();
+  it('agrega como trabajo actual, sin fecha fin, al marcar "Actualmente trabajo aquí"', async () => {
+    const onAgregar = jest.fn().mockResolvedValue(undefined);
     const { container } = render(<FormularioExperiencia experiencias={[]} onAgregar={onAgregar} />);
     const [inicio, fin] = Array.from(container.querySelectorAll('input[type="date"]'));
     fireEvent.change(screen.getByPlaceholderText('Ej. Jalasoft'), { target: { value: 'Jalasoft' } });
@@ -42,6 +42,7 @@ describe('FormularioExperiencia · validaciones', () => {
 
     expect(onAgregar).toHaveBeenCalledTimes(1);
     expect(onAgregar.mock.calls[0][0]).toEqual({ empresa: 'Jalasoft', cargo: 'Dev', fechaInicio: '2023-08-01' });
-    expect(onAgregar.mock.calls[0][0].fechaFin).toBeUndefined();
+    expect(onAgregar.mock.calls[0][0]).not.toHaveProperty('fechaFin');
+    await waitFor(() => expect(screen.getByPlaceholderText('Ej. Jalasoft')).toHaveValue(''));
   });
 });
