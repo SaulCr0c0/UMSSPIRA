@@ -11,7 +11,7 @@ import { MobileMenu } from './mobile-menu';
 export const NavbarMovil: React.FC = () => {
   const config = {
     height: "h-20",
-    logoWidth: "w-44",
+    logoWidth: "w-28 md:w-44", // CAMBIO 1: logo más chico en móvil
     logoHeight: "h-20",
     spacing: "space-x-3",
     textSize: "text-base",
@@ -19,7 +19,7 @@ export const NavbarMovil: React.FC = () => {
     itemPaddingY: "py-2",
     notificationPosition: "translate-x-0",
     profilePosition: "translate-x-0",
-    rightSectionGap: "space-x-4",
+    rightSectionGap: "space-x-1 md:space-x-4", // CAMBIO 2: menos espacio en móvil
   };
 
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -84,7 +84,8 @@ export const NavbarMovil: React.FC = () => {
         </nav>
 
         {/* Sección derecha */}
-        <div className={`flex items-center ${config.rightSectionGap} pr-2`}>
+        {/* CAMBIO 3: shrink-0 evita que se corte, y el padding derecho solo en escritorio */}
+        <div className={`flex shrink-0 items-center ${config.rightSectionGap} md:pr-2`}>
           <div className={`p-2.5 rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
             <Bell className="w-6 h-6" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>

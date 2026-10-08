@@ -3,14 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Home, Briefcase, Award, Calendar, User, LogOut } from 'lucide-react';
+import { Menu, X, Home, Calendar, Briefcase, Award, Star, Users, User, LogOut } from 'lucide-react';
 
-const links = [
-  { href: '/', label: 'Inicio', icon: Home },
-  { href: '/empleos', label: 'Empleos', icon: Briefcase },
-  { href: '/mentorias', label: 'Mentorías', icon: Award },
-  { href: '/eventos', label: 'Eventos', icon: Calendar },
-  { href: '/profile', label: 'Perfil', icon: User },
+// Mismas secciones que el navbar de escritorio
+const sections = [
+  { id: 'inicio', label: 'Inicio', icon: Home },
+  { id: 'eventos', label: 'Eventos', icon: Calendar },
+  { id: 'jobs', label: 'Bolsa de trabajo', icon: Briefcase },
+  { id: 'mentorias', label: 'Mentorías', icon: Award },
+  { id: 'benefits', label: 'Beneficios', icon: Star },
+  { id: 'community', label: 'Comunidad', icon: Users },
 ];
 
 interface MobileMenuProps {
@@ -19,15 +21,32 @@ interface MobileMenuProps {
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ onLogout }) => {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const isProfileActive = pathname.startsWith('/profile');
 
-  // Cerrar el panel al navegar a otra sección
+  const itemClass = (active: boolean) =>
+    `flex w-full items-center gap-3 min-h-11 px-3 rounded-xl text-left text-base font-medium border-l-4 ${
+      active
+        ? 'bg-[#1E293B] text-white border-[#FFB162]'
+        : 'border-transparent text-slate-300 hover:bg-slate-800/60 hover:text-white'
+    }`;
+
+  // Cerrar el panel al navegar a otra página
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Cerrar el panel si la pantalla pasa a escritorio (≥ 768 px), por ejemplo al rotar
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setOpen(false);
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   // Cerrar con Escape y bloquear el scroll de fondo mientras está abierto
   useEffect(() => {
@@ -42,6 +61,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ onLogout }) => {
       document.body.style.overflow = '';
     };
   }, [open]);
+
+  const handleSelect = (id: string) => {
+    setActiveTab(id);
+    setOpen(false);
+  };
 
   const handleLogout = () => {
     setOpen(false);
@@ -95,23 +119,29 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ onLogout }) => {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1" aria-label="Menú móvil">
-          {links.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setOpen(false)}
+          {sections.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => handleSelect(id)}
               tabIndex={open ? 0 : -1}
-              aria-current={isActive(href) ? 'page' : undefined}
-              className={`flex items-center gap-3 min-h-11 px-3 rounded-xl text-base font-medium border-l-4 ${
-                isActive(href)
-                  ? 'bg-[#1E293B] text-white border-[#FFB162]'
-                  : 'border-transparent text-slate-300 hover:bg-slate-800/60 hover:text-white'
-              }`}
+              aria-current={activeTab === id ? 'page' : undefined}
+              className={itemClass(activeTab === id)}
             >
               <Icon className="w-5 h-5" />
               {label}
-            </Link>
+            </button>
           ))}
+
+          <Link
+            href="/profile"
+            tabIndex={open ? 0 : -1}
+            aria-current={isProfileActive ? 'page' : undefined}
+            className={itemClass(isProfileActive)}
+          >
+            <User className="w-5 h-5" />
+            Perfil
+          </Link>
         </nav>
 
         {/* Cerrar sesión al final del panel */}
