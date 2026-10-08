@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "../hooks/use-auth";
 
@@ -14,8 +15,8 @@ interface FieldErrors {
 function Icon({ children }: { children: ReactNode }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -29,10 +30,15 @@ function Icon({ children }: { children: ReactNode }) {
   );
 }
 
-const MailIcon = () => (
+const AtIcon = () => (
   <Icon>
-    <rect x="3" y="5" width="18" height="14" rx="2" />
-    <path d="m3 7 9 6 9-6" />
+    <circle cx="12" cy="12" r="4" />
+    <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
+  </Icon>
+);
+const KeyIcon = () => (
+  <Icon>
+    <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
   </Icon>
 );
 const LockIcon = () => (
@@ -55,10 +61,14 @@ const EyeOffIcon = () => (
 );
 
 const fieldWrapper =
-  "flex items-center gap-2 rounded-lg bg-palladian px-3 text-gray-500 focus-within:ring-2 focus-within:ring-burning-flame";
+  "flex items-center gap-3 rounded-lg border bg-transparent px-3.5 text-gray-500 focus-within:ring-2 focus-within:ring-burning-flame";
 const fieldInput =
-  "w-full bg-transparent py-3 text-sm text-abyssal-blue outline-none placeholder:text-gray-400";
-const labelClass = "block text-[11px] font-bold uppercase tracking-wide text-abyssal-blue";
+  "w-full bg-transparent py-3.5 text-sm text-abyssal-blue outline-none placeholder:text-gray-400";
+const labelClass = "block text-sm font-semibold text-abyssal-blue";
+
+function fieldState(hasError: boolean) {
+  return hasError ? "border-truffle-trouble ring-2 ring-truffle-trouble" : "border-oatmeal";
+}
 
 export function LoginForm() {
   const { signIn, isLoading, error } = useAuth();
@@ -85,42 +95,46 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <div className="space-y-1.5">
-        <label htmlFor="email" className={labelClass}>
-          Correo electrónico institucional o personal
-        </label>
-        <div className={`${fieldWrapper} ${fieldErrors.email ? "ring-2 ring-truffle-trouble" : ""}`}>
-          <MailIcon />
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <label htmlFor="email" className={labelClass}>
+            Correo electrónico <span className="text-truffle-trouble">*</span>
+          </label>
+          <span className="text-xs text-gray-500">Institucional</span>
+        </div>
+        <div className={`${fieldWrapper} ${fieldState(Boolean(fieldErrors.email))}`}>
+          <AtIcon />
           <input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="alumni.sistemas@umss.edu.bo"
+            placeholder="ejemplo@correo.umss.edu.bo"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={Boolean(fieldErrors.email)}
+            aria-required="true"
             className={fieldInput}
           />
         </div>
         {fieldErrors.email && <p className="text-xs text-truffle-trouble">{fieldErrors.email}</p>}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className={labelClass}>
-            Contraseña
-          </label>
-        </div>
-        <div className={`${fieldWrapper} ${fieldErrors.password ? "ring-2 ring-truffle-trouble" : ""}`}>
-          <LockIcon />
+      <div className="space-y-2">
+        <label htmlFor="password" className={labelClass}>
+          Contraseña <span className="text-truffle-trouble">*</span>
+        </label>
+        <div className={`${fieldWrapper} ${fieldState(Boolean(fieldErrors.password))}`}>
+          <KeyIcon />
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
+            placeholder="••••••••••••"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             aria-invalid={Boolean(fieldErrors.password)}
+            aria-required="true"
             className={fieldInput}
           />
           <button
@@ -135,14 +149,14 @@ export function LoginForm() {
         {fieldErrors.password && <p className="text-xs text-truffle-trouble">{fieldErrors.password}</p>}
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-abyssal-blue">
+      <label className="flex items-center gap-2.5 text-sm text-abyssal-blue">
         <input
           type="checkbox"
           checked={remember}
           onChange={(event) => setRemember(event.target.checked)}
-          className="h-4 w-4 accent-abyssal-blue"
+          className="h-[18px] w-[18px] accent-abyssal-blue"
         />
-        Recordar mi sesión en este equipo
+        Recordarme
       </label>
 
       {error && (
@@ -154,10 +168,32 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-lg bg-burning-flame px-4 py-3 text-sm font-bold text-abyssal-blue shadow-sm transition hover:brightness-95 disabled:opacity-60"
+        className="w-full rounded-lg bg-burning-flame px-4 py-3.5 text-sm font-bold text-abyssal-blue shadow-sm transition hover:brightness-95 disabled:opacity-60"
       >
-        {isLoading ? "Ingresando..." : "Ingresar al Portal →"}
+        {isLoading ? "Ingresando..." : "Ingresar →"}
       </button>
+
+      <hr className="border-oatmeal" />
+
+      <div className="flex items-start gap-3 rounded-lg border border-oatmeal bg-[#E7E2D6] px-3.5 py-3 text-[13px] leading-snug text-abyssal-blue">
+        <span className="mt-0.5 shrink-0">
+          <LockIcon />
+        </span>
+        <p>
+          Acceso protegido para Administradores del Sistema, Decanaturas y Titulados debidamente
+          registrados.
+        </p>
+      </div>
+
+      <p className="text-center text-sm text-gray-500">
+        ¿Aún no te has registrado?{" "}
+        <Link
+          href="/register"
+          className="font-semibold text-abyssal-blue underline underline-offset-4 hover:text-truffle-trouble"
+        >
+          Inicia tu registro aquí
+        </Link>
+      </p>
     </form>
   );
 }
