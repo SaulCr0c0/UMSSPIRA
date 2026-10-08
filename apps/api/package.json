@@ -13,7 +13,9 @@
     "test:profile-info": "npm run build && node --test test/mentorship-profile-information.test.cjs",
     "lint": "eslint src --ext .ts",
     "start": "node dist/main",
-    "test": "jest --config jest.config.js"
+    "test": "npm run build && npm run test:node && npm run test:jest",
+    "test:node": "node --test \"dist/modules/reports/**/*.spec.js\"",
+    "test:jest": "jest --config jest.config.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -26,6 +28,7 @@
     "class-validator": "^0.15.1",
     "dotenv": "^18.0.5",
     "multer": "^2.4.0",
+    "pdfmake": "^0.2.23",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
@@ -36,7 +39,7 @@
     "@types/jest": "29.5.14",
     "@types/multer": "^2.3.0",
     "@types/node": "^20.0.0",
-    "@types/pdfmake": "^0.3.3",
+    "@types/pdfmake": "^0.2.13",
     "@types/pg": "^8.23.1",
     "eslint": "^10.12.0",
     "jest": "29.7.0",
