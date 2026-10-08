@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormacionAcademicaForm } from './formacion-academica';
 
 function llenarFormulario() {
@@ -25,8 +25,8 @@ describe('FormacionAcademicaForm', () => {
     expect(screen.getByLabelText('Año de egreso')).toHaveValue('2022');
   });
 
-  it('envia el registro y limpia el formulario', () => {
-    const onAgregar = jest.fn();
+  it('envia el registro y limpia el formulario', async () => {
+    const onAgregar = jest.fn().mockResolvedValue(undefined);
     render(<FormacionAcademicaForm formaciones={[]} onAgregar={onAgregar} />);
     llenarFormulario();
 
@@ -38,7 +38,7 @@ describe('FormacionAcademicaForm', () => {
       anioEgreso: '2022',
       grado: 'Licenciatura',
     });
-    expect(screen.getByLabelText('Institución')).toHaveValue('');
+    await waitFor(() => expect(screen.getByLabelText('Institución')).toHaveValue(''));
   });
 
   it('lista las formaciones registradas', () => {

@@ -9,6 +9,7 @@ import { SeccionAcordeon } from './seccion-acordeon';
 import { FormularioExperiencia, type Experiencia } from './experiencia-laboral';
 import { FormacionAcademicaForm, type FormacionAcademica } from './formacion-academica';
 import { FormularioCertificaciones, type Certificacion } from './certificaciones';
+import { crearFormacion } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import type {
   CertificationRecord,
@@ -157,14 +158,16 @@ export function AcordeonPerfil() {
         <FormacionAcademicaForm
           formaciones={formaciones}
           onErroresChange={erroresFormacion}
-          onAgregar={(formacion) =>
+          onAgregar={async (formacion) => {
+            // Solo se agrega al store si la API respondió 201; un 400 o 409 lo maneja el formulario
+            const creada = await crearFormacion(formacion);
             addEducation({
-              institution: formacion.institucion,
-              title: formacion.titulo,
-              graduationYear: formacion.anioEgreso,
-              degree: formacion.grado,
-            })
-          }
+              institution: creada.institucion,
+              title: creada.titulo,
+              graduationYear: String(creada.anioEgreso),
+              degree: creada.grado,
+            });
+          }}
         />
       </SeccionAcordeon>
       <SeccionAcordeon

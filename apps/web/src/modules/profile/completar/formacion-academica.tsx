@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { GraduationCap, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { type ErroresFormulario, validarFormacion } from '@/modules/profile/validation/reglas-perfil';
+import { ApiError } from '@/shared/services/api-client';
 
 const GRADOS = ['Técnico superior', 'Licenciatura', 'Maestría', 'Doctorado'];
 
@@ -16,7 +17,8 @@ export type FormacionAcademica = {
 
 type FormacionAcademicaFormProps = {
   formaciones: FormacionAcademica[];
-  onAgregar: (formacion: FormacionAcademica) => void;
+  // Guarda la formación (en la API); si falla, el formulario muestra el error y conserva los datos
+  onAgregar: (formacion: FormacionAcademica) => Promise<void> | void;
   // Avisa al acordeón cuántos campos tienen errores sin corregir (contador del encabezado)
   onErroresChange?: (cantidad: number) => void;
 };
@@ -33,6 +35,9 @@ export function FormacionAcademicaForm({ formaciones, onAgregar, onErroresChange
   const [errores, setErrores] = useState<ErroresFormulario<keyof FormacionAcademica>>({});
   // Los errores se muestran desde el primer intento de agregar y se recalculan mientras se corrige
   const [intentado, setIntentado] = useState(false);
+  // Error que devolvió el servidor al guardar (409 duplicada, 400, sin conexión...)
+  const [errorServidor, setErrorServidor] = useState<string>();
+  const [enviando, setEnviando] = useState(false);
 
   const cantidadErrores = Object.keys(errores).length;
   useEffect(() => {
@@ -45,20 +50,31 @@ export function FormacionAcademicaForm({ formaciones, onAgregar, onErroresChange
     if (intentado) setErrores(validarFormacion(nuevos));
   }
 
-  function agregar(evento: React.FormEvent<HTMLFormElement>) {
+  async function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (enviando) return;
     const encontrados = validarFormacion(datos);
     setIntentado(true);
     setErrores(encontrados);
+    setErrorServidor(undefined);
     if (Object.keys(encontrados).length > 0) return;
-    onAgregar({
-      institucion: datos.institucion.trim(),
-      titulo: datos.titulo.trim(),
-      anioEgreso: datos.anioEgreso,
-      grado: datos.grado,
-    });
-    setDatos(VACIO);
-    setIntentado(false);
+
+    setEnviando(true);
+    try {
+      await onAgregar({
+        institucion: datos.institucion.trim(),
+        titulo: datos.titulo.trim(),
+        anioEgreso: datos.anioEgreso,
+        grado: datos.grado,
+      });
+      setDatos(VACIO);
+      setIntentado(false);
+    } catch (error) {
+      // 409: ya registrada; 400: el backend rechazó algún campo. En ambos casos se conservan los datos
+      setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la formación.');
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -166,12 +182,15 @@ export function FormacionAcademicaForm({ formaciones, onAgregar, onErroresChange
           </div>
         </div>
 
+        <MensajeError id="error-servidor-formacion" mensaje={errorServidor} />
+
         <button
           type="submit"
-          className="inline-flex h-10 items-center gap-2 rounded-md border border-[#2C3B4D] bg-white px-4 text-sm font-medium text-[#2C3B4D] hover:bg-[#EEE9DF]"
+          disabled={enviando}
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-[#2C3B4D] bg-white px-4 text-sm font-medium text-[#2C3B4D] hover:bg-[#EEE9DF] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Plus className="h-4 w-4" />
-          Agregar formación
+          {enviando ? 'Guardando…' : 'Agregar formación'}
         </button>
       </form>
     </div>
