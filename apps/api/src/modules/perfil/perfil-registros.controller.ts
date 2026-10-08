@@ -1,6 +1,6 @@
 import {
-  BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   ForbiddenException,
@@ -11,13 +11,32 @@ import {
   Param,
   Put,
   Req,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Request } from 'express';
 
+import { CrearCertificacionDto } from './dto/crear-certificacion.dto';
+import { CrearExperienciaLaboralDto } from './dto/crear-experiencia-laboral.dto';
+import { CrearFormacionAcademicaDto } from './dto/crear-formacion-academica.dto';
 import { Seccion, esSeccion } from './perfil.constants';
-import { Registro, datosAColumnas } from './perfil.mappers';
+import { Registro } from './perfil.mappers';
 import { PerfilRepository } from './perfil.repository';
 import { obtenerTituladoId } from './titulado-actual';
+import {
+  FormacionComparable,
+  MENSAJE_FORMACION_DUPLICADA,
+  esFormacionDuplicada,
+} from './validators/formacion-duplicada';
+
+// T4.4: al editar se aplican las mismas reglas que al crear (los mismos DTOs de HU2)
+const DTO_POR_SECCION: Record<Seccion, new () => object> = {
+  'formacion-academica': CrearFormacionAcademicaDto,
+  'experiencia-laboral': CrearExperienciaLaboralDto,
+  'certificaciones': CrearCertificacionDto,
+};
+
+// Mismas opciones que el ValidationPipe global (main.ts): el formato del error 400 es idéntico al de crear
+const validador = new ValidationPipe({ whitelist: true, transform: true, stopAtFirstError: true });
 
 @Controller('perfil')
 export class PerfilRegistrosController {
@@ -43,11 +62,29 @@ export class PerfilRegistrosController {
     const registro = await this.obtenerRegistroPropio(seccionParam, id, req);
     const seccion = seccionParam as Seccion;
 
-    if (datosAColumnas(seccion, datos ?? {}).columnas.length === 0) {
-      throw new BadRequestException('No se enviaron campos para actualizar');
+    // 400 por campo, con el mismo formato que al crear
+    const validados = (await validador.transform(datos ?? {}, {
+      type: 'body',
+      metatype: DTO_POR_SECCION[seccion],
+    })) as Record<string, unknown>;
+
+    if (seccion === 'formacion-academica') {
+      // 409: otra formación del mismo titulado ya tiene Institución, Título y Año (el propio registro no cuenta)
+      const existentes = (await this.perfilRepository.listar(
+        seccion,
+        registro.idTitulado,
+      )) as unknown as FormacionComparable[];
+      if (esFormacionDuplicada(validados as unknown as FormacionComparable, existentes, registro.id)) {
+        throw new ConflictException(MENSAJE_FORMACION_DUPLICADA);
+      }
     }
 
-    return this.perfilRepository.actualizar(seccion, registro.id, datos);
+    // Sin fecha de fin = trabajo actual: se limpia la fecha anterior en vez de conservarla
+    if (seccion === 'experiencia-laboral') {
+      validados.fechaFin = validados.fechaFin ?? null;
+    }
+
+    return this.perfilRepository.actualizar(seccion, registro.id, validados);
   }
 
   // T4.3: elimina el registro; 404 si no existe

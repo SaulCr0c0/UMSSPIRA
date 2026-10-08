@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,13 +15,14 @@ describe('PerfilRegistrosController', () => {
 
   let controller: PerfilRegistrosController;
   let repository: jest.Mocked<
-    Pick<PerfilRepository, 'obtenerPorId' | 'actualizar' | 'eliminar'>
+    Pick<PerfilRepository, 'obtenerPorId' | 'actualizar' | 'eliminar' | 'listar'>
   >;
 
   beforeEach(() => {
     process.env.TITULADO_ID_PRUEBA = TITULADO_ID;
 
     repository = {
+      listar: jest.fn().mockResolvedValue([]),
       obtenerPorId: jest.fn(),
       actualizar: jest.fn(),
       eliminar: jest.fn(),
@@ -126,7 +128,7 @@ describe('PerfilRegistrosController', () => {
     };
 
     it('actualiza el registro existente sin crear otro', async () => {
-      const datos = { empresa: 'UMSS', cargo: 'Docente' };
+      const datos = { empresa: 'UMSS', cargo: 'Docente', fechaInicio: '2024-01-01' };
       const actualizado = { ...registroPropio, cargo: 'Docente' };
       repository.obtenerPorId.mockResolvedValue(registroPropio);
       repository.actualizar.mockResolvedValue(actualizado);
@@ -138,12 +140,96 @@ describe('PerfilRegistrosController', () => {
         {} as Request,
       );
 
+      // sin fechaFin = trabajo actual: se limpia la fecha anterior
       expect(repository.actualizar).toHaveBeenCalledWith(
         'experiencia-laboral',
         'experiencia-1',
-        datos,
+        expect.objectContaining({ ...datos, fechaFin: null }),
       );
       expect(resultado).toEqual(actualizado);
+    });
+
+    // T4.4: mismas validaciones que al crear
+    it('responde 400 con el mensaje del campo cuando un dato no es válido', async () => {
+      repository.obtenerPorId.mockResolvedValue(registroPropio);
+
+      const intento = controller.actualizarRegistro(
+        'experiencia-laboral',
+        'experiencia-1',
+        { empresa: 'UMSS', cargo: 'Docente', fechaInicio: '2024-05-01', fechaFin: '2024-01-01' },
+        {} as Request,
+      );
+
+      await expect(intento).rejects.toBeInstanceOf(BadRequestException);
+      await expect(intento).rejects.toMatchObject({
+        response: { message: ['La fecha de fin no puede ser anterior a la fecha de inicio'] },
+      });
+      expect(repository.actualizar).not.toHaveBeenCalled();
+    });
+
+    describe('formación académica', () => {
+      const formacionPropia: Registro = {
+        id: 'formacion-1',
+        idTitulado: TITULADO_ID,
+        fechaCreacion: '2026-10-01',
+        institucion: 'UMSS',
+        titulo: 'Licenciatura en Informática',
+        anioEgreso: 2023,
+      };
+      const otraFormacion: Registro = {
+        id: 'formacion-2',
+        idTitulado: TITULADO_ID,
+        fechaCreacion: '2026-10-02',
+        institucion: 'UMSA',
+        titulo: 'Maestría',
+        anioEgreso: 2025,
+      };
+      const datos = {
+        institucion: 'UMSS',
+        titulo: 'Licenciatura en Informática',
+        grado: 'Licenciatura',
+        anioEgreso: 2023,
+      };
+
+      beforeEach(() => {
+        repository.obtenerPorId.mockResolvedValue(formacionPropia);
+        repository.listar.mockResolvedValue([formacionPropia, otraFormacion]);
+        repository.actualizar.mockResolvedValue({ ...formacionPropia, grado: 'Licenciatura' });
+      });
+
+      it('guardar sin cambiar los datos clave no cuenta como duplicado de sí mismo', async () => {
+        await expect(
+          controller.actualizarRegistro('formacion-academica', 'formacion-1', datos, {} as Request),
+        ).resolves.toBeDefined();
+        expect(repository.actualizar).toHaveBeenCalledTimes(1);
+      });
+
+      it('responde 409 si queda igual a otra formación del mismo titulado (sin importar mayúsculas ni espacios)', async () => {
+        const intento = controller.actualizarRegistro(
+          'formacion-academica',
+          'formacion-1',
+          { ...datos, institucion: '  umsa ', titulo: 'MAESTRÍA'.toLowerCase(), anioEgreso: 2025 },
+          {} as Request,
+        );
+
+        await expect(intento).rejects.toBeInstanceOf(ConflictException);
+        await expect(intento).rejects.toMatchObject({
+          response: { message: 'La formación académica ya se encuentra registrada.' },
+        });
+        expect(repository.actualizar).not.toHaveBeenCalled();
+      });
+
+      it('responde 400 si el año de egreso es posterior al actual', async () => {
+        await expect(
+          controller.actualizarRegistro(
+            'formacion-academica',
+            'formacion-1',
+            { ...datos, anioEgreso: new Date().getFullYear() + 1 },
+            {} as Request,
+          ),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(repository.actualizar).not.toHaveBeenCalled();
+      });
     });
 
     it('responde 404 cuando el registro no existe', async () => {
