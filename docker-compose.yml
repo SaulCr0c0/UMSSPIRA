@@ -7,16 +7,24 @@ services:
       - "6379:6379"
 
   db:
-    image: postgres:15-alpine
+    image: umsspira-postgres:15-alpine
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in the root .env file}
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
+    volumes:
       - db_data:/var/lib/postgresql/data
-      - ./supabase/migrations/0001_esquema_principal.sql:/docker-entrypoint-initdb.d/0001_esquema_principal.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   db_data:
