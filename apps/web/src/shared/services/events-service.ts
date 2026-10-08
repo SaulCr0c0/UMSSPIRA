@@ -6,6 +6,10 @@ import type {
 
 import { apiClient } from './api-client';
 
+export function getEventCatalog(): Promise<EventItem[]> {
+  return apiClient<EventItem[]>('/api/events/catalog');
+}
+
 export function createEvent(
   event: CreateEventDto,
   userId?: string,

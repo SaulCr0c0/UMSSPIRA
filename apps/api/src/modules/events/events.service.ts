@@ -255,6 +255,28 @@ export class EventsService {
     );
   }
 
+  async getEventById(eventId: string): Promise<EventItem> {
+    const { data, error } = await supabase
+      .from('evento')
+      .select('*')
+      .eq('id', eventId)
+      .maybeSingle();
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Error al consultar el evento: ${error.message}`,
+      );
+    }
+
+    if (!data) {
+      throw new NotFoundException(
+        'No se encontró el evento solicitado',
+      );
+    }
+
+    return this.mapEventRow(data);
+  }
+
   private async getOwnedEvent(
     eventId: string,
     userId: string,

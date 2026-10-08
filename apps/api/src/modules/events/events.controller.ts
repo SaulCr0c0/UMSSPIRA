@@ -32,6 +32,11 @@ export class EventsController {
     );
   }
 
+  @Get('catalog')
+  async getCatalog() {
+    return this.eventsService.getCatalog();
+  }
+
   @Get('admin')
   async getAdminEvents(
     @Headers('x-user-id') userId: string,
@@ -52,6 +57,13 @@ export class EventsController {
       eventId,
       userId,
     );
+  }
+
+  @Get(':id')
+  async getEventById(
+    @Param('id') eventId: string,
+  ) {
+    return this.eventsService.getEventById(eventId);
   }
 
   @Patch('admin/:id')
