@@ -3,7 +3,7 @@
  * Solo se ejecuta en el navegador y si este soporta Service Workers.
  */
 
-type DeviceProfile = 'desktop' | 'default';
+type DeviceProfile = 'desktop' | 'mobile' | 'default';
 
 let isReloading = false;
 
@@ -39,8 +39,13 @@ function listenForUpdates(registration: ServiceWorkerRegistration): void {
   });
 }
 
+// Móvil = pantalla táctil sin mouse ni hover
 // Escritorio = pantalla grande y puntero preciso (mouse)
 function detectDeviceProfile(): DeviceProfile {
+  const isTouchOnly =
+    window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(hover: none)').matches;
+  if (isTouchOnly) return 'mobile';
+
   const isLargeScreen = window.matchMedia('(min-width: 1024px)').matches;
   const hasMouse = window.matchMedia('(pointer: fine)').matches;
   return isLargeScreen && hasMouse ? 'desktop' : 'default';
