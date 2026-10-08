@@ -38,6 +38,8 @@ export interface UpdateCompanyRequest {
   tamanoEmpresa?: string;
   sitioWeb?: string;
   correo?: string;
+  telefono?: string;
+  direccion?: string;
 }
 
 /**
