@@ -9,6 +9,7 @@
     "dev": "nest start --watch",
     "dev:local": "SUPABASE_ENV=local nest start --watch",
     "build": "nest build",
+    "test": "npm run build && node --test \"dist/**/*.spec.js\"",
     "test:interests": "npm run build && node --test test/mentorship-interests.e2e.cjs",
     "test:profile-info": "npm run build && node --test test/mentorship-profile-information.test.cjs",
     "lint": "eslint src --ext .ts",
