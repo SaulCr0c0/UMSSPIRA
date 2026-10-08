@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   Min,
@@ -19,14 +20,14 @@ export class SubmitRegistrationDto {
   sessionToken!: string;
 
   @Transform(trim)
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  fechaTitulacion!: string;
+  fechaTitulacion?: string;
 
   @Transform(trim)
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  fechaIngreso!: string;
+  fechaIngreso?: string;
 
   @IsBoolean()
   deseaMentor!: boolean;

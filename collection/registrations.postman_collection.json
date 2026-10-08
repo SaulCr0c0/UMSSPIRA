@@ -73,6 +73,14 @@
     {
       "key": "rejectedSis",
       "value": "201900002"
+    },
+    {
+      "key": "verifiedSessionToken",
+      "value": ""
+    },
+    {
+      "key": "duplicateSessionToken",
+      "value": ""
     }
   ],
   "item": [
@@ -1545,9 +1553,234 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Antes de correr: en redis-cli ejecuta  DEL registration:session:<sessionToken>   (o EXPIRE ... 1)",
+                  "// Antes de correr: en redis-cli ejecuta  DEL registration-session:<sessionToken>  (o EXPIRE ... 1)",
                   "pm.test('410 Gone tras vencer el TTL', () => pm.response.to.have.status(410));"
                 ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+  {
+  "name": "CA-03 - Envío de solicitud",
+  "item": [
+    {
+      "name": "Submit válido - 201 Created",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/registrations/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionToken\": \"{{verifiedSessionToken}}\",\n  \"deseaMentor\": true,\n  \"tipoDocumento\": \"titulo_provision_nacional\",\n  \"rutaStorage\": \"documents/{{verifiedSessionToken}}/titulo.pdf\",\n  \"sizeBytes\": 1048576\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "pm.test('Devuelve datos de la solicitud registrada', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('data');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit con payload inválido - 400 Bad Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/registrations/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionToken\": \"{{verifiedSessionToken}}\",\n  \"deseaMentor\": true,\n  \"tipoDocumento\": \"titulo_provision_nacional\",\n  \"rutaStorage\": \"documents/test/titulo.pdf\",\n  \"sizeBytes\": 0\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit con sesión inexistente - 410 Gone",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/registrations/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionToken\": \"{{unknownToken}}\",\n  \"deseaMentor\": true,\n  \"tipoDocumento\": \"titulo_provision_nacional\",\n  \"rutaStorage\": \"documents/test/titulo.pdf\",\n  \"sizeBytes\": 1048576\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('410 Gone', () => pm.response.to.have.status(410));",
+              "pm.test('Indica que el registro venció', () => {",
+              "  pm.expect(pm.response.json().message).to.include('desde el inicio');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit con tipo de documento inválido - 400 Bad Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/registrations/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionToken\": \"{{verifiedSessionToken}}\",\n  \"deseaMentor\": true,\n  \"tipoDocumento\": \"documento_inexistente\",\n  \"rutaStorage\": \"documents/test/titulo.pdf\",\n  \"sizeBytes\": 1048576\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('Indica tipo de documento inválido', () => {",
+              "  pm.expect(pm.response.json().message).to.include('tipo de archivo');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit duplicado al finalizar - 409 Conflict",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/registrations/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "registrations",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionToken\": \"{{duplicateSessionToken}}\",\n  \"deseaMentor\": false,\n  \"tipoDocumento\": \"titulo_provision_nacional\",\n  \"rutaStorage\": \"documents/test/titulo.pdf\",\n  \"sizeBytes\": 1048576\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+              ]
               }
             }
           ]

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../../shared/lib/supabase';
 type SubmitRegistrationData = {
   idCarrera: string;
@@ -6,8 +6,8 @@ type SubmitRegistrationData = {
   apellido: string;
   telefono: string;
   email: string;
-  fechaTitulacion: string;
-  fechaIngreso: string;
+  fechaTitulacion: string | null;
+  fechaIngreso: string | null;
   ci: string;
   extensionCi: string;
   expedidoEn: string;
@@ -61,53 +61,72 @@ export class RegistrationsRepository {
   }
 
   async submitRegistration(data: SubmitRegistrationData) {
-  const { data: tiposArchivo, error: tipoError } =
-    await getSupabaseClient()
-      .from('tipo_archivo')
-      .select('id, nombre');
+    const tiposDocumento: Record<string, string> = {
+      titulo_provision_nacional: 'Título en Provisión Nacional',
+      diploma_academico: 'Diploma Académico',
+      certificado_egreso: 'Certificado de Egreso',
+    };
 
-  if (tipoError) throw tipoError;
+    const inputTipoDocumento = data.tipoDocumento.trim().toLowerCase();
 
-  const tipoArchivo = (tiposArchivo ?? []).find(
-    (row) =>
-      String(row.nombre ?? '').trim().toLowerCase() ===
-      data.tipoDocumento.trim().toLowerCase(),
-  );
+    const nombreDocumento =
+      tiposDocumento[inputTipoDocumento] ?? data.tipoDocumento.trim();
 
-  if (!tipoArchivo) {
-    throw new Error(
-      `No existe el tipo de archivo: ${data.tipoDocumento}`,
-    );
+    const { data: tiposArchivo, error: tipoError } =
+      await getSupabaseClient()
+        .from('tipo_archivo')
+        .select('id, nombre');
+
+    if (tipoError) {
+      throw tipoError;
+    }
+
+    const tipoArchivo = (tiposArchivo ?? []).find((row) => {
+      const nombreDb = String(row.nombre ?? '')
+        .trim()
+        .toLowerCase();
+
+      return (
+        nombreDb === inputTipoDocumento ||
+        nombreDb === nombreDocumento.toLowerCase()
+      );
+    });
+
+    if (!tipoArchivo) {
+      throw new BadRequestException(
+        `No existe el tipo de archivo: ${data.tipoDocumento}`,
+      );
+    }
+
+    const { data: result, error } =
+      await getSupabaseClient().rpc(
+        'fun_registrar_solicitud',
+        {
+          p_id_carrera: data.idCarrera,
+          p_nombre: data.nombre,
+          p_apellido: data.apellido,
+          p_telefono: data.telefono,
+          p_email: data.email,
+          p_fecha_titulacion: data.fechaTitulacion,
+          p_fecha_ingreso: data.fechaIngreso,
+          p_ci: data.ci,
+          p_extension_ci: data.extensionCi || null,
+          p_expedido_en: data.expedidoEn,
+          p_anio_egreso: data.anioEgreso,
+          p_cod_sis: Number(data.codigoSis),
+          p_desea_mentor: data.deseaMentor,
+          p_id_tipo_archivo: tipoArchivo.id,
+          p_tamanio_mb: data.tamanioMb,
+          p_ruta_storage: data.rutaStorage,
+        },
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    return result;
   }
-
-  const { data: result, error } =
-    await getSupabaseClient().rpc(
-      'fun_registrar_solicitud',
-      {
-        p_id_carrera: data.idCarrera,
-        p_nombre: data.nombre,
-        p_apellido: data.apellido,
-        p_telefono: data.telefono,
-        p_email: data.email,
-        p_fecha_titulacion: data.fechaTitulacion,
-        p_fecha_ingreso: data.fechaIngreso,
-        p_ci: data.ci,
-        p_extension_ci: data.extensionCi || null,
-        p_expedido_en: data.expedidoEn,
-        p_anio_egreso: data.anioEgreso,
-        p_cod_sis: Number(data.codigoSis),
-        p_desea_mentor: data.deseaMentor,
-        p_id_tipo_archivo: tipoArchivo.id,
-        p_tamanio_mb: data.tamanioMb,
-        p_ruta_storage: data.rutaStorage,
-      },
-    );
-
-  if (error) throw error;
-
-  return result;
-}
-
   private async findActiveApplicationByDetailIds(detailIds: string[]) {
     if (detailIds.length === 0) return null;
     const { data, error } = await getSupabaseClient()

@@ -78,54 +78,77 @@ export class RegistrationsService {
   }
 
   async submitRegistration(dto: SubmitRegistrationDto) {
-  const { raw } = await this.readSession(sessionKey(dto.sessionToken));
+    const { raw } = await this.readSession(sessionKey(dto.sessionToken));
 
-  if (!raw) {
-    throw new GoneException({
-      statusCode: 410,
-      message: EXPIRED_MESSAGE,
-    });
+    if (!raw) {
+      throw new GoneException({
+        statusCode: 410,
+        message: EXPIRED_MESSAGE,
+      });
+    }
+
+    const session = JSON.parse(raw) as CreateRegistrationDataDto & {
+      isEmailVerified?: boolean;
+    };
+
+    if (session.isEmailVerified !== true) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'Debes verificar tu correo antes de enviar la solicitud',
+        });
+    }
+
+  // CA-03.6: volver a comprobar duplicados justo antes
+  // de registrar definitivamente la solicitud.
+    await this.withDataSource(() =>
+      this.duplicatesService.assertNoActiveApplication({
+        ci: session.ci,
+        complementoCi: session.complementoCi ?? '',
+        expedidoEn: session.expedidoEn,
+        correo: session.correo,
+        codigoSis: session.codigoSis,
+        }),
+    );
+
+    const tamanioMb = Math.max(
+      1,
+      Math.ceil(dto.sizeBytes / (1024 * 1024)),
+    );
+
+    const result = await this.withDataSource(() =>
+      this.registrationsRepository.submitRegistration({
+        idCarrera: session.carreraId,
+        nombre: session.nombres,
+        apellido: session.apellidos,
+        telefono: session.telefono,
+        email: session.correo,
+        fechaTitulacion: dto.fechaTitulacion ?? null,
+        fechaIngreso: dto.fechaIngreso ?? null,
+        ci: session.ci,
+        extensionCi: session.complementoCi ?? '',
+        expedidoEn: session.expedidoEn,
+        anioEgreso: session.anioEgreso,
+        codigoSis: session.codigoSis,
+        deseaMentor: dto.deseaMentor,
+        tipoDocumento: dto.tipoDocumento,
+        tamanioMb,
+        rutaStorage: dto.rutaStorage,
+      }),
+    );
+
+  // La solicitud ya fue registrada correctamente.
+  // Si Redis falla, no debemos convertir el registro exitoso
+  // en una respuesta de error.
+    try {
+      await redisClient.del(sessionKey(dto.sessionToken));
+    } catch (error) {
+      this.logger.error(
+        `No se pudo eliminar la sesion de registro: ${(error as Error).message}`,
+      );
+    }
+
+    return result;
   }
-
-  const session = JSON.parse(raw) as CreateRegistrationDataDto & {
-    isEmailVerified?: boolean;
-  };
-
-  if (session.isEmailVerified !== true) {
-    throw new BadRequestException({
-      statusCode: 400,
-      message: 'Debes verificar tu correo antes de enviar la solicitud',
-    });
-  }
-
-  const tamanioMb = Math.max(
-    1,
-    Math.ceil(dto.sizeBytes / (1024 * 1024)),
-  );
-
-  const result = await this.withDataSource(() =>
-    this.registrationsRepository.submitRegistration({
-      idCarrera: session.carreraId,
-      nombre: session.nombres,
-      apellido: session.apellidos,
-      telefono: session.telefono,
-      email: session.correo,
-      fechaTitulacion: dto.fechaTitulacion,
-      fechaIngreso: dto.fechaIngreso,
-      ci: session.ci,
-      extensionCi: session.complementoCi ?? '',
-      expedidoEn: session.expedidoEn,
-      anioEgreso: session.anioEgreso,
-      codigoSis: session.codigoSis,
-      deseaMentor: dto.deseaMentor,
-      tipoDocumento: dto.tipoDocumento,
-      tamanioMb,
-      rutaStorage: dto.rutaStorage,
-    }),
-  );
-
-  return result;
-}
 
   private async readSession(key: string): Promise<{ raw: string | null; ttl: number }> {
     try {
