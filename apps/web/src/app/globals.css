@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --umss-navy: #1E3A5F;
+  --umss-orange: #E85D3A;
+  --umss-cream: #F5F0E8;
+  --umss-dark: #1A1A2E;
+}
+
+html, body {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  color: #1A1A2E;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
