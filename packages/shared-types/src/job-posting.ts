@@ -1,3 +1,4 @@
+
 // packages/shared-types/src/job-posting.ts
 
 export interface JobPosting {

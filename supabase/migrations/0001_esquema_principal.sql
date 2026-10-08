@@ -60,3 +60,4 @@ CREATE TABLE participante_conversacion ( id UUID PRIMARY KEY DEFAULT uuid_genera
 CREATE TABLE mensaje ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), id_conversacion UUID, emisor_id UUID, contenido TEXT, tipo_contenido VARCHAR(50), archivo_url TEXT, estado_envio VARCHAR(20), fecha_mensaje TIMESTAMP, CONSTRAINT fk_mensaje_conversacion FOREIGN KEY (id_conversacion) REFERENCES conversacion(id), CONSTRAINT fk_mensaje_emisor FOREIGN KEY (emisor_id) REFERENCES usuario(usuario_id) );
 CREATE TABLE mensaje_estado ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), id_mensaje UUID, usuario_id UUID, estado VARCHAR(20), fecha TIMESTAMP, CONSTRAINT fk_mensaje_estado_mensaje FOREIGN KEY (id_mensaje) REFERENCES mensaje(id), CONSTRAINT fk_mensaje_estado_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) );
 -- ============================================================ -- FIN DEL SCRIPT -- ============================================================
+
