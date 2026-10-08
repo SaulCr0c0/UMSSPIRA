@@ -39,13 +39,16 @@ function fakeRepository(solicitudes: ApplicationRow[], usingMock = true): Gradua
 }
 
 describe('GraduatesReportService', () => {
-  it('devuelve los titulados del estado, ordenados por fecha y apellido, con los 9 datos', async () => {
+  it('con la base de datos ordena los titulados por fecha y apellido, con los 9 datos', async () => {
     const service = new GraduatesReportService(
-      fakeRepository([
-        application('Vargas', 'verificado', '2026-09-12'),
-        application('Arnez', 'verificado', '2026-09-12'),
-        application('López', 'verificado', '2026-09-10'),
-      ]),
+      fakeRepository(
+        [
+          application('Vargas', 'verificado', '2026-09-12'),
+          application('Arnez', 'verificado', '2026-09-12'),
+          application('López', 'verificado', '2026-09-10'),
+        ],
+        false,
+      ),
     );
 
     const report = await service.getGraduatesReport('verified', SISTEMAS.id);
@@ -135,6 +138,43 @@ describe('GraduatesReportService con los datos de prueba', () => {
     assert.equal(verified.careerName, 'Ingeniería de Sistemas');
     assert.equal(verified.total, 72);
     assert.equal(observed.total, 18);
+  });
+
+  it('empieza con los titulados de la tabla de /reports, en el mismo orden y con los mismos datos', async () => {
+    const service = new GraduatesReportService(new GraduatesReportRepository());
+
+    const verified = await service.getGraduatesReport('verified');
+    const observed = await service.getGraduatesReport('observed');
+
+    // Los 7 verificados y los 4 observados de la tabla de la HU1-HU3 van primero
+    assert.deepEqual(
+      verified.graduates.slice(0, 7).map((row) => row.sisCode),
+      ['201804921', '201901844', '201708301', '201903490', '201704612', '201809003', '201901842'],
+    );
+    assert.deepEqual(
+      observed.graduates.slice(0, 4).map((row) => row.sisCode),
+      ['201709122', '201805510', '201802119', '201907723'],
+    );
+    assert.deepEqual(verified.graduates[0], {
+      number: 1,
+      fullName: 'Morales Albarracín, Valeria Sofía',
+      sisCode: '201804921',
+      phone: '+591 79519163',
+      email: 'valeria.morales@postgrado.uc.edu',
+      admissionDate: '12/02/2018',
+      graduationDate: '24/10/2024',
+      careerDuration: '6 años 8 meses',
+      statusDate: '25/11/2025',
+    });
+  });
+
+  it('sin el texto de la tabla, calcula la duración con las fechas', async () => {
+    const row = application('Vargas', 'verificado', '2026-09-12');
+    const service = new GraduatesReportService(fakeRepository([row]));
+
+    const report = await service.getGraduatesReport('verified', SISTEMAS.id);
+
+    assert.equal(report.graduates[0].careerDuration, '7 años, 9 meses');
   });
 
   it('con la carrera de Informática trae sólo sus 10 verificados', async () => {

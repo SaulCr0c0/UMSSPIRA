@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { GraduateReportStatus } from './data/graduate-report-data-source';
 import { GraduateCsvRecord } from './types/graduate-csv-record.type';
 
 export interface GeneratedCsvFile {
@@ -13,43 +14,44 @@ export interface GeneratedCsvFile {
 @Injectable()
 export class GraduateCsvService {
   private readonly headers = [
-    'Número',
+    'Nro',
+    'Número de registro',
     'Nombre completo',
-    'Carrera',
     'Código SIS',
     'Teléfono',
     'Correo electrónico',
     'Fecha de ingreso',
-    'Duración de la carrera',
-    'Fecha de egreso',
     'Fecha de titulación',
-    'Fecha de verificación',
+    'Duración de estudio',
+    'Fecha de revisión',
+    'Motivo de rechazo',
+    'Estado',
   ];
 
   generate(
     records: GraduateCsvRecord[],
     generationDate: Date = new Date(),
+    status?: GraduateReportStatus,
   ): GeneratedCsvFile {
     if (!Array.isArray(records) || records.length === 0) {
-      throw new BadRequestException(
-        'No hay egresados verificados para exportar',
-      );
+      throw new BadRequestException(this.buildEmptyMessage(status));
     }
 
     try {
       const rows = records.map((record) =>
         [
           record.numero,
+          record.numeroRegistro,
           record.nombreCompleto,
-          record.carrera,
           record.codigoSis,
           record.telefono,
           record.correoElectronico,
           record.fechaIngreso,
-          record.duracionCarrera,
-          record.fechaEgreso,
           record.fechaTitulacion,
-          record.fechaVerificacion,
+          record.duracionEstudio,
+          record.fechaRevision,
+          record.motivoRechazo,
+          record.estado,
         ]
           .map((value) => this.escapeValue(value))
           .join(','),
@@ -59,26 +61,37 @@ export class GraduateCsvService {
         .map((header) => this.escapeValue(header))
         .join(',');
 
-      /*
-       * Se usa CRLF para una mejor compatibilidad con Excel.
-       * El carácter \uFEFF corresponde al BOM requerido para UTF-8.
-       */
       const csvContent = `\uFEFF${[headerRow, ...rows].join('\r\n')}\r\n`;
 
       return {
         buffer: Buffer.from(csvContent, 'utf8'),
-        filename: this.buildFilename(generationDate),
+        filename: this.buildFilename(generationDate, status),
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException(
         'No se pudo generar el archivo CSV. Intente nuevamente.',
       );
     }
   }
 
+  private buildEmptyMessage(status?: GraduateReportStatus): string {
+    if (status === 'VERIFICADO') {
+      return 'No hay egresados verificados para exportar';
+    }
+
+    if (status === 'OBSERVADO') {
+      return 'No hay egresados observados para exportar';
+    }
+
+    return 'No hay egresados para exportar';
+  }
+
   private escapeValue(value: string | number): string {
     const text = String(value ?? '');
-
     const escapedText = text.replace(/"/g, '""');
 
     const requiresQuotes =
@@ -90,11 +103,21 @@ export class GraduateCsvService {
     return requiresQuotes ? `"${escapedText}"` : escapedText;
   }
 
-  private buildFilename(date: Date): string {
+  private buildFilename(
+    date: Date,
+    status?: GraduateReportStatus,
+  ): string {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
 
-    return `nomina-egresados-verificados-${day}${month}${year}.csv`;
+    const suffix =
+      status === 'VERIFICADO'
+        ? '-verificados'
+        : status === 'OBSERVADO'
+          ? '-observados'
+          : '';
+
+    return `nomina-egresados${suffix}-${day}${month}${year}.csv`;
   }
 }

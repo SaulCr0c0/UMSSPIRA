@@ -4,6 +4,7 @@ import { ChevronDown, Download, FileText, LoaderCircle, X } from 'lucide-react';
 import { useState } from 'react';
 import {
   GraduateCsvFilters,
+  GraduateCsvStatus,
   requestGraduateCsv,
   triggerGraduateCsvDownload,
 } from './graduate-csv.client';
@@ -20,6 +21,24 @@ type Feedback =
   | { type: 'success'; text: string }
   | null;
 
+function getStatusText(status: GraduateCsvStatus): string {
+  if (status === 'VERIFICADO') return 'verificados';
+  if (status === 'OBSERVADO') return 'observados';
+  return '';
+}
+
+function getEmptyMessage(status: GraduateCsvStatus): string {
+  if (status === 'VERIFICADO') {
+    return 'No hay titulados verificados para exportar';
+  }
+
+  if (status === 'OBSERVADO') {
+    return 'No hay titulados observados para exportar';
+  }
+
+  return 'No hay titulados para exportar';
+}
+
 export function GraduateCsvExport({
   totalRecords,
   filters = {},
@@ -31,6 +50,12 @@ export function GraduateCsvExport({
   const [isGenerating, setIsGenerating] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
 
+  const status = filters.status ?? 'TODOS';
+  const statusText = getStatusText(status);
+  const recordsDescription = statusText
+    ? `${totalRecords} titulados ${statusText}`
+    : `${totalRecords} titulados`;
+
   const handleCsvSelection = () => {
     setMenuOpen(false);
     setFeedback(null);
@@ -38,7 +63,7 @@ export function GraduateCsvExport({
     if (totalRecords <= 0) {
       setFeedback({
         type: 'error',
-        text: 'No hay titulados verificados para exportar',
+        text: getEmptyMessage(status),
       });
       return;
     }
@@ -115,9 +140,11 @@ export function GraduateCsvExport({
           className="absolute right-0 z-20 mt-2 w-full overflow-hidden rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] shadow-lg"
         >
           <div className="border-b border-[#C9C1B1] px-4 py-3">
-            <p className="font-semibold text-[#1B2632]">Formato de exportación</p>
+            <p className="font-semibold text-[#1B2632]">
+              Formato de exportación
+            </p>
             <p className="mt-1 text-sm text-[#2C3B4D]">
-              {totalRecords} titulados verificados serán exportados.
+              {recordsDescription} serán exportados.
             </p>
           </div>
 
@@ -190,8 +217,7 @@ export function GraduateCsvExport({
                   Exportar nómina en CSV
                 </h2>
                 <p className="mt-2 text-[#2C3B4D]">
-                  Se exportarán {totalRecords} titulados verificados con los
-                  filtros activos.
+                  Se exportarán {recordsDescription} con los filtros activos.
                 </p>
               </div>
 
