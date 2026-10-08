@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { emailVerificationService } from '../services/email-verification.service';
+import { useRegistrationStore } from '@/modules/registration/frontend/store';
 
 /**
  * Enmascara un correo electrónico para proteger la privacidad según CA-02.1.
@@ -97,7 +98,15 @@ export const useEmailVerificationStore = create<EmailVerificationState>((set, ge
   setCooldownSeconds: (cooldownSeconds: number) => set({ cooldownSeconds }),
 
   verifyCode: async (onSuccess) => {
-    const { email, otpDigits, sessionToken, attempts, isExpired, maxAttemptsReached } = get();
+    let { email, otpDigits, sessionToken, attempts, isExpired, maxAttemptsReached } = get();
+
+    if (!sessionToken && typeof window !== 'undefined') {
+      const regSession = useRegistrationStore.getState().sessionToken;
+      if (regSession) {
+        sessionToken = regSession;
+        set({ sessionToken: regSession });
+      }
+    }
 
     if (isExpired) {
       set({ error: 'El código expiró. Solicita uno nuevo' });
@@ -163,7 +172,20 @@ export const useEmailVerificationStore = create<EmailVerificationState>((set, ge
   },
 
   resendCode: async () => {
-    const { email, sessionToken } = get();
+    let { email, sessionToken } = get();
+
+    if (!sessionToken && typeof window !== 'undefined') {
+      const regState = useRegistrationStore.getState();
+      if (regState.sessionToken) {
+        sessionToken = regState.sessionToken;
+        set({ sessionToken });
+      }
+      if (regState.personalData?.correo) {
+        email = regState.personalData.correo;
+        set({ email, maskedEmail: maskEmail(email) });
+      }
+    }
+
     set({ isResending: true, error: null });
 
     const response = await emailVerificationService.resendOtp({
@@ -181,6 +203,7 @@ export const useEmailVerificationStore = create<EmailVerificationState>((set, ge
         maxAttemptsReached: false,
         error: null,
         cooldownSeconds: response.cooldownSeconds || 30,
+        ...(response.maskedEmail ? { maskedEmail: response.maskedEmail } : {}),
       });
       return true;
     }
