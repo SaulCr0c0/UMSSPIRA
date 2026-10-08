@@ -22,7 +22,7 @@ BEGIN
         SELECT 1
         FROM detalle_solicitud ds
         INNER JOIN solicitud s ON s.id_detalle_solicitud = ds.id
-        WHERE s.estado <> 'Rechazado'   -- CA-01.5
+       WHERE LOWER(s.estado) NOT IN ('rechazado', 'rechazada')  -- CA-01.5
           AND (
                 (ds.ci = p_ci
                  AND COALESCE(ds.extension_ci, '') = COALESCE(p_extension_ci, ''))
