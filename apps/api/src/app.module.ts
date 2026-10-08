@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { JobPostingsModule } from './modules/job-postings/job-postings.module';
-import { MentorshipModule } from './modules/mentorship/mentorship.module';
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { MentorshipModule } from './modules/mentorship/mentorship.module';
     AuthModule,
     CompaniesModule,
     JobPostingsModule,
-    MentorshipModule,
   ],
   controllers: [],
   providers: [],
