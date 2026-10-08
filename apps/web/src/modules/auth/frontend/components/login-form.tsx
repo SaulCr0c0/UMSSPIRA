@@ -149,15 +149,7 @@ export function LoginForm() {
         {fieldErrors.password && <p className="text-xs text-truffle-trouble">{fieldErrors.password}</p>}
       </div>
 
-      <label className="flex items-center gap-2.5 text-sm text-abyssal-blue">
-        <input
-          type="checkbox"
-          checked={remember}
-          onChange={(event) => setRemember(event.target.checked)}
-          className="h-[18px] w-[18px] accent-abyssal-blue"
-        />
-        Recordarme
-      </label>
+      
 
       {error && (
         <p role="alert" className="rounded-lg bg-truffle-trouble/10 px-3 py-2 text-sm text-truffle-trouble">
