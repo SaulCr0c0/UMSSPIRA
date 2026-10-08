@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { GraduationCap, Plus } from 'lucide-react';
+import { PREFIJOS_FORMACION, erroresDelBackend } from '@/modules/profile/validation/errores-api';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { type ErroresFormulario, validarFormacion } from '@/modules/profile/validation/reglas-perfil';
 import { ApiError } from '@/shared/services/api-client';
@@ -70,8 +71,16 @@ export function FormacionAcademicaForm({ formaciones, onAgregar, onErroresChange
       setDatos(VACIO);
       setIntentado(false);
     } catch (error) {
-      // 409: ya registrada; 400: el backend rechazó algún campo. En ambos casos se conservan los datos
-      setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la formación.');
+      // En cualquier error se conservan los datos del formulario
+      if (error instanceof ApiError && error.statusCode === 400) {
+        // 400: cada mensaje del backend va junto a su campo; los que no se reconocen quedan como error general
+        const { porCampo, generales } = erroresDelBackend(error.mensajes, PREFIJOS_FORMACION);
+        setErrores(porCampo);
+        setErrorServidor(generales.length > 0 ? generales.join(' ') : undefined);
+      } else {
+        // 409: ya registrada; también sin conexión u otros errores del servidor
+        setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la formación.');
+      }
     } finally {
       setEnviando(false);
     }

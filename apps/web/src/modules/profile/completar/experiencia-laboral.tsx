@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Briefcase } from 'lucide-react';
+import { PREFIJOS_EXPERIENCIA, erroresDelBackend } from '@/modules/profile/validation/errores-api';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { type ErroresFormulario, validarExperiencia } from '@/modules/profile/validation/reglas-perfil';
 import { ApiError } from '@/shared/services/api-client';
@@ -88,7 +89,15 @@ export function FormularioExperiencia({ experiencias, onAgregar, onErroresChange
       setTrabajoActual(false);
       setIntentado(false);
     } catch (error) {
-      setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la experiencia.');
+      // En cualquier error se conservan los datos del formulario
+      if (error instanceof ApiError && error.statusCode === 400) {
+        // 400: cada mensaje del backend va junto a su campo; los que no se reconocen quedan como error general
+        const { porCampo, generales } = erroresDelBackend(error.mensajes, PREFIJOS_EXPERIENCIA);
+        setErrores(porCampo);
+        setErrorServidor(generales.length > 0 ? generales.join(' ') : undefined);
+      } else {
+        setErrorServidor(error instanceof ApiError ? error.message : 'No se pudo guardar la experiencia.');
+      }
     } finally {
       setEnviando(false);
     }
