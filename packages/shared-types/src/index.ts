@@ -1,4 +1,6 @@
 export type PingResponse = { status: string; message: string; timestamp: string; };
 export * from './company';
 export * from './job-posting';
+
+export * from './mentor';
 export * from './events';
