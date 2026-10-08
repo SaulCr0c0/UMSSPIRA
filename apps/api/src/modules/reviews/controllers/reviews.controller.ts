@@ -1,4 +1,11 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '@umsspira/shared-types';
 import { AuthGuard, CurrentUser, RolesGuard } from '@/shared/guards';
 import { Roles } from '@/shared/guards/roles.decorator';
@@ -13,7 +20,7 @@ export class ReviewsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('administrador')
   async createReview(
-    @Param('id') applicationId: string,
+    @Param('id', ParseUUIDPipe) applicationId: string,
     @Body() dto: CreateReviewDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
