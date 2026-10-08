@@ -1,5 +1,6 @@
 import React from 'react';
-import  Navbar  from '@/shared/components/navbar';
+import { Navbar } from '@/shared/components/navbar'; // ← corregido: con llaves
+import { NavbarMovil } from '@/shared/components/movil/navbar-movil'; // ← TU PARTE
 import Image from 'next/image';
 import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
 
@@ -22,8 +23,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-white">
       
-      {/* Barra de Navegación Superior */}
-      <Navbar />
+      {/* Barra de Navegación Superior: escritorio (≥ 768px) */}
+      <div className="hidden md:block"> {/* ← TU PARTE */}
+        <Navbar />
+      </div>
+
+      {/* Barra de Navegación Superior: móvil (< 768px) */}
+      <div className="md:hidden"> {/* ← TU PARTE */}
+        <NavbarMovil />
+      </div>
 
       {/* Contenido Principal con contenedor fluido y adaptable a cualquier ancho */}
       <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex-grow space-y-8">
