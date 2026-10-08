@@ -28,6 +28,13 @@ const HTML_ESCAPES: Record<string, string> = {
   "'": '&#39;',
 };
 
+const REVIEW_APPROVED_SUBJECT = 'Tu solicitud fue aprobada';
+const REVIEW_OBSERVED_SUBJECT = 'Tu solicitud tiene observaciones';
+const REVIEW_REJECTED_SUBJECT = 'Tu solicitud no fue aprobada';
+const REVIEW_APPROVED_TEMPLATE = 'review-approved';
+const REVIEW_OBSERVED_TEMPLATE = 'review-observed';
+const REVIEW_REJECTED_TEMPLATE = 'review-rejected';
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
 }
@@ -78,6 +85,51 @@ export class MailService {
     await this.send({ to, subject: OTP_VERIFICATION_SUBJECT, html, text });
   }
 
+    /**
+   * Notifica la aprobación de la solicitud e incluye el código de activación.
+   * Lanza ServiceUnavailableException si falla el envío: quien lo llame debe
+   * capturarlo para no deshacer el dictamen.
+   */
+  async sendReviewApproved({
+    to,
+    fullName,
+    code,
+    expiresInHours,
+  }: SendReviewApprovedParams): Promise<void> {
+    await this.sendFromTemplate(to, REVIEW_APPROVED_SUBJECT, REVIEW_APPROVED_TEMPLATE, {
+      platformName: this.config.fromName,
+      greeting: this.greeting(fullName),
+      code,
+      expiresInHours: String(expiresInHours),
+    });
+  }
+
+  /** Notifica que la solicitud tiene observaciones a corregir. */
+  async sendReviewObserved({
+    to,
+    fullName,
+    observation,
+  }: SendReviewObservedParams): Promise<void> {
+    await this.sendFromTemplate(to, REVIEW_OBSERVED_SUBJECT, REVIEW_OBSERVED_TEMPLATE, {
+      platformName: this.config.fromName,
+      greeting: this.greeting(fullName),
+      observation,
+    });
+  }
+
+  /** Notifica el rechazo de la solicitud con su justificación. */
+  async sendReviewRejected({
+    to,
+    fullName,
+    justification,
+  }: SendReviewRejectedParams): Promise<void> {
+    await this.sendFromTemplate(to, REVIEW_REJECTED_SUBJECT, REVIEW_REJECTED_TEMPLATE, {
+      platformName: this.config.fromName,
+      greeting: this.greeting(fullName),
+      justification,
+    });
+  }
+
   private async send(message: OutgoingMessage): Promise<void> {
     try {
       await this.transporter.sendMail({
@@ -90,6 +142,25 @@ export class MailService {
       this.logger.error(`Falló el envío del correo "${message.subject}": ${reason}`);
       throw new ServiceUnavailableException(SEND_ERROR_MESSAGE);
     }
+  }
+
+    private async sendFromTemplate(
+    to: string,
+    subject: string,
+    templateName: string,
+    variables: Record<string, string>,
+  ): Promise<void> {
+    const [html, text] = await Promise.all([
+      this.renderTemplate(`${templateName}.html`, variables, true),
+      this.renderTemplate(`${templateName}.txt`, variables, false),
+    ]);
+
+    await this.send({ to, subject, html, text });
+  }
+
+  private greeting(fullName?: string): string {
+    const name = fullName?.trim();
+    return name ? `Hola, ${name}:` : 'Hola:';
   }
 
   private async renderTemplate(
@@ -116,4 +187,24 @@ export class MailService {
     this.templateCache.set(fileName, content);
     return content;
   }
+  
 }
+
+export type SendReviewApprovedParams = {
+  to: string;
+  fullName?: string;
+  code: string;
+  expiresInHours: number;
+};
+
+export type SendReviewObservedParams = {
+  to: string;
+  fullName?: string;
+  observation: string;
+};
+
+export type SendReviewRejectedParams = {
+  to: string;
+  fullName?: string;
+  justification: string;
+};
