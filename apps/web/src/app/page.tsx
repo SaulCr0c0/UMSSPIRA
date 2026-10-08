@@ -1,249 +1,269 @@
 import React from 'react';
 import { Navbar } from '@/shared/components/navbar';
 import Image from 'next/image';
-import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
+import {
+  Search,
+  Calendar,
+  Briefcase,
+  Star,
+  Users,
+  ChevronRight,
+  Bookmark,
+} from 'lucide-react';
 
-// Importamos tu imagen de fondo principal
 import umssBg from '@/shared/assets/images/14sept.webp';
-
-// 📂 Importa aquí las imágenes para las 3 tarjetas de eventos (ajusta las rutas según tus archivos reales)
 import eventImg1 from '@/shared/assets/images/reencuentro.jpg';
 import eventImg2 from '@/shared/assets/images/networking.jpg';
 import eventImg3 from '@/shared/assets/images/beneficios.jpg';
 
-export default function Home() {
-  // =====================================================================
-  // APARTADO DE CONFIGURACIÓN DEL BANNER (¡Modifica a tu gusto aquí!)
-  // =====================================================================
-  const backgroundOpacity = "opacity-100"; // Intensidad de la transparencia
-  const imagePosition = "object-center";    // Posición interna
-  const imageZoom = "scale-100";            // Zoom interno
+const shortcuts = [
+  {
+    title: 'Eventos',
+    description: 'Participa en los próximos eventos y actividades.',
+    icon: Calendar,
+    color: 'bg-amber-50 text-amber-600',
+  },
+  {
+    title: 'Bolsa de trabajo',
+    description: 'Encuentra nuevas oportunidades laborales.',
+    icon: Briefcase,
+    color: 'bg-blue-50 text-blue-600',
+  },
+  {
+    title: 'Beneficios',
+    description: 'Accede a descuentos y convenios exclusivos.',
+    icon: Star,
+    color: 'bg-amber-50 text-amber-600',
+  },
+  {
+    title: 'Comunidad',
+    description: 'Conecta con otros egresados.',
+    icon: Users,
+    color: 'bg-slate-100 text-slate-700',
+  },
+];
 
+const events = [
+  {
+    title: 'Reencuentro de Egresados',
+    image: eventImg1,
+    day: '12',
+    month: 'OCT',
+    location: 'Auditorio UMSS',
+    time: '8:00 p.m. - 12:00 p.m.',
+  },
+  {
+    title: 'Charla de Networking',
+    image: eventImg2,
+    day: '25',
+    month: 'OCT',
+    location: 'Aula Magna',
+    time: '8:00 p.m. - 7:00 p.m.',
+  },
+  {
+    title: 'Feria de Beneficios',
+    image: eventImg3,
+    day: '08',
+    month: 'NOV',
+    location: 'Campus UMSS',
+    time: '9:30 p.m. - 4:00 p.m.',
+  },
+];
+
+export default function Home() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans">
-      
-      {/* Barra de Navegación Superior */}
+    <div className="flex min-h-screen min-w-0 flex-col bg-[#FDFBF7] font-sans text-slate-900">
       <Navbar />
 
-      {/* Contenido Principal con fondo claro */}
-      <main className="flex-1 min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">        
-        {/* Banner Principal PWA Shell */}
-        <section className="relative w-full rounded-2xl overflow-hidden bg-[#111827] text-white p-8 md:p-12 shadow-lg">
-          
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <Image 
-              src={umssBg} 
-              alt="Fondo Institucional UMSS" 
-              fill 
-              className={`object-cover ${imagePosition} ${imageZoom} ${backgroundOpacity} transition-transform duration-500`}
+      <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 space-y-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {/* Banner principal */}
+        <section className="relative w-full overflow-hidden rounded-2xl bg-[#111827] p-4 text-white shadow-lg sm:p-8 md:p-12">
+          <div className="absolute inset-0">
+            <Image
+              src={umssBg}
+              alt="Fondo Institucional UMSS"
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="object-cover object-center"
               priority
             />
-            <div className="absolute inset-0 bg-[#0F172A]/60"></div>
+            <div className="absolute inset-0 bg-[#0F172A]/60" />
           </div>
 
-          <div className="relative z-10 max-w-2xl space-y-4">
-            <h3 className="text-sm font-medium text-slate-300 font-sans">Bienvenido a</h3>
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">
+          <div className="relative z-10 w-full min-w-0 max-w-2xl space-y-4">
+            <h3 className="text-sm font-medium text-slate-300">
+              Bienvenido a
+            </h3>
+
+            <h1 className="break-words font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
               UMSS<span className="text-amber-500">PIRA</span>
             </h1>
-            <p className="text-slate-300 text-sm md:text-base font-normal font-sans">
+
+            <p className="text-sm text-slate-300 md:text-base">
               Tu comunidad, siempre conectada.
             </p>
 
-            {/* Barra de Búsqueda Integrada */}
+            {/* Buscador adaptable */}
             <div className="pt-2">
-              <div className="relative max-w-xl">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <Search className="w-4 h-4" />
-                </span>
-                <input 
-                  type="text" 
-                  placeholder="Busque eventos, beneficios, empleos..." 
-                  className="w-full pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl text-sm focus:outline-none shadow-sm placeholder:text-slate-400 font-sans"
+              <label
+                htmlFor="home-search"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Buscar eventos, beneficios y empleos
+              </label>
+
+              <div className="relative w-full min-w-0 max-w-xl">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  id="home-search"
+                  name="search"
+                  type="search"
+                  placeholder="Buscar..."
+                  className="block min-h-11 w-full min-w-0 rounded-xl bg-white py-3 pl-10 pr-3 text-base text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Tarjetas de Navegación Rápida (4 Tarjetas Superiores) */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Tarjeta 1: Eventos */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-base font-sans">Eventos</h3>
-              <p className="text-xs text-slate-500 mt-1 font-sans">Participa en los próximos eventos y actividades.</p>
-            </div>
-          </div>
+        {/* Tarjetas de navegación rápida */}
+        <section
+          aria-label="Secciones de la plataforma"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {shortcuts.map((shortcut) => {
+            const Icon = shortcut.icon;
 
-          {/* Tarjeta 2: Bolsa de trabajo */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-base font-sans">Bolsa de trabajo</h3>
-              <p className="text-xs text-slate-500 mt-1 font-sans">Encuentra nuevas oportunidades laborales.</p>
-            </div>
-          </div>
+            return (
+              <div
+                key={shortcut.title}
+                className="flex min-w-0 flex-col justify-between space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${shortcut.color}`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
 
-          {/* Tarjeta 3: Beneficios */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                <Star className="w-5 h-5" />
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-base font-sans">Beneficios</h3>
-              <p className="text-xs text-slate-500 mt-1 font-sans">Accede a descuentos y convenios exclusivos.</p>
-            </div>
-          </div>
+                  <ChevronRight
+                    className="h-5 w-5 shrink-0 text-slate-400"
+                    aria-hidden="true"
+                  />
+                </div>
 
-          {/* Tarjeta 4: Comunidad */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                <Users className="w-5 h-5" />
+                <div>
+                  <h3 className="break-words text-base font-bold">
+                    {shortcut.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {shortcut.description}
+                  </p>
+                </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-base font-sans">Comunidad</h3>
-              <p className="text-xs text-slate-500 mt-1 font-sans">Conecta con otros egresados.</p>
-            </div>
-          </div>
-
+            );
+          })}
         </section>
 
-        {/* Sección de Próximos Eventos */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-serif font-bold text-slate-900">Próximos eventos</h2>
-            <a href="#all-events" className="text-xs font-semibold text-amber-600 hover:underline flex items-center space-x-1 font-sans">
+        {/* Próximos eventos */}
+        <section aria-labelledby="events-title" className="space-y-4 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2
+              id="events-title"
+              className="font-serif text-xl font-bold"
+            >
+              Próximos eventos
+            </h2>
+
+            <a
+              href="#all-events"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-amber-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500"
+            >
               <span>Ver todos</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </a>
           </div>
 
-          {/* Grid de Eventos con Imágenes Integradas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Evento 1 */}
-            <div className="bg-slate-180 rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-              <div className="h-32 bg-slate-200 relative">
-                <Image 
-                  src={eventImg1} 
-                  alt="Reencuentro de Egresados" 
-                  fill 
-                  className="object-cover"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10">
-                  <Bookmark className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                {/* Badge de Fecha */}
-                <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
-                  <span className="block text-base font-bold leading-none font-sans">12</span>
-                  <span className="block text-[10px] uppercase font-semibold tracking-wider font-sans">OCT</span>
-                </div>
-                
-                <div className="pt-3">
-                  <h3 className="font-bold text-slate-900 text-sm font-sans">Reencuentro de Egresados</h3>
-                  <div className="space-y-1 mt-2 text-xs text-slate-500 font-sans">
-                    <p className="flex items-center space-x-1.5"><span>📍</span><span>Auditorio UMSS</span></p>
-                    <p className="flex items-center space-x-1.5"><span>⏰</span><span>8:00 p.m. - 12:00 p.m.</span></p>
+          <div
+            id="all-events"
+            className="grid grid-cols-1 gap-6 md:grid-cols-3"
+          >
+            {events.map((event) => (
+              <article
+                key={event.title}
+                className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="relative h-32 bg-slate-200">
+                  <Image
+                    src={event.image}
+                    alt={event.title}
+                    fill
+                    sizes="(max-width: 767px) 100vw, (max-width: 1280px) 33vw, 400px"
+                    className="object-cover"
+                  />
+
+                  <div className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-1.5 text-slate-700 shadow">
+                    <Bookmark className="h-4 w-4" aria-hidden="true" />
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Evento 2 */}
-            <div className="bg-slate-180 rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-              <div className="h-32 bg-slate-200 relative">
-                <Image 
-                  src={eventImg2} 
-                  alt="Charla de Networking" 
-                  fill 
-                  className="object-cover"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10">
-                  <Bookmark className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
-                  <span className="block text-base font-bold leading-none font-sans">25</span>
-                  <span className="block text-[10px] uppercase font-semibold tracking-wider font-sans">OCT</span>
-                </div>
-                
-                <div className="pt-3">
-                  <h3 className="font-bold text-slate-900 text-sm font-sans">Charla de Networking</h3>
-                  <div className="space-y-1 mt-2 text-xs text-slate-500 font-sans">
-                    <p className="flex items-center space-x-1.5"><span>📍</span><span>Aula Magna</span></p>
-                    <p className="flex items-center space-x-1.5"><span>⏰</span><span>8:00 p.m. - 7:00 p.m.</span></p>
+                <div className="relative flex flex-1 flex-col justify-between space-y-4 p-4">
+                  <div className="absolute -top-6 left-4 z-10 rounded-xl bg-[#A34739] px-3 py-1.5 text-center text-white shadow">
+                    <span className="block text-base font-bold leading-none">
+                      {event.day}
+                    </span>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider">
+                      {event.month}
+                    </span>
+                  </div>
+
+                  <div className="pt-3">
+                    <h3 className="break-words text-sm font-bold">
+                      {event.title}
+                    </h3>
+
+                    <div className="mt-2 space-y-1 text-xs text-slate-500">
+                      <p className="flex items-start gap-1.5">
+                        <span aria-hidden="true" className="shrink-0">
+                          📍
+                        </span>
+                        <span className="min-w-0 break-words">
+                          {event.location}
+                        </span>
+                      </p>
+
+                      <p className="flex items-start gap-1.5">
+                        <span aria-hidden="true" className="shrink-0">
+                          ⏰
+                        </span>
+                        <span className="min-w-0 break-words">
+                          {event.time}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Evento 3 */}
-            <div className="bg-slate-180 rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-              <div className="h-32 bg-slate-200 relative">
-                <Image 
-                  src={eventImg3} 
-                  alt="Feria de Beneficios" 
-                  fill 
-                  className="object-cover"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10">
-                  <Bookmark className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
-                  <span className="block text-base font-bold leading-none font-sans">08</span>
-                  <span className="block text-[10px] uppercase font-semibold tracking-wider font-sans">NOV</span>
-                </div>
-                
-                <div className="pt-3">
-                  <h3 className="font-bold text-slate-900 text-sm font-sans">Feria de Beneficios</h3>
-                  <div className="space-y-1 mt-2 text-xs text-slate-500 font-sans">
-                    <p className="flex items-center space-x-1.5"><span>📍</span><span>Campus UMSS</span></p>
-                    <p className="flex items-center space-x-1.5"><span>⏰</span><span>9:30 p.m. - 4:00 p.m.</span></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+              </article>
+            ))}
           </div>
         </section>
-
       </main>
+
+      {/* Pie de página de la tarea #51 */}
       <footer className="w-full shrink-0 border-t border-slate-200 bg-[#0F172A] text-white">
-        <div className="max-w-7xl mx-auto flex flex-col gap-2 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <p className="text-sm font-semibold">
             UMSSPIRA — Egresados UMSS
           </p>
-
           <p className="text-sm text-slate-300">
             Universidad Mayor de San Simón
           </p>
         </div>
       </footer>
-
     </div>
   );
 }
