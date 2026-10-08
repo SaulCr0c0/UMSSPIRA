@@ -71,6 +71,21 @@ async function sendDeviceProfile(): Promise<DeviceProfile> {
   return profile;
 }
 
+// En móvil la app pasa horas o días en segundo plano sin recargarse.
+// Al volver a primer plano: se reenvía el perfil (el sistema pudo borrar
+// la caché de configuración) y se busca una versión nueva del SW.
+function listenForForeground(registration: ServiceWorkerRegistration): void {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (detectDeviceProfile() !== 'mobile') return;
+
+    registration.update().catch(() => undefined);
+    sendDeviceProfile().catch((error) => {
+      console.error('[SW] No se pudo reenviar el perfil de dispositivo:', error);
+    });
+  });
+}
+
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
     return undefined;
@@ -88,6 +103,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     listenForUpdates(registration);
+    listenForForeground(registration);
     sendDeviceProfile().catch((error) => {
       console.error('[SW] No se pudo enviar el perfil de dispositivo:', error);
     });
