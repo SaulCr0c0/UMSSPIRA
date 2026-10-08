@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: BRAND.name,
   description: BRAND.description,
   manifest: '/manifest.json',
-  icons: { icon: '/brand/icons/icon-192.png', apple: '/brand/icons/icon-192.png' },
+  icons: { icon: '/brand/icons/icon-192.png?v=2', apple: '/brand/icons/icon-192.png?v=2' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
