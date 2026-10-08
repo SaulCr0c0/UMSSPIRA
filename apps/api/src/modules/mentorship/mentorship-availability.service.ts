@@ -23,7 +23,7 @@ import {
 export class MentorshipAvailabilityService {
   private readonly logger = new Logger(MentorshipAvailabilityService.name);
 
-  /** GET /mentorship/disponibilidad */
+  /** GET /mentorship/availability */
   async getAvailability(mentorId: string): Promise<MentorAvailability> {
     // Regla 1: el mentor debe existir (404) y estar activo (403).
     await this.requireActiveMentor(mentorId);
@@ -36,7 +36,7 @@ export class MentorshipAvailabilityService {
     };
   }
 
-  /** PATCH /mentorship/disponibilidad */
+  /** PATCH /mentorship/availability */
   async setAvailability(
     mentorId: string,
     dto: UpdateAvailabilityDto,
