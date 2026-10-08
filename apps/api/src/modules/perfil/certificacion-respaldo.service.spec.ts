@@ -27,15 +27,10 @@ describe('CertificacionRespaldoService', () => {
     guardarRespaldo.mockResolvedValue({ id: 'r1' });
   });
 
-  it('sube un PDF como DOCUMENTO y lo registra', async () => {
-    await expect(servicio.subir('t1', 'c1', archivo('application/pdf', 'Titulo.pdf'))).resolves.toEqual({ id: 'r1' });
+  it('sube un JPG como FOTO y lo registra', async () => {
+    await expect(servicio.subir('t1', 'c1', archivo('image/jpeg', 'Titulo.jpg'))).resolves.toEqual({ id: 'r1' });
     expect(upload).toHaveBeenCalled();
-    expect(guardarRespaldo).toHaveBeenCalledWith('c1', 'DOCUMENTO', expect.stringMatching(/^t1\/c1\/\d+_titulo\.pdf$/));
-  });
-
-  it('sube un JPG como FOTO', async () => {
-    await servicio.subir('t1', 'c1', archivo('image/jpeg', 'foto.jpg'));
-    expect(guardarRespaldo).toHaveBeenCalledWith('c1', 'FOTO', expect.any(String));
+    expect(guardarRespaldo).toHaveBeenCalledWith('c1', 'FOTO', expect.stringMatching(/^t1\/c1\/\d+_titulo\.jpg$/));
   });
 
   it('responde 400 si no llega archivo', async () => {

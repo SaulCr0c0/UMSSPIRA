@@ -30,8 +30,8 @@ export class CertificacionRespaldoService {
       throw new ForbiddenException('La certificación no pertenece al titulado');
     }
 
-    // PDF = documento; JPG o PNG = foto (el formato ya lo validó ArchivoRespaldoPipe)
-    const tipo: TipoRespaldo = archivo.mimetype === 'application/pdf' ? 'DOCUMENTO' : 'FOTO';
+    // Solo se aceptan JPG (lo valida ArchivoRespaldoPipe), así que el respaldo siempre se guarda como FOTO
+    const tipo: TipoRespaldo = 'FOTO';
     const nombre = archivo.originalname.toLowerCase().replace(/[^a-z0-9.]+/g, '_');
     const archivoKey = `${tituladoId}/${certificacionId}/${Date.now()}_${nombre}`;
 

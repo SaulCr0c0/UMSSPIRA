@@ -132,12 +132,12 @@ export function BackupField({ documentName, isVerified, onDocumentChange }: Back
         <label className="flex cursor-pointer items-center gap-2 rounded-md border border-umss-sand bg-white px-4 py-2.5 text-[13px] font-semibold text-umss-navy transition hover:bg-umss-cream">
           <Camera className="h-4 w-4" aria-hidden="true" />
           Subir foto
-          <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={onDocumentChange} />
+          <input type="file" accept="image/jpeg" className="hidden" onChange={onDocumentChange} />
         </label>
         <label className="flex cursor-pointer items-center gap-2 rounded-md bg-umss-ink px-4 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">
           <FileText className="h-4 w-4" aria-hidden="true" />
           Subir documento
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={onDocumentChange} />
+          <input type="file" accept="image/jpeg" className="hidden" onChange={onDocumentChange} />
         </label>
       </div>
     </div>

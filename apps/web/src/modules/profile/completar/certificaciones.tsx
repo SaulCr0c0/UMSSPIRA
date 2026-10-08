@@ -175,7 +175,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
           <input
             ref={fotoRef}
             type="file"
-            accept="image/png,image/jpeg"
+            accept="image/jpeg"
             aria-label="Subir foto"
             className="hidden"
             onChange={elegirRespaldo}
@@ -183,7 +183,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
           <input
             ref={documentoRef}
             type="file"
-            accept="application/pdf"
+            accept="image/jpeg"
             aria-label="Subir documento"
             className="hidden"
             onChange={elegirRespaldo}
