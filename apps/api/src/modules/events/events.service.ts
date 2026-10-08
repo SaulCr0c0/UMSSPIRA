@@ -1,3 +1,4 @@
+
 import {
   BadRequestException,
   ConflictException,
@@ -17,8 +18,22 @@ import { UpdateDraftEventDto } from './dto/update-draft-event.dto';
 
 const DRAFT_EVENT_STATUS: Extract<EventStatus, 'BORRADOR'> =
   'BORRADOR';
+
 const PUBLISHED_EVENT_STATUS: Extract<EventStatus, 'PUBLICADO'> =
   'PUBLICADO';
+
+type EventRow = {
+  id: string;
+  id_usuario: string;
+  titulo: string;
+  descripcion: string | null;
+  fecha_inicio: string;
+  fecha_fin: string;
+  cupo_maximo: number;
+  ubicacion: string | null;
+  estado: string;
+  fecha_creacion: string;
+};
 
 @Injectable()
 export class EventsService {
@@ -47,17 +62,9 @@ export class EventsService {
       maxCapacity,
     );
 
-    // Si no se envía un estado, se crea como BORRADOR.
     const initialStatus: EventStatus =
       status ?? DRAFT_EVENT_STATUS;
 
-    /*
-     * En shared-types manejamos:
-     * BORRADOR | PUBLICADO | CANCELADO
-     *
-     * En la base de datos se almacena:
-     * borrador | publicado | cancelado
-     */
     const databaseStatus = initialStatus.toLowerCase();
     const createdAt = new Date().toISOString();
 
@@ -103,19 +110,14 @@ export class EventsService {
       );
     }
 
-    return (data ?? []).map((row) =>
-      this.mapEventRow(row),
-    );
+    return (data ?? []).map((row) => this.mapEventRow(row));
   }
 
   async getAdminDraft(
     eventId: string,
     userId: string,
   ): Promise<EventItem> {
-    const event = await this.getOwnedEvent(
-      eventId,
-      userId,
-    );
+    const event = await this.getOwnedEvent(eventId, userId);
 
     this.ensureDraft(event);
 
@@ -127,10 +129,7 @@ export class EventsService {
     updateEventDto: UpdateDraftEventDto,
     userId: string,
   ): Promise<EventItem> {
-    const currentEvent = await this.getOwnedEvent(
-      eventId,
-      userId,
-    );
+    const currentEvent = await this.getOwnedEvent(eventId, userId);
 
     this.ensureDraft(currentEvent);
 
@@ -163,10 +162,7 @@ export class EventsService {
       })
       .eq('id', eventId)
       .eq('id_usuario', userId)
-      .eq(
-        'estado',
-        DRAFT_EVENT_STATUS.toLowerCase(),
-      )
+      .eq('estado', DRAFT_EVENT_STATUS.toLowerCase())
       .select()
       .single();
 
@@ -183,12 +179,10 @@ export class EventsService {
     eventId: string,
     userId: string,
   ): Promise<EventItem> {
-    const currentEvent = await this.getOwnedEvent(
-      eventId,
-      userId,
-    );
+    const currentEvent = await this.getOwnedEvent(eventId, userId);
 
     this.ensureDraft(currentEvent);
+
     this.validateEventData(
       currentEvent.titulo,
       currentEvent.fecha_inicio,
@@ -203,10 +197,7 @@ export class EventsService {
       })
       .eq('id', eventId)
       .eq('id_usuario', userId)
-      .eq(
-        'estado',
-        DRAFT_EVENT_STATUS.toLowerCase(),
-      )
+      .eq('estado', DRAFT_EVENT_STATUS.toLowerCase())
       .select()
       .single();
 
@@ -222,12 +213,7 @@ export class EventsService {
   /**
    * T7
    * Catálogo para el egresado.
-   *
-   * Devuelve únicamente eventos PUBLICADOS
-   * que todavía no han finalizado.
-   *
-   * Los eventos se ordenan por fecha de inicio
-   * de manera ascendente.
+   * Devuelve eventos publicados que todavía no han finalizado.
    */
   async getCatalog(): Promise<EventItem[]> {
     const now = new Date().toISOString();
@@ -235,10 +221,7 @@ export class EventsService {
     const { data, error } = await supabase
       .from('evento')
       .select('*')
-      .eq(
-        'estado',
-        PUBLISHED_EVENT_STATUS.toLowerCase(),
-      )
+      .eq('estado', PUBLISHED_EVENT_STATUS.toLowerCase())
       .gt('fecha_fin', now)
       .order('fecha_inicio', {
         ascending: true,
@@ -250,9 +233,7 @@ export class EventsService {
       );
     }
 
-    return (data ?? []).map((row) =>
-      this.mapEventRow(row),
-    );
+    return (data ?? []).map((row) => this.mapEventRow(row));
   }
 
   async getEventById(eventId: string): Promise<EventItem> {
@@ -280,7 +261,7 @@ export class EventsService {
   private async getOwnedEvent(
     eventId: string,
     userId: string,
-  ): Promise<any> {
+  ): Promise<EventRow> {
     const { data, error } = await supabase
       .from('evento')
       .select('*')
@@ -303,11 +284,8 @@ export class EventsService {
     return data;
   }
 
-  private ensureDraft(event: any): void {
-    if (
-      event.estado?.toUpperCase() !==
-      DRAFT_EVENT_STATUS
-    ) {
+  private ensureDraft(event: EventRow): void {
+    if (event.estado.toUpperCase() !== DRAFT_EVENT_STATUS) {
       throw new ConflictException(
         'El evento ya no se encuentra en estado BORRADOR',
       );
@@ -355,10 +333,10 @@ export class EventsService {
   }
 
   /**
-   * Convierte una fila de la tabla "evento"
+   * Convierte una fila de la tabla evento
    * al modelo EventItem utilizado por la API.
    */
-  private mapEventRow(row: any): EventItem {
+  private mapEventRow(row: EventRow): EventItem {
     return {
       id: row.id,
       title: row.titulo,
