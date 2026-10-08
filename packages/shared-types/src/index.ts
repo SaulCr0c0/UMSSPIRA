@@ -3,3 +3,4 @@ export * from './company';
 export * from './job-posting';
 export * from './auth';
 export * from './email-verification';
+export * from './review';
