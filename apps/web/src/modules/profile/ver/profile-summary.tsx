@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import DownloadProfileButton from '@/modules/profile/components/download-profile-button';
 import { profileHeader } from '@/modules/profile/data/profile-data';
+import AffinityLinkCard from '@/modules/profile/ver/affinity-link-card';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import { recordsToTimeline } from '@/modules/profile/utils/records-to-timeline';
 import { sortSectionsByRecency } from '@/modules/profile/utils/sort-by-recency';
@@ -51,25 +52,28 @@ export default function ProfileSummary() {
       </header>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        {/* Resumen del perfil */}
-        <aside className="hidden w-[300px] shrink-0 flex-col gap-4 rounded-2xl border border-umss-ink/10 bg-white p-6 lg:flex">
-          <h2 className="text-xl font-bold text-umss-navy">Resumen del Perfil</h2>
-          <p className="text-[13px] leading-[1.5] text-umss-navy/70">
-            Este es el resumen digital de tu trayectoria académica y laboral registrada en la UMSS.
-            Los respaldos documentales han sido validados por la administración de la Red de
-            Egresados.
-          </p>
-          <ul className="flex flex-col gap-3 border-t border-umss-sand pt-4 text-xs font-semibold text-umss-navy">
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#0F5132]" aria-hidden="true" />
-              {validatedBackups} Respaldos validados
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-umss-terracotta" aria-hidden="true" />
-              {experiences} Experiencias registradas
-            </li>
-          </ul>
-        </aside>
+        {/* Columna izquierda: resumen (solo escritorio) y acceso a la afinidad (Épica 3) */}
+        <div className="flex w-full shrink-0 flex-col gap-6 lg:w-[300px]">
+          <aside className="hidden w-full flex-col gap-4 rounded-2xl border border-umss-ink/10 bg-white p-6 lg:flex">
+            <h2 className="text-xl font-bold text-umss-navy">Resumen del Perfil</h2>
+            <p className="text-[13px] leading-[1.5] text-umss-navy/70">
+              Este es el resumen digital de tu trayectoria académica y laboral registrada en la UMSS.
+              Los respaldos documentales han sido validados por la administración de la Red de
+              Egresados.
+            </p>
+            <ul className="flex flex-col gap-3 border-t border-umss-sand pt-4 text-xs font-semibold text-umss-navy">
+              <li className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#0F5132]" aria-hidden="true" />
+                {validatedBackups} Respaldos validados
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-umss-terracotta" aria-hidden="true" />
+                {experiences} Experiencias registradas
+              </li>
+            </ul>
+          </aside>
+          <AffinityLinkCard />
+        </div>
 
         {/* Línea de tiempo */}
         <section className="min-w-0 flex-1 rounded-2xl border border-umss-ink/10 bg-white px-4 py-5 md:px-7 md:py-6">
