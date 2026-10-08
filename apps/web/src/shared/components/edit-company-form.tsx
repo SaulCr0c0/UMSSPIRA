@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Globe, MapPin, Phone, Mail, Save, Pencil, Loader2 } from 'lucide-react';
+import { Lock, Globe, MapPin, Mail, Save, Pencil, Loader2, User, ArrowLeft } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import type { Company, UpdateCompanyPayload } from '@umsspira/shared-types';
-
+// IMPORTANTE: Asegúrate de que esta ruta coincida con tu estructura de carpetas
+import { CompanyHeader } from '@/app/(dashboard)/companies/company-header';
 interface EditCompanyFormProps {
   company: Company;
   onCancel: () => void;
@@ -23,10 +24,15 @@ const TAMANO_OPTIONS = [
 export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyFormProps) {
   const [formData, setFormData] = useState<Company>(company);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleChange = (field: keyof Company, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setSubmitError(null);
+
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -39,32 +45,33 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio';
-    if (!formData.descripcion.trim()) newErrors.descripcion = 'La descripcion es obligatoria';
+    if (!formData.nombre?.trim()) newErrors.nombre = 'El nombre es obligatorio';
+    if (!formData.descripcion?.trim()) newErrors.descripcion = 'La descripción es obligatoria';
+    if (!formData.direccion?.trim()) newErrors.direccion = 'La ubicación es obligatoria';
 
     if (formData.descripcion.length > MAX_DESCRIPTION_LENGTH) {
-      newErrors.descripcion = `Maximo ${MAX_DESCRIPTION_LENGTH} caracteres`;
+      newErrors.descripcion = `Máximo ${MAX_DESCRIPTION_LENGTH} caracteres`;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.correo.trim()) {
+    if (!formData.correo?.trim()) {
       newErrors.correo = 'El correo es obligatorio';
-    } else if (!emailRegex.test(formData.correo)) {
-      newErrors.correo = 'Correo invalido';
+    } else if (!emailRegex.test(formData.correo.trim())) {
+      newErrors.correo = 'Correo electrónico inválido';
     }
 
-    const phoneRegex = /^\+?[0-9\s-]{7,}$/;
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El telefono es obligatorio';
-    } else if (!phoneRegex.test(formData.telefono)) {
-      newErrors.telefono = 'Telefono invalido';
+    const phoneRegex = /^\+?[0-9\s-]{7,15}$/;
+    if (!formData.telefono?.trim()) {
+      newErrors.telefono = 'El teléfono es obligatorio';
+    } else if (!phoneRegex.test(formData.telefono.trim()) || /[a-zA-Z]/.test(formData.telefono)) {
+      newErrors.telefono = 'Teléfono inválido (no debe contener letras)';
     }
 
-    const urlRegex = /^https?:\/\/.+\..+/;
-    if (!formData.sitioWeb.trim()) {
+    const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+(\/.*)?$/;
+    if (!formData.sitioWeb?.trim()) {
       newErrors.sitioWeb = 'El sitio web es obligatorio';
-    } else if (!urlRegex.test(formData.sitioWeb)) {
-      newErrors.sitioWeb = 'Debe iniciar con http:// o https://';
+    } else if (formData.sitioWeb.includes(' ') || !urlRegex.test(formData.sitioWeb.trim())) {
+      newErrors.sitioWeb = 'Formato de sitio web inválido (ej. www.techsolutions.com)';
     }
 
     setErrors(newErrors);
@@ -77,194 +84,279 @@ export function EditCompanyForm({ company, onCancel, onSubmit }: EditCompanyForm
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
+
     try {
       const { id, nit, ...payload } = formData;
-      await onSubmit(payload);
+      const cleanedPayload: UpdateCompanyPayload = {
+        ...payload,
+        nombre: payload.nombre.trim(),
+        descripcion: payload.descripcion.trim(),
+        correo: payload.correo.trim(),
+        telefono: payload.telefono.trim(),
+        sitioWeb: payload.sitioWeb.trim(),
+        direccion: payload.direccion.trim(),
+      };
+      await onSubmit(cleanedPayload);
+    } catch (error) {
+      setSubmitError('Ocurrió un error al guardar los cambios. Intente nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputClass = (field: string) => {
-    const value = formData[field as keyof Company] as string;
-    return cn(
-      'w-full px-3 py-2 border rounded-lg text-sm leading-[22px] text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
-      errors[field]
-        ? 'border-red-500 ring-1 ring-red-200 bg-red-50/30'
-        : value && value.trim()
-        ? 'border-green-500'
-        : 'border-[#C9C1B1]'
-    );
+  const handleCancel = () => {
+    setFormData(company);
+    setErrors({});
+    setTouched({});
+    setSubmitError(null);
+    onCancel();
+  };
+
+  const getInputBorderStyle = (field: keyof Company) => {
+    const val = formData[field] as string;
+    const hasError = !!errors[field];
+    const isFieldTouched = touched[field];
+    const isValidAndNotEmpty = !hasError && val && val.trim().length > 0;
+
+    if (hasError) return 'border-red-500 ring-1 ring-red-200 bg-red-50/20';
+    if (isFieldTouched && isValidAndNotEmpty) return 'border-green-500 ring-1 ring-green-100';
+    return 'border-[#C9C1B1]'; // Oatmeal
   };
 
   const counterColor = (() => {
     const len = formData.descripcion.length;
     if (len >= MAX_DESCRIPTION_LENGTH) return 'text-red-500 font-semibold';
     if (len > MAX_DESCRIPTION_LENGTH * 0.9) return 'text-[#A35139] font-medium';
-    return 'text-[#C9C1B1]';
+    return 'text-[#8C827A]';
   })();
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full bg-white rounded-2xl p-6 shadow-sm border border-[#C9C1B1]"
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-[#EEE9DF] text-[#A35139] border border-[#C9C1B1]">
-          <Pencil className="w-5 h-5" />
-        </div>
-        <h2 className="text-lg font-semibold text-[#182632]">
-          Editar perfil de la empresa
-        </h2>
-      </div>
+    <div className="w-full space-y-6">
+      
+      {/* AQUÍ ESTÁ LA MAGIA: Llamamos al componente y le pasamos el nombre dinámico */}
+      <CompanyHeader companyName={formData.nombre} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            NIT / RUC <span className="text-red-500">*</span>
-          </label>
-          <div className="relative mt-1">
-            <input
-              type="text"
-              value={formData.nit}
-              disabled
-              className="w-full px-3 py-2 bg-[#EEE9DF] border border-[#C9C1B1] rounded-lg text-sm leading-[22px] text-[#2C3B40] cursor-not-allowed"
-            />
-            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C9C1B1]" />
-          </div>
-          <p className="text-[11px] leading-[14px] text-[#C9C1B1] mt-1">No editable</p>
-        </div>
-
-        <div>
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            Tamano de la empresa <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.tamano}
-            onChange={(e) => handleChange('tamano', e.target.value)}
-            className="w-full px-3 py-2 mt-1 border border-[#C9C1B1] rounded-lg text-sm leading-[22px] text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40"
-          >
-            {TAMANO_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            Sitio web <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.sitioWeb}
-            onChange={(e) => handleChange('sitioWeb', e.target.value)}
-            className={cn(inputClass('sitioWeb'), 'mt-1')}
-          />
-          {errors.sitioWeb && (
-            <p className="text-[11px] leading-[14px] text-red-500 mt-1">{errors.sitioWeb}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            Ubicacion <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.direccion}
-            onChange={(e) => handleChange('direccion', e.target.value)}
-            className={cn(inputClass('direccion'), 'mt-1')}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            Descripcion <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={formData.descripcion}
-            onChange={(e) => {
-              if (e.target.value.length <= MAX_DESCRIPTION_LENGTH) {
-                handleChange('descripcion', e.target.value);
-              }
-            }}
-            rows={4}
-            className={cn(
-              'w-full px-3 py-2 mt-1 border rounded-lg resize-none text-sm leading-[22px] text-[#182632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40',
-              errors.descripcion
-                ? 'border-red-500 ring-1 ring-red-200 bg-red-50/30'
-                : 'border-[#C9C1B1]'
-            )}
-          />
-          <div className="flex justify-between mt-1">
-            {errors.descripcion ? (
-              <p className="text-[11px] leading-[14px] text-red-500">{errors.descripcion}</p>
-            ) : (
-              <span />
-            )}
-            <p className={cn('text-[11px] leading-[14px] transition-colors', counterColor)}>
-              {formData.descripcion.length}/{MAX_DESCRIPTION_LENGTH}
-            </p>
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="text-[13px] font-semibold text-[#182632] leading-[18px]">
-            Contacto <span className="text-red-500">*</span>
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
-            <div>
-              <input
-                type="tel"
-                value={formData.telefono}
-                onChange={(e) => handleChange('telefono', e.target.value)}
-                placeholder="+591 71234567"
-                className={inputClass('telefono')}
-              />
-              {errors.telefono && (
-                <p className="text-[11px] leading-[14px] text-red-500 mt-1">{errors.telefono}</p>
-              )}
-            </div>
-            <div>
-              <input
-                type="email"
-                value={formData.correo}
-                onChange={(e) => handleChange('correo', e.target.value)}
-                placeholder="contacto@empresa.com"
-                className={inputClass('correo')}
-              />
-              {errors.correo && (
-                <p className="text-[11px] leading-[14px] text-red-500 mt-1">{errors.correo}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[#C9C1B1]">
+      {/* Navegación posterior */}
+      <div className="space-y-2">
         <button
           type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-5 py-2 bg-[#C9C1B1] text-[#182632] text-sm font-semibold tracking-[0.5px] rounded-lg hover:bg-[#B5AC9A] disabled:opacity-50 transition-colors"
+          onClick={handleCancel}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2632] hover:text-black transition-colors"
         >
-          Cancelar
+          <ArrowLeft className="w-3.5 h-3.5" /> Volver
         </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex items-center gap-2 px-5 py-2 bg-[#FFB162] text-[#182632] text-sm font-semibold tracking-[0.5px] rounded-lg hover:bg-[#FFA048] disabled:opacity-50 transition-colors"
-        >
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
-        </button>
+        <div className="border-b border-[#C9C1B1]">
+          <button className="pb-2 text-xs font-bold text-[#FFB162] border-b-2 border-[#FFB162]">
+            Información general
+          </button>
+        </div>
       </div>
-    </form>
+
+      {/* Contenedor del formulario */}
+      <form
+        onSubmit={handleSubmit}
+        className="w-full bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-[#C9C1B1] space-y-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-[#EEE9DF] text-[#A35139] border border-[#C9C1B1]">
+            <Pencil className="w-5 h-5" />
+          </div>
+          <h2 className="text-lg font-bold text-[#1B2632]">
+            Editar perfil de la empresa
+          </h2>
+        </div>
+
+        {submitError && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
+            {submitError}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* NIT / RUC (CA1 y CA10) */}
+          <div>
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              NIT / RUC <span className="text-red-500">*</span>
+            </label>
+            <div className="relative mt-1">
+              <input
+                type="text"
+                value={formData.nit}
+                disabled
+                readOnly
+                className="w-full px-3 py-2 pr-24 bg-[#F4F1EA] border border-[#C9C1B1] rounded-lg text-sm text-[#5C6669] cursor-not-allowed"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#8C827A] text-xs">
+                <Lock className="w-3.5 h-3.5" />
+                <span className="text-[10px]">No editable</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tamaño de la empresa */}
+          <div>
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              Tamaño de la empresa <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.tamano}
+              onChange={(e) => handleChange('tamano', e.target.value)}
+              className="w-full px-3 py-2 mt-1 border border-[#C9C1B1] rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40"
+            >
+              {TAMANO_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sitio web */}
+          <div>
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              Sitio web <span className="text-red-500">*</span>
+            </label>
+            <div className="relative mt-1">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+              <input
+                type="text"
+                value={formData.sitioWeb}
+                onChange={(e) => handleChange('sitioWeb', e.target.value)}
+                placeholder="www.techsolutions.com"
+                className={cn(
+                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                  getInputBorderStyle('sitioWeb')
+                )}
+              />
+            </div>
+            {errors.sitioWeb && (
+              <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.sitioWeb}</p>
+            )}
+          </div>
+
+          {/* Ubicación */}
+          <div>
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              Ubicación <span className="text-red-500">*</span>
+            </label>
+            <div className="relative mt-1">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+              <input
+                type="text"
+                value={formData.direccion}
+                onChange={(e) => handleChange('direccion', e.target.value)}
+                placeholder="Av. San Martín y Costanera..."
+                className={cn(
+                  'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                  getInputBorderStyle('direccion')
+                )}
+              />
+            </div>
+            {errors.direccion && (
+              <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.direccion}</p>
+            )}
+          </div>
+
+          {/* Descripción */}
+          <div className="md:col-span-2">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              Descripción <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={formData.descripcion}
+              onChange={(e) => {
+                if (e.target.value.length <= MAX_DESCRIPTION_LENGTH) {
+                  handleChange('descripcion', e.target.value);
+                }
+              }}
+              rows={4}
+              className={cn(
+                'w-full px-3 py-2 mt-1 border rounded-lg resize-none text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                getInputBorderStyle('descripcion')
+              )}
+            />
+            <div className="flex justify-between items-center mt-1">
+              {errors.descripcion ? (
+                <p className="text-[11px] text-red-500 font-medium">{errors.descripcion}</p>
+              ) : <span />}
+              <p className={cn('text-[11px] transition-colors ml-auto', counterColor)}>
+                {formData.descripcion.length}/{MAX_DESCRIPTION_LENGTH}
+              </p>
+            </div>
+          </div>
+
+          {/* Contacto */}
+          <div className="md:col-span-2">
+            <label className="text-[13px] font-semibold text-[#1B2632]">
+              Contacto <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+              {/* Teléfono */}
+              <div>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                  <input
+                    type="tel"
+                    value={formData.telefono}
+                    onChange={(e) => handleChange('telefono', e.target.value)}
+                    placeholder="+591 71234567"
+                    className={cn(
+                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                      getInputBorderStyle('telefono')
+                    )}
+                  />
+                </div>
+                {errors.telefono && (
+                  <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.telefono}</p>
+                )}
+              </div>
+
+              {/* Correo */}
+              <div>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                  <input
+                    type="email"
+                    value={formData.correo}
+                    onChange={(e) => handleChange('correo', e.target.value)}
+                    placeholder="contacto@empresa.com"
+                    className={cn(
+                      'w-full pl-9 pr-3 py-2 border rounded-lg text-sm text-[#1B2632] bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]/40 transition-colors',
+                      getInputBorderStyle('correo')
+                    )}
+                  />
+                </div>
+                {errors.correo && (
+                  <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.correo}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Botones de acción */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-[#C9C1B1]">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="px-6 py-2 bg-[#E2DBD0] text-[#1B2632] text-sm font-semibold rounded-lg hover:bg-[#D5CCC0] disabled:opacity-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2 bg-[#FFB162] text-[#1B2632] text-sm font-semibold rounded-lg hover:bg-[#FFA048] disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

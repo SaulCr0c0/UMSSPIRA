@@ -7,7 +7,7 @@ export default function TestFormPage() {
   const company: Company = {
     id: '1',
     nombre: 'TechSolutions S.A.',
-    nit: '123456789',
+    nit: '1234567899',
     descripcion: 'Somos una empresa de tecnologia enfocada en desarrollar soluciones de software.',
     telefono: '+591 71234567',
     correo: 'contacto@techsolutions.com',
