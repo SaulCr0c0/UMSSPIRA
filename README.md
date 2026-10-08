@@ -32,14 +32,18 @@ Esto instala las dependencias de **todos** los workspaces (`apps/api`, `apps/web
 
 ## Variables de entorno
 
-El servicio de base de datos usa un archivo `.env` en la raíz del repositorio:
+El servicio de base de datos y el backend usan un archivo `.env` en la raíz del repositorio. Crea uno copiando `.env.example` y configura la contraseña y el UUID real de un egresado existente en `egresado.id`:
 
-Si crean uno pasan la informacion al grupo 
-para evitar problemas de seguridad.
+```powershell
+Copy-Item .env.example .env
+```
 
-Por ahora solo hay uno que es de la contrasenia
-de la base de datos, se les pasara por el grupo 
-de whatsapp.
+```env
+POSTGRES_PASSWORD=tu_contrasenia_local
+PROFILE_EGRESADO_ID=uuid-de-un-egresado-existente
+```
+
+`PROFILE_EGRESADO_ID` vincula las pantallas de experiencia a un único perfil local; no sustituye la autenticación ni aísla usuarios. No subas `.env` al repositorio ni compartas la contraseña.
 
 ## Levantar servicios locales (Docker)
 
@@ -47,7 +51,15 @@ de whatsapp.
 docker compose up -d
 ```
 
-Levanta y crea la base de datos, con esto ya tienen corriendo la base de datos de manera local. 
+Levanta Redis y PostgreSQL. La imagen de PostgreSQL copia las migraciones del repositorio durante el build, así Docker Desktop no necesita compartir carpetas de Windows. PostgreSQL publica el puerto `5432`, conserva sus datos en el volumen `db_data` y aplica las migraciones `0001` y `0002` al crear la base por primera vez. Puedes comprobar que esté listo con `docker compose ps`; la base aparecerá como `healthy`.
+
+Si ya existía el volumen `db_data`, Docker no vuelve a ejecutar las migraciones automáticamente. Aplica la nueva migración sin borrar los datos:
+
+```bash
+docker compose exec -T db psql -U postgres -d postgres < supabase/migrations/0002_experiencia_laboral_detalle.sql
+```
+
+Si cambian las migraciones o el Dockerfile, reconstruye la imagen con `docker compose up -d --build`; los datos de PostgreSQL siguen en `db_data`.
 
 Para poder ejecutar y configurar la base de datos de manera local se puede utilizar dos extensiones o el 
 el cliente de postgresql
@@ -86,6 +98,28 @@ pnpm --filter web dev
 
 - API por defecto en `http://localhost:3000` (revisar `apps/api/src/main.ts`)
 - Web por defecto en `http://localhost:3001`
+
+El API usa PostgreSQL en `localhost:5432` y carga las variables del `.env` raíz al ejecutar `pnpm --filter api dev` o `pnpm --filter api start`. El UUID de perfil se puede consultar con `docker compose exec db psql -U postgres -d postgres -c "SELECT id FROM egresado;"`.
+
+Si la consulta no devuelve filas y solo necesitas un perfil para desarrollo local, puedes crear uno y copiar el UUID que devuelve a `PROFILE_EGRESADO_ID`:
+
+```bash
+docker compose exec db psql -U postgres -d postgres -c "INSERT INTO egresado (apellido) VALUES ('Perfil local de desarrollo') RETURNING id;"
+```
+
+### API de experiencia laboral del perfil
+
+Las pantallas `/profile/experience`, `/new`, `/[id]` y `/[id]/edit` usan estos endpoints:
+
+| Método | Endpoint | Uso en las pantallas |
+|---|---|---|
+| `GET` | `/api/profile/experiences` | Listado del perfil |
+| `GET` | `/api/profile/experiences/:id` | Detalle y precarga de edición |
+| `POST` | `/api/profile/experiences` | Crear experiencia |
+| `PUT` | `/api/profile/experiences/:id` | Guardar edición |
+| `DELETE` | `/api/profile/experiences/:id` | Eliminar desde el listado |
+
+La API persiste empresa, cargo, fechas, tipo de empleo y descripción en `experiencia_laboral`. Esos datos podrán ser consumidos por el matching de vacantes. En el modo local, `PROFILE_EGRESADO_ID` limita las operaciones a un egresado configurado en el servidor; la autenticación multiusuario queda fuera de este alcance.
 
 
 ## Colección de API (Postman)
