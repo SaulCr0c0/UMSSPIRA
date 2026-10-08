@@ -1,3 +1,5 @@
+import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
+
 export const mentorAvailabilityStatuses = ['AVAILABLE', 'PAUSED', 'UNAVAILABLE'] as const;
 
 export type MentorAvailabilityStatus = typeof mentorAvailabilityStatuses[number];
@@ -36,13 +38,18 @@ function parseAvailability(value: unknown): MentorAvailability {
 }
 
 async function requestAvailability(options: RequestInit, action: 'consultar' | 'actualizar') {
+  const token = getAccessToken();
+  if (!token) {
+    throw new MentorAvailabilityError('Inicia sesión para configurar tu disponibilidad.', 401);
+  }
+
   let response: Response;
   try {
     response = await fetch(`${API_URL}/mentorship/disponibilidad`, {
       ...options,
-      credentials: 'include',
+      credentials: 'omit',
       cache: 'no-store',
-      headers: { Accept: 'application/json', ...options.headers },
+      headers: { Accept: 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
     });
   } catch {
     throw new MentorAvailabilityError(
@@ -54,6 +61,7 @@ async function requestAvailability(options: RequestInit, action: 'consultar' | '
   }
 
   if (!response.ok) {
+    if (response.status === 401 && getAccessToken() === token) clearAccessToken();
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tu disponibilidad.',
       403: 'Acceso denegado. Se requiere un perfil de mentor activo.',
