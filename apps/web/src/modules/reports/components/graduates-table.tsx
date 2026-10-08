@@ -6,6 +6,7 @@ import type { Graduate } from '../data/graduates.mock';
 interface GraduatesTableProps {
   graduates: Graduate[];
   onViewReason: (graduate: Graduate) => void;
+  startIndex?: number;
 }
 
 function StatusBadge({ status }: { status: Graduate['status'] }) {
@@ -22,7 +23,11 @@ function StatusBadge({ status }: { status: Graduate['status'] }) {
   );
 }
 
-export function GraduatesTable({ graduates, onViewReason }: GraduatesTableProps) {
+export function GraduatesTable({
+  graduates,
+  onViewReason,
+  startIndex = 0,
+}: GraduatesTableProps) {
   return (
     <>
       {/* Vista de escritorio / tablet (Scroll horizontal controlado) */}
@@ -48,7 +53,9 @@ export function GraduatesTable({ graduates, onViewReason }: GraduatesTableProps)
             <tbody className="divide-y divide-slate-200">
               {graduates.map((record, index) => (
                 <tr className="align-top hover:bg-slate-50/80" key={record.id}>
-                  <td className="whitespace-nowrap px-4 py-4">{index + 1}</td>
+                  <td className="whitespace-nowrap px-4 py-4">
+                    {startIndex + index + 1}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-4 font-semibold text-slate-800">
                     {record.registrationNumber}
                   </td>

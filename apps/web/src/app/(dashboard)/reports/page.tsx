@@ -26,7 +26,7 @@ import {
 import { GraduateCsvExport } from '../../../modules/reports/graduates/csv/graduate-csv-export';
 
 const ITEMS_PER_PAGE = 10;
-const REPORTS_LIST_STATE_KEY = 'umsspira:reports-list-state';
+const REPORTS_LIST_STATE_KEY = 'umsspira:reports-liststate';
 
 interface ReportsListState {
   searchTerm: string;
@@ -153,6 +153,8 @@ export default function ReportsPage() {
   }, [filteredGraduates, currentPage]);
 
   useEffect(() => {
+    if (loadingGraduates) return;
+
     const totalPages = Math.max(
       1,
       Math.ceil(filteredGraduates.length / ITEMS_PER_PAGE),
@@ -183,6 +185,7 @@ export default function ReportsPage() {
     currentPage,
     filteredGraduates.length,
     hasRestoredListState,
+    loadingGraduates,
     searchTerm,
     selectedStatus,
   ]);
@@ -283,6 +286,7 @@ export default function ReportsPage() {
           <GraduatesTable
             graduates={paginatedGraduates}
             onViewReason={setSelectedGraduate}
+            startIndex={(currentPage - 1) * ITEMS_PER_PAGE}
           />
           <Pagination
             currentPage={currentPage}
