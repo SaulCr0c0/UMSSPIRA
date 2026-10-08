@@ -22,7 +22,7 @@ export interface DisponibilidadMentor {
   hora_fin: string | null;
 }
 
-/** Respuesta de GET/PATCH /mentorship/disponibilidad. */
+/** Respuesta de GET/PATCH /mentorship/availability. */
 export interface MentorAvailability {
   availabilityStatus: MentorAvailabilityStatus | null;
   fecha_actualizacion: string | null;

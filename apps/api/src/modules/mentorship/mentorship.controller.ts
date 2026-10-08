@@ -47,13 +47,13 @@ export class MentorshipController {
     return this.mentorshipService.getActiveProfiles();
   }
 
-  @Get('mi-perfil')
+  @Get('my-profile')
   @UseGuards(MentorTestAuthGuard)
   getMyProfile(@Req() req: AuthenticatedRequest): Promise<Mentor> {
     return this.mentorshipService.getMyProfile(this.userId(req));
   }
 
-  @Get(['mi-perfil/informacion', 'my-profile/information'])
+  @Get('my-profile/information')
   @UseGuards(MentorTestAuthGuard)
   getMyProfileInformation(
     @Req() req: AuthenticatedRequest,
@@ -61,7 +61,7 @@ export class MentorshipController {
     return this.mentorshipService.getMyProfileInformation(this.userId(req));
   }
 
-  @Patch(['mi-perfil/informacion', 'my-profile/information'])
+  @Patch('my-profile/information')
   @UseGuards(MentorTestAuthGuard)
   @UsePipes(
     new ValidationPipe({
@@ -78,7 +78,7 @@ export class MentorshipController {
     return this.mentorshipService.updateMyProfileInformation(this.userId(req), dto);
   }
 
-  @Delete(['mi-perfil/informacion', 'my-profile/information'])
+  @Delete('my-profile/information')
   @UseGuards(MentorTestAuthGuard)
   deleteMyProfileInformation(
     @Req() req: AuthenticatedRequest,
@@ -99,7 +99,7 @@ export class MentorshipController {
     return this.mentorshipService.checkEligibility(this.userId(req));
   }
 
-  @Patch('mi-perfil/participacion')
+  @Patch('my-profile/participation')
   @UseGuards(MentorTestAuthGuard)
   setParticipation(
     @Req() req: AuthenticatedRequest,
@@ -108,14 +108,14 @@ export class MentorshipController {
     return this.mentorshipService.setParticipation(this.userId(req), dto);
   }
 
-  // El frontend llama a /mentorship/mi-perfil/areas; my-profile/areas queda como alias.
-  @Get(['mi-perfil/areas', 'my-profile/areas'])
+  // Areas tecnicas configuradas por el mentor autenticado.
+  @Get('my-profile/areas')
   @UseGuards(MentorTestAuthGuard)
   getMyAreas(@Req() req: AuthenticatedRequest): Promise<MentorAreasState> {
     return this.mentorshipService.getMyAreas(this.userId(req));
   }
 
-  @Patch(['mi-perfil/areas', 'my-profile/areas'])
+  @Patch('my-profile/areas')
   @UseGuards(MentorTestAuthGuard)
   updateMyAreas(
     @Req() req: AuthenticatedRequest,

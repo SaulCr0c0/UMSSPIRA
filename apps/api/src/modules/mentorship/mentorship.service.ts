@@ -120,7 +120,7 @@ export class MentorshipService {
     );
   }
 
-  /** GET /mentorship/mi-perfil */
+  /** GET /mentorship/my-profile */
   async getMyProfile(userId: string): Promise<Mentor> {
     const profile = await this.findById(userId);
     if (!profile) {
@@ -260,7 +260,7 @@ export class MentorshipService {
     return { eligible: await this.isApprovedGraduate(userId) };
   }
 
-  /** GET /mentorship/mi-perfil/areas */
+  /** GET /mentorship/my-profile/areas */
   async getMyAreas(userId: string): Promise<MentorAreasState> {
     await this.ensureActiveMentor(userId);
 
@@ -455,7 +455,7 @@ export class MentorshipService {
     return this.getMyAreas(userId);
   }
 
-  /** PATCH /mentorship/mi-perfil/participacion (core HU-6.1) */
+  /** PATCH /mentorship/my-profile/participation (core HU-6.1) */
   async setParticipation(userId: string, dto: UpdateParticipationDto): Promise<Mentor> {
     const existing = await this.findById(userId);
     const today = this.today();
