@@ -10,10 +10,12 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+// Las etiquetas llevan un asterisco de campo obligatorio, por eso se busca por el inicio del texto.
+// "^contraseña" no coincide con el botón "Mostrar contraseña".
 function fillAndSubmit(email: string, password: string) {
-  fireEvent.change(screen.getByLabelText(/correo electrónico/i), { target: { value: email } });
-  fireEvent.change(screen.getByLabelText("Contraseña"), { target: { value: password } });
-  fireEvent.click(screen.getByRole("button", { name: /ingresar al portal/i }));
+  fireEvent.change(screen.getByLabelText(/^correo electrónico/i), { target: { value: email } });
+  fireEvent.change(screen.getByLabelText(/^contraseña/i), { target: { value: password } });
+  fireEvent.click(screen.getByRole("button", { name: /^ingresar/i }));
 }
 
 describe("LoginForm", () => {
@@ -25,7 +27,7 @@ describe("LoginForm", () => {
   it("muestra los mensajes de validación cuando los campos están vacíos", () => {
     render(<LoginForm />);
 
-    fireEvent.click(screen.getByRole("button", { name: /ingresar al portal/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^ingresar/i }));
 
     expect(screen.getByText("Ingresa tu correo electrónico")).toBeTruthy();
     expect(screen.getByText("Ingresa tu contraseña")).toBeTruthy();
@@ -58,7 +60,7 @@ describe("LoginForm", () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/applications"));
   });
 
-  it("redirige al egresado a su área personal (CA-05.3)", async () => {
+  it("redirige al titulado a su área personal (CA-05.3)", async () => {
     render(<LoginForm />);
 
     fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
