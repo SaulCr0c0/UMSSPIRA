@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "auth",
-    "description": "Pruebas del modulo auth (HU-05). Requiere los usuarios de prueba del seed. No guardar contrasenas reales en este archivo: definirlas como variables de entorno en Postman.",
+    "description": "Pruebas del modulo auth (HU-05): inicio de sesion y usuario autenticado. Requiere los usuarios de prueba del seed. No guardar contrasenas reales en este archivo: definirlas como variables en Postman y no exportar la coleccion con ellas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,7 +10,9 @@
     { "key": "adminPassword", "value": "" },
     { "key": "tituladoEmail", "value": "titulado@example.com" },
     { "key": "tituladoPassword", "value": "" },
-    { "key": "unknownEmail", "value": "no-existe@example.com" }
+    { "key": "unknownEmail", "value": "no-existe@example.com" },
+    { "key": "adminToken", "value": "" },
+    { "key": "tituladoToken", "value": "" }
   ],
   "item": [
     {
@@ -24,7 +26,8 @@
               "pm.test('responde 200', () => pm.response.to.have.status(200));",
               "const body = pm.response.json();",
               "pm.test('devuelve accessToken', () => pm.expect(body.data.accessToken).to.be.a('string').and.not.empty);",
-              "pm.test('rol es administrador', () => pm.expect(body.data.role).to.eql('administrador'));"
+              "pm.test('rol es administrador', () => pm.expect(body.data.role).to.eql('administrador'));",
+              "if (body.data && body.data.accessToken) { pm.collectionVariables.set('adminToken', body.data.accessToken); }"
             ]
           }
         }
@@ -54,7 +57,8 @@
               "pm.test('responde 200', () => pm.response.to.have.status(200));",
               "const body = pm.response.json();",
               "pm.test('devuelve accessToken', () => pm.expect(body.data.accessToken).to.be.a('string').and.not.empty);",
-              "pm.test('rol es titulado', () => pm.expect(body.data.role).to.eql('titulado'));"
+              "pm.test('rol es titulado', () => pm.expect(body.data.role).to.eql('titulado'));",
+              "if (body.data && body.data.accessToken) { pm.collectionVariables.set('tituladoToken', body.data.accessToken); }"
             ]
           }
         }
@@ -211,6 +215,115 @@
           "raw": "{{baseUrl}}/api/auth/login",
           "host": ["{{baseUrl}}"],
           "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "GET /api/auth/me - sin token (CA-05.1)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responde 401', () => pm.response.to.have.status(401));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve mensaje de error', () => pm.expect(body.error).to.be.a('string').and.not.empty);",
+              "pm.test('no devuelve datos', () => pm.expect(body.data).to.be.undefined);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "GET /api/auth/me - token invalido (CA-05.1)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responde 401', () => pm.response.to.have.status(401));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve mensaje de error', () => pm.expect(body.error).to.be.a('string').and.not.empty);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer token-invalido" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "GET /api/auth/me - administrador con sesion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responde 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve id y correo', () => {",
+              "  pm.expect(body.data.id).to.be.a('string').and.not.empty;",
+              "  pm.expect(body.data.email).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.test('rol es administrador', () => pm.expect(body.data.role).to.eql('administrador'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "GET /api/auth/me - titulado con sesion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('responde 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve id y correo', () => {",
+              "  pm.expect(body.data.id).to.be.a('string').and.not.empty;",
+              "  pm.expect(body.data.email).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.test('rol es titulado', () => pm.expect(body.data.role).to.eql('titulado'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tituladoToken}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
         }
       }
     }

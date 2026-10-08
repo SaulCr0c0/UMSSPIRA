@@ -81,7 +81,7 @@ export function LoginForm() {
     const errors = validate();
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    await signIn({ email: email.trim(), password });
+    await signIn({ email: email.trim(), password }, remember);
   }
 
   return (

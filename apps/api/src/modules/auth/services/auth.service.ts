@@ -2,9 +2,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthRepository } from '../repositories/auth.repository';
 import { UnauthorizedError } from '@/shared/errors';
-import type { LoginInput, LoginResponse, UserRole } from '@umsspira/shared-types';
-
-const ALLOWED_ROLES: UserRole[] = ['administrador', 'titulado'];
+import { isUserRole } from '@/shared/guards/user-roles';
+import type { LoginInput, LoginResponse } from '@umsspira/shared-types';
 
 @Injectable()
 export class AuthService {
@@ -23,9 +22,9 @@ export class AuthService {
       throw new UnauthorizedError();
     }
 
-    const role = data.user.app_metadata?.role as UserRole | undefined;
-    if (!role || !ALLOWED_ROLES.includes(role)) {
-      this.logger.warn(`Login rechazado: rol inválido o ausente (${role ?? 'sin rol'})`);
+    const role: unknown = data.user.app_metadata?.role;
+    if (!isUserRole(role)) {
+      this.logger.warn(`Login rechazado: rol inválido o ausente (${String(role ?? 'sin rol')})`);
       throw new UnauthorizedError();
     }
 

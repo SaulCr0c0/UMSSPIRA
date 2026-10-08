@@ -11,3 +11,9 @@ export type LoginResponse = {
   accessToken: string;
   role: UserRole;
 };
+
+export type AuthenticatedUser = {
+  id: string;
+  email: string;
+  role: UserRole;
+};

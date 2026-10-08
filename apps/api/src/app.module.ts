@@ -9,7 +9,8 @@ import { EmailVerificationModule } from './modules/email-verification/email-veri
     AuthModule,
     EmailVerificationModule,
   ],
-  controllers: [],
+
+ controllers: [],
   providers: [],
 })
 export class AppModule {}
