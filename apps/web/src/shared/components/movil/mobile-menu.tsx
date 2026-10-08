@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Home, Briefcase, Award, Calendar, User } from 'lucide-react';
+import { Menu, X, Home, Briefcase, Award, Calendar, User, LogOut } from 'lucide-react';
 
 const links = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -13,7 +13,11 @@ const links = [
   { href: '/profile', label: 'Perfil', icon: User },
 ];
 
-export const MobileMenu: React.FC = () => {
+interface MobileMenuProps {
+  onLogout?: () => void;
+}
+
+export const MobileMenu: React.FC<MobileMenuProps> = ({ onLogout }) => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -24,6 +28,25 @@ export const MobileMenu: React.FC = () => {
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Cerrar con Escape y bloquear el scroll de fondo mientras está abierto
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  const handleLogout = () => {
+    setOpen(false);
+    onLogout?.();
+  };
 
   return (
     <div className="md:hidden">
@@ -39,6 +62,15 @@ export const MobileMenu: React.FC = () => {
         <Menu className="w-6 h-6" />
       </button>
 
+      {/* Fondo oscuro: tocar fuera cierra el panel */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-300 ${
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+
       {/* Panel lateral */}
       <aside
         id="mobile-drawer"
@@ -47,10 +79,19 @@ export const MobileMenu: React.FC = () => {
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex h-20 items-center border-b border-slate-700/60 px-4">
+        <div className="flex h-20 items-center justify-between border-b border-slate-700/60 px-4">
           <span className="font-serif text-lg font-bold text-white">
             UMSS<span className="text-[#FFB162]">PIRA</span>
           </span>
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setOpen(false)}
+            tabIndex={open ? 0 : -1}
+            className="h-11 w-11 flex items-center justify-center rounded-lg text-slate-200 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#FFB162]"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1" aria-label="Menú móvil">
@@ -58,6 +99,7 @@ export const MobileMenu: React.FC = () => {
             <Link
               key={href}
               href={href}
+              onClick={() => setOpen(false)}
               tabIndex={open ? 0 : -1}
               aria-current={isActive(href) ? 'page' : undefined}
               className={`flex items-center gap-3 min-h-11 px-3 rounded-xl text-base font-medium border-l-4 ${
@@ -71,6 +113,19 @@ export const MobileMenu: React.FC = () => {
             </Link>
           ))}
         </nav>
+
+        {/* Cerrar sesión al final del panel */}
+        <div className="border-t border-slate-700/60 p-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            tabIndex={open ? 0 : -1}
+            className="flex w-full items-center gap-3 min-h-11 px-3 rounded-xl text-base font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#FFB162]"
+          >
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
     </div>
   );
