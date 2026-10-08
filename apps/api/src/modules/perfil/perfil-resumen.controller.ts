@@ -6,7 +6,7 @@ import { PerfilRepository } from './perfil.repository';
 import { obtenerTituladoId } from './titulado-actual';
 
 // HU3 (T3.1): solo ese grupo edita este archivo
-@Controller('perfil')
+@Controller('api/v1/perfil')
 @UsePipes(perfilValidationPipe())
 export class PerfilResumenController {
   private readonly servicio: PerfilResumenService;

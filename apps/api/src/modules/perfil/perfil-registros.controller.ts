@@ -40,7 +40,7 @@ const DTO_POR_SECCION: Record<Seccion, new () => object> = {
 // Mismas opciones que el ValidationPipe global (main.ts): el formato del error 400 es idéntico al de crear
 const validador = new ValidationPipe({ whitelist: true, transform: true, stopAtFirstError: true });
 
-@Controller('perfil')
+@Controller('api/v1/perfil')
 @UsePipes(perfilValidationPipe())
 export class PerfilRegistrosController {
   constructor(private readonly perfilRepository: PerfilRepository) {}
