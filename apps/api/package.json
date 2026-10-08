@@ -2,9 +2,16 @@
   "name": "api",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "nest start --watch",
+    "dev:local": "SUPABASE_ENV=local nest start --watch",
     "build": "nest build",
+    "test:interests": "npm run build && node --test test/mentorship-interests.e2e.cjs",
+    "test:profile-info": "npm run build && node --test test/mentorship-profile-information.test.cjs",
+    "lint": "eslint src --ext .ts",
     "start": "node dist/main"
   },
   "dependencies": {
@@ -20,11 +27,15 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
   },
-  "devDependencies": {
+    "devDependencies": {
     "@nestjs/cli": "^10.0.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^20.0.0",
+    "@types/pdfmake": "^0.3.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "typescript": "^5.1.3"
+    "eslint": "^10.12.0",
+    "typescript": "^5.1.3",
+    "typescript-eslint": "^8.71.0"
   }
 }
