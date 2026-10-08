@@ -1,14 +1,6 @@
 node_modules/
-apps/api/.local/
 dist/
 .next/
-.next-production/
 .env
-.env.local
-.env.*.local
-.env.localstack
 .DS_Store
 supabase/.temp/
-AGENTS.md
-*.tsbuildinfo
-.tmp-chrome-*/

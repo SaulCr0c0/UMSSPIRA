@@ -19,7 +19,7 @@ export interface EmpresaRow {
 
 @Injectable()
 export class CompaniesService {
-  async getHeader(_empresaId: string): Promise<HeaderResponseDto> {
+  async getHeader(empresaId: string): Promise<HeaderResponseDto> {
     return {
       nombre: 'Empresa Demo S.A.',
       eslogan: 'Innovacion para el futuro',
@@ -29,7 +29,7 @@ export class CompaniesService {
   }
   
   async updateProfile(
-    _empresaId: string,
+    empresaId: string,
     dto: UpdateCompanyDto,
   ): Promise<EmpresaRow> {
     // TSK-4.7: Bloqueo explicito de NIT/RUC
@@ -72,7 +72,7 @@ export class CompaniesService {
     }
 
     fields.push(`fecha_actualizacion = NOW()`);
-    values.push(_empresaId);
+    values.push(empresaId);
 
     const sql = `
       UPDATE empresa
@@ -95,7 +95,7 @@ export class CompaniesService {
    * Hace LEFT JOIN con direccion_empresa y telefono_empresa.
    * Devuelve null en campos que no existan (CA7).
    */
-  async getContact(_empresaId: string): Promise<ContactResponseDto> {
+  async getContact(empresaId: string): Promise<ContactResponseDto> {
     const sql = `
       SELECT
         e.descripcion_larga as "description",
@@ -112,7 +112,7 @@ export class CompaniesService {
       LIMIT 1
     `;
 
-    const rows = await query<ContactResponseDto>(sql, [_empresaId]);
+    const rows = await query<ContactResponseDto>(sql, [empresaId]);
 
     if (rows.length === 0) {
       throw new NotFoundException('Empresa no encontrada');

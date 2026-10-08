@@ -2,7 +2,7 @@ name: Integración Continua UMSSPIRA
 
 on:
   pull_request:
-    branches: [ "main", "dev", "epic*" ]
+    branches: [ "main", "develop", "epic*" ]
 
 jobs:
   verificacion-codigo:
