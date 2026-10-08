@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KpiCard } from '../../../modules/reports/components/kpi-card';
 import { GraduatesTable } from '../../../modules/reports/components/graduates-table';
 import { EmptyState } from '../../../modules/reports/components/empty-state';
@@ -26,6 +26,43 @@ import {
 import { GraduateCsvExport } from '../../../modules/reports/graduates/csv/graduate-csv-export';
 
 const ITEMS_PER_PAGE = 10;
+const REPORTS_LIST_STATE_KEY = 'umsspira:reports-list-state';
+
+interface ReportsListState {
+  searchTerm: string;
+  selectedStatus: StatusFilterOption;
+  currentPage: number;
+}
+
+function readReportsListState(): ReportsListState | null {
+  try {
+    const storedState = window.localStorage.getItem(REPORTS_LIST_STATE_KEY);
+    if (!storedState) return null;
+
+    const parsedState = JSON.parse(storedState) as Partial<ReportsListState>;
+    const { currentPage, searchTerm, selectedStatus } = parsedState;
+
+    if (
+      typeof searchTerm !== 'string' ||
+      (selectedStatus !== 'TODOS' &&
+        selectedStatus !== 'VERIFICADO' &&
+        selectedStatus !== 'OBSERVADO') ||
+      typeof currentPage !== 'number' ||
+      !Number.isInteger(currentPage) ||
+      currentPage <= 0
+    ) {
+      return null;
+    }
+
+    return {
+      searchTerm,
+      selectedStatus,
+      currentPage,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function normalizeText(value: string): string {
   return value
@@ -50,8 +87,20 @@ export default function ReportsPage() {
 
   // Estados de paginação y modal (HU 3)
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedGraduate, setSelectedGraduate] =
-    useState<Graduate | null>(null);
+  const [selectedGraduate, setSelectedGraduate] = useState<Graduate | null>(null);
+  const [hasRestoredListState, setHasRestoredListState] = useState(false);
+
+  useEffect(() => {
+    const storedState = readReportsListState();
+
+    if (storedState) {
+      setSearchTerm(storedState.searchTerm);
+      setSelectedStatus(storedState.selectedStatus);
+      setCurrentPage(storedState.currentPage);
+    }
+
+    setHasRestoredListState(true);
+  }, []);
 
   // Mapeamento de status para o contrato de exportação em PDF da HU 4
   const pdfExportStatus = useMemo<GraduateStatus>(() => {
@@ -102,6 +151,41 @@ export default function ReportsPage() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredGraduates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredGraduates, currentPage]);
+
+  useEffect(() => {
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filteredGraduates.length / ITEMS_PER_PAGE),
+    );
+
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+      return;
+    }
+
+    if (!hasRestoredListState) return;
+
+    const listState: ReportsListState = {
+      searchTerm,
+      selectedStatus,
+      currentPage,
+    };
+
+    try {
+      window.localStorage.setItem(
+        REPORTS_LIST_STATE_KEY,
+        JSON.stringify(listState),
+      );
+    } catch {
+      // La vista sigue funcionando aunque el navegador no permita almacenamiento local.
+    }
+  }, [
+    currentPage,
+    filteredGraduates.length,
+    hasRestoredListState,
+    searchTerm,
+    selectedStatus,
+  ]);
 
   if (loadingIndicators || loadingGraduates) {
     return (
