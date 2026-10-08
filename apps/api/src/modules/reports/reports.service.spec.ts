@@ -15,33 +15,34 @@ describe('ReportsService', () => {
 
   it('debe calcular las metricas institucionales con exactitud', () => {
     const metrics = service.getMetrics();
-    strictEqual(metrics.totalGraduates, 30);
-    strictEqual(metrics.verifiedGraduates, 15);
-    strictEqual(metrics.observedGraduates, 15);
+    strictEqual(metrics.totalGraduates, 90);
+    strictEqual(metrics.verifiedGraduates, 72);
+    strictEqual(metrics.observedGraduates, 18);
     // Valida que ningún observado compute como mentor activo
     const mentoresVerificadosReales = service['records'].filter(
       (r) => r.estado === 'VERIFICADO' && r.deseaMentor
     ).length;
     strictEqual(metrics.activeMentors, mentoresVerificadosReales);
+    strictEqual(metrics.activeMentors, 37);
   });
 
   it('debe paginar el padron de egresados correctamente', () => {
     const res = service.getGraduates({ page: '1', limit: '5' });
     strictEqual(res.data.length, 5);
-    strictEqual(res.meta.total, 30);
-    strictEqual(res.meta.totalPages, 6);
+    strictEqual(res.meta.total, 90);
+    strictEqual(res.meta.totalPages, 18);
     strictEqual(res.meta.page, 1);
   });
 
   it('debe filtrar por estado OBSERVADO', () => {
     const res = service.getGraduates({ status: 'OBSERVADO', limit: '30' });
-    strictEqual(res.data.length, 15);
+    strictEqual(res.data.length, 18);
     ok(res.data.every((r) => r.estado === 'OBSERVADO'));
   });
 
   it('debe filtrar por termino de busqueda', () => {
-    const res = service.getGraduates({ search: 'Perez' });
+    const res = service.getGraduates({ search: 'Morales' });
     ok(res.data.length >= 1);
-    strictEqual(res.data[0].apellido, 'Perez');
+    strictEqual(res.data[0].apellido, 'Morales Albarracín');
   });
 });

@@ -161,9 +161,9 @@ test('usa el mock consolidado de HU1/HU2/HU3', () => {
   const observed = dataSource.findAll({ status: 'OBSERVADO' });
   const all = dataSource.findAll({});
 
-  assert.equal(verified.length, 15);
-  assert.equal(observed.length, 15);
-  assert.equal(all.length, 30);
+  assert.equal(verified.length, 72);
+  assert.equal(observed.length, 18);
+  assert.equal(all.length, 90);
   assert.equal(verified.length + observed.length, all.length);
 });
 
@@ -172,19 +172,18 @@ test('aplica la misma búsqueda visible por nombre o código SIS', () => {
 
   const byName = dataSource.findAll({
     status: 'OBSERVADO',
-    search: 'gomez',
+    search: 'quispe',
   });
   const bySis = dataSource.findAll({
     status: 'OBSERVADO',
-    search: '201800002',
+    search: '201709122',
   });
 
   assert.equal(byName.length, 1);
-  assert.equal(byName[0].numeroRegistro, '#REG-2023-0002');
-  assert.equal(byName[0].nombreCompleto, 'Gomez, Maria');
+  assert.equal(byName[0].nombreCompleto, 'Quispe Condori, Marcelo Andrés');
   assert.ok(byName[0].motivoRechazo.length > 0);
   assert.equal(bySis.length, 1);
-  assert.equal(bySis[0].codigoSis, '201800002');
+  assert.equal(bySis[0].codigoSis, '201709122');
 });
 
 test('el endpoint CSV exporta solo los observados seleccionados', async () => {
@@ -204,7 +203,7 @@ test('el endpoint CSV exporta solo los observados seleccionados', async () => {
   const content = buffer.toString('utf8').slice(1).trimEnd();
   const lines = content.split('\r\n');
 
-  assert.equal(lines.length, 16);
+  assert.equal(lines.length, 19);
   assert.ok(content.includes(',OBSERVADO'));
   assert.ok(!content.includes(',VERIFICADO'));
   assert.equal(headers['Content-Type'], 'text/csv; charset=utf-8');
@@ -231,7 +230,7 @@ test('el endpoint CSV exporta los verificados cuando ese estado está activo', a
   const content = buffer.toString('utf8').slice(1).trimEnd();
   const lines = content.split('\r\n');
 
-  assert.equal(lines.length, 16);
+  assert.equal(lines.length, 73);
   assert.ok(content.includes(',VERIFICADO'));
   assert.ok(!content.includes(',OBSERVADO'));
   assert.match(
@@ -257,7 +256,7 @@ test('el endpoint CSV con TODOS exporta exactamente todos los registros del mock
   const content = buffer.toString('utf8').slice(1).trimEnd();
   const lines = content.split('\r\n');
 
-  assert.equal(lines.length, 31);
+  assert.equal(lines.length, 91);
   assert.ok(content.includes(',VERIFICADO'));
   assert.ok(content.includes(',OBSERVADO'));
   assert.match(
