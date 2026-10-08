@@ -9,6 +9,7 @@ const PRECACHE_URLS = ['/manifest.webmanifest', '/favicon.ico'];
 const PROFILES = {
   default: { maxAssets: 80 },
   desktop: { maxAssets: 200 },
+  mobile: { maxAssets: 40 },
 };
 const DEFAULT_PROFILE = 'default';
 const PROFILE_KEY = '/__sw-profile';
