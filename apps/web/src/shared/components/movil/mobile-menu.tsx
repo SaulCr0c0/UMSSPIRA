@@ -29,6 +29,16 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ onLogout }) => {
     setOpen(false);
   }, [pathname]);
 
+  // Cerrar el panel si la pantalla pasa a escritorio (≥ 768 px), por ejemplo al rotar
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setOpen(false);
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
   // Cerrar con Escape y bloquear el scroll de fondo mientras está abierto
   useEffect(() => {
     if (!open) return;
