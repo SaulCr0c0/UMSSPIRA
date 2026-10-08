@@ -10,6 +10,7 @@ import {
   SECCIONES,
   Seccion,
   TABLA_RESPALDO,
+  TABLA_TITULADO,
   TipoRespaldo,
 } from './perfil.constants';
 import {
@@ -20,12 +21,13 @@ import {
   filaARegistro,
   filaARespaldo,
 } from './perfil.mappers';
+import { DatosTitulado, ResumenRepositorio } from './perfil-resumen.service';
 import { FormacionComparable } from './validators/formacion-duplicada';
 
 // Único archivo que habla con la BD. Los nombres de tabla y columna salen de perfil.constants.ts
 // y los valores van siempre como parámetros ($1, $2...), nunca dentro del texto del SQL.
 @Injectable()
-export class PerfilRepository implements FormacionRepositorio {
+export class PerfilRepository implements FormacionRepositorio, ResumenRepositorio {
   async insertar(seccion: Seccion, tituladoId: string, datos: object): Promise<Registro> {
     const { tabla } = SECCIONES[seccion];
     const { columnas, valores } = datosAColumnas(seccion, datos);
@@ -90,6 +92,29 @@ export class PerfilRepository implements FormacionRepositorio {
       `VALUES ($1, $2, $3, NOW()) RETURNING *`;
     const filas = await query<Record<string, unknown>>(sql, [certificacionId, tipo, archivoKey]);
     return filaARespaldo(filas[0]);
+  }
+
+  // Cabecera del resumen (HU3): nombre completo y carrera del titulado.
+  // promocion queda en null: titulado no tiene todavía una columna con el año de egreso.
+  async obtenerDatosTitulado(tituladoId: string): Promise<DatosTitulado | null> {
+    const filas = await query<{ nombre: string | null; carrera: string | null }>(
+      `SELECT NULLIF(TRIM(CONCAT_WS(' ', t.nombre, t.apellido)), '') AS nombre, c.nombre AS carrera ` +
+        `FROM ${TABLA_TITULADO} t LEFT JOIN carrera c ON c.id = t.id_carrera WHERE t.${COLUMNA_ID} = $1`,
+      [tituladoId],
+    );
+    if (!filas[0]) return null;
+    return { nombre: filas[0].nombre, carrera: filas[0].carrera, promocion: null };
+  }
+
+  // Respaldos de varias certificaciones a la vez (estado del respaldo en el resumen)
+  async listarRespaldos(idsCertificacion: string[]): Promise<Respaldo[]> {
+    const c = COLUMNAS_RESPALDO;
+    const filas = await query<Record<string, unknown>>(
+      `SELECT * FROM ${TABLA_RESPALDO} WHERE ${c.idCertificacion} = ANY($1::uuid[]) ` +
+        `ORDER BY ${c.fechaSubida} DESC NULLS LAST`,
+      [idsCertificacion],
+    );
+    return filas.map(filaARespaldo);
   }
 
   // Contrato FormacionRepositorio (lo usa FormacionAcademicaService para el 409 de T2.5)

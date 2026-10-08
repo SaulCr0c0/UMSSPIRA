@@ -15,8 +15,14 @@ services:
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
+    volumes:
       - db_data:/var/lib/postgresql/data
       - ./supabase/migrations/0001_esquema_principal.sql:/docker-entrypoint-initdb.d/0001_esquema_principal.sql:ro
+      - ./supabase/migrations/0002_renombrar_egresado_a_titulado.sql:/docker-entrypoint-initdb.d/0002_renombrar_egresado_a_titulado.sql:ro
+      - ./supabase/migrations/0003_corregir_tablas_epica2.sql:/docker-entrypoint-initdb.d/0003_corregir_tablas_epica2.sql:ro
+      - ./supabase/migrations/0004_uuid_gen_random_uuid.sql:/docker-entrypoint-initdb.d/0004_uuid_gen_random_uuid.sql:ro
+      - ./supabase/migrations/0005_activar_rls.sql:/docker-entrypoint-initdb.d/0005_activar_rls.sql:ro
+      - ./supabase/migrations/0012_indices_perfil_titulado.sql:/docker-entrypoint-initdb.d/0012_indices_perfil_titulado.sql:ro
 
 volumes:
   db_data:
