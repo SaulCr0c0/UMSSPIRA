@@ -9,7 +9,10 @@ import {
 import { randomUUID } from 'crypto';
 import { redisClient } from '../../../shared/lib/redis';
 import { RegistrationsRepository } from '../repositories/registrations.repository';
-import { CreateRegistrationDataDto } from '../contracts/dto';
+import {
+  CreateRegistrationDataDto,
+  SubmitRegistrationDto,
+} from '../contracts/dto';
 import { DuplicatesService } from './duplicates.service';
 
 // Vigencia de los datos temporales del formulario en Redis: 2 horas (CA-01.1 y CA-01.6)
@@ -73,6 +76,56 @@ export class RegistrationsService {
     }
     return { sessionToken: token, expiresInSeconds: Math.max(ttl, 0) };
   }
+
+  async submitRegistration(dto: SubmitRegistrationDto) {
+  const { raw } = await this.readSession(sessionKey(dto.sessionToken));
+
+  if (!raw) {
+    throw new GoneException({
+      statusCode: 410,
+      message: EXPIRED_MESSAGE,
+    });
+  }
+
+  const session = JSON.parse(raw) as CreateRegistrationDataDto & {
+    isEmailVerified?: boolean;
+  };
+
+  if (session.isEmailVerified !== true) {
+    throw new BadRequestException({
+      statusCode: 400,
+      message: 'Debes verificar tu correo antes de enviar la solicitud',
+    });
+  }
+
+  const tamanioMb = Math.max(
+    1,
+    Math.ceil(dto.sizeBytes / (1024 * 1024)),
+  );
+
+  const result = await this.withDataSource(() =>
+    this.registrationsRepository.submitRegistration({
+      idCarrera: session.carreraId,
+      nombre: session.nombres,
+      apellido: session.apellidos,
+      telefono: session.telefono,
+      email: session.correo,
+      fechaTitulacion: dto.fechaTitulacion,
+      fechaIngreso: dto.fechaIngreso,
+      ci: session.ci,
+      extensionCi: session.complementoCi ?? '',
+      expedidoEn: session.expedidoEn,
+      anioEgreso: session.anioEgreso,
+      codigoSis: session.codigoSis,
+      deseaMentor: dto.deseaMentor,
+      tipoDocumento: dto.tipoDocumento,
+      tamanioMb,
+      rutaStorage: dto.rutaStorage,
+    }),
+  );
+
+  return result;
+}
 
   private async readSession(key: string): Promise<{ raw: string | null; ttl: number }> {
     try {
