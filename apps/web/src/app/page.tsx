@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar } from '@/shared/components/navbar';
+import  Navbar  from '@/shared/components/navbar';
 import Image from 'next/image';
 import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
 
