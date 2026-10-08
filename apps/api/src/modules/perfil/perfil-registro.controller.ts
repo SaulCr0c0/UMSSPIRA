@@ -8,9 +8,11 @@ import {
   Req,
   UploadedFile,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
+import { perfilValidationPipe } from './perfil.pipe';
 import { CertificacionRespaldoService } from './certificacion-respaldo.service';
 import { CrearCertificacionDto } from './dto/crear-certificacion.dto';
 import { CrearExperienciaLaboralDto } from './dto/crear-experiencia-laboral.dto';
@@ -23,6 +25,7 @@ import { ArchivoRespaldoPipe } from './validators/archivo-respaldo.pipe';
 
 // HU1: endpoints de guardado del formulario de perfil (T1.6 a T1.9)
 @Controller('perfil')
+@UsePipes(perfilValidationPipe())
 export class PerfilRegistroController {
   private readonly experienciaLaboral: ExperienciaLaboralService;
   private readonly respaldo: CertificacionRespaldoService;

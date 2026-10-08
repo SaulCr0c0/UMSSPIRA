@@ -1,17 +1,48 @@
-import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let cliente: SupabaseClient | null = null;
+/**
+ * Cliente de Supabase COMPARTIDO por toda la API.
+ * Uso en cualquier módulo:
+ *
+ *   import { supabase } from '../../shared/lib/supabase';
+ *   const { data, error } = await supabase.from('tabla').select('*');
+ *
+ * Variables de entorno requeridas (.env):
+ *   SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY   (backend: usa la service_role, NO la anon key)
+ *
+ * El cliente se crea en el primer uso (no al importar el archivo), así el
+ * orden de carga del .env no importa mientras esté cargado antes del primer request.
+ */
+let client: SupabaseClient | null = null;
 
-// El backend usa la clave service_role: con RLS activo en todas las tablas y sin políticas en Storage,
-// la clave anon no puede subir archivos. Esta clave nunca debe llegar al frontend.
-export function supabaseClient(): SupabaseClient {
-  if (!cliente) {
-    const url = process.env.SUPABASE_URL;
-    const clave = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !clave) {
-      throw new Error('SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no estan definidas en el entorno');
-    }
-    cliente = createClient(url, clave, { auth: { persistSession: false } });
+function getClient(): SupabaseClient {
+  if (client) return client;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      'Supabase no configurado: define SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en el .env',
+    );
   }
-  return cliente;
+
+  client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return client;
+}
+
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const instance = getClient();
+    const value = Reflect.get(instance, prop) as unknown;
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+
+
+// Alias para el módulo de perfil (usa supabaseClient().storage...): es el mismo cliente compartido
+export function supabaseClient(): SupabaseClient {
+  return supabase;
 }

@@ -1,0 +1,273 @@
+{
+  "info": {
+    "_postman_id": "3f0c8b12-5e4a-4f91-8f57-9d8fef551b42",
+    "name": "UMSSPIRA - Mentorship API",
+    "description": "Solicitudes locales para consultar perfiles y probar la API de mentorship.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Mentorship API",
+      "item": [
+        {
+          "name": "Consultar estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/mentorship/status"
+          }
+        },
+        {
+          "name": "Listar perfiles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('La respuesta es una lista de perfiles', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const profiles = pm.response.json();",
+                  "  pm.expect(profiles).to.be.an('array');",
+                  "  if (profiles.length > 0) pm.environment.set('userId', profiles[0].userId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/mentorship/profiles"
+          }
+        },
+        {
+          "name": "Evaluar perfil elegible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El perfil completo es elegible', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().eligible).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"userId\": \"30000000-0000-4000-8000-000000000001\",\n    \"isMentorActive\": true,\n    \"isGraduate\": true,\n    \"isVerified\": true,\n    \"isApproved\": true,\n    \"hasParticipationRestriction\": false,\n    \"personalInfo\": {\n      \"firstName\": \"Lucia\",\n      \"lastName\": \"Rojas\",\n      \"email\": \"lucia.rojas@example.test\",\n      \"phone\": \"+591 70000001\"\n    },\n    \"academicInfo\": {\n      \"career\": \"Ingenieria de Sistemas\",\n      \"degree\": \"Licenciatura\",\n      \"graduationYear\": 2021\n    },\n    \"professionalInfo\": {\n      \"summary\": \"Desarrolladora backend con experiencia en APIs.\",\n      \"yearsExperience\": 4\n    },\n    \"description\": \"Mentora de sistemas distribuidos.\",\n    \"experienceDescription\": \"Experiencia en APIs, PostgreSQL y servicios en la nube.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/eligibility"
+          }
+        },
+        {
+          "name": "Evaluar perfil incompleto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El perfil incompleto no es elegible', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const result = pm.response.json();",
+                  "  pm.expect(result.eligible).to.eql(false);",
+                  "  pm.expect(result.issues.some(issue => issue.code === 'profile_incomplete')).to.eql(true);",
+                  "  const invalid = result.issues.find(issue => issue.code === 'invalid_profile_data');",
+                  "  pm.expect(invalid.invalidFields).to.include('Correo electrónico válido');",
+                  "  pm.expect(invalid.invalidFields).to.include('Año de egreso');",
+                  "  pm.expect(invalid.invalidFields).to.include('Años de experiencia');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"userId\": \"30000000-0000-4000-8000-000000000002\",\n    \"isMentorActive\": true,\n    \"isGraduate\": true,\n    \"isVerified\": true,\n    \"isApproved\": true,\n    \"hasParticipationRestriction\": false,\n    \"personalInfo\": {\n      \"firstName\": \"Mario\",\n      \"lastName\": \"\",\n      \"email\": \"mario.invalid\",\n      \"phone\": \"\"\n    },\n    \"academicInfo\": {\n      \"career\": \"Diseno Grafico\",\n      \"degree\": \"\",\n      \"graduationYear\": 0\n    },\n    \"professionalInfo\": {\n      \"summary\": \"\",\n      \"yearsExperience\": -1\n    },\n    \"description\": \"\",\n    \"experienceDescription\": \"\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/eligibility"
+          }
+        },
+        {
+          "name": "Evaluar perfil con restricciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El perfil con restricciones no es elegible', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const result = pm.response.json();",
+                  "  pm.expect(result.eligible).to.eql(false);",
+                  "  pm.expect(result.issues.some(issue => issue.code === 'participation_restricted')).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"userId\": \"30000000-0000-4000-8000-000000000003\",\n    \"isMentorActive\": true,\n    \"isGraduate\": true,\n    \"isVerified\": false,\n    \"isApproved\": false,\n    \"hasParticipationRestriction\": true,\n    \"personalInfo\": {\n      \"firstName\": \"Andrea\",\n      \"lastName\": \"Vargas\",\n      \"email\": \"andrea.vargas@example.test\",\n      \"phone\": \"+591 70000003\"\n    },\n    \"academicInfo\": {\n      \"career\": \"Ingenieria Industrial\",\n      \"degree\": \"Licenciatura\",\n      \"graduationYear\": 2018\n    },\n    \"professionalInfo\": {\n      \"summary\": \"Lider de proyectos.\",\n      \"yearsExperience\": 7\n    },\n    \"description\": \"Mentora de gestion de proyectos.\",\n    \"experienceDescription\": \"Experiencia liderando equipos multidisciplinarios.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/eligibility"
+          }
+        },
+        {
+          "name": "Evaluar mentor inactivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Un mentor inactivo no es elegible', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const result = pm.response.json();",
+                  "  pm.expect(result.eligible).to.eql(false);",
+                  "  pm.expect(result.issues.some(issue => issue.code === 'mentor_inactive')).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"userId\": \"30000000-0000-4000-8000-000000000001\",\n    \"isMentorActive\": false,\n    \"isGraduate\": true,\n    \"isVerified\": true,\n    \"isApproved\": true,\n    \"hasParticipationRestriction\": false,\n    \"personalInfo\": {\n      \"firstName\": \"Lucia\",\n      \"lastName\": \"Rojas\",\n      \"email\": \"lucia.rojas@example.test\",\n      \"phone\": \"+591 70000001\"\n    },\n    \"academicInfo\": {\n      \"career\": \"Ingenieria de Sistemas\",\n      \"degree\": \"Licenciatura\",\n      \"graduationYear\": 2021\n    },\n    \"professionalInfo\": {\n      \"summary\": \"Desarrolladora backend con experiencia en APIs.\",\n      \"yearsExperience\": 4\n    },\n    \"description\": \"Mentora de sistemas distribuidos.\",\n    \"experienceDescription\": \"Experiencia en APIs, PostgreSQL y servicios en la nube.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/eligibility"
+          }
+        },
+        {
+          "name": "Evaluar perfil vacío e inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Se informan todos los datos faltantes e inválidos', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const result = pm.response.json();",
+                  "  pm.expect(result.eligible).to.eql(false);",
+                  "  const incomplete = result.issues.find(issue => issue.code === 'profile_incomplete');",
+                  "  const invalid = result.issues.find(issue => issue.code === 'invalid_profile_data');",
+                  "  pm.expect(incomplete.missingFields).to.include('Nombre');",
+                  "  pm.expect(incomplete.missingFields).to.include('Carrera');",
+                  "  pm.expect(invalid.invalidFields).to.include('Estado activo del mentor');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/eligibility"
+          }
+        },
+        {
+          "name": "Desactivar mentor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Prueba desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/mentorship/deactivate/{{userId}}"
+          }
+        },
+        {
+          "name": "Restablecer perfiles demo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/mentorship/profiles/reset"
+          }
+        }
+      ]
+    }
+  ]
+}

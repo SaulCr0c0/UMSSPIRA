@@ -1,11 +1,13 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
+import { Controller, Get, Req, Res, UsePipes } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { perfilValidationPipe } from './perfil.pipe';
 import { PerfilExportarService } from './perfil-exportar.service';
 import { PerfilRepository } from './perfil.repository';
 import { obtenerTituladoId } from './titulado-actual';
 
 // HU5 (T5.2 y T5.3): solo ese grupo edita este archivo
 @Controller('perfil')
+@UsePipes(perfilValidationPipe())
 export class PerfilExportarController {
   private readonly servicio: PerfilExportarService;
 

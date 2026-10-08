@@ -12,9 +12,11 @@ import {
   Put,
   Req,
   ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { Request } from 'express';
 
+import { perfilValidationPipe } from './perfil.pipe';
 import { CrearCertificacionDto } from './dto/crear-certificacion.dto';
 import { CrearExperienciaLaboralDto } from './dto/crear-experiencia-laboral.dto';
 import { CrearFormacionAcademicaDto } from './dto/crear-formacion-academica.dto';
@@ -39,6 +41,7 @@ const DTO_POR_SECCION: Record<Seccion, new () => object> = {
 const validador = new ValidationPipe({ whitelist: true, transform: true, stopAtFirstError: true });
 
 @Controller('perfil')
+@UsePipes(perfilValidationPipe())
 export class PerfilRegistrosController {
   constructor(private readonly perfilRepository: PerfilRepository) {}
 
