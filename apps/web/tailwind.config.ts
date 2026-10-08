@@ -24,6 +24,8 @@ const config: Config = {
       },
     },
   },
+  // Sin preflight: el CSS global de dev ya trae su propio reset y no debe cambiar
+  corePlugins: { preflight: false },
   plugins: [],
 };
 export default config;

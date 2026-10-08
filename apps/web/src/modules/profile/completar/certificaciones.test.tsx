@@ -23,18 +23,18 @@ describe('FormularioCertificaciones', () => {
 
     expect(screen.getByRole('button', { name: 'Subir foto' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Subir documento' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Subir foto', { selector: 'input' })).toHaveAttribute('accept', 'image/png,image/jpeg');
-    expect(screen.getByLabelText('Subir documento', { selector: 'input' })).toHaveAttribute('accept', 'application/pdf');
+    expect(screen.getByLabelText('Subir foto', { selector: 'input' })).toHaveAttribute('accept', 'image/jpeg');
+    expect(screen.getByLabelText('Subir documento', { selector: 'input' })).toHaveAttribute('accept', 'image/jpeg');
   });
 
   it('envia la certificacion con su respaldo', () => {
     const onAgregar = jest.fn();
     render(<FormularioCertificaciones certificaciones={[]} onAgregar={onAgregar} />);
     llenarFormulario();
-    const archivo = new File(['contenido'], 'certificado.pdf', { type: 'application/pdf' });
+    const archivo = new File(['contenido'], 'certificado.jpg', { type: 'image/jpeg' });
 
     fireEvent.change(screen.getByLabelText('Subir documento', { selector: 'input' }), { target: { files: [archivo] } });
-    expect(screen.getByText('certificado.pdf')).toBeInTheDocument();
+    expect(screen.getByText('certificado.jpg')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
 
