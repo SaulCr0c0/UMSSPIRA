@@ -1,10 +1,11 @@
 'use client';
 import React from 'react';
-import Image from 'next/image';
 import { 
   Home, ShieldAlert, FileText, Edit3, BarChart2, Calendar as CalendarIcon, 
   Settings 
 } from 'lucide-react';
+
+import Logo from './logo';
 
 // Importamos la imagen única que ocupará todo ese lugar en el sidebar
 import logoCompleto from '../assets/images/logoumsspira.jpg'; // Reemplaza con el nombre de tu archivo
@@ -20,20 +21,11 @@ export default function AdminNavbar({ activeNav, setActiveNav }: AdminNavbarProp
       
       {/* Cabecera del Sidebar con la Imagen Única */}
       <div className="p-4 sm:p-6 space-y-6">
-        {/*
-          Logo adaptable:
-          - Se controla la ALTURA por breakpoint y el ancho se calcula solo (w-auto),
-            así conserva su proporción original.
-          - max-w-full evita que desborde el sidebar.
-          - object-contain garantiza que nunca se deforme aunque max-w-full entre en acción.
-        */}
         <div className="flex items-center min-w-0">
-          <Image 
-            src={logoCompleto} 
-            alt="Logo UMSSPIRA" 
-            priority
+          <Logo
+            src={logoCompleto}
+            maxWidthClassName="max-w-full"
             sizes="(max-width: 640px) 200px, 220px"
-            className="block h-10 sm:h-12 md:h-14 w-auto max-w-full object-contain object-left" 
           />
         </div>
 

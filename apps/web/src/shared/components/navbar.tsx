@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award } from 'lucide-react';
+
+import Logo from './logo';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
@@ -52,19 +53,11 @@ export const Navbar: React.FC = () => {
         
         {/* Logo Institucional en la esquina superior izquierda */}
         <div className="flex items-center min-w-0">
-          {/*
-            Logo adaptable:
-            - Se controla la ALTURA y el ancho se calcula solo (w-auto) para conservar la proporción.
-            - max-w limita el ancho en pantallas angostas (móvil en vertical).
-            - object-contain evita cualquier deformación si max-w entra en acción.
-          */}
           <Link href="#" className="block shrink-0">
-            <Image 
-              src={logoUmss} 
-              alt="Logo UMSSPIRA" 
-              priority
-              sizes="(max-width: 640px) 45vw, 200px"
-              className={`block ${config.logoHeight} ${config.logoMaxWidth} w-auto object-contain object-left`}
+            <Logo
+              src={logoUmss}
+              heightClassName={config.logoHeight}
+              maxWidthClassName={config.logoMaxWidth}
             />
           </Link>
         </div>
