@@ -16,17 +16,24 @@ interface AdminNavbarProps {
 
 export default function AdminNavbar({ activeNav, setActiveNav }: AdminNavbarProps) {
   return (
-    <aside className="w-64 bg-[#0F172A] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none">
+    <aside className="w-56 sm:w-64 bg-[#0F172A] text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none">
       
       {/* Cabecera del Sidebar con la Imagen Única */}
-      <div className="p-6 space-y-6">
-        {/* Imagen en lugar del texto y cuadrito anterior */}
-        <div className="relative w-full h-14">
+      <div className="p-4 sm:p-6 space-y-6">
+        {/*
+          Logo adaptable:
+          - Se controla la ALTURA por breakpoint y el ancho se calcula solo (w-auto),
+            así conserva su proporción original.
+          - max-w-full evita que desborde el sidebar.
+          - object-contain garantiza que nunca se deforme aunque max-w-full entre en acción.
+        */}
+        <div className="flex items-center min-w-0">
           <Image 
             src={logoCompleto} 
             alt="Logo UMSSPIRA" 
-            fill 
-            className="object-contain object-left" 
+            priority
+            sizes="(max-width: 640px) 200px, 220px"
+            className="block h-10 sm:h-12 md:h-14 w-auto max-w-full object-contain object-left" 
           />
         </div>
 
@@ -97,7 +104,7 @@ export default function AdminNavbar({ activeNav, setActiveNav }: AdminNavbarProp
       </div>
 
       {/* Footer del Sidebar (Configuración) */}
-      <div className="p-6 border-t border-slate-800">
+      <div className="p-4 sm:p-6 border-t border-slate-800">
         <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-slate-800/60 text-slate-400 hover:text-white transition-colors text-sm font-medium cursor-pointer">
           <Settings className="w-5 h-5" />
           <span>Configuración</span>
