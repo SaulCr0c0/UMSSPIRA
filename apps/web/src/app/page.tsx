@@ -20,7 +20,7 @@ export default function Home() {
   const imageZoom = "scale-100";            // Zoom interno
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-white">
+    <div className="min-h-[100dvh] bg-[#FDFBF7] text-slate-900 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-white">
       
       {/* Barra de Navegación Superior */}
       <Navbar />

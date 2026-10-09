@@ -12,13 +12,13 @@ export default function AdminDashboardPage() {
   const [activeSubTab, setActiveSubTab] = useState('Dashboard');
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex font-sans antialiased overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#FDFBF7] text-slate-900 flex font-sans antialiased overflow-hidden">
       
       {/* Sidebar Modular AdminNavbar */}
       <AdminNavbar activeNav={activeNav} setActiveNav={setActiveNav} />
 
       {/* 🖥️ CONTENIDO PRINCIPAL DEL PANEL */}
-      <div className="flex-grow flex flex-col h-screen overflow-y-auto">
+      <div className="flex-grow flex flex-col h-[100dvh] overflow-y-auto">
         
         {/* Barra Superior del Panel */}
         <header className="w-full bg-[#FAF7F2] border-b border-slate-200 px-8 h-20 flex items-center justify-between shrink-0">

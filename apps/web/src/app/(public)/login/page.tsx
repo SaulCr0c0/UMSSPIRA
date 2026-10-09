@@ -15,7 +15,7 @@ import selloImg from '@/shared/assets/images/sello.png';
 
 export default function PublicLandingPage() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-white">
+    <div className="min-h-[100dvh] bg-[#FDFBF7] text-slate-900 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-white">
       
       {/* 🧭 Navbar Superior Público Modular */}
       <PublicNavbar />
