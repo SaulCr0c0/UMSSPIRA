@@ -38,16 +38,24 @@ const navItems: NavItem[] = [
 export const Navbar: React.FC = () => {
   // =====================================================================
   // 🎛️ PANEL DE CONTROL DE TAMAÑOS Y DISPOSICIÓN INDEPENDIENTE
-  // Modifica estos valores para mover cada elemento a tu gusto:
+  // Modifica estos valores para mover cada elemento a tu gusto.
+  // Convención: valores base = celulares grandes en horizontal (768–1023 px)
+  //             prefijo lg: = escritorio (1024 px en adelante)
   // =====================================================================
   const config = {
     height: "h-16 md:h-20",                  // Altura total de la barra (más compacta en móvil)
     logoHeight: "h-10 sm:h-12 md:h-14",      // Alto del logo por breakpoint (el ancho se calcula solo)
     logoMaxWidth: "max-w-[45vw]",            // Límite de ancho para que nunca desborde en pantallas angostas
-    spacing: "space-x-3",      // Espacio del menú principal
-    textSize: "text-base",     // Tamaño de tipografía
-    itemPaddingX: "px-3",      // Padding horizontal de los botones
-    itemPaddingY: "py-2",      // Padding vertical de los botones
+
+    // Menú principal: compacto entre 768 y 1023 px, completo desde 1024 px
+    spacing: "gap-1 lg:gap-3",               // Espacio entre botones del menú
+    textSize: "text-[11px] lg:text-base",    // Tamaño de tipografía
+    itemPaddingX: "px-2 lg:px-3",            // Padding horizontal de los botones
+    itemPaddingY: "py-1.5 lg:py-2",          // Padding vertical de los botones
+    itemLayout: "flex-col lg:flex-row",      // Ícono arriba del texto en compacto; al lado en escritorio
+    itemGap: "gap-0.5 lg:gap-2",             // Espacio entre ícono y texto
+    iconSize: "w-5 h-5 lg:w-6 lg:h-6",       // Tamaño del ícono
+    underlineInset: "left-2 right-2 lg:left-3 lg:right-3", // Margen de la línea naranja activa
 
     // 🎚️ CONTROLES INDEPENDIENTES PARA LA SECCIÓN DERECHA:
     // Puedes usar clases como "translate-x-0", "translate-x-2", "translate-x-4", "-translate-x-2", etc.
@@ -97,16 +105,16 @@ export const Navbar: React.FC = () => {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
+                className={`flex ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative whitespace-nowrap ${
                   isActive
                     ? 'bg-[#1E293B] text-white'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Icon className="w-6 h-6" />
+                <Icon className={`${config.iconSize} shrink-0`} />
                 <span>{label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
+                  <span className={`absolute bottom-0 ${config.underlineInset} h-0.5 bg-[#FFB162] rounded-full`}></span>
                 )}
               </button>
             );
