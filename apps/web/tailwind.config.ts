@@ -7,10 +7,16 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/modules/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/shared/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
+        umss: {
+          dark: '#1B2632',
+          sand: '#EEE9DF',
+          red: '#8B0000',
+        },
         palladian: "#EEE9DF",
         oatmeal: "#C9C1B1",
         "blue-fantastic": "#2C3B4D",

@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import type { ActivationCodeRepository } from '../repositories/activation-code.repository';
 import { ActivationCodeService } from './activation-code.service';
 

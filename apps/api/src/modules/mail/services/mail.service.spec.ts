@@ -19,7 +19,7 @@ describe('MailService', () => {
     mockTransporter = {
       sendMail: jest.fn().mockResolvedValue({ messageId: 'test-id' }),
     };
-    mailService = new MailService(mockTransporter as any, mockConfig);
+    mailService = new MailService(mockTransporter as unknown as ConstructorParameters<typeof MailService>[0], mockConfig);
   });
 
   it('renderiza plantillas y envia el codigo de verificacion por SMTP', async () => {
