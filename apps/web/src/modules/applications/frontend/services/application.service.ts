@@ -1,7 +1,8 @@
 // Servicio de solicitudes del backoffice (HU-04)
+
 import type { ApplicationStatus } from "@umsspira/shared-types";
+
 export type { ApplicationStatus };
-export type AgeFilter = "" | "within48" | "over48";
 export type DocumentType = "diploma" | "titulo" | "certificado";
 export type SlaTone = "overdue" | "warning" | "ok" | "paused" | "closed";
 
@@ -9,6 +10,7 @@ export interface Application {
   id: string;
   code: string; // EGR-2025-004812
   fullName: string;
+  email: string;
   ci: string;
   issuedIn: string; // código de departamento: LP, CB, SC...
   sisCode: string;
@@ -23,7 +25,6 @@ export interface ApplicationsQuery {
   pageSize: number;
   career: string; // "" = todas
   status: "" | ApplicationStatus; // "" = todos
-  age: AgeFilter;
   search: string;
 }
 
@@ -38,8 +39,7 @@ export interface SlaInfo {
   progress: number; // 0 a 1
 }
 
-export const PAGE_SIZE_OPTIONS = [10, 15]; // CA-04.1: máximo 15 filas
-export const DEFAULT_PAGE_SIZE = 10;
+export const DEFAULT_PAGE_SIZE = 15; // CA-04.1: máximo 15 filas
 export const OVERDUE_HOURS = 48; // CA-04.1
 export const WARNING_HOURS = 36;
 
@@ -49,8 +49,6 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   APPROVED: "Aprobado",
   REJECTED: "Rechazado",
 };
-
-export const AGE_LABELS = { within48: "< 48h", over48: "> 48h Vencido" };
 
 export const DOCUMENT_LABELS: Record<DocumentType, string> = {
   diploma: "Diploma Académico",
@@ -70,7 +68,7 @@ export const DEPARTMENT_NAMES: Record<string, string> = {
   PD: "Pando",
 };
 
-// Provisional: reemplazar por el catálogo que entregue la API
+// Provisional: reemplazar por el catálogo de carreras que entregue la API
 export const CAREER_OPTIONS = ["Ingeniería de Sistemas", "Ingeniería Informática"];
 
 // "Ingeniería de Sistemas" -> "Sistemas"
@@ -101,7 +99,7 @@ export function getMarkerLabel(application: Application, now: number = Date.now(
   }
 }
 
-// Columna "Antigüedad & SLA"
+// Indicador de antigüedad y SLA
 export function getSla(application: Application, now: number = Date.now()): SlaInfo {
   const exact = hoursSince(application.submittedAt, now);
   const hours = Math.floor(exact);
@@ -122,103 +120,9 @@ export function getSla(application: Application, now: number = Date.now()): SlaI
   return { tone: "ok", label: `${hours} hrs • A tiempo`, progress };
 }
 
-// ---- Datos de prueba (se eliminan cuando exista requestsApi) ----
-const FIRST_NAMES = ["Alejandro", "Valeria", "Carlos", "Mariana", "Jorge", "Lucía", "Diego", "Paola", "Marco", "Rosa"];
-const LAST_NAMES = [
-  "Rojas Torrico",
-  "Gonzales Mercado",
-  "Paredes Claure",
-  "Bustamante Paz",
-  "Morales Villarroel",
-  "Quispe Mamani",
-];
-const DEPARTMENTS = ["CB", "LP", "SC", "OR", "PT", "TJ", "CH"];
-const DOCUMENT_TYPES: DocumentType[] = ["diploma", "titulo", "certificado"];
-const STATUSES: ApplicationStatus[] = ["PENDING", "PENDING", "OBSERVED", "APPROVED", "REJECTED", "PENDING"];
-
-const MOCK_APPLICATIONS: Application[] = Array.from({ length: 142 }, (_, index) => {
-  const hoursAgo = ((index * 7 + 3) % 120) + 1;
-  return {
-    id: `mock-${index + 1}`,
-    code: `EGR-2025-${String(4812 - index).padStart(6, "0")}`,
-    fullName: `${FIRST_NAMES[index % FIRST_NAMES.length]} ${LAST_NAMES[index % LAST_NAMES.length]}`,
-    ci: String(4_000_000 + index * 13_791),
-    issuedIn: DEPARTMENTS[index % DEPARTMENTS.length],
-    sisCode: String(201_600_000 + index * 97),
-    career: CAREER_OPTIONS[index % CAREER_OPTIONS.length],
-    documentType: DOCUMENT_TYPES[(index * 5) % DOCUMENT_TYPES.length],
-    status: STATUSES[index % STATUSES.length],
-    submittedAt: new Date(Date.now() - hoursAgo * 3_600_000).toISOString(),
-  };
-});
-
-// Orden de CA-04.1: pendientes primero, de la más antigua a la más reciente;
-// el resto después, de la más reciente a la más antigua
-function sortApplications(items: Application[]): Application[] {
-  return [...items].sort((a, b) => {
-    const aPending = a.status === "PENDING";
-    const bPending = b.status === "PENDING";
-    if (aPending !== bPending) return aPending ? -1 : 1;
-    const diff = new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
-    return aPending ? diff : -diff;
-  });
-}
-
-function matchesAge(application: Application, age: AgeFilter, now: number): boolean {
-  if (age === "over48") return isOverdue(application, now);
-  if (age === "within48") return hoursSince(application.submittedAt, now) <= OVERDUE_HOURS;
-  return true;
-}
-
-async function fetchApplicationsMock(query: ApplicationsQuery): Promise<ApplicationsPage> {
-  await new Promise((resolve) => setTimeout(resolve, 80));
-
-  const now = Date.now();
-  const text = query.search.trim().toLowerCase();
-  const filtered = MOCK_APPLICATIONS.filter((application) => {
-    if (query.career && application.career !== query.career) return false;
-    if (query.status && application.status !== query.status) return false;
-    if (!matchesAge(application, query.age, now)) return false;
-    if (text) {
-      const haystack = `${application.code} ${application.fullName} ${application.ci} ${application.sisCode}`.toLowerCase();
-      if (!haystack.includes(text)) return false;
-    }
-    return true;
-  });
-
-  const sorted = sortApplications(filtered);
-  const start = (query.page - 1) * query.pageSize;
-  return { items: sorted.slice(start, start + query.pageSize), total: sorted.length };
-}
-
-// Cuando la API esté lista, agregar aquí la llamada real y quitar el mock
-export function fetchApplications(query: ApplicationsQuery): Promise<ApplicationsPage> {
-  return fetchApplicationsMock(query);
-
-
-}
-// ---- Resumen del tablero (datos de prueba; la API real lo entregará) ----
-export interface ApplicationsSummary {
-  pending: number;
-  observed: number;
-  approvedToday: number;
-  critical: number;
-  slaCompliance: number; // porcentaje de expedientes que no están vencidos
-}
-
-export async function fetchSummary(): Promise<ApplicationsSummary> {
-  await new Promise((resolve) => setTimeout(resolve, 80));
-
-  const now = Date.now();
-  const critical = MOCK_APPLICATIONS.filter((application) => isOverdue(application, now)).length;
-
-  return {
-    pending: MOCK_APPLICATIONS.filter((application) => application.status === "PENDING").length,
-    observed: MOCK_APPLICATIONS.filter((application) => application.status === "OBSERVED").length,
-    approvedToday: MOCK_APPLICATIONS.filter(
-      (application) => application.status === "APPROVED" && hoursSince(application.submittedAt, now) <= 24,
-    ).length,
-    critical,
-    slaCompliance: Math.round((1 - critical / MOCK_APPLICATIONS.length) * 1000) / 10,
-  };
+// TODO(requestsApi): reemplazar por la llamada a GET /api/applications
+// (página, carrera, estado y búsqueda). Hasta que el endpoint exista se devuelve
+// una lista vacía: es preferible no mostrar nada que mostrar datos falsos.
+export async function fetchApplications(_query: ApplicationsQuery): Promise<ApplicationsPage> {
+  return { items: [], total: 0 };
 }

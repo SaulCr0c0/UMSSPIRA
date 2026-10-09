@@ -16,6 +16,7 @@ function makeApplication(status: Application["status"], hoursAgo: number): Appli
     id: "prueba",
     code: "EGR-2025-000001",
     fullName: "Ana Prueba",
+    email: "ana@example.com",
     ci: "1234567",
     issuedIn: "CB",
     sisCode: "201600001",
@@ -31,7 +32,6 @@ const baseQuery: ApplicationsQuery = {
   pageSize: 15,
   career: "",
   status: "",
-  age: "",
   search: "",
 };
 
@@ -71,53 +71,10 @@ describe("getSla y getMarkerLabel", () => {
 });
 
 describe("fetchApplications", () => {
-  it("respeta el tamaño de página y cuenta el total", async () => {
+  // Se reemplaza por pruebas de la llamada real cuando exista GET /api/applications
+  it("devuelve una lista vacía mientras no exista la API, sin datos inventados", async () => {
     const result = await fetchApplications(baseQuery);
 
-    expect(result.items.length).toBe(15);
-    expect(result.total).toBe(142);
-  });
-
-  it("muestra primero las pendientes, de la más antigua a la más reciente", async () => {
-    const { items } = await fetchApplications(baseQuery);
-
-    expect(items.every((item) => item.status === "PENDING")).toBe(true);
-    const dates = items.map((item) => new Date(item.submittedAt).getTime());
-    expect(dates).toEqual([...dates].sort((a, b) => a - b));
-  });
-
-  it("filtra por estado", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, status: "APPROVED" });
-
-    expect(total).toBeGreaterThan(0);
-    expect(items.every((item) => item.status === "APPROVED")).toBe(true);
-  });
-
-  it("el filtro de más de 48 horas solo devuelve solicitudes vencidas", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, age: "over48" });
-
-    expect(total).toBeGreaterThan(0);
-    expect(items.every((item) => isOverdue(item))).toBe(true);
-  });
-
-  it("busca por código de expediente", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, search: "EGR-2025-004812" });
-
-    expect(total).toBe(1);
-    expect(items[0].code).toBe("EGR-2025-004812");
-  });
-
-  it("devuelve una lista vacía cuando nada coincide (CA-04.2)", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, search: "zzzz" });
-
-    expect(total).toBe(0);
-    expect(items).toEqual([]);
-  });
-
-  it("la segunda página trae otras solicitudes", async () => {
-    const first = await fetchApplications(baseQuery);
-    const second = await fetchApplications({ ...baseQuery, page: 2 });
-
-    expect(second.items[0].id).not.toBe(first.items[0].id);
+    expect(result).toEqual({ items: [], total: 0 });
   });
 });

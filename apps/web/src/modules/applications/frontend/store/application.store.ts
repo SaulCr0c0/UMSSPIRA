@@ -16,7 +16,6 @@ export const initialQuery: ApplicationsQuery = {
   pageSize: DEFAULT_PAGE_SIZE,
   career: "",
   status: "",
-  age: "",
   search: "",
 };
 
