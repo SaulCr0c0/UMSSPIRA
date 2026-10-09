@@ -77,3 +77,66 @@ export async function uploadDocument({ sessionToken, tipoDocumento, file }: Uplo
     errors: Array.isArray(body?.errors) ? body.errors : [],
   };
 }
+
+export interface SubmittedRegistration {
+  idSolicitud: string;
+  estado: string;
+  mensaje: string;
+}
+
+export type SubmitRegistrationResult =
+  | { ok: true; submission: SubmittedRegistration }
+  | { ok: false; status: number; code?: string; message: string; errors: DocumentFieldError[] };
+
+export interface SubmitRegistrationParams {
+  sessionToken: string;
+  tipoDocumento: DocumentType;
+  rutaStorage: string;
+  sizeBytes: number;
+}
+
+// Registra la solicitud en la base de datos con fun_registrar_solicitud (CA-03.2).
+// Requiere que el documento ya este guardado en Storage y el correo verificado.
+export async function submitRegistration({
+  sessionToken,
+  tipoDocumento,
+  rutaStorage,
+  sizeBytes,
+}: SubmitRegistrationParams): Promise<SubmitRegistrationResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/registrations/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionToken, deseaMentor: false, tipoDocumento, rutaStorage, sizeBytes }),
+    });
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      message: 'No se pudo conectar con el servidor. Intenta nuevamente en unos minutos.',
+      errors: [],
+    };
+  }
+
+  let body: ({ data?: SubmittedRegistration } & ApiErrorBody) | null = null;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+
+  if (response.ok && body?.data) {
+    return { ok: true, submission: body.data };
+  }
+
+  const rawMessage = body?.message;
+  const message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage;
+  return {
+    ok: false,
+    status: response.status,
+    code: body?.code,
+    message: message ?? 'No se pudo registrar la solicitud. Intenta nuevamente.',
+    errors: Array.isArray(body?.errors) ? body.errors : [],
+  };
+}
