@@ -174,6 +174,35 @@ describe('DocumentUploadStep', () => {
     expect(useRegistrationStore.getState().sessionToken).toBeNull();
   });
 
+  it('cierra el modal y ofrece volver al inicio sin perder el registro', async () => {
+    mockedUpload.mockResolvedValue({
+      ok: true,
+      document: {
+        path: 'solicitudes/x/y.pdf',
+        tipoDocumento: 'titulo_provision_nacional',
+        mimeType: 'application/pdf',
+        sizeBytes: 2048,
+        originalName: 'titulo.pdf',
+      },
+    });
+    mockedSubmit.mockResolvedValue({
+      ok: true,
+      submission: { idSolicitud: 'abcdef12-3456-4789-8123-456789abcdef', estado: 'Pendiente', mensaje: 'ok' },
+    });
+    await renderReadyStep();
+    completeForm();
+
+    submit();
+    expect(await screen.findByText('¡Solicitud enviada con éxito!')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(await screen.findByText('Tu solicitud fue registrada correctamente.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio' }));
+    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(useRegistrationStore.getState().sessionToken).toBeNull();
+  });
+
   it('avisa el vencimiento cuando la sesión expiró al enviar (CA-01.6)', async () => {
     mockedUpload.mockResolvedValue({
       ok: true,
