@@ -1,6 +1,6 @@
 import React from 'react';
-import { Navbar } from '@/shared/components/navbar'; // ← corregido: con llaves
-import { NavbarMovil } from '@/shared/components/movil/navbar-movil'; // ← TU PARTE
+import { Navbar } from '@/shared/components/navbar';
+import { NavbarMovil } from '@/shared/components/movil/navbar-movil';
 import Image from 'next/image';
 import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
 
