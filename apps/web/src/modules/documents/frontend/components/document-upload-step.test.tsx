@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DocumentUploadStep, REGISTER_PATH, VERIFY_EMAIL_PATH } from './document-upload-step';
 import { useRegistrationStore } from '@/modules/registration/frontend/store';
-import { uploadDocument } from '../services';
+import { submitRegistration, uploadDocument } from '../services';
 
 const mockPush = jest.fn();
 
@@ -13,9 +13,11 @@ jest.mock('next/navigation', () => ({
 jest.mock('../services', () => ({
   ...jest.requireActual('../services'),
   uploadDocument: jest.fn(),
+  submitRegistration: jest.fn(),
 }));
 
 const mockedUpload = uploadDocument as jest.Mock;
+const mockedSubmit = submitRegistration as jest.Mock;
 const INVALID_FILE = 'Formato o tamaño no permitido. Adjunta un documento en PDF, PNG o JPG de máximo 5 MB';
 const SESSION_TOKEN = '22222222-2222-4222-8222-222222222222';
 
@@ -124,7 +126,20 @@ describe('DocumentUploadStep', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
-  it('envía el documento con el tipo y la sesión del registro (CA-03.2)', async () => {
+  it('registra la solicitud y muestra la confirmación con los datos del envío (CA-03.2)', async () => {
+    useRegistrationStore.getState().setPersonalData({
+      nombres: 'Juan',
+      apellidos: 'Pérez Rojas',
+      ci: '1234567',
+      complementoCi: '',
+      expedidoEn: 'CB',
+      correo: 'juanperez@gmail.com',
+      telefono: '71234567',
+      carreraId: 'carrera-1',
+      anioEgreso: 2020,
+      codigoSis: '201900001',
+    });
+    const file = buildFile('titulo.pdf', 'application/pdf');
     mockedUpload.mockResolvedValue({
       ok: true,
       document: {
@@ -135,13 +150,103 @@ describe('DocumentUploadStep', () => {
         originalName: 'titulo.pdf',
       },
     });
+    const submission = { idSolicitud: 'abcdef12-3456-4789-8123-456789abcdef', estado: 'Pendiente', mensaje: 'ok' };
+    mockedSubmit.mockResolvedValue({ ok: true, submission });
     await renderReadyStep();
-    const file = completeForm();
+    completeForm(file);
 
     submit();
 
-    expect(await screen.findByText('Tu documento se adjuntó correctamente.')).toBeInTheDocument();
+    expect(await screen.findByText('¡Solicitud enviada con éxito!')).toBeInTheDocument();
     expect(mockedUpload).toHaveBeenCalledWith({ sessionToken: SESSION_TOKEN, tipoDocumento: 'titulo_provision_nacional', file });
+    expect(mockedSubmit).toHaveBeenCalledWith({
+      sessionToken: SESSION_TOKEN,
+      tipoDocumento: 'titulo_provision_nacional',
+      rutaStorage: 'solicitudes/x/y.pdf',
+      sizeBytes: 2048,
+      mimeType: 'application/pdf',
+    });
+    expect(screen.getByText('Juan Pérez Rojas')).toBeInTheDocument();
+    expect(screen.getByText('ju****z@gmail.com')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio' }));
+    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(useRegistrationStore.getState().sessionToken).toBeNull();
+  });
+
+  it('cierra el modal y ofrece volver al inicio sin perder el registro', async () => {
+    mockedUpload.mockResolvedValue({
+      ok: true,
+      document: {
+        path: 'solicitudes/x/y.pdf',
+        tipoDocumento: 'titulo_provision_nacional',
+        mimeType: 'application/pdf',
+        sizeBytes: 2048,
+        originalName: 'titulo.pdf',
+      },
+    });
+    mockedSubmit.mockResolvedValue({
+      ok: true,
+      submission: { idSolicitud: 'abcdef12-3456-4789-8123-456789abcdef', estado: 'Pendiente', mensaje: 'ok' },
+    });
+    await renderReadyStep();
+    completeForm();
+
+    submit();
+    expect(await screen.findByText('¡Solicitud enviada con éxito!')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(await screen.findByText('Tu solicitud fue registrada correctamente.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio' }));
+    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(useRegistrationStore.getState().sessionToken).toBeNull();
+  });
+
+  it('avisa el vencimiento cuando la sesión expiró al enviar (CA-01.6)', async () => {
+    mockedUpload.mockResolvedValue({
+      ok: true,
+      document: {
+        path: 'solicitudes/x/y.pdf',
+        tipoDocumento: 'titulo_provision_nacional',
+        mimeType: 'application/pdf',
+        sizeBytes: 2048,
+        originalName: 'titulo.pdf',
+      },
+    });
+    const expired = 'El tiempo para completar tu registro venció. Debes llenar el formulario desde el inicio.';
+    mockedSubmit.mockResolvedValue({ ok: false, status: 410, message: expired, errors: [] });
+    await renderReadyStep();
+    completeForm();
+
+    submit();
+
+    expect(await screen.findByText(expired)).toBeInTheDocument();
+    expect(useRegistrationStore.getState().sessionToken).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Volver al formulario' }));
+    expect(mockPush).toHaveBeenCalledWith(REGISTER_PATH);
+  });
+
+  it('muestra el duplicado detectado al enviar sin perder lo elegido (CA-03.6)', async () => {
+    mockedUpload.mockResolvedValue({
+      ok: true,
+      document: {
+        path: 'solicitudes/x/y.pdf',
+        tipoDocumento: 'diploma_academico',
+        mimeType: 'application/pdf',
+        sizeBytes: 2048,
+        originalName: 'diploma.pdf',
+      },
+    });
+    const message = 'Este correo electrónico ya está registrado en otra solicitud';
+    mockedSubmit.mockResolvedValue({ ok: false, status: 409, message, errors: [{ field: 'correo', message }] });
+    await renderReadyStep();
+    completeForm(buildFile('diploma.pdf', 'application/pdf'), 'diploma_academico');
+
+    submit();
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByText('diploma.pdf')).toBeInTheDocument();
   });
 
   it('dirige a la verificación de correo si el servidor indica que no está verificado (CA-03.1)', async () => {

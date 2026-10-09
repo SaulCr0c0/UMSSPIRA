@@ -45,4 +45,9 @@ export class SubmitRegistrationDto {
   @IsInt()
   @Min(1)
   sizeBytes!: number;
+
+  @Transform(trim)
+  @IsOptional()
+  @IsString()
+  mimeType?: string;
 }

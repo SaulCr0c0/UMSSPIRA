@@ -131,6 +131,7 @@ export class RegistrationsService {
         codigoSis: session.codigoSis,
         deseaMentor: dto.deseaMentor,
         tipoDocumento: dto.tipoDocumento,
+        mimeType: dto.mimeType ?? null,
         tamanioMb,
         rutaStorage: dto.rutaStorage,
       }),
