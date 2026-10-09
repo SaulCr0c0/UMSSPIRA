@@ -1,42 +1,68 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-/**
- * Cliente de Supabase COMPARTIDO por toda la API.
- * Uso en cualquier módulo:
- *
- *   import { supabase } from '../../shared/lib/supabase';
- *   const { data, error } = await supabase.from('tabla').select('*');
- *
- * Variables de entorno requeridas (.env):
- *   SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY   (backend: usa la service_role, NO la anon key)
- *
- * El cliente se crea en el primer uso (no al importar el archivo), así el
- * orden de carga del .env no importa mientras esté cargado antes del primer request.
- */
-let client: SupabaseClient | null = null;
+let anonClient: SupabaseClient | null = null;
+let serviceClient: SupabaseClient | null = null;
 
-function getClient(): SupabaseClient {
-  if (client) return client;
+// Cliente con la clave anonima (respeta RLS). Lo usan autenticacion y guardas.
+export function getSupabase(): SupabaseClient {
+  if (anonClient) return anonClient;
 
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
     throw new Error(
-      'Supabase no configurado: define SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en el .env',
+      'Faltan las variables de entorno SUPABASE_URL y/o SUPABASE_ANON_KEY. Revisa tu archivo .env',
     );
   }
 
-  client = createClient(url, key, {
+  anonClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return client;
+  return anonClient;
 }
 
-export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
-  get(_target, prop) {
-    const instance = getClient();
-    const value = Reflect.get(instance, prop) as unknown;
-    return typeof value === 'function' ? value.bind(instance) : value;
+// Error propio para distinguir una configuracion incompleta de un fallo de Supabase.
+export class SupabaseConfigError extends Error {
+  constructor() {
+    super(
+      'Faltan las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY',
+    );
+    this.name = 'SupabaseConfigError';
+  }
+}
+
+/**
+ * Cliente para el backend con la clave de servicio (no pasa por RLS).
+ * Conserva la clave de servicio requerida por dev. Se crea bajo demanda
+ * para no detener la API al importar el archivo.
+ */
+export function getSupabaseClient(): SupabaseClient {
+  if (serviceClient) {
+    return serviceClient;
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new SupabaseConfigError();
+  }
+
+  serviceClient = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return serviceClient;
+}
+
+/**
+ * Acceso compatible con `supabase.from(...)` (forma usada por otros modulos del monorepo).
+ * Delega en getSupabaseClient(), por lo que tampoco detiene la API al importar el archivo.
+ */
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    const client = getSupabaseClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === 'function' ? value.bind(client) : value;
   },
 });
