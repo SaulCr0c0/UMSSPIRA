@@ -104,20 +104,25 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Menú de Navegación con efectos visuales interactivos */}
-        <nav className={`hidden md:flex flex-1 min-w-0 items-center justify-center ${config.spacing} ${config.textSize} font-medium`}>
+        <nav
+          aria-label="Navegación principal"
+          className={`hidden md:flex flex-1 min-w-0 items-center justify-center ${config.spacing} ${config.textSize} font-medium`}
+        >
           {navItems.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
               <button
                 key={id}
+                type="button"
                 onClick={() => setActiveTab(id)}
-                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-colors relative whitespace-nowrap ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-colors relative whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
                   isActive
                     ? 'bg-[#1E293B] text-white'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Icon className={`${config.iconSize} shrink-0`} />
+                <Icon className={`${config.iconSize} shrink-0`} aria-hidden="true" />
                 <span>{label}</span>
                 {isActive && (
                   <span className={`absolute bottom-0 ${config.underlineInset} h-0.5 bg-[#FFB162] rounded-full`}></span>
