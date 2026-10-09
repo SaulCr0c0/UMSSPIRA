@@ -74,7 +74,7 @@ export default function PublicNavbar() {
               <button
                 key={item.name}
                 onClick={(e) => handleItemClick(item.name, e)}
-                className={`flex shrink-0 items-center whitespace-nowrap ${config.menuPaddingX} ${config.menuPaddingY} rounded-xl transition-all relative cursor-pointer ${
+                className={`flex shrink-0 items-center whitespace-nowrap ${config.menuPaddingX} ${config.menuPaddingY} rounded-xl transition-colors relative cursor-pointer ${
                   isActive
                     ? 'bg-slate-100 text-slate-900 font-semibold shadow-sm'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
