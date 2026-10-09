@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award } from 'lucide-react';
 
-// Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
 
 export const Navbar: React.FC = () => {
@@ -39,7 +38,6 @@ export const Navbar: React.FC = () => {
     <header className={`w-full bg-umss-navy text-white shadow-md font-sans relative z-50`}>
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${config.height} flex items-center justify-between`}>
         
-        {/* Logo Institucional */}
         <div className="flex items-center">
           <Link href="#" className={`relative block ${config.logoWidth} ${config.logoHeight}`}>
             <Image 
@@ -52,7 +50,6 @@ export const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        {/* Menú de Navegación */}
         <nav className={`hidden md:flex items-center ${config.spacing} ${config.textSize} font-medium`}>
           
           <button 
@@ -125,7 +122,6 @@ export const Navbar: React.FC = () => {
 
         </nav>
 
-        {/* Sección Derecha */}
         <div className={`flex items-center ${config.rightSectionGap} pr-2`}>
           
           <div className={`p-2.5 rounded-full hover:bg-umss-navy/50 transition-colors relative text-white/70 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
