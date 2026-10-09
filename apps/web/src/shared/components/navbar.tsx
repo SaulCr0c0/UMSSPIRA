@@ -13,9 +13,9 @@ export const Navbar: React.FC = () => {
   // Modifica estos valores para mover cada elemento a tu gusto:
   // =====================================================================
   const config = {
-    height: "h-20",            // Altura total de la barra
-    logoWidth: "w-44",         // Ancho del logo
-    logoHeight: "h-20",        // Alto del logo
+    height: "h-16 md:h-20",                  // Altura total de la barra (más compacta en móvil)
+    logoHeight: "h-10 sm:h-12 md:h-14",      // Alto del logo por breakpoint (el ancho se calcula solo)
+    logoMaxWidth: "max-w-[45vw]",            // Límite de ancho para que nunca desborde en pantallas angostas
     spacing: "space-x-3",      // Espacio del menú principal
     textSize: "text-base",     // Tamaño de tipografía
     itemPaddingX: "px-3",      // Padding horizontal de los botones
@@ -51,14 +51,20 @@ export const Navbar: React.FC = () => {
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${config.height} flex items-center justify-between`}>
         
         {/* Logo Institucional en la esquina superior izquierda */}
-        <div className="flex items-center">
-          <Link href="#" className={`relative block ${config.logoWidth} ${config.logoHeight}`}>
+        <div className="flex items-center min-w-0">
+          {/*
+            Logo adaptable:
+            - Se controla la ALTURA y el ancho se calcula solo (w-auto) para conservar la proporción.
+            - max-w limita el ancho en pantallas angostas (móvil en vertical).
+            - object-contain evita cualquier deformación si max-w entra en acción.
+          */}
+          <Link href="#" className="block shrink-0">
             <Image 
               src={logoUmss} 
               alt="Logo UMSSPIRA" 
-              fill 
-              className="object-contain object-left"
               priority
+              sizes="(max-width: 640px) 45vw, 200px"
+              className={`block ${config.logoHeight} ${config.logoMaxWidth} w-auto object-contain object-left`}
             />
           </Link>
         </div>
