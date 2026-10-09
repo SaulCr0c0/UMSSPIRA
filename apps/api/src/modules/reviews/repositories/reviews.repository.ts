@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { ApplicationStatus, ReviewResponse } from "@umsspira/shared-types"; // TODO: ajustar el nombre real del paquete
-
+export type ApplicantContact = { email: string; fullName: string };
 type SaveReviewInput = Omit<ReviewResponse, "id" | "reviewedAt">;
 
 @Injectable()
@@ -28,5 +28,11 @@ export class ReviewsRepository {
     this.reviews.push(review);
     this.statuses.set(input.applicationId, input.status);
     return review;
+  }
+
+  async getApplicantContact(_applicationId: string): Promise<ApplicantContact | null> {
+    // TODO(BD): leer el correo y el nombre del egresado desde la solicitud
+    // (los datos que ingresó en el registro). Mock mientras no exista el esquema.
+    return { email: 'titulado.prueba@example.com', fullName: 'Titulado de Prueba' };
   }
 }
