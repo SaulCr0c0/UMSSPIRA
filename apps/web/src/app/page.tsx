@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navbar } from '@/shared/components/navbar';
+import { NavbarMovil } from '@/shared/components/movil/navbar-movil';
 import Image from 'next/image';
 import {
   Search,
@@ -72,18 +73,27 @@ const events = [
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen min-w-0 flex-col bg-[#FDFBF7] font-sans text-slate-900">
-      <Navbar />
+    <div className="flex min-h-screen min-w-0 flex-col bg-[#FDFBF7] font-sans text-slate-900 antialiased selection:bg-amber-500 selection:text-white">
+      {/* Navegación de escritorio */}
+      <div className="hidden md:block">
+        <Navbar />
+      </div>
 
-      <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 space-y-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      {/* Navegación móvil */}
+      <div className="md:hidden">
+        <NavbarMovil />
+      </div>
+
+      {/* Contenido principal */}
+      <main className="mx-auto w-full min-w-0 max-w-[1440px] flex-1 space-y-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
         {/* Banner principal */}
-        <section className="relative w-full overflow-hidden rounded-2xl bg-[#111827] p-4 text-white shadow-lg sm:p-8 md:p-12">
-          <div className="absolute inset-0">
+        <section className="relative w-full overflow-hidden rounded-2xl bg-[#111827] p-6 text-white shadow-lg sm:rounded-3xl sm:p-10 md:p-12">
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
             <Image
               src={umssBg}
               alt="Fondo Institucional UMSS"
               fill
-              sizes="(max-width: 1280px) 100vw, 1280px"
+              sizes="(max-width: 1440px) 100vw, 1440px"
               className="object-cover object-center"
               priority
             />
@@ -91,15 +101,15 @@ export default function Home() {
           </div>
 
           <div className="relative z-10 w-full min-w-0 max-w-2xl space-y-4">
-            <h3 className="text-sm font-medium text-slate-300">
+            <h3 className="text-xs font-medium tracking-wide text-slate-300 sm:text-sm">
               Bienvenido a
             </h3>
 
-            <h1 className="break-words font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+            <h1 className="break-words font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               UMSS<span className="text-amber-500">PIRA</span>
             </h1>
 
-            <p className="text-sm text-slate-300 md:text-base">
+            <p className="text-sm font-normal text-slate-300 sm:text-base">
               Tu comunidad, siempre conectada.
             </p>
 
@@ -133,7 +143,7 @@ export default function Home() {
         {/* Tarjetas de navegación rápida */}
         <section
           aria-label="Secciones de la plataforma"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4"
         >
           {shortcuts.map((shortcut) => {
             const Icon = shortcut.icon;
@@ -141,23 +151,23 @@ export default function Home() {
             return (
               <div
                 key={shortcut.title}
-                className="flex min-w-0 flex-col justify-between space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                className="group flex min-w-0 flex-col justify-between space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${shortcut.color}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${shortcut.color}`}
                   >
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
 
                   <ChevronRight
-                    className="h-5 w-5 shrink-0 text-slate-400"
+                    className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1"
                     aria-hidden="true"
                   />
                 </div>
 
                 <div>
-                  <h3 className="break-words text-base font-bold">
+                  <h3 className="break-words text-base font-bold text-slate-900">
                     {shortcut.title}
                   </h3>
                   <p className="mt-1 text-xs text-slate-500">
@@ -174,7 +184,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2
               id="events-title"
-              className="font-serif text-xl font-bold"
+              className="font-serif text-lg font-bold text-slate-900 sm:text-xl"
             >
               Próximos eventos
             </h2>
@@ -190,19 +200,19 @@ export default function Home() {
 
           <div
             id="all-events"
-            className="grid grid-cols-1 gap-6 md:grid-cols-3"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
             {events.map((event) => (
               <article
                 key={event.title}
                 className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="relative h-32 bg-slate-200">
+                <div className="relative h-36 bg-slate-200 sm:h-32">
                   <Image
                     src={event.image}
                     alt={event.title}
                     fill
-                    sizes="(max-width: 767px) 100vw, (max-width: 1280px) 33vw, 400px"
+                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1440px) 33vw, 480px"
                     className="object-cover"
                   />
 
@@ -211,7 +221,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="relative flex flex-1 flex-col justify-between space-y-4 p-4">
+                <div className="relative flex flex-1 flex-col justify-between space-y-4 p-4 sm:p-5">
                   <div className="absolute -top-6 left-4 z-10 rounded-xl bg-[#A34739] px-3 py-1.5 text-center text-white shadow">
                     <span className="block text-base font-bold leading-none">
                       {event.day}
@@ -222,7 +232,7 @@ export default function Home() {
                   </div>
 
                   <div className="pt-3">
-                    <h3 className="break-words text-sm font-bold">
+                    <h3 className="break-words text-sm font-bold text-slate-900 sm:text-base">
                       {event.title}
                     </h3>
 
@@ -253,12 +263,13 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Pie de página de la tarea #51 */}
+      {/* Pie de página */}
       <footer className="w-full shrink-0 border-t border-slate-200 bg-[#0F172A] text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <p className="text-sm font-semibold">
             UMSSPIRA — Egresados UMSS
           </p>
+
           <p className="text-sm text-slate-300">
             Universidad Mayor de San Simón
           </p>
