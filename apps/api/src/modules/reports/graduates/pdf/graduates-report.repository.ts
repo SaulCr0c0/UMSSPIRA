@@ -7,13 +7,15 @@ const DETAIL_COLUMNS =
   'nombre, apellido, cod_sis, telefono, email, fecha_ingreso, fecha_titulacion, id_carrera';
 
 // Origen de los datos del reporte: la base de datos (Supabase) o los datos de prueba.
-// Se usan los datos de prueba si GRADUATES_REPORT_USE_MOCK=true o si Supabase no está configurado.
+// Mientras Supabase no tenga solicitudes ni exista el login del administrador, se usan los datos de
+// prueba (los mismos titulados de la tabla de /reports) aunque SUPABASE_URL esté configurado.
+// Para leer la base de datos real: GRADUATES_REPORT_USE_MOCK=false (y SUPABASE_URL configurado).
 @Injectable()
 export class GraduatesReportRepository {
   private client: SupabaseClient | null = null;
 
   isUsingMock(): boolean {
-    return process.env.GRADUATES_REPORT_USE_MOCK === 'true' || !process.env.SUPABASE_URL;
+    return process.env.GRADUATES_REPORT_USE_MOCK !== 'false' || !process.env.SUPABASE_URL;
   }
 
   async findApplicationsByStatus(dbStatus: string, careerId?: string): Promise<ReportSourceData> {
