@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { RegistrationsService } from '../services/registrations.service';
-import { CreateRegistrationDataDto } from '../contracts/dto';
+import {
+  CreateRegistrationDataDto,
+  SubmitRegistrationDto,
+} from '../contracts/dto';
 import { validationExceptionFactory } from '../contracts/validation-exception.factory';
 import { RegistrationsExceptionFilter } from './registrations-exception.filter';
 
@@ -31,6 +34,12 @@ export class RegistrationsController {
   @Get('sessions/:token')
   async getSession(@Param('token', new ParseUUIDPipe({ errorHttpStatusCode: 410 })) token: string) {
     const result = await this.registrationsService.getRegistrationSession(token);
+    return { data: result };
+  }
+
+  @Post('submit')
+  async submitRegistration(@Body() dto: SubmitRegistrationDto) {
+    const result = await this.registrationsService.submitRegistration(dto);
     return { data: result };
   }
 }
