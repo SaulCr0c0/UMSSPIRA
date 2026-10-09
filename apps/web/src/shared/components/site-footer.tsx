@@ -31,7 +31,7 @@ const SOCIALS = [
   { href: 'https://twitter.com', label: 'Twitter', icon: Twitter },
 ]
 
-export default function SiteFooter() {
+export function SiteFooter() {
   const year = new Date().getFullYear()
 
   const scrollToTop = () => {
@@ -161,3 +161,5 @@ export default function SiteFooter() {
     </footer>
   )
 }
+
+export default SiteFooter

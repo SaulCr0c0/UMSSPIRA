@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
   --umss-navy: #1E3A5F;
   --umss-orange: #E85D3A;
@@ -10,13 +9,28 @@
   --umss-dark: #1A1A2E;
 }
 
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   font-family: var(--font-poppins), system-ui, sans-serif;
   color: #1A1A2E;
-  -webkit-font-smoothing: antialiased;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
+
+img, svg, video { max-width: 100%; height: auto; }
+
+p, h1, h2, h3, li { overflow-wrap: anywhere; }
