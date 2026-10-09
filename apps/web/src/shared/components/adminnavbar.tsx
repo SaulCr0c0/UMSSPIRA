@@ -30,65 +30,77 @@ export default function AdminNavbar({ activeNav, setActiveNav }: AdminNavbarProp
         </div>
 
         {/* Menú de Navegación del Sidebar */}
-        <nav className="space-y-1.5 pt-2 text-sm font-medium">
+        <nav aria-label="Navegación de administración" className="space-y-1.5 pt-2 text-sm font-medium">
           
           <button 
+            type="button"
             onClick={() => setActiveNav('Inicio')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Inicio' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Inicio' ? 'bg-[#1E293B] text-white font-semibold' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <Home className="w-5 h-5" />
+            <Home className="w-5 h-5" aria-hidden="true" />
             <span>Inicio</span>
           </button>
 
           <button 
+            type="button"
             onClick={() => setActiveNav('Auditoría')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Auditoría' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Auditoría' ? 'bg-[#1E293B] text-white font-semibold' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <ShieldAlert className="w-5 h-5" />
+            <ShieldAlert className="w-5 h-5" aria-hidden="true" />
             <span>Auditoria</span>
           </button>
 
           <button 
+            type="button"
             onClick={() => setActiveNav('Reportes')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Reportes' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Reportes' ? 'bg-[#1E293B] text-white font-semibold shadow-sm' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <FileText className="w-5 h-5 text-amber-400" />
+            <FileText className="w-5 h-5 text-amber-400" aria-hidden="true" />
             <span>Reportes</span>
           </button>
 
           <button 
+            type="button"
             onClick={() => setActiveNav('Encuestas')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Encuestas' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Encuestas' ? 'bg-[#1E293B] text-white font-semibold' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <Edit3 className="w-5 h-5" />
+            <Edit3 className="w-5 h-5" aria-hidden="true" />
             <span>Encuestas</span>
           </button>
 
           <button 
+            type="button"
             onClick={() => setActiveNav('Analítica')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Analítica' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Analítica' ? 'bg-[#1E293B] text-white font-semibold' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <BarChart2 className="w-5 h-5" />
+            <BarChart2 className="w-5 h-5" aria-hidden="true" />
             <span>Analítica</span>
           </button>
 
           <button 
+            type="button"
             onClick={() => setActiveNav('Eventos')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+            aria-current={activeNav === 'Eventos' ? 'page' : undefined}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
               activeNav === 'Eventos' ? 'bg-[#1E293B] text-white font-semibold' : 'hover:bg-slate-800/60 text-slate-400 hover:text-white'
             }`}
           >
-            <CalendarIcon className="w-5 h-5" />
+            <CalendarIcon className="w-5 h-5" aria-hidden="true" />
             <span>Eventos</span>
           </button>
 
@@ -97,8 +109,11 @@ export default function AdminNavbar({ activeNav, setActiveNav }: AdminNavbarProp
 
       {/* Footer del Sidebar (Configuración) */}
       <div className="p-4 sm:p-6 border-t border-slate-800">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-slate-800/60 text-slate-400 hover:text-white transition-colors text-sm font-medium cursor-pointer">
-          <Settings className="w-5 h-5" />
+        <button
+          type="button"
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-slate-800/60 text-slate-400 hover:text-white transition-colors text-sm font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162]"
+        >
+          <Settings className="w-5 h-5" aria-hidden="true" />
           <span>Configuración</span>
         </button>
       </div>
