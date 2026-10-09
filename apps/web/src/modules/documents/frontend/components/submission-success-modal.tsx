@@ -45,7 +45,7 @@ export function SubmissionSuccessModal({
   onClose,
 }: SubmissionSuccessModalProps) {
   // Referencia corta y legible del trámite a partir del identificador real.
-  const trackingCode = submission.idSolicitud.replace(/-/g, '').slice(0, 8).toUpperCase();
+  const trackingCode = submission?.idSolicitud?.replace(/-/g, '').slice(0, 8).toUpperCase() || 'N/A';
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
