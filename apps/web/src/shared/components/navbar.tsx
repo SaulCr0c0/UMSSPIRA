@@ -7,7 +7,7 @@ const links = [
   { href: '/', label: 'Inicio' },
   { href: '/companies', label: 'Empresas' },
   { href: '/job-postings', label: 'Ofertas' },
-  { href: '/login', label: 'Iniciar sesión' },
+  { href: '/login', label: 'Iniciar sesion' },
 ]
 
 export default function Navbar() {
@@ -46,7 +46,7 @@ export default function Navbar() {
           </button>
           <button
             className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg text-umss-navy"
-            aria-label="Menú"
+            aria-label="Menu"
           >
             <Menu className="h-6 w-6" />
           </button>
