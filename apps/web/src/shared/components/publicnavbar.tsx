@@ -24,17 +24,24 @@ export default function PublicNavbar() {
 
   return (
     <header className="w-full bg-white border-b border-slate-100 shadow-sm font-sans relative z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
         
         {/* Logo Institucional y Facultad */}
-        <div className="flex items-center space-x-3">
-          <div className="relative block w-44 h-16 cursor-pointer">
-            <Image 
-              src={logoUmss} 
-              alt="Logo UMSSPIRA" 
-              fill 
-              className="object-contain object-left"
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="shrink-0 cursor-pointer">
+            {/*
+              Logo adaptable:
+              - Se controla la ALTURA por breakpoint y el ancho se calcula solo (w-auto),
+                así conserva su proporción original.
+              - max-w-[45vw] evita que desborde en pantallas angostas (ej. móvil en vertical).
+              - object-contain garantiza que nunca se deforme aunque max-w lo limite.
+            */}
+            <Image
+              src={logoUmss}
+              alt="Logo UMSSPIRA"
               priority
+              sizes="(max-width: 640px) 45vw, 200px"
+              className="block h-10 sm:h-12 md:h-14 w-auto max-w-[45vw] object-contain object-left"
             />
           </div>
           <div className="hidden lg:block border-l border-slate-200 pl-3 text-[11px] text-slate-600 font-medium leading-tight">
