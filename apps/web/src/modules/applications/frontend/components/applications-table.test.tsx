@@ -71,4 +71,21 @@ describe("ApplicationsTable", () => {
     expect(props.onPageChange).toHaveBeenCalledWith(2);
     expect((screen.getByRole("button", { name: "Página anterior" }) as HTMLButtonElement).disabled).toBe(true);
   });
+  it("muestra el estado de cada solicitud con su badge (CA-04.1)", () => {
+  renderTable({
+    items: [
+      { ...makeApplication("PENDING", 5), id: "a" },
+      { ...makeApplication("OBSERVED", 5), id: "b" },
+      { ...makeApplication("APPROVED", 5), id: "c" },
+      { ...makeApplication("REJECTED", 5), id: "d" },
+    ],
+    total: 4,
+  });
+
+  expect(screen.getByRole("columnheader", { name: "Estado" })).toBeTruthy();
+  expect(screen.getByText("Pendiente de validación")).toBeTruthy();
+  expect(screen.getByText("Observado")).toBeTruthy();
+  expect(screen.getByText("Aprobado")).toBeTruthy();
+  expect(screen.getByText("Rechazado")).toBeTruthy();
+});
 });

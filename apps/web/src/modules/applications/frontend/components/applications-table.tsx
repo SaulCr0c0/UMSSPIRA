@@ -5,14 +5,17 @@ import {
   DEPARTMENT_NAMES,
   DOCUMENT_LABELS,
   PAGE_SIZE_OPTIONS,
+  STATUS_LABELS,
   getMarkerLabel,
   getSla,
   isOverdue,
   shortCareer,
   type Application,
+  type ApplicationStatus,
   type SlaTone,
 } from "../services";
 import type { ApplicationsLoadStatus } from "../store";
+import { Badge, type RequestStatus } from "../../../../shared/components/badge";
 
 interface ApplicationsTableProps {
   items: Application[];
@@ -33,6 +36,13 @@ const SLA_STYLES: Record<SlaTone, { bar: string; text: string }> = {
   ok: { bar: "bg-green-600", text: "text-green-800" },
   paused: { bar: "bg-gray-400", text: "text-gray-600" },
   closed: { bar: "bg-gray-400", text: "text-gray-600" },
+};
+
+const BADGE_VARIANT: Record<ApplicationStatus, RequestStatus> = {
+  PENDING: "pending",
+  OBSERVED: "observed",
+  APPROVED: "approved",
+  REJECTED: "rejected",
 };
 
 function markerStyle(application: Application, overdue: boolean): { bar: string; text: string } {
@@ -159,6 +169,7 @@ export function ApplicationsTable({
               <th className={headerCell}>Tipo documento</th>
               <th className={headerCell}>Fecha envío</th>
               <th className={headerCell}>Antigüedad &amp; SLA</th>
+              <th className={headerCell}>Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -216,6 +227,9 @@ export function ApplicationsTable({
                         style={{ width: `${Math.round(sla.progress * 100)}%` }}
                       />
                     </div>
+                  </td>
+                  <td className={bodyCell}>
+                        <Badge variant={BADGE_VARIANT[application.status]}>{STATUS_LABELS[application.status]}</Badge>
                   </td>
                 </tr>
               );
