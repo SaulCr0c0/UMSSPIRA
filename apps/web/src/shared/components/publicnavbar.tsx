@@ -67,14 +67,19 @@ export default function PublicNavbar() {
         </div>
 
         {/* Menú de Navegación con efectos sobre fondo blanco */}
-        <nav className={`hidden md:flex flex-1 min-w-0 items-center justify-center ${config.menuGap} ${config.menuTextSize} font-medium`}>
+        <nav
+          aria-label="Navegación principal"
+          className={`hidden md:flex flex-1 min-w-0 items-center justify-center ${config.menuGap} ${config.menuTextSize} font-medium`}
+        >
           {navItems.map((item) => {
             const isActive = activeTab === item.name;
             return (
               <button
                 key={item.name}
+                type="button"
                 onClick={(e) => handleItemClick(item.name, e)}
-                className={`flex shrink-0 items-center whitespace-nowrap ${config.menuPaddingX} ${config.menuPaddingY} rounded-xl transition-colors relative cursor-pointer ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex shrink-0 items-center whitespace-nowrap ${config.menuPaddingX} ${config.menuPaddingY} rounded-xl transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
                   isActive
                     ? 'bg-slate-100 text-slate-900 font-semibold shadow-sm'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
@@ -92,14 +97,16 @@ export default function PublicNavbar() {
         {/* Botones de Autenticación (Demostrativos sin redirección por ahora) */}
         <div className={`flex shrink-0 items-center ${config.authGap}`}>
           <button
+            type="button"
             onClick={(e) => e.preventDefault()}
-            className={`shrink-0 whitespace-nowrap ${config.authPaddingX} ${config.authPaddingY} ${config.authText} font-semibold text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer`}
+            className={`shrink-0 whitespace-nowrap ${config.authPaddingX} ${config.authPaddingY} ${config.authText} font-semibold text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162]`}
           >
             Iniciar sesión
           </button>
           <button
+            type="button"
             onClick={(e) => e.preventDefault()}
-            className={`shrink-0 whitespace-nowrap ${config.authPaddingX} ${config.authPaddingY} ${config.authText} font-semibold text-slate-900 bg-[#FFB162] hover:bg-[#f39c4a] rounded-xl transition-colors shadow-sm cursor-pointer`}
+            className={`shrink-0 whitespace-nowrap ${config.authPaddingX} ${config.authPaddingY} ${config.authText} font-semibold text-slate-900 bg-[#FFB162] hover:bg-[#f39c4a] rounded-xl transition-colors shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] focus-visible:ring-offset-2`}
           >
             Registro
           </button>
