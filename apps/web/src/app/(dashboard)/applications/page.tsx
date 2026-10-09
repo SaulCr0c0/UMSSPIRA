@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ApplicationDrawer } from "../../../modules/applications/frontend/components/application-drawer";
 import { ApplicationsFilters } from "../../../modules/applications/frontend/components/applications-filters";
-import { ApplicationsSummaryCards } from "../../../modules/applications/frontend/components/applications-summary";
 import { ApplicationsTable } from "../../../modules/applications/frontend/components/applications-table";
 import { useApplications } from "../../../modules/applications/frontend/hooks/use-applications";
 
@@ -14,12 +13,10 @@ export default function ApplicationsPage() {
     status,
     error,
     query,
-    summary,
     searchInput,
     setSearchInput,
     setFilter,
     setPage,
-    setPageSize,
     clearFilters,
     reload,
   } = useApplications();
@@ -29,73 +26,38 @@ export default function ApplicationsPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-6 rounded-2xl bg-palladian p-6">
-        <div className="max-w-3xl space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-truffle-trouble">
-            Comisión de Acreditación FCyT • UMSS
-          </p>
-          <h1 className="font-display text-3xl font-bold text-abyssal-blue">Bandeja de Solicitudes Académicas</h1>
-          <p className="text-sm text-gray-700">
-            Revisión y validación de expedientes de titulación y acreditación para egresados de Ingeniería de
-            Sistemas y Licenciatura en Informática. En conformidad con la Res. FCyT N° 104/2024, el ciclo de
-            auditoría documental dispone de un plazo máximo estricto de 48 horas continuas desde el registro
-            del postulante.
-          </p>
+      <header className="space-y-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-bold text-abyssal-blue">Bandeja de Solicitudes</h1>
+          <span className="rounded-full border border-oatmeal bg-white px-3 py-1 text-xs font-semibold text-gray-600">
+            {total} en total
+          </span>
         </div>
-
-        <div className="rounded-xl bg-white/70 px-5 py-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-gray-600">SLA institucional FCyT</p>
-          <p className="mt-1 font-display text-4xl font-bold text-abyssal-blue">
-            {summary ? `${summary.slaCompliance}%` : "—"}
-          </p>
-          {summary && (
-            <p
-              className={`mt-1 text-xs font-semibold ${
-                summary.slaCompliance >= 90 ? "text-green-800" : "text-truffle-trouble"
-              }`}
-            >
-              {summary.slaCompliance >= 90 ? "En cumplimiento normativo" : "Por debajo de la meta"}
-            </p>
-          )}
-        </div>
+        <p className="text-sm text-gray-600">
+          Gestión y auditoría de expedientes de egresados de Ingeniería de Sistemas
+        </p>
       </header>
 
-      <ApplicationsSummaryCards summary={summary} />
-
-      <section className="rounded-2xl bg-white p-6 shadow-lg">
+      <section className="rounded-xl border border-oatmeal bg-white p-4">
         <ApplicationsFilters
           query={query}
           searchInput={searchInput}
           onSearchChange={setSearchInput}
           onFilterChange={setFilter}
           onClear={clearFilters}
-          trailing={
-            <button
-              type="button"
-              disabled
-              title="Disponible en una próxima versión"
-              className="rounded-lg bg-palladian px-4 py-2.5 text-sm font-semibold text-abyssal-blue disabled:opacity-60"
-            >
-              Exportar Acta CSV/PDF
-            </button>
-          }
         />
       </section>
 
-      <section className="rounded-2xl bg-white p-6 shadow-lg">
-        <ApplicationsTable
-          items={items}
-          total={total}
-          page={query.page}
-          pageSize={query.pageSize}
-          status={status}
-          error={error}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          onClearFilters={clearFilters}
-          onSelect={(application) => setSelectedId(application.id)}
-        />
-      </section>
+      <ApplicationsTable
+        items={items}
+        total={total}
+        page={query.page}
+        status={status}
+        error={error}
+        onPageChange={setPage}
+        onClearFilters={clearFilters}
+        onSelect={(application) => setSelectedId(application.id)}
+      />
 
       <ApplicationDrawer
         open={selectedId !== null}

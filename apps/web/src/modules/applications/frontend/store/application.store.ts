@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { DEFAULT_PAGE_SIZE, type Application, type ApplicationsQuery } from "../services";
+import type { Application, ApplicationsQuery } from "../services";
 
 export type ApplicationsLoadStatus = "idle" | "loading" | "error" | "ready";
 
@@ -13,10 +13,8 @@ export interface ApplicationState {
 
 export const initialQuery: ApplicationsQuery = {
   page: 1,
-  pageSize: DEFAULT_PAGE_SIZE,
   career: "",
   status: "",
-  age: "",
   search: "",
 };
 

@@ -1,9 +1,8 @@
 /// <reference types="jest" />
 import {
   fetchApplications,
-  getMarkerLabel,
-  getSla,
   isOverdue,
+  shortCareer,
   type Application,
   type ApplicationsQuery,
 } from "./application.service";
@@ -16,24 +15,17 @@ function makeApplication(status: Application["status"], hoursAgo: number): Appli
     id: "prueba",
     code: "EGR-2025-000001",
     fullName: "Ana Prueba",
+    email: "ana.prueba@gmail.com",
     ci: "1234567",
     issuedIn: "CB",
     sisCode: "201600001",
     career: "Ingeniería de Sistemas",
-    documentType: "diploma",
     status,
     submittedAt: new Date(NOW - hoursAgo * HOUR).toISOString(),
   };
 }
 
-const baseQuery: ApplicationsQuery = {
-  page: 1,
-  pageSize: 15,
-  career: "",
-  status: "",
-  age: "",
-  search: "",
-};
+const baseQuery: ApplicationsQuery = { page: 1, career: "", status: "", search: "" };
 
 describe("isOverdue (alerta de 48 horas, CA-04.1)", () => {
   it("marca una solicitud pendiente de más de 48 horas", () => {
@@ -50,74 +42,70 @@ describe("isOverdue (alerta de 48 horas, CA-04.1)", () => {
   });
 });
 
-describe("getSla y getMarkerLabel", () => {
-  it("una pendiente vencida lleva prioridad alta", () => {
-    const application = makeApplication("pendiente", 60);
-    expect(getSla(application, NOW).tone).toBe("overdue");
-    expect(getMarkerLabel(application, NOW)).toBe("PRIORIDAD ALTA");
-  });
-
-  it("una pendiente reciente va a tiempo", () => {
-    expect(getSla(makeApplication("pendiente", 5), NOW).tone).toBe("ok");
-  });
-
-  it("una observada queda pausada", () => {
-    expect(getSla(makeApplication("observado", 20), NOW).label).toContain("Pausado");
-  });
-
-  it("una aprobada queda finalizada", () => {
-    expect(getSla(makeApplication("aprobado", 20), NOW).tone).toBe("closed");
+describe("shortCareer", () => {
+  it("abrevia el nombre de la carrera", () => {
+    expect(shortCareer("Ingeniería de Sistemas")).toBe("Ing. de Sistemas");
   });
 });
 
 describe("fetchApplications", () => {
-  it("respeta el tamaño de página y cuenta el total", async () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    document.cookie = "umsspira_token=; path=/; max-age=0";
+  });
+
+  function mockFetch(response: { ok: boolean; status?: number; body?: unknown }) {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: response.ok,
+      status: response.status ?? 200,
+      json: async () => response.body,
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    return fetchMock;
+  }
+
+  it("pide la página con los filtros y envía el token", async () => {
+    document.cookie = "umsspira_token=token-de-prueba; path=/";
+    const fetchMock = mockFetch({ ok: true, body: { data: { items: [], total: 0 } } });
+
+    await fetchApplications({ page: 2, career: "Ingeniería de Sistemas", status: "pendiente", search: " ana " });
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/applications?");
+    expect(url).toContain("page=2");
+    expect(url).toContain("pageSize=15");
+    expect(url).toContain("career=");
+    expect(url).toContain("status=pendiente");
+    expect(url).toContain("search=ana");
+    expect(options.headers.Authorization).toBe("Bearer token-de-prueba");
+  });
+
+  it("omite los filtros vacíos", async () => {
+    const fetchMock = mockFetch({ ok: true, body: { data: { items: [], total: 0 } } });
+
+    await fetchApplications(baseQuery);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).not.toContain("career=");
+    expect(url).not.toContain("status=");
+    expect(url).not.toContain("search=");
+  });
+
+  it("devuelve las solicitudes y el total que entrega la API", async () => {
+    const application = makeApplication("pendiente", 60);
+    mockFetch({ ok: true, body: { data: { items: [application], total: 42 } } });
+
     const result = await fetchApplications(baseQuery);
 
-    expect(result.items.length).toBe(15);
-    expect(result.total).toBe(142);
+    expect(result.total).toBe(42);
+    expect(result.items).toEqual([application]);
   });
 
-  it("muestra primero las pendientes, de la más antigua a la más reciente", async () => {
-    const { items } = await fetchApplications(baseQuery);
+  it("falla cuando la API responde con error", async () => {
+    mockFetch({ ok: false, status: 401, body: {} });
 
-    expect(items.every((item) => item.status === "pendiente")).toBe(true);
-    const dates = items.map((item) => new Date(item.submittedAt).getTime());
-    expect(dates).toEqual([...dates].sort((a, b) => a - b));
-  });
-
-  it("filtra por estado", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, status: "aprobado" });
-
-    expect(total).toBeGreaterThan(0);
-    expect(items.every((item) => item.status === "aprobado")).toBe(true);
-  });
-
-  it("el filtro de más de 48 horas solo devuelve solicitudes vencidas", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, age: "over48" });
-
-    expect(total).toBeGreaterThan(0);
-    expect(items.every((item) => isOverdue(item))).toBe(true);
-  });
-
-  it("busca por código de expediente", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, search: "EGR-2025-004812" });
-
-    expect(total).toBe(1);
-    expect(items[0].code).toBe("EGR-2025-004812");
-  });
-
-  it("devuelve una lista vacía cuando nada coincide (CA-04.2)", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, search: "zzzz" });
-
-    expect(total).toBe(0);
-    expect(items).toEqual([]);
-  });
-
-  it("la segunda página trae otras solicitudes", async () => {
-    const first = await fetchApplications(baseQuery);
-    const second = await fetchApplications({ ...baseQuery, page: 2 });
-
-    expect(second.items[0].id).not.toBe(first.items[0].id);
+    await expect(fetchApplications(baseQuery)).rejects.toThrow("401");
   });
 });
