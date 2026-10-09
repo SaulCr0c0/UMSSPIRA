@@ -1,6 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 export const TOKEN_KEY = 'token';
 
+/** Deploy de demo: no exige sesion. Se fija al compilar (NEXT_PUBLIC_*). */
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -43,7 +46,9 @@ function errorMessage(body: unknown, fallback: string): string {
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
+  // En modo demo no se envia un token vencido o invalido: la API lo rechazaria con 401.
+  const stored = getToken();
+  const token = stored && (!DEMO_MODE || hasValidSession()) ? stored : null;
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {

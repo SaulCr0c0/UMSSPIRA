@@ -12,7 +12,7 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
-import { clearToken, hasValidSession } from "@/shared/services/api-client";
+import { DEMO_MODE, clearToken, hasValidSession } from "@/shared/services/api-client";
 import { getCompanyHeader } from "@/shared/services/companies";
 
 // Si el padre pasa companyName se usa tal cual; si no, se pide a la API.
@@ -32,7 +32,7 @@ export function CompanyDropdown({
 
   // CA14: nombre de la empresa autenticada (sin datos de otra empresa por defecto)
   useEffect(() => {
-    if (companyName || !hasValidSession()) return;
+    if (companyName || (!DEMO_MODE && !hasValidSession())) return;
     let cancelled = false;
     getCompanyHeader()
       .then((h) => {
