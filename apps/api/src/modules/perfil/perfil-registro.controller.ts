@@ -24,7 +24,7 @@ import { obtenerTituladoId } from './titulado-actual';
 import { ArchivoRespaldoPipe } from './validators/archivo-respaldo.pipe';
 
 // HU1: endpoints de guardado del formulario de perfil (T1.6 a T1.9)
-@Controller('perfil')
+@Controller('api/v1/perfil')
 @UsePipes(perfilValidationPipe())
 export class PerfilRegistroController {
   private readonly experienciaLaboral: ExperienciaLaboralService;

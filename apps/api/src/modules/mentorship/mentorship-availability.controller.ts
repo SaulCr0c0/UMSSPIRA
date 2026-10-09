@@ -24,14 +24,14 @@ type AuthenticatedRequest = Request & { user?: { id?: string } };
 export class MentorshipAvailabilityController {
   constructor(private readonly availabilityService: MentorshipAvailabilityService) {}
 
-  /** GET /mentorship/disponibilidad */
-  @Get('disponibilidad')
+  /** GET /mentorship/availability */
+  @Get('availability')
   getAvailability(@Req() req: AuthenticatedRequest): Promise<MentorAvailability> {
     return this.availabilityService.getAvailability(this.userId(req));
   }
 
-  /** PATCH /mentorship/disponibilidad */
-  @Patch('disponibilidad')
+  /** PATCH /mentorship/availability */
+  @Patch('availability')
   setAvailability(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateAvailabilityDto,

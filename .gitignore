@@ -2,6 +2,7 @@ node_modules/
 apps/api/.local/
 dist/
 .next/
+.next-dev/
 .next-production/
 .env
 .env.local

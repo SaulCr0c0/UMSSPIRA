@@ -34,7 +34,7 @@ interface InterestWithParent {
  */
 @Injectable()
 export class MentorshipInterestsService {
-  /** GET /mentorship/intereses/catalogo */
+  /** GET /mentorship/interests/catalog */
   async getCatalog(mentorId: string): Promise<InterestCatalogGroup[]> {
     // Regla 2: el mentor debe existir en la tabla mentor.
     await this.requireMentor(mentorId);
@@ -74,7 +74,7 @@ export class MentorshipInterestsService {
     return [...groups.values()].sort((a, b) => a.area.nombre.localeCompare(b.area.nombre));
   }
 
-  /** GET /mentorship/intereses/mis */
+  /** GET /mentorship/interests/mine */
   async getMyInterests(mentorId: string): Promise<MentorInterest[]> {
     // Regla 2: el mentor debe existir en la tabla mentor.
     await this.requireMentor(mentorId);
@@ -102,7 +102,7 @@ export class MentorshipInterestsService {
       );
   }
 
-  /** POST /mentorship/intereses */
+  /** POST /mentorship/interests */
   async addInterests(mentorId: string, dto: AddInterestsDto): Promise<MentorInterest[]> {
     // Regla 2: el mentor debe existir en la tabla mentor.
     await this.requireMentor(mentorId);
@@ -154,12 +154,12 @@ export class MentorshipInterestsService {
     return catalog.map(({ interest, parent }) => this.toInterest(interest, parent));
   }
 
-  /** DELETE /mentorship/intereses/:idInteres */
-  async removeInterest(mentorId: string, idInteres: string): Promise<RemovedInterest> {
+  /** DELETE /mentorship/interests/:interestId */
+  async removeInterest(mentorId: string, interestId: string): Promise<RemovedInterest> {
     // Regla 2: el mentor debe existir en la tabla mentor.
     await this.requireMentor(mentorId);
 
-    const [area] = await this.findAreas([idInteres]);
+    const [area] = await this.findAreas([interestId]);
     if (!area) {
       // Regla 6: un id fuera del catálogo no es válido.
       throw new NotFoundException('Interés no encontrado en el catálogo');
@@ -173,13 +173,13 @@ export class MentorshipInterestsService {
       .from('mentor_area')
       .delete()
       .eq('id_mentor', mentorId)
-      .eq('id_area', idInteres)
+      .eq('id_area', interestId)
       .select('id');
     if (error) this.fail(error);
     if (!data || data.length === 0) {
       throw new NotFoundException('El mentor no tiene seleccionado ese interés');
     }
-    return { id: idInteres, eliminado: true };
+    return { id: interestId, eliminado: true };
   }
 
   /**

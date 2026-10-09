@@ -6,7 +6,7 @@ import { PerfilRepository } from './perfil.repository';
 import { obtenerTituladoId } from './titulado-actual';
 
 // HU5 (T5.2 y T5.3): solo ese grupo edita este archivo
-@Controller('perfil')
+@Controller('api/v1/perfil')
 @UsePipes(perfilValidationPipe())
 export class PerfilExportarController {
   private readonly servicio: PerfilExportarService;

@@ -33,20 +33,20 @@ type AuthenticatedRequest = Request & { user?: { id?: string } };
 export class MentorshipInterestsController {
   constructor(private readonly interestsService: MentorshipInterestsService) {}
 
-  /** GET /mentorship/intereses/catalogo */
-  @Get('intereses/catalogo')
+  /** GET /mentorship/interests/catalog */
+  @Get('interests/catalog')
   getCatalog(@Req() req: AuthenticatedRequest): Promise<InterestCatalogGroup[]> {
     return this.interestsService.getCatalog(this.userId(req));
   }
 
-  /** GET /mentorship/intereses/mis */
-  @Get('intereses/mis')
+  /** GET /mentorship/interests/mine */
+  @Get('interests/mine')
   getMyInterests(@Req() req: AuthenticatedRequest): Promise<MentorInterest[]> {
     return this.interestsService.getMyInterests(this.userId(req));
   }
 
-  /** POST /mentorship/intereses */
-  @Post('intereses')
+  /** POST /mentorship/interests */
+  @Post('interests')
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -61,13 +61,13 @@ export class MentorshipInterestsController {
     return this.interestsService.addInterests(this.userId(req), dto);
   }
 
-  /** DELETE /mentorship/intereses/:idInteres */
-  @Delete('intereses/:idInteres')
+  /** DELETE /mentorship/interests/:interestId */
+  @Delete('interests/:interestId')
   removeInterest(
     @Req() req: AuthenticatedRequest,
-    @Param('idInteres', ParseUUIDPipe) idInteres: string,
+    @Param('interestId', ParseUUIDPipe) interestId: string,
   ): Promise<RemovedInterest> {
-    return this.interestsService.removeInterest(this.userId(req), idInteres);
+    return this.interestsService.removeInterest(this.userId(req), interestId);
   }
 
   /** Evita un 500 si el guard de auth aún no inyectó el usuario. */
