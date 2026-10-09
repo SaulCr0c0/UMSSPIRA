@@ -149,7 +149,7 @@ export default function Home() {
                   src={eventImg1} 
                   alt="Reencuentro de Egresados" 
                   fill 
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover"
                 />
                 <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10 cursor-pointer hover:bg-white transition-colors">
@@ -180,7 +180,7 @@ export default function Home() {
                   src={eventImg2} 
                   alt="Charla de Networking" 
                   fill 
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover"
                 />
                 <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10 cursor-pointer hover:bg-white transition-colors">
@@ -210,7 +210,7 @@ export default function Home() {
                   src={eventImg3} 
                   alt="Feria de Beneficios" 
                   fill 
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover"
                 />
                 <div className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-slate-700 shadow z-10 cursor-pointer hover:bg-white transition-colors">

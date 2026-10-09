@@ -29,6 +29,7 @@ export default function PublicLandingPage() {
             src={umssBg} 
             alt="Fondo Institucional UMSS" 
             fill 
+            sizes="100vw"
             className="object-cover object-center"
             priority
           />
@@ -68,7 +69,7 @@ export default function PublicLandingPage() {
           {/* 🛡️ Sello / Insignia Institucional Circular con Imagen (Derecha) */}
           <div className="hidden lg:flex absolute right-12 bottom-12 flex-col items-center justify-center w-36 h-36 rounded-full border-2 border-amber-500/60 bg-[#0F172A]/90 backdrop-blur-sm p-4 text-center shadow-xl">
             <div className="w-10 h-10 relative mb-1">
-              <Image src={selloImg} alt="Sello Institucional" fill className="object-contain" />
+              <Image src={selloImg} alt="Sello Institucional" fill sizes="40px" className="object-contain" />
             </div>
             <span className="text-[10px] tracking-widest uppercase text-amber-400 font-bold">EST. 1832</span>
             <span className="text-[9px] text-slate-300 leading-none mt-0.5">Ciencia Conocimiento Sociedad</span>
