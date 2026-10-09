@@ -111,7 +111,7 @@ export const Navbar: React.FC = () => {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative whitespace-nowrap ${
+                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-colors relative whitespace-nowrap ${
                   isActive
                     ? 'bg-[#1E293B] text-white'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -150,7 +150,7 @@ export const Navbar: React.FC = () => {
 
             {/* Menú Desplegable Flotante */}
             {isProfileDropdownOpen && (
-              <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
+              <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
 
                 {/* Cabecera del Usuario */}
                 <div className="px-3 py-2.5 border-b border-slate-100 flex items-center space-x-3">
