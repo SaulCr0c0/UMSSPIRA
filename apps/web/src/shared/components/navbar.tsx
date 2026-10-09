@@ -1,12 +1,39 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award } from 'lucide-react';
+import {
+  Home,
+  Calendar,
+  Briefcase,
+  Star,
+  Users,
+  User,
+  Bell,
+  ChevronDown,
+  Award,
+  type LucideIcon,
+} from 'lucide-react';
 
 import Logo from './logo';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
+
+// Items del menú principal: agregar o quitar un enlace se hace aquí
+interface NavItem {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+}
+
+const navItems: NavItem[] = [
+  { id: 'inicio', label: 'Inicio', Icon: Home },
+  { id: 'eventos', label: 'Eventos', Icon: Calendar }, // Épica 7
+  { id: 'jobs', label: 'Bolsa de trabajo', Icon: Briefcase },
+  { id: 'mentorias', label: 'Mentorías', Icon: Award }, // Épica 6
+  { id: 'benefits', label: 'Beneficios', Icon: Star },
+  { id: 'community', label: 'Comunidad', Icon: Users },
+];
 
 export const Navbar: React.FC = () => {
   // =====================================================================
@@ -31,7 +58,7 @@ export const Navbar: React.FC = () => {
 
   // Estado inicial en null para que al inicio NINGUNO esté seleccionado ni tenga efectos
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  
+
   // Estado para controlar la apertura y cierre del menú desplegable del avatar (Épica 2)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,7 +77,7 @@ export const Navbar: React.FC = () => {
   return (
     <header className={`w-full bg-[#0F172A] text-white shadow-md font-sans relative z-50`}>
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${config.height} flex items-center justify-between`}>
-        
+
         {/* Logo Institucional en la esquina superior izquierda */}
         <div className="flex items-center min-w-0">
           <Link href="#" className="block shrink-0">
@@ -64,117 +91,40 @@ export const Navbar: React.FC = () => {
 
         {/* Menú de Navegación con efectos visuales interactivos */}
         <nav className={`hidden md:flex items-center ${config.spacing} ${config.textSize} font-medium`}>
-          
-          {/* Inicio */}
-          <button 
-            onClick={() => setActiveTab('inicio')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'inicio' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Home className="w-6 h-6" />
-            <span>Inicio</span>
-            {activeTab === 'inicio' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
-          {/* Eventos (Épica 7) */}
-          <button 
-            onClick={() => setActiveTab('eventos')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'eventos' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Calendar className="w-6 h-6" />
-            <span>Eventos</span>
-            {activeTab === 'eventos' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
-          {/* Bolsa de trabajo */}
-          <button 
-            onClick={() => setActiveTab('jobs')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'jobs' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Briefcase className="w-6 h-6" />
-            <span>Bolsa de trabajo</span>
-            {activeTab === 'jobs' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
-          {/* Mentorías (Épica 6) */}
-          <button 
-            onClick={() => setActiveTab('mentorias')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'mentorias' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Award className="w-6 h-6" />
-            <span>Mentorías</span>
-            {activeTab === 'mentorias' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
-          {/* Beneficios */}
-          <button 
-            onClick={() => setActiveTab('benefits')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'benefits' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Star className="w-6 h-6" />
-            <span>Beneficios</span>
-            {activeTab === 'benefits' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
-          {/* Comunidad */}
-          <button 
-            onClick={() => setActiveTab('community')}
-            className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
-              activeTab === 'community' 
-                ? 'bg-[#1E293B] text-white' 
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Users className="w-6 h-6" />
-            <span>Comunidad</span>
-            {activeTab === 'community' && (
-              <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
-            )}
-          </button>
-
+          {navItems.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center space-x-2 ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative ${
+                  isActive
+                    ? 'bg-[#1E293B] text-white'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Icon className="w-6 h-6" />
+                <span>{label}</span>
+                {isActive && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFB162] rounded-full"></span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Sección Derecha con Controles de Posición Independientes */}
         <div className={`flex items-center ${config.rightSectionGap} pr-2`}>
-          
+
           {/* Notificaciones (Control independiente de posición) */}
           <div className={`p-2.5 rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
             <Bell className="w-6 h-6" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
           </div>
-          
+
           {/* Contenedor del Avatar con Dropdown (Control independiente de posición) */}
           <div className={`relative transform ${config.profilePosition}`} ref={dropdownRef}>
-            <div 
+            <div
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
               className="flex items-center space-x-2 pl-2 cursor-pointer group py-1"
             >
@@ -187,7 +137,7 @@ export const Navbar: React.FC = () => {
             {/* Menú Desplegable Flotante */}
             {isProfileDropdownOpen && (
               <div className="absolute right-0 mt-3 w-72 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
-                
+
                 {/* Cabecera del Usuario */}
                 <div className="px-3 py-2.5 border-b border-slate-100 flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
@@ -201,8 +151,8 @@ export const Navbar: React.FC = () => {
 
                 {/* Opciones del Menú (Épica 2: Mi Perfil /profile) */}
                 <div className="py-2 space-y-1">
-                  <Link 
-                    href="/profile" 
+                  <Link
+                    href="/profile"
                     onClick={() => setIsProfileDropdownOpen(false)}
                     className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
                   >
