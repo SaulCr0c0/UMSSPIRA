@@ -1,10 +1,10 @@
-const CACHE_NAME = "umsspira-core-v1";
+const CACHE_NAME = 'umsspira-core-v2';
 
 const CORE_ASSETS = [
-  "/",
+  '/',
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(CORE_ASSETS);
@@ -14,7 +14,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -28,33 +28,56 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") {
-    return;
-  }
-
+self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        if (!response || response.status !== 200) {
-          return response;
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
         }
 
-        const responseClone = response.clone();
-
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
-
-        return response;
+        return networkResponse;
       })
-      .catch(() => {
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
 
-          return caches.match("/");
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        if (event.request.mode === 'navigate') {
+          return new Response(
+            `
+              <!DOCTYPE html>
+              <html lang="es">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Sin conexión</title>
+                </head>
+                <body>
+                  <h1>Sin conexión</h1>
+                  <p>No fue posible cargar esta página porque no hay conexión a Internet.</p>
+                  <p>Cuando se restablezca la conexión, intenta nuevamente.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+              },
+            }
+          );
+        }
+
+        return new Response('', {
+          status: 503,
+          statusText: 'Servicio no disponible',
         });
       })
   );
