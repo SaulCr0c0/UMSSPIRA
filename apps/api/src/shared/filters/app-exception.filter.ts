@@ -14,9 +14,12 @@ export class AppExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
-      const body = exception.getResponse() as any;
-      const message = typeof body === 'string' ? body : body?.message ?? 'Error inesperado';
-      response.status(status).json({ error: Array.isArray(message) ? message[0] : message });
+      const body = exception.getResponse();
+      const message = typeof body === 'string' ? body : (body as { message?: string | string[] }).message ?? 'Error inesperado';
+      response.status(status).json({
+        ...(typeof body === 'object' ? body : { statusCode: status, message: body }),
+        error: Array.isArray(message) ? message[0] : message,
+      });
       return;
     }
 

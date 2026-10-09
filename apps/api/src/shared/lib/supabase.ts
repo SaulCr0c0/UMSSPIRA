@@ -26,7 +26,7 @@ export function getSupabase(): SupabaseClient {
 export class SupabaseConfigError extends Error {
   constructor() {
     super(
-      'Faltan las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY (o SUPABASE_ANON_KEY)',
+      'Faltan las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY',
     );
     this.name = 'SupabaseConfigError';
   }
@@ -34,8 +34,8 @@ export class SupabaseConfigError extends Error {
 
 /**
  * Cliente para el backend con la clave de servicio (no pasa por RLS).
- * Si no hay clave de servicio, usa la anonima. Se crea bajo demanda para no
- * detener la API al importar el archivo.
+ * Conserva la clave de servicio requerida por dev. Se crea bajo demanda
+ * para no detener la API al importar el archivo.
  */
 export function getSupabaseClient(): SupabaseClient {
   if (serviceClient) {
@@ -43,7 +43,7 @@ export function getSupabaseClient(): SupabaseClient {
   }
 
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
     throw new SupabaseConfigError();
