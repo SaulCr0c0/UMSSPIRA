@@ -16,7 +16,7 @@ export default function HomePage() {
           <p className="mt-4 max-w-2xl text-lg text-white/80">
             Egresados que inspiran, talento que conecta.
           </p>
-
+a
           <div className="mt-8 flex max-w-2xl items-center gap-2 rounded-xl bg-white p-2 shadow-umss-lg">
             <Search className="ml-2 h-5 w-5 text-umss-navy/50" />
             <input

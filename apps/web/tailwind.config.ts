@@ -7,7 +7,7 @@ const config: Config = {
       colors: {
         umss: {
           navy: '#1E3A5F',
-          orange: '#E85D3A',
+          orange: '#E8503A',
           cream: '#F5F0E8',
           light: '#F5F5F5',
           dark: '#1A1A2E',
