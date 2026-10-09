@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SiteHeader } from '@/shared/components/site-header';
+import { AffinitySiteHeader } from '@/shared/components/affinity-site-header';
 import { NlpSearch, type SearchCandidateResult } from '@/shared/components/nlp-search';
 import { CandidateCard } from '@/shared/components/candidate-card';
 import { EvidenceBreakdown } from '@/shared/components/evidence-breakdown';
 import { GraduateAffinityView } from '@/shared/components/graduate-affinity-view';
-import { SiteFooter } from '@/shared/components/site-footer';
+import { AffinitySiteFooter } from '@/shared/components/affinity-site-footer';
 import { CandidatesEmptyState } from '@/shared/components/candidates-empty-state';
 import { useCarouselPagination } from '@/shared/hooks/use-carousel-pagination';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -14,7 +14,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 // TODO: [Tarea #32] - Reemplazar este mock estático cuando se conecte el cálculo de afinidad real de la base de datos (Épica 2)
 import candidatesData from '@/shared/mocks/candidates-mock.json';
 
-export default function Home() {
+export default function AffinityPage() {
   const [activeView, setActiveView] = useState<'recruiter' | 'graduate'>('recruiter');
   const [candidates, setCandidates] = useState<SearchCandidateResult[]>(
     candidatesData.candidates as SearchCandidateResult[]
@@ -47,7 +47,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-palladian text-abyssal-blue font-sans flex flex-col justify-between">
       <div>
-        <SiteHeader activeView={activeView} onToggleView={(view) => setActiveView(view)} />
+        <AffinitySiteHeader activeView={activeView} onToggleView={(view) => setActiveView(view)} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
           {activeView === 'recruiter' ? (
@@ -138,7 +138,7 @@ export default function Home() {
           )}
         </main>
       </div>
-      <SiteFooter />
+      <AffinitySiteFooter />
     </div>
   );
 }
