@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Estabilidad de layout al rotar el dispositivo (HU #78 / T8)
+ */
+@layer base {
+  html {
+    /* Reserva el espacio de la barra de scroll para que el ancho no cambie
+       cuando aparece o desaparece (evita saltos horizontales). */
+    scrollbar-gutter: stable;
+
+    /* Evita que el navegador móvil reescale el texto al girar la pantalla. */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* Evita el scroll horizontal accidental durante la transición.
+       Se aplica en html (no en body) para no romper elementos sticky. */
+    overflow-x: hidden;
+  }
+
+  body {
+    /* Ningún elemento puede ser más ancho que la pantalla. */
+    max-width: 100%;
+  }
+}
