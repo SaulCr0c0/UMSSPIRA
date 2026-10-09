@@ -76,16 +76,30 @@ export const Navbar: React.FC = () => {
   // Estado para controlar la apertura y cierre del menú desplegable del avatar (Épica 2)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Cerrar el menú flotante al hacer clic fuera de él
+  // Cerrar el menú flotante al hacer clic fuera de él o al presionar Esc
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
       }
     };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileDropdownOpen(false);
+        // Devuelve el foco al botón del avatar para no perder la posición con el teclado
+        profileButtonRef.current?.focus();
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   return (
@@ -143,19 +157,30 @@ export const Navbar: React.FC = () => {
 
           {/* Contenedor del Avatar con Dropdown (Control independiente de posición) */}
           <div className={`relative transform ${config.profilePosition}`} ref={dropdownRef}>
-            <div
+            <button
+              ref={profileButtonRef}
+              type="button"
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center gap-1 lg:gap-2 pl-1 lg:pl-2 cursor-pointer group py-1"
+              aria-label="Menú de perfil"
+              aria-expanded={isProfileDropdownOpen}
+              aria-controls="profile-menu"
+              className="flex items-center gap-1 lg:gap-2 pl-1 lg:pl-2 cursor-pointer group py-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162]"
             >
               <div className="w-9 h-9 shrink-0 rounded-full bg-white flex items-center justify-center text-slate-900 shadow-inner group-hover:bg-slate-100 transition-colors">
-                <User className="w-6 h-6 text-slate-800" />
+                <User className="w-6 h-6 text-slate-800" aria-hidden="true" />
               </div>
-              <ChevronDown className={`w-5 h-5 shrink-0 text-slate-400 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
-            </div>
+              <ChevronDown
+                aria-hidden="true"
+                className={`w-5 h-5 shrink-0 text-slate-400 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
             {/* Menú Desplegable Flotante */}
             {isProfileDropdownOpen && (
-              <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
+              <div
+                id="profile-menu"
+                className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50"
+              >
 
                 {/* Cabecera del Usuario */}
                 <div className="px-3 py-2.5 border-b border-slate-100 flex items-center space-x-3">
