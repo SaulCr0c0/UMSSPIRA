@@ -1,8 +1,8 @@
 import './globals.css';
-
 import '../shared/identidad/tokens.css';
 import type { Metadata } from 'next';
 import { BRAND } from '../shared/identidad/brand';
+import ServiceWorkerRegister from './service-worker-register';
 
 export const metadata: Metadata = {
   title: BRAND.name,
@@ -10,8 +10,6 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: { icon: '/brand/icons/icon-192.png?v=2', apple: '/brand/icons/icon-192.png?v=2' },
 };
-=======
-import ServiceWorkerRegister from './service-worker-register';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
