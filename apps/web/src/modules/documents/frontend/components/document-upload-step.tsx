@@ -107,6 +107,7 @@ export function DocumentUploadStep() {
         tipoDocumento,
         rutaStorage: document.path,
         sizeBytes: document.sizeBytes,
+        mimeType: document.mimeType,
       });
       if (result.ok) {
         setSubmitted({ registration: result.submission, submittedAt: new Date().toISOString() });

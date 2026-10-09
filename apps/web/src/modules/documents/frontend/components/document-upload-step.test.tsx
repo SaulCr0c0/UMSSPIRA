@@ -164,6 +164,7 @@ describe('DocumentUploadStep', () => {
       tipoDocumento: 'titulo_provision_nacional',
       rutaStorage: 'solicitudes/x/y.pdf',
       sizeBytes: 2048,
+      mimeType: 'application/pdf',
     });
     expect(screen.getByText('Juan Pérez Rojas')).toBeInTheDocument();
     expect(screen.getByText('ju****z@gmail.com')).toBeInTheDocument();

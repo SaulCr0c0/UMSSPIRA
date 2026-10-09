@@ -93,22 +93,25 @@ export interface SubmitRegistrationParams {
   tipoDocumento: DocumentType;
   rutaStorage: string;
   sizeBytes: number;
+  mimeType: string;
 }
 
 // Registra la solicitud en la base de datos con fun_registrar_solicitud (CA-03.2).
 // Requiere que el documento ya este guardado en Storage y el correo verificado.
+// El formato real (mimeType) permite guardar la referencia al catalogo tipo_archivo.
 export async function submitRegistration({
   sessionToken,
   tipoDocumento,
   rutaStorage,
   sizeBytes,
+  mimeType,
 }: SubmitRegistrationParams): Promise<SubmitRegistrationResult> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/registrations/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionToken, deseaMentor: false, tipoDocumento, rutaStorage, sizeBytes }),
+      body: JSON.stringify({ sessionToken, deseaMentor: false, tipoDocumento, rutaStorage, sizeBytes, mimeType }),
     });
   } catch {
     return {

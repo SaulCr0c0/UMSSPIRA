@@ -6,6 +6,7 @@ describe('submitRegistration', () => {
     tipoDocumento: 'titulo_provision_nacional' as const,
     rutaStorage: 'solicitudes/x/y.pdf',
     sizeBytes: 2048,
+    mimeType: 'application/pdf',
   };
 
   beforeEach(() => {
