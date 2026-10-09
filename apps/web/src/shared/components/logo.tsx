@@ -18,13 +18,15 @@ interface LogoProps {
  * - Se controla por ALTURA y el ancho es automático (w-auto): mantiene la proporción.
  * - max-w-* evita el desborde en pantallas angostas (ej. móvil en vertical).
  * - object-contain garantiza que nunca se deforme si max-w entra en acción.
+ * - sizes coincide con los max-w de los navbars (45vw / 16vw / 240px) para que
+ *   al rotar el dispositivo el navegador no pida otra versión de la imagen.
  */
 export default function Logo({
   src,
   alt = 'Logo UMSSPIRA',
   heightClassName = 'h-10 sm:h-12 md:h-14',
   maxWidthClassName = 'max-w-[45vw]',
-  sizes = '(max-width: 640px) 45vw, 200px',
+  sizes = '(max-width: 768px) 45vw, (max-width: 1024px) 16vw, 240px',
   priority = true,
 }: LogoProps) {
   return (
