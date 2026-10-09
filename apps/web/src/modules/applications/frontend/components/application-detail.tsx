@@ -1,10 +1,7 @@
 import type { ReactNode } from "react";
 
-export type ApplicationStatus =
-  | "PENDING"
-  | "APPROVED"
-  | "OBSERVED"
-  | "REJECTED";
+import type { ApplicationStatus } from "@umsspira/shared-types";
+export type { ApplicationStatus };
 
 export type ChecklistItem = { label: string; checked: boolean };
 
