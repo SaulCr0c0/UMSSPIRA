@@ -6,3 +6,4 @@ export * from './mentor';
 export * from './auth';
 export * from './email-verification';
 export * from './review';
+export * from './affinity';

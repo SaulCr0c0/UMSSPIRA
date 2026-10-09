@@ -89,3 +89,19 @@ svg {
 .icon-success {
   color: var(--success);
 }
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #EEE9DF;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9C1B1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2C3B4D;
+}
