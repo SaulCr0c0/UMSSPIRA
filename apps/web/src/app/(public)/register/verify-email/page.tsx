@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { VerifyEmailForm } from '@/modules/email-verification/frontend/components/verify-email-form';
+import { ProgressSteps } from '@/shared/components/progress-steps';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function VerifyEmailPage() {
   return (
     <main className="min-h-[calc(100vh-144px)] bg-palladian px-4 py-8 sm:py-12 flex items-center justify-center">
       <div className="w-full max-w-xl">
+        <ProgressSteps currentStep="email" />
         <VerifyEmailForm
           onSuccess={handleSuccess}
           onEditData={handleEditData}
