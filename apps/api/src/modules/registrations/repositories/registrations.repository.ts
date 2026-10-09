@@ -15,8 +15,17 @@ type SubmitRegistrationData = {
   codigoSis: string;
   deseaMentor: boolean;
   tipoDocumento: string;
+  mimeType: string | null;
   tamanioMb: number;
   rutaStorage: string;
+};
+
+// Formato real del archivo (detectado en la carga) hacia el catalogo tipo_archivo.
+// El tipo de documento (titulo/diploma/certificado) no vive en ese catalogo.
+const MIME_TO_FORMAT: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'image/png': 'PNG',
+  'image/jpeg': 'JPG',
 };
 
 const REJECTED_STATES = new Set(['rechazado', 'rechazada']);
@@ -81,20 +90,26 @@ export class RegistrationsRepository {
       throw tipoError;
     }
 
+    // Con el formato real se busca en el catalogo (PDF/PNG/JPG); sin el,
+    // se conserva la busqueda anterior por compatibilidad.
+    const formatName = data.mimeType
+      ? MIME_TO_FORMAT[data.mimeType.trim().toLowerCase()]
+      : undefined;
+    const wanted = (formatName ?? nombreDocumento).toLowerCase();
+
     const tipoArchivo = (tiposArchivo ?? []).find((row) => {
       const nombreDb = String(row.nombre ?? '')
         .trim()
         .toLowerCase();
 
-      return (
-        nombreDb === inputTipoDocumento ||
-        nombreDb === nombreDocumento.toLowerCase()
-      );
+      return nombreDb === wanted || (!formatName && nombreDb === inputTipoDocumento);
     });
 
     if (!tipoArchivo) {
       throw new BadRequestException(
-        `No existe el tipo de archivo: ${data.tipoDocumento}`,
+        formatName
+          ? `No existe el formato de archivo: ${formatName}`
+          : `No existe el tipo de archivo: ${data.tipoDocumento}`,
       );
     }
 
