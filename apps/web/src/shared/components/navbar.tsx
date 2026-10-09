@@ -45,7 +45,11 @@ export const Navbar: React.FC = () => {
   const config = {
     height: "h-16 md:h-20",                  // Altura total de la barra (más compacta en móvil)
     logoHeight: "h-10 sm:h-12 md:h-14",      // Alto del logo por breakpoint (el ancho se calcula solo)
-    logoMaxWidth: "max-w-[45vw]",            // Límite de ancho para que nunca desborde en pantallas angostas
+    logoMaxWidth: "max-w-[45vw] md:max-w-[16vw] lg:max-w-[240px]", // Nunca desborda; en compacto cede espacio al menú
+
+    // Contenedor principal: padding lateral y separación entre logo / menú / sección derecha
+    containerPadding: "px-4 sm:px-6 md:px-4 lg:px-8",
+    containerGap: "gap-2 lg:gap-4",
 
     // Menú principal: compacto entre 768 y 1023 px, completo desde 1024 px
     spacing: "gap-1 lg:gap-3",               // Espacio entre botones del menú
@@ -61,7 +65,9 @@ export const Navbar: React.FC = () => {
     // Puedes usar clases como "translate-x-0", "translate-x-2", "translate-x-4", "-translate-x-2", etc.
     notificationPosition: "translate-x-0", // Mueve la campanita a izq/der de forma independiente
     profilePosition: "translate-x-0",      // Mueve el avatar y su menú a izq/der de forma independiente
-    rightSectionGap: "space-x-4",          // Espacio base entre ambos elementos
+    rightSectionGap: "gap-1 lg:gap-4",     // Espacio base entre ambos elementos
+    rightSectionPadding: "pr-0 lg:pr-2",   // Margen derecho de la sección
+    bellPadding: "p-2 lg:p-2.5",           // Área de toque de la campanita
   };
 
   // Estado inicial en null para que al inicio NINGUNO esté seleccionado ni tenga efectos
@@ -84,10 +90,10 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className={`w-full bg-[#0F172A] text-white shadow-md font-sans relative z-50`}>
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${config.height} flex items-center justify-between`}>
+      <div className={`max-w-7xl mx-auto ${config.containerPadding} ${config.height} flex items-center justify-between ${config.containerGap}`}>
 
         {/* Logo Institucional en la esquina superior izquierda */}
-        <div className="flex items-center min-w-0">
+        <div className="flex items-center min-w-0 shrink">
           <Link href="#" className="block shrink-0">
             <Logo
               src={logoUmss}
@@ -98,14 +104,14 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Menú de Navegación con efectos visuales interactivos */}
-        <nav className={`hidden md:flex items-center ${config.spacing} ${config.textSize} font-medium`}>
+        <nav className={`hidden md:flex flex-1 min-w-0 items-center justify-center ${config.spacing} ${config.textSize} font-medium`}>
           {navItems.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative whitespace-nowrap ${
+                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-all relative whitespace-nowrap ${
                   isActive
                     ? 'bg-[#1E293B] text-white'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -122,10 +128,10 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Sección Derecha con Controles de Posición Independientes */}
-        <div className={`flex items-center ${config.rightSectionGap} pr-2`}>
+        <div className={`flex shrink-0 items-center ${config.rightSectionGap} ${config.rightSectionPadding}`}>
 
           {/* Notificaciones (Control independiente de posición) */}
-          <div className={`p-2.5 rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
+          <div className={`${config.bellPadding} rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
             <Bell className="w-6 h-6" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
           </div>
@@ -134,24 +140,24 @@ export const Navbar: React.FC = () => {
           <div className={`relative transform ${config.profilePosition}`} ref={dropdownRef}>
             <div
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center space-x-2 pl-2 cursor-pointer group py-1"
+              className="flex items-center gap-1 lg:gap-2 pl-1 lg:pl-2 cursor-pointer group py-1"
             >
-              <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-900 shadow-inner group-hover:bg-slate-100 transition-colors">
+              <div className="w-9 h-9 shrink-0 rounded-full bg-white flex items-center justify-center text-slate-900 shadow-inner group-hover:bg-slate-100 transition-colors">
                 <User className="w-6 h-6 text-slate-800" />
               </div>
-              <ChevronDown className={`w-5 h-5 text-slate-400 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-5 h-5 shrink-0 text-slate-400 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {/* Menú Desplegable Flotante */}
             {isProfileDropdownOpen && (
-              <div className="absolute right-0 mt-3 w-72 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
+              <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50">
 
                 {/* Cabecera del Usuario */}
                 <div className="px-3 py-2.5 border-b border-slate-100 flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 shrink-0 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
                     <User className="w-5 h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900">Usuario UMSS</p>
                     <p className="text-xs text-slate-500">Titulado / Egresado</p>
                   </div>
