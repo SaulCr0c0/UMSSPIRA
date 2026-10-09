@@ -1,6 +1,6 @@
 // Servicio de solicitudes del backoffice (HU-04)
-
-export type ApplicationStatus = "pendiente" | "observado" | "aprobado" | "rechazado";
+import type { ApplicationStatus } from "@umsspira/shared-types";
+export type { ApplicationStatus };
 export type AgeFilter = "" | "within48" | "over48";
 export type DocumentType = "diploma" | "titulo" | "certificado";
 export type SlaTone = "overdue" | "warning" | "ok" | "paused" | "closed";
@@ -44,10 +44,10 @@ export const OVERDUE_HOURS = 48; // CA-04.1
 export const WARNING_HOURS = 36;
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  pendiente: "Pendiente de validación",
-  observado: "Observado",
-  aprobado: "Aprobado",
-  rechazado: "Rechazado",
+  PENDING: "Pendiente de validación",
+  OBSERVED: "Observado",
+  APPROVED: "Aprobado",
+  REJECTED: "Rechazado",
 };
 
 export const AGE_LABELS = { within48: "< 48h", over48: "> 48h Vencido" };
@@ -84,19 +84,19 @@ export function hoursSince(iso: string, now: number = Date.now()): number {
 
 // Solo una solicitud pendiente puede estar vencida (CA-04.1)
 export function isOverdue(application: Application, now: number = Date.now()): boolean {
-  return application.status === "pendiente" && hoursSince(application.submittedAt, now) > OVERDUE_HOURS;
+  return application.status === "PENDING" && hoursSince(application.submittedAt, now) > OVERDUE_HOURS;
 }
 
 // Etiqueta pequeña bajo el código del expediente
 export function getMarkerLabel(application: Application, now: number = Date.now()): string {
   switch (application.status) {
-    case "pendiente":
+    case "PENDING":
       return isOverdue(application, now) ? "PRIORIDAD ALTA" : "NORMAL";
-    case "observado":
+    case "OBSERVED":
       return "SUBSANACIÓN";
-    case "aprobado":
+    case "APPROVED":
       return "EMITIDO";
-    case "rechazado":
+    case "REJECTED":
       return "DENEGADO";
   }
 }
@@ -107,10 +107,10 @@ export function getSla(application: Application, now: number = Date.now()): SlaI
   const hours = Math.floor(exact);
   const progress = Math.min(exact / OVERDUE_HOURS, 1);
 
-  if (application.status === "aprobado" || application.status === "rechazado") {
+  if (application.status === "APPROVED" || application.status === "REJECTED") {
     return { tone: "closed", label: "Finalizado • Cierre", progress: 1 };
   }
-  if (application.status === "observado") {
+  if (application.status === "OBSERVED") {
     return { tone: "paused", label: `${hours} hrs • Pausado`, progress };
   }
   if (exact > OVERDUE_HOURS) {
@@ -134,7 +134,7 @@ const LAST_NAMES = [
 ];
 const DEPARTMENTS = ["CB", "LP", "SC", "OR", "PT", "TJ", "CH"];
 const DOCUMENT_TYPES: DocumentType[] = ["diploma", "titulo", "certificado"];
-const STATUSES: ApplicationStatus[] = ["pendiente", "pendiente", "observado", "aprobado", "rechazado", "pendiente"];
+const STATUSES: ApplicationStatus[] = ["PENDING", "PENDING", "OBSERVED", "APPROVED", "REJECTED", "PENDING"];
 
 const MOCK_APPLICATIONS: Application[] = Array.from({ length: 142 }, (_, index) => {
   const hoursAgo = ((index * 7 + 3) % 120) + 1;
@@ -156,8 +156,8 @@ const MOCK_APPLICATIONS: Application[] = Array.from({ length: 142 }, (_, index) 
 // el resto después, de la más reciente a la más antigua
 function sortApplications(items: Application[]): Application[] {
   return [...items].sort((a, b) => {
-    const aPending = a.status === "pendiente";
-    const bPending = b.status === "pendiente";
+    const aPending = a.status === "PENDING";
+    const bPending = b.status === "PENDING";
     if (aPending !== bPending) return aPending ? -1 : 1;
     const diff = new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
     return aPending ? diff : -diff;
@@ -213,10 +213,10 @@ export async function fetchSummary(): Promise<ApplicationsSummary> {
   const critical = MOCK_APPLICATIONS.filter((application) => isOverdue(application, now)).length;
 
   return {
-    pending: MOCK_APPLICATIONS.filter((application) => application.status === "pendiente").length,
-    observed: MOCK_APPLICATIONS.filter((application) => application.status === "observado").length,
+    pending: MOCK_APPLICATIONS.filter((application) => application.status === "PENDING").length,
+    observed: MOCK_APPLICATIONS.filter((application) => application.status === "OBSERVED").length,
     approvedToday: MOCK_APPLICATIONS.filter(
-      (application) => application.status === "aprobado" && hoursSince(application.submittedAt, now) <= 24,
+      (application) => application.status === "APPROVED" && hoursSince(application.submittedAt, now) <= 24,
     ).length,
     critical,
     slaCompliance: Math.round((1 - critical / MOCK_APPLICATIONS.length) * 1000) / 10,

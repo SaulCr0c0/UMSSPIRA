@@ -37,36 +37,36 @@ const baseQuery: ApplicationsQuery = {
 
 describe("isOverdue (alerta de 48 horas, CA-04.1)", () => {
   it("marca una solicitud pendiente de más de 48 horas", () => {
-    expect(isOverdue(makeApplication("pendiente", 60), NOW)).toBe(true);
+    expect(isOverdue(makeApplication("PENDING", 60), NOW)).toBe(true);
   });
 
   it("no marca una pendiente dentro del plazo", () => {
-    expect(isOverdue(makeApplication("pendiente", 10), NOW)).toBe(false);
+    expect(isOverdue(makeApplication("PENDING", 10), NOW)).toBe(false);
   });
 
   it("no marca las solicitudes que ya tienen dictamen", () => {
-    expect(isOverdue(makeApplication("aprobado", 100), NOW)).toBe(false);
-    expect(isOverdue(makeApplication("rechazado", 100), NOW)).toBe(false);
+    expect(isOverdue(makeApplication("APPROVED", 100), NOW)).toBe(false);
+    expect(isOverdue(makeApplication("REJECTED", 100), NOW)).toBe(false);
   });
 });
 
 describe("getSla y getMarkerLabel", () => {
   it("una pendiente vencida lleva prioridad alta", () => {
-    const application = makeApplication("pendiente", 60);
+    const application = makeApplication("PENDING", 60);
     expect(getSla(application, NOW).tone).toBe("overdue");
     expect(getMarkerLabel(application, NOW)).toBe("PRIORIDAD ALTA");
   });
 
   it("una pendiente reciente va a tiempo", () => {
-    expect(getSla(makeApplication("pendiente", 5), NOW).tone).toBe("ok");
+    expect(getSla(makeApplication("PENDING", 5), NOW).tone).toBe("ok");
   });
 
   it("una observada queda pausada", () => {
-    expect(getSla(makeApplication("observado", 20), NOW).label).toContain("Pausado");
+    expect(getSla(makeApplication("OBSERVED", 20), NOW).label).toContain("Pausado");
   });
 
   it("una aprobada queda finalizada", () => {
-    expect(getSla(makeApplication("aprobado", 20), NOW).tone).toBe("closed");
+    expect(getSla(makeApplication("APPROVED", 20), NOW).tone).toBe("closed");
   });
 });
 
@@ -81,16 +81,16 @@ describe("fetchApplications", () => {
   it("muestra primero las pendientes, de la más antigua a la más reciente", async () => {
     const { items } = await fetchApplications(baseQuery);
 
-    expect(items.every((item) => item.status === "pendiente")).toBe(true);
+    expect(items.every((item) => item.status === "PENDING")).toBe(true);
     const dates = items.map((item) => new Date(item.submittedAt).getTime());
     expect(dates).toEqual([...dates].sort((a, b) => a - b));
   });
 
   it("filtra por estado", async () => {
-    const { items, total } = await fetchApplications({ ...baseQuery, status: "aprobado" });
+    const { items, total } = await fetchApplications({ ...baseQuery, status: "APPROVED" });
 
     expect(total).toBeGreaterThan(0);
-    expect(items.every((item) => item.status === "aprobado")).toBe(true);
+    expect(items.every((item) => item.status === "APPROVED")).toBe(true);
   });
 
   it("el filtro de más de 48 horas solo devuelve solicitudes vencidas", async () => {

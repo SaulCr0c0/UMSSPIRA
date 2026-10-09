@@ -36,8 +36,8 @@ const SLA_STYLES: Record<SlaTone, { bar: string; text: string }> = {
 };
 
 function markerStyle(application: Application, overdue: boolean): { bar: string; text: string } {
-  if (application.status === "rechazado" || overdue) return { bar: "bg-red-600", text: "text-red-600" };
-  if (application.status === "aprobado") return { bar: "bg-green-600", text: "text-green-800" };
+  if (application.status === "REJECTED" || overdue) return { bar: "bg-red-600", text: "text-red-600" };
+  if (application.status === "APPROVED") return { bar: "bg-green-600", text: "text-green-800" };
   return { bar: "bg-amber-500", text: "text-amber-700" };
 }
 

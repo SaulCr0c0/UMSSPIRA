@@ -22,7 +22,7 @@ function makeApplication(status: Application["status"], hoursAgo: number): Appli
 
 function renderTable(overrides: Partial<React.ComponentProps<typeof ApplicationsTable>> = {}) {
   const props = {
-    items: [makeApplication("pendiente", 60)],
+    items: [makeApplication("PENDING", 60)],
     total: 1,
     page: 1,
     pageSize: 10,
