@@ -56,12 +56,12 @@ importers:
       multer:
         specifier: ^2.4.0
         version: 2.4.0
-      pg:
-        specifier: ^8.23.1
-        version: 8.23.1
       pdfmake:
         specifier: ^0.2.23
         version: 0.2.23
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
       reflect-metadata:
         specifier: ^0.1.13
         version: 0.1.14
@@ -85,8 +85,8 @@ importers:
         specifier: ^20.0.0
         version: 20.19.43
       '@types/pdfmake':
-        specifier: ^0.3.3
-        version: 0.3.3
+        specifier: ^0.2.13
+        version: 0.2.13
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
@@ -3971,6 +3971,10 @@ packages:
     resolution: {integrity: sha512-IHZsA4T7YElCKNNXtiLgqScw4zPd3pG9do8UrznC757gMd7UPeHSL2qwNNMJo4r79fl8oj1Xx+1nh2YkzdMpLQ==}
     engines: {node: '>=18'}
 
+  pdfmake@0.2.23:
+    resolution: {integrity: sha512-A/IksoKb/ikOZH1edSDJ/2zBbqJKDghD4+fXn3rT7quvCJDlsZMs3NmIB3eajLMMFU9Bd3bZPVvlUMXhvFI+bQ==}
+    engines: {node: '>=18'}
+
   pg-cloudflare@1.4.1:
     resolution: {integrity: sha512-6PQbsFWZcp9EmJEwy5cGQ2La+AMWpP46lgbb8X+U/XsHIUweYDNCpeuKck5RxL2MdVFi7krbbEi5nX4Zh7JhrQ==}
 
@@ -4004,9 +4008,6 @@ packages:
 
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
-  pdfmake@0.2.23:
-    resolution: {integrity: sha512-A/IksoKb/ikOZH1edSDJ/2zBbqJKDghD4+fXn3rT7quvCJDlsZMs3NmIB3eajLMMFU9Bd3bZPVvlUMXhvFI+bQ==}
-    engines: {node: '>=18'}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -9875,6 +9876,13 @@ snapshots:
       canvas: 3.2.3
       path2d: 0.2.2
 
+  pdfmake@0.2.23:
+    dependencies:
+      '@foliojs-fork/linebreak': 1.1.2
+      '@foliojs-fork/pdfkit': 0.15.3
+      iconv-lite: 0.7.3
+      xmldoc: 2.0.3
+
   pg-cloudflare@1.4.1:
     optional: true
 
@@ -9909,12 +9917,6 @@ snapshots:
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
-  pdfmake@0.2.23:
-    dependencies:
-      '@foliojs-fork/linebreak': 1.1.2
-      '@foliojs-fork/pdfkit': 0.15.3
-      iconv-lite: 0.7.3
-      xmldoc: 2.0.3
 
   picocolors@1.1.1: {}
 
