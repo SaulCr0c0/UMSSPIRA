@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { GraduationCap, Plus } from 'lucide-react'
+import { GraduationCap, Info, Plus } from 'lucide-react'
 import { useAcademicEducation } from './use-academic-education'
 import type { AcademicEducation } from './types'
 import { AcademicEducationCard } from './academic-education-card'
@@ -14,44 +14,59 @@ export function AcademicEducationList() {
   const [pendingDelete, setPendingDelete] = useState<AcademicEducation | null>(null)
 
   return (
-    <>
+    <main className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeading
         crumbs={[PROFILE_CRUMB, { label: 'Mi formación académica' }]}
         title="Mi formación académica"
-        description="Registra tu formación para que las empresas conozcan tu trayectoria académica."
+        description="Gestiona tu formación académica para mantener actualizado tu perfil profesional."
+        variant="list"
         action={
-          <Link href="/perfil/formacion/agregar" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#ff5b1f] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#e95118]">
+          <Link href="/perfil/formacion/agregar" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-end rounded-lg bg-orange-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-700">
             <Plus className="size-4" aria-hidden="true" />
             Agregar formación
           </Link>
         }
       />
-      <section aria-label="Formaciones académicas registradas" className="rounded-2xl border border-[#e9e8ed] bg-white p-4 shadow-sm sm:p-6">
+      <section aria-labelledby="academic-education-list-title" className="overflow-hidden rounded-lg border border-zinc-100 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 px-5 py-6 sm:px-6">
+          <h2 id="academic-education-list-title" className="text-sm font-semibold text-zinc-900">Formación académica registrada en tu perfil</h2>
+          {!isLoading && !error && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+              {records.length} {records.length === 1 ? 'registro activo' : 'registros activos'}
+            </span>
+          )}
+        </div>
         {isLoading ? (
-          <div className="flex flex-col gap-3" aria-busy="true">
-            {[0, 1].map((item) => <div key={item} className="h-28 animate-pulse rounded-xl bg-[#f1f0f4]" />)}
+          <div className="flex flex-col gap-3 px-5 pb-6 sm:px-6" aria-busy="true">
+            {[0, 1].map((item) => <div key={item} className="h-28 animate-pulse rounded-xl bg-zinc-100" />)}
           </div>
         ) : error ? (
-          <p role="alert" className="py-10 text-center text-sm text-red-700">No se pudo cargar tu formación académica.</p>
+          <p role="alert" className="px-5 py-10 text-center text-sm text-red-700">No se pudo cargar tu formación académica.</p>
         ) : records.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-[#dce7ff] text-[#13213e]">
+          <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-blue-100 text-blue-950">
               <GraduationCap className="size-6" aria-hidden="true" />
             </span>
-            <p className="font-medium text-[#101c35]">Aún no registraste formación académica</p>
-            <p className="max-w-sm text-sm text-[#555b68]">Agrega tu bachillerato o carrera para completar tu perfil profesional.</p>
+            <p className="font-medium text-zinc-900">Aún no registraste formación académica</p>
+            <p className="max-w-sm text-sm text-zinc-600">Agrega tu bachillerato o carrera para completar tu perfil profesional.</p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="divide-y divide-zinc-100">
             {records.map((record) => <li key={record.idFormacion}><AcademicEducationCard record={record} onDelete={setPendingDelete} /></li>)}
           </ul>
         )}
       </section>
+      <aside className="mt-8 flex items-center gap-3 rounded-lg bg-[#d9e2ff] px-5 py-5 text-sm leading-6 text-slate-900">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-white">
+          <Info className="size-4" aria-hidden="true" />
+        </span>
+        <p>Tu formación académica forma parte de tu perfil profesional y puede ser considerada en la compatibilidad con las vacantes.</p>
+      </aside>
       <DeleteAcademicEducationModal
         record={pendingDelete}
         onClose={() => setPendingDelete(null)}
         onConfirm={(record) => remove(record.idFormacion)}
       />
-    </>
+    </main>
   )
 }

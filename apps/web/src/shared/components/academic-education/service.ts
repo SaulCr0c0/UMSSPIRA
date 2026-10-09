@@ -17,7 +17,7 @@ const carreras: Carrera[] = [
   { idCarrera: 'car-12', nombre: 'Diplomado en Desarrollo de Software' },
 ]
 
-let records: AcademicEducation[] = [
+const INITIAL_RECORDS: AcademicEducation[] = [
   {
     idFormacion: 'form-1',
     idEgresado: CURRENT_EGRESADO_ID,
@@ -45,19 +45,78 @@ let records: AcademicEducation[] = [
   },
 ]
 
+const STORAGE_KEY = 'umsspira:academic-education'
+let records = INITIAL_RECORDS
+
+function isAcademicEducation(value: unknown): value is AcademicEducation {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.idFormacion === 'string' &&
+    typeof record.idEgresado === 'string' &&
+    (record.idCarrera === null || typeof record.idCarrera === 'string') &&
+    (record.tipoFormacion === 'Bachiller' || record.tipoFormacion === 'Carrera') &&
+    typeof record.institucion === 'string' &&
+    typeof record.titulo === 'string' &&
+    typeof record.nivelAcademico === 'string' &&
+    typeof record.estado === 'string' &&
+    typeof record.anioInicio === 'number' &&
+    (record.anioFin === null || typeof record.anioFin === 'number') &&
+    (record.descripcion === undefined || typeof record.descripcion === 'string')
+  )
+}
+
+function readRecords(): AcademicEducation[] {
+  if (typeof window === 'undefined') return records
+
+  let stored: string | null
+  try {
+    stored = window.localStorage.getItem(STORAGE_KEY)
+  } catch {
+    throw new Error('No se pudo leer la formación académica guardada.')
+  }
+  if (stored === null) {
+    writeRecords(INITIAL_RECORDS)
+    return INITIAL_RECORDS
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(stored)
+  } catch {
+    throw new Error('No se pudo leer la formación académica guardada.')
+  }
+  if (!Array.isArray(parsed) || !parsed.every(isAcademicEducation)) {
+    throw new Error('No se pudo leer la formación académica guardada.')
+  }
+  return parsed
+}
+
+function writeRecords(nextRecords: AcademicEducation[]): void {
+  if (typeof window === 'undefined') {
+    records = nextRecords
+    return
+  }
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRecords))
+  } catch {
+    throw new Error('No se pudo guardar la formación académica. Inténtalo nuevamente.')
+  }
+}
+
 export async function listCarreras(): Promise<Carrera[]> {
   return carreras
 }
 
 export async function listAcademicEducation(idEgresado: string): Promise<AcademicEducation[]> {
-  return records.filter((record) => record.idEgresado === idEgresado)
+  return readRecords().filter((record) => record.idEgresado === idEgresado)
 }
 
 export async function createAcademicEducation(
   payload: AcademicEducationPayload,
 ): Promise<AcademicEducation> {
   const created = { ...payload, idFormacion: crypto.randomUUID() }
-  records = [...records, created]
+  writeRecords([...readRecords(), created])
   return created
 }
 
@@ -65,14 +124,15 @@ export async function updateAcademicEducation(
   idFormacion: string,
   payload: AcademicEducationPayload,
 ): Promise<AcademicEducation> {
+  const records = readRecords()
   if (!records.some((record) => record.idFormacion === idFormacion)) {
     throw new Error('La formación académica no existe.')
   }
   const updated = { ...payload, idFormacion }
-  records = records.map((record) => (record.idFormacion === idFormacion ? updated : record))
+  writeRecords(records.map((record) => (record.idFormacion === idFormacion ? updated : record)))
   return updated
 }
 
 export async function deleteAcademicEducation(idFormacion: string): Promise<void> {
-  records = records.filter((record) => record.idFormacion !== idFormacion)
+  writeRecords(readRecords().filter((record) => record.idFormacion !== idFormacion))
 }

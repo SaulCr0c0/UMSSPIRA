@@ -18,8 +18,8 @@ export function AcademicEducationFormView({
   idFormacion?: string
 }) {
   const router = useRouter()
-  const { idEgresado, records, isLoading, create, update } = useAcademicEducation()
-  const { carreras, isLoading: carrerasLoading } = useCarreras()
+  const { idEgresado, records, isLoading, error: recordsError, create, update } = useAcademicEducation()
+  const { carreras, isLoading: carrerasLoading, error: carrerasError } = useCarreras()
   const isEdit = mode === 'edit'
   const record = isEdit ? records.find((item) => item.idFormacion === idFormacion) : undefined
 
@@ -32,23 +32,34 @@ export function AcademicEducationFormView({
   )
 
   if (isLoading || carrerasLoading) {
-    return <>{heading}<div className="h-[36rem] animate-pulse rounded-2xl bg-[#f1f0f4]" aria-busy="true" /></>
+    return <main className="mx-auto w-full max-w-4xl px-6 py-10">{heading}<div className="h-[36rem] animate-pulse rounded-2xl bg-zinc-100" aria-busy="true" /></main>
+  }
+
+  if (recordsError || carrerasError) {
+    return (
+      <main className="mx-auto w-full max-w-4xl px-6 py-10">
+        {heading}
+        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+          No se pudieron cargar los datos de formación académica. Inténtalo nuevamente.
+        </p>
+      </main>
+    )
   }
 
   if (isEdit && !record) {
     return (
-      <>
+      <main className="mx-auto w-full max-w-4xl px-6 py-10">
         {heading}
-        <div className="rounded-2xl border border-[#e9e8ed] bg-white p-10 text-center shadow-sm">
-          <p className="font-medium text-[#101c35]">No encontramos esta formación académica.</p>
-          <Link href={LIST_PATH} className="mt-3 inline-block text-sm font-medium text-[#e95118] hover:underline">Volver a Mi formación académica</Link>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
+          <p className="font-medium text-zinc-900">No encontramos esta formación académica.</p>
+          <Link href={LIST_PATH} className="mt-3 inline-block text-sm font-medium text-orange-600 hover:underline">Volver a Mi formación académica</Link>
         </div>
-      </>
+      </main>
     )
   }
 
   return (
-    <>
+    <main className="mx-auto w-full max-w-4xl px-6 py-10">
       {heading}
       <AcademicEducationForm
         key={record?.idFormacion ?? 'new'}
@@ -63,6 +74,6 @@ export function AcademicEducationFormView({
           router.push(LIST_PATH)
         }}
       />
-    </>
+    </main>
   )
 }

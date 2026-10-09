@@ -13,7 +13,6 @@ import {
   type AcademicEducationFormValues,
   type AcademicEducationPayload,
   type Carrera,
-  type TipoFormacion,
 } from './types'
 import { FormField, SelectControl, controlClassName, fieldA11y } from './form-field'
 
@@ -51,8 +50,11 @@ export function AcademicEducationForm({
   const setField = <K extends keyof AcademicEducationFormValues>(field: K, value: AcademicEducationFormValues[K]) =>
     setValues((previous) => ({ ...previous, [field]: value }))
 
-  const handleTipoChange = (tipoFormacion: TipoFormacion) =>
+  const handleTipoChange = (value: string) => {
+    const tipoFormacion = TIPOS_FORMACION.find((tipo) => tipo === value)
+    if (!tipoFormacion) return
     setValues((previous) => ({ ...previous, tipoFormacion, idCarrera: tipoFormacion === 'Carrera' ? previous.idCarrera : '' }))
+  }
 
   const handleEstadoChange = (estado: string) =>
     setValues((previous) => ({ ...previous, estado, actualmenteCursando: estado === ESTADO_CURSANDO ? previous.actualmenteCursando : false }))
@@ -85,15 +87,15 @@ export function AcademicEducationForm({
   const isBachiller = values.tipoFormacion === 'Bachiller'
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="rounded-2xl border border-[#e9e8ed] bg-white shadow-sm">
+    <form onSubmit={handleSubmit} noValidate className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <div className="flex flex-col gap-6 p-6 sm:p-8">
         {submitError && <div role="alert" className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"><AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />{submitError}</div>}
         <div className="grid gap-6 sm:grid-cols-2">
           <FormField id="tipoFormacion" label="Tipo de formación" required error={visibleError('tipoFormacion')}>
-            <SelectControl {...fieldA11y('tipoFormacion', visibleError('tipoFormacion'))} value={values.tipoFormacion} onChange={(event) => handleTipoChange(event.target.value as TipoFormacion)} onBlur={markTouched('tipoFormacion')} placeholder="Selecciona el tipo de formación" options={toOptions(TIPOS_FORMACION)} />
+            <SelectControl {...fieldA11y('tipoFormacion', visibleError('tipoFormacion'))} value={values.tipoFormacion} onChange={(event) => handleTipoChange(event.target.value)} onBlur={markTouched('tipoFormacion')} placeholder="Selecciona el tipo de formación" options={toOptions(TIPOS_FORMACION)} />
           </FormField>
           <FormField id="institucion" label="Institución educativa" required error={visibleError('institucion')}>
-            <input {...fieldA11y('institucion', visibleError('institucion'))} type="text" className={controlClassName} value={values.institucion} onChange={(event) => setField('institucion', event.target.value)} onBlur={markTouched('institucion')} placeholder="Ej. Universidad Mayor de San Simón" maxLength={150} autoComplete="organization" />
+            <input {...fieldA11y('institucion', visibleError('institucion'))} type="text" className={controlClassName} value={values.institucion} onChange={(event) => setField('institucion', event.target.value)} onBlur={markTouched('institucion')} placeholder="Ej. Universidad Mayor de San Simón" maxLength={100} autoComplete="organization" />
           </FormField>
           <FormField id="idCarrera" label="Carrera o programa" required={isCarrera} error={visibleError('idCarrera')} hint={isBachiller ? `El título se registrará automáticamente como “${TITULO_BACHILLER}”.` : !values.tipoFormacion ? 'Selecciona primero el tipo de formación.' : undefined} className="sm:col-span-2">
             {isBachiller ? (
@@ -116,19 +118,19 @@ export function AcademicEducationForm({
           </FormField>
           <div className="flex flex-col gap-1 sm:col-span-2">
             <label htmlFor="actualmenteCursando" className="flex w-fit cursor-pointer items-center gap-2.5">
-              <input id="actualmenteCursando" type="checkbox" className="size-4 cursor-pointer rounded border-gray-300 accent-[#ff5b1f]" checked={values.actualmenteCursando} onChange={(event) => handleCursandoChange(event.target.checked)} aria-describedby="actualmenteCursando-hint" />
-              <span className="text-sm font-medium text-[#101c35]">Actualmente cursando</span>
+              <input id="actualmenteCursando" type="checkbox" className="size-4 cursor-pointer rounded border-zinc-300 accent-orange-600" checked={values.actualmenteCursando} onChange={(event) => handleCursandoChange(event.target.checked)} aria-describedby="actualmenteCursando-hint" />
+              <span className="text-sm font-medium text-zinc-900">Actualmente cursando</span>
             </label>
-            <p id="actualmenteCursando-hint" className="pl-6 text-xs text-[#737987]">Al marcar esta opción, el año de finalización se deshabilitará.</p>
+            <p id="actualmenteCursando-hint" className="pl-6 text-xs text-zinc-500">Al marcar esta opción, el año de finalización se deshabilitará.</p>
           </div>
           <FormField id="descripcion" label="Descripción" error={visibleError('descripcion')} className="sm:col-span-2">
-            <textarea {...fieldA11y('descripcion', visibleError('descripcion'))} className={`${controlClassName} min-h-28 resize-y`} value={values.descripcion} onChange={(event) => setField('descripcion', event.target.value)} onBlur={markTouched('descripcion')} placeholder="Describe logros académicos relevantes..." maxLength={500} />
+            <textarea {...fieldA11y('descripcion', visibleError('descripcion'))} className={`${controlClassName} min-h-28 resize-y`} value={values.descripcion} onChange={(event) => setField('descripcion', event.target.value)} onBlur={markTouched('descripcion')} placeholder="Describe logros académicos relevantes..." maxLength={250} />
           </FormField>
         </div>
       </div>
-      <div className="flex flex-col-reverse gap-3 border-t border-[#e9e8ed] px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
-        <button type="button" className="h-10 rounded-lg border border-[#d9d8df] px-5 text-sm font-medium text-[#263958] hover:bg-[#f7f6f8] disabled:opacity-50" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
-        <button type="submit" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#ff5b1f] px-5 text-sm font-semibold text-white hover:bg-[#e95118] disabled:opacity-50" disabled={isSubmitting}>
+      <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
+        <button type="button" className="h-10 rounded-lg border border-zinc-300 px-5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
+        <button type="submit" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-orange-600 px-5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-50" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
           {mode === 'create' ? 'Guardar formación' : 'Guardar cambios'}
         </button>

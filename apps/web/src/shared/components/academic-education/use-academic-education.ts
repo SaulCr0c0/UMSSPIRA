@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   CURRENT_EGRESADO_ID,
   createAcademicEducation,
@@ -15,12 +15,25 @@ export function useAcademicEducation() {
   const [records, setRecords] = useState<AcademicEducation[]>([])
   const [error, setError] = useState<unknown>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const isMounted = useRef(false)
+
+  const refresh = useCallback(async () => {
+    const items = await listAcademicEducation(CURRENT_EGRESADO_ID)
+    if (isMounted.current) {
+      setRecords(items)
+      setError(null)
+    }
+  }, [])
 
   useEffect(() => {
     let isActive = true
+    isMounted.current = true
     void listAcademicEducation(CURRENT_EGRESADO_ID)
       .then((items) => {
-        if (isActive) setRecords(items)
+        if (isActive) {
+          setRecords(items)
+          setError(null)
+        }
       })
       .catch((reason: unknown) => {
         if (isActive) setError(reason)
@@ -30,6 +43,7 @@ export function useAcademicEducation() {
       })
     return () => {
       isActive = false
+      isMounted.current = false
     }
   }, [])
 
@@ -40,17 +54,17 @@ export function useAcademicEducation() {
     isLoading,
     async create(payload: AcademicEducationPayload) {
       const created = await createAcademicEducation(payload)
-      setRecords(await listAcademicEducation(CURRENT_EGRESADO_ID))
+      await refresh()
       return created
     },
     async update(idFormacion: string, payload: AcademicEducationPayload) {
       const updated = await updateAcademicEducation(idFormacion, payload)
-      setRecords(await listAcademicEducation(CURRENT_EGRESADO_ID))
+      await refresh()
       return updated
     },
     async remove(idFormacion: string) {
       await deleteAcademicEducation(idFormacion)
-      setRecords(await listAcademicEducation(CURRENT_EGRESADO_ID))
+      await refresh()
     },
   }
 }
@@ -64,7 +78,10 @@ export function useCarreras() {
     let isActive = true
     void listCarreras()
       .then((items) => {
-        if (isActive) setCarreras(items)
+        if (isActive) {
+          setCarreras(items)
+          setError(null)
+        }
       })
       .catch((reason: unknown) => {
         if (isActive) setError(reason)
