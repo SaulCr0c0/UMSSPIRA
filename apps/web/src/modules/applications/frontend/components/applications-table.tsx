@@ -2,17 +2,11 @@
 
 import type { KeyboardEvent } from "react";
 import {
-  DEPARTMENT_NAMES,
-  DOCUMENT_LABELS,
-  PAGE_SIZE_OPTIONS,
   STATUS_LABELS,
-  getMarkerLabel,
-  getSla,
+  hoursSince,
   isOverdue,
-  shortCareer,
   type Application,
   type ApplicationStatus,
-  type SlaTone,
 } from "../services";
 import type { ApplicationsLoadStatus } from "../store";
 import { Badge, type RequestStatus } from "../../../../shared/components/badge";
@@ -25,19 +19,11 @@ interface ApplicationsTableProps {
   status: ApplicationsLoadStatus;
   error: string | null;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
   onClearFilters: () => void;
-  onSelect?: (application: Application) => void; // CA-04.3: abre el expediente (lo conecta reviewModals)
+  onSelect?: (application: Application) => void; // CA-04.3: abre el expediente
 }
 
-const SLA_STYLES: Record<SlaTone, { bar: string; text: string }> = {
-  overdue: { bar: "bg-red-600", text: "text-red-600" },
-  warning: { bar: "bg-amber-500", text: "text-amber-700" },
-  ok: { bar: "bg-green-600", text: "text-green-800" },
-  paused: { bar: "bg-gray-400", text: "text-gray-600" },
-  closed: { bar: "bg-gray-400", text: "text-gray-600" },
-};
-
+// El badge compartido usa "pending"...; la bandeja usa los valores de shared-types
 const BADGE_VARIANT: Record<ApplicationStatus, RequestStatus> = {
   PENDING: "pending",
   OBSERVED: "observed",
@@ -45,39 +31,16 @@ const BADGE_VARIANT: Record<ApplicationStatus, RequestStatus> = {
   REJECTED: "rejected",
 };
 
-function markerStyle(application: Application, overdue: boolean): { bar: string; text: string } {
-  if (application.status === "REJECTED" || overdue) return { bar: "bg-red-600", text: "text-red-600" };
-  if (application.status === "APPROVED") return { bar: "bg-green-600", text: "text-green-800" };
-  return { bar: "bg-amber-500", text: "text-amber-700" };
-}
-
-const AVATAR_COLORS = ["bg-truffle-trouble", "bg-abyssal-blue", "bg-green-800", "bg-amber-700", "bg-purple-800"];
-
-function Avatar({ name }: { name: string }) {
-  const [first = "", second = ""] = name.split(" ");
-  const initials = `${first.charAt(0)}${second.charAt(0)}`.toUpperCase();
-  const color = AVATAR_COLORS[name.length % AVATAR_COLORS.length];
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${color}`}
-    >
-      {initials}
-    </span>
-  );
-}
+// Abreviaturas del lugar de expedición, como en el Figma
+const DEPARTMENT_ABBR: Record<string, string> = { CB: "Cbba.", SC: "SCZ" };
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-BO", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-BO", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+// "Ingeniería de Sistemas" -> "Ing. de Sistemas"
+function abbreviateCareer(career: string): string {
+  return career.replace(/^Ingeniería/, "Ing.");
 }
 
 // Números de página con puntos suspensivos: 1 2 3 ... 15
@@ -95,7 +58,7 @@ function getPageItems(page: number, totalPages: number): (number | "ellipsis")[]
   return result;
 }
 
-const headerCell = "px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-gray-500";
+const headerCell = "px-4 py-3 text-left text-xs font-semibold text-white";
 const bodyCell = "px-4 py-3 align-middle text-sm text-abyssal-blue";
 
 export function ApplicationsTable({
@@ -106,7 +69,6 @@ export function ApplicationsTable({
   status,
   error,
   onPageChange,
-  onPageSizeChange,
   onClearFilters,
   onSelect,
 }: ApplicationsTableProps) {
@@ -124,112 +86,70 @@ export function ApplicationsTable({
 
   if (status === "error") {
     return (
-      <p role="alert" className="rounded-lg bg-truffle-trouble/10 px-4 py-3 text-sm text-truffle-trouble">
+      <p role="alert" className="m-4 rounded-lg bg-truffle-trouble/10 px-4 py-3 text-sm text-truffle-trouble">
         {error}
       </p>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h2 className="font-display text-xl font-bold text-abyssal-blue">Expedientes Registrados</h2>
-          <span className="rounded-full bg-palladian px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-abyssal-blue">
-            {total} total
-          </span>
-        </div>
-        <ul className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
-          <li className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-red-600" />
-            Vencido &gt; 48h
-          </li>
-          <li className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Próximas a vencer
-          </li>
-          <li className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-green-600" />
-            Auditado
-          </li>
-        </ul>
-      </div>
-
-      <p className="text-xs text-gray-600">
-        Orden: solicitudes pendientes primero, de la más antigua a la más reciente.
-      </p>
-
-      <div className="overflow-x-auto rounded-xl border border-gray-200" aria-busy={isLoading}>
+    <div>
+      <div className="overflow-x-auto" aria-busy={isLoading}>
         <table className="w-full min-w-[900px] border-collapse">
-          <thead className="bg-palladian/60">
+          <thead className="bg-blue-fantastic">
             <tr>
-              <th className={headerCell}>Código</th>
-              <th className={headerCell}>Egresado / Postulante</th>
-              <th className={headerCell}>C.I. &amp; Expedido</th>
-              <th className={headerCell}>Tipo documento</th>
-              <th className={headerCell}>Fecha envío</th>
-              <th className={headerCell}>Antigüedad &amp; SLA</th>
+              <th className={`${headerCell} pl-6`}>Código</th>
+              <th className={headerCell}>Egresado / Correo</th>
+              <th className={headerCell}>C.I. / Expedido</th>
+              <th className={headerCell}>Carrera</th>
+              <th className={headerCell}>Código SIS</th>
+              <th className={headerCell}>Antigüedad / Envío</th>
               <th className={headerCell}>Estado</th>
             </tr>
           </thead>
           <tbody>
             {items.map((application) => {
               const overdue = isOverdue(application);
-              const marker = markerStyle(application, overdue);
-              const sla = getSla(application);
-              const slaStyle = SLA_STYLES[sla.tone];
+              const hours = Math.floor(hoursSince(application.submittedAt));
               return (
                 <tr
                   key={application.id}
                   tabIndex={onSelect ? 0 : undefined}
                   onClick={() => onSelect?.(application)}
                   onKeyDown={(event) => handleKeyDown(event, application)}
-                  className={`border-t border-gray-100 ${onSelect ? "cursor-pointer hover:bg-palladian/60" : ""}`}
+                  className={`border-t border-oatmeal/40 even:bg-palladian/40 ${
+                    onSelect ? "cursor-pointer hover:bg-palladian" : ""
+                  }`}
                 >
-                  <td className={bodyCell}>
-                    <div className="flex items-stretch gap-3">
-                      <span className={`w-1 rounded-full ${marker.bar}`} aria-hidden="true" />
-                      <div>
-                        <p className="font-bold">{application.code}</p>
-                        <p className={`text-[10px] font-bold uppercase tracking-wide ${marker.text}`}>
-                          {getMarkerLabel(application)}
-                        </p>
-                      </div>
-                    </div>
+                  <td
+                    className={`${bodyCell} border-l-4 pl-5 ${
+                      overdue ? "border-l-truffle-trouble" : "border-l-transparent"
+                    }`}
+                  >
+                    <span className="font-mono text-xs font-bold">{application.code}</span>
                   </td>
                   <td className={bodyCell}>
-                    <div className="flex items-center gap-3">
-                      <Avatar name={application.fullName} />
-                      <div>
-                        <p className="font-semibold">{application.fullName}</p>
-                        <p className="text-xs text-gray-500">
-                          SIS: {application.sisCode} • {shortCareer(application.career)}
-                        </p>
-                      </div>
-                    </div>
+                    <p className="font-semibold">{application.fullName}</p>
+                    <p className="text-xs text-gray-500">{application.email}</p>
                   </td>
                   <td className={bodyCell}>
-                    <p className="font-semibold">{application.ci}</p>
-                    <p className="text-xs text-gray-500">
-                      {DEPARTMENT_NAMES[application.issuedIn] ?? application.issuedIn}
+                    <span className="font-semibold">{application.ci}</span>{" "}
+                    <span className="text-xs text-gray-500">
+                      {DEPARTMENT_ABBR[application.issuedIn] ?? application.issuedIn}
+                    </span>
+                  </td>
+                  <td className={bodyCell}>{abbreviateCareer(application.career)}</td>
+                  <td className={bodyCell}>
+                    <span className="font-mono text-xs">{application.sisCode}</span>
+                  </td>
+                  <td className={bodyCell}>
+                    {overdue && <Badge variant="alert">Alerta &gt;48h</Badge>}
+                    <p className="mt-1 text-xs text-gray-600">
+                      {hours} hrs ({formatDate(application.submittedAt)})
                     </p>
                   </td>
-                  <td className={bodyCell}>{DOCUMENT_LABELS[application.documentType]}</td>
                   <td className={bodyCell}>
-                    <p className="font-semibold">{formatDate(application.submittedAt)}</p>
-                    <p className="text-xs text-gray-500">{formatTime(application.submittedAt)}</p>
-                  </td>
-                  <td className={`${bodyCell} min-w-[160px]`}>
-                    <p className={`text-xs font-bold ${slaStyle.text}`}>{sla.label}</p>
-                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-200" aria-hidden="true">
-                      <div
-                        className={`h-1.5 rounded-full ${slaStyle.bar}`}
-                        style={{ width: `${Math.round(sla.progress * 100)}%` }}
-                      />
-                    </div>
-                  </td>
-                  <td className={bodyCell}>
-                        <Badge variant={BADGE_VARIANT[application.status]}>{STATUS_LABELS[application.status]}</Badge>
+                    <Badge variant={BADGE_VARIANT[application.status]}>{STATUS_LABELS[application.status]}</Badge>
                   </td>
                 </tr>
               );
@@ -255,65 +175,50 @@ export function ApplicationsTable({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-abyssal-blue">
-        <p>{total === 0 ? "Sin resultados" : `Mostrando ${from}-${to} de ${total} solicitudes registradas`}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-oatmeal/40 px-6 py-4 text-sm text-abyssal-blue">
+        <p>{total === 0 ? "Sin resultados" : `Mostrando ${from}-${to} de ${total} solicitudes`}</p>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-            Por pág:
-            <select
-              value={pageSize}
-              onChange={(event) => onPageSizeChange(Number(event.target.value))}
-              className="rounded-lg bg-palladian px-2 py-1.5 text-sm font-semibold normal-case text-abyssal-blue"
-            >
-              {PAGE_SIZE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <nav aria-label="Paginación" className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-              aria-label="Página anterior"
-              className="rounded-lg px-3 py-1.5 font-semibold disabled:opacity-40"
-            >
-              ‹
-            </button>
-            {getPageItems(page, totalPages).map((item, index) =>
-              item === "ellipsis" ? (
-                <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onPageChange(item)}
-                  aria-current={item === page ? "page" : undefined}
-                  className={`min-w-[2rem] rounded-lg px-2 py-1.5 font-semibold ${
-                    item === page ? "bg-abyssal-blue text-white" : "text-abyssal-blue hover:bg-palladian"
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <button
-              type="button"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-              aria-label="Página siguiente"
-              className="rounded-lg px-3 py-1.5 font-semibold disabled:opacity-40"
-            >
-              ›
-            </button>
-          </nav>
-        </div>
+        <nav aria-label="Paginación" className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            aria-label="Página anterior"
+            className="rounded-lg border border-oatmeal/60 px-3 py-1.5 font-medium disabled:opacity-40"
+          >
+            ‹ Anterior
+          </button>
+          {getPageItems(page, totalPages).map((item, index) =>
+            item === "ellipsis" ? (
+              <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onPageChange(item)}
+                aria-current={item === page ? "page" : undefined}
+                className={`min-w-[2rem] rounded-lg border px-2 py-1.5 font-semibold ${
+                  item === page
+                    ? "border-abyssal-blue bg-abyssal-blue text-white"
+                    : "border-oatmeal/60 text-abyssal-blue hover:bg-palladian"
+                }`}
+              >
+                {item}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            aria-label="Página siguiente"
+            className="rounded-lg border border-oatmeal/60 px-3 py-1.5 font-medium disabled:opacity-40"
+          >
+            Siguiente ›
+          </button>
+        </nav>
       </div>
     </div>
   );

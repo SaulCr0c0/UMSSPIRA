@@ -10,6 +10,7 @@ function makeApplication(status: Application["status"], hoursAgo: number): Appli
     id: "prueba",
     code: "EGR-2025-000001",
     fullName: "Ana Prueba",
+    email: "ana.prueba@example.com",
     ci: "1234567",
     issuedIn: "CB",
     sisCode: "201600001",
@@ -25,11 +26,10 @@ function renderTable(overrides: Partial<React.ComponentProps<typeof Applications
     items: [makeApplication("PENDING", 60)],
     total: 1,
     page: 1,
-    pageSize: 10,
+    pageSize: 15,
     status: "ready" as const,
     error: null,
     onPageChange: jest.fn(),
-    onPageSizeChange: jest.fn(),
     onClearFilters: jest.fn(),
     ...overrides,
   };
@@ -41,8 +41,40 @@ describe("ApplicationsTable", () => {
   it("destaca la solicitud pendiente de más de 48 horas (CA-04.1)", () => {
     renderTable();
 
-    expect(screen.getByText(/VENCIDO/)).toBeTruthy();
-    expect(screen.getByText("PRIORIDAD ALTA")).toBeTruthy();
+    expect(screen.getByText("Alerta >48h")).toBeTruthy();
+    expect(screen.getByText(/60 hrs/)).toBeTruthy();
+  });
+
+  it("no muestra la alerta cuando la solicitud está dentro del plazo", () => {
+    renderTable({ items: [makeApplication("PENDING", 5)] });
+
+    expect(screen.queryByText("Alerta >48h")).toBeNull();
+  });
+
+  it("muestra el correo, la carrera y el código SIS", () => {
+    renderTable();
+
+    expect(screen.getByText("ana.prueba@example.com")).toBeTruthy();
+    expect(screen.getByText("Ing. de Sistemas")).toBeTruthy();
+    expect(screen.getByText("201600001")).toBeTruthy();
+  });
+
+  it("muestra el estado de cada solicitud con su badge (CA-04.1)", () => {
+    renderTable({
+      items: [
+        { ...makeApplication("PENDING", 5), id: "a" },
+        { ...makeApplication("OBSERVED", 5), id: "b" },
+        { ...makeApplication("APPROVED", 5), id: "c" },
+        { ...makeApplication("REJECTED", 5), id: "d" },
+      ],
+      total: 4,
+    });
+
+    expect(screen.getByRole("columnheader", { name: "Estado" })).toBeTruthy();
+    expect(screen.getByText("Pendiente de validación")).toBeTruthy();
+    expect(screen.getByText("Observado")).toBeTruthy();
+    expect(screen.getByText("Aprobado")).toBeTruthy();
+    expect(screen.getByText("Rechazado")).toBeTruthy();
   });
 
   it("muestra el aviso y limpia los filtros cuando no hay resultados (CA-04.2)", () => {
@@ -71,21 +103,4 @@ describe("ApplicationsTable", () => {
     expect(props.onPageChange).toHaveBeenCalledWith(2);
     expect((screen.getByRole("button", { name: "Página anterior" }) as HTMLButtonElement).disabled).toBe(true);
   });
-  it("muestra el estado de cada solicitud con su badge (CA-04.1)", () => {
-  renderTable({
-    items: [
-      { ...makeApplication("PENDING", 5), id: "a" },
-      { ...makeApplication("OBSERVED", 5), id: "b" },
-      { ...makeApplication("APPROVED", 5), id: "c" },
-      { ...makeApplication("REJECTED", 5), id: "d" },
-    ],
-    total: 4,
-  });
-
-  expect(screen.getByRole("columnheader", { name: "Estado" })).toBeTruthy();
-  expect(screen.getByText("Pendiente de validación")).toBeTruthy();
-  expect(screen.getByText("Observado")).toBeTruthy();
-  expect(screen.getByText("Aprobado")).toBeTruthy();
-  expect(screen.getByText("Rechazado")).toBeTruthy();
-});
 });
