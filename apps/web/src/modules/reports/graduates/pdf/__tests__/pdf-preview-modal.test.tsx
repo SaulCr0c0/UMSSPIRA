@@ -29,7 +29,7 @@ jest.mock('react-pdf', () => ({
     return <div data-testid="pdf-document">{children}</div>;
   },
   Page: ({ pageNumber }: { pageNumber: number }) => <div data-testid="pdf-page">Página {pageNumber}</div>,
-}));
+}), { virtual: true });
 jest.mock('../utils/download-pdf', () => ({ downloadPdf: jest.fn() }));
 jest.mock('../utils/print-pdf', () => ({ printPdf: jest.fn(), disposePrintFrame: jest.fn() }));
 

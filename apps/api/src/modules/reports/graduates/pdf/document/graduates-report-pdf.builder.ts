@@ -1,5 +1,5 @@
-import PdfPrinter = require('pdfmake');
-import { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import PdfPrinter from 'pdfmake';
+import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { GraduatesReportResponse, GraduateStatus } from '../types/graduates-report.types';
 import { formatGenerationDate } from '../utils/build-report-file-name';
 import { UMSS_LOGO_DATA_URL } from './umss-logo';
@@ -145,6 +145,11 @@ function buildTable(report: GraduatesReportResponse): Content {
 
 // Documento PDF del reporte: hoja A4 horizontal, encabezado institucional en la primera
 // página, tabla con títulos repetidos y «Página N de M» al pie.
+type PdfPrinterConstructor = new (fonts: typeof FONTS) => {
+  createPdfKitDocument: (docDefinition: TDocumentDefinitions) => NodeJS.ReadableStream & {
+    end: () => void;
+  };
+};
 export function buildGraduatesReportPdf(
   report: GraduatesReportResponse,
   fileName: string,
@@ -179,9 +184,9 @@ export function buildGraduatesReportPdf(
     }),
   };
 
-  return new Promise((resolve, reject) => {
+return new Promise((resolve, reject) => {
     try {
-      const document = new PdfPrinter(FONTS).createPdfKitDocument(definition);
+      const document = new (PdfPrinter as unknown as PdfPrinterConstructor)(FONTS).createPdfKitDocument(definition);
       const chunks: Buffer[] = [];
       document.on('data', (chunk: Buffer) => chunks.push(chunk));
       document.on('end', () => resolve(Buffer.concat(chunks)));

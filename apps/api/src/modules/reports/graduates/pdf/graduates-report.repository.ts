@@ -66,7 +66,7 @@ export class GraduatesReportRepository {
   // Temporal: cuando DevOps complete apps/api/src/shared/lib/supabase.ts, usar ese cliente.
   private getClient(): SupabaseClient {
     if (!this.client) {
-      this.client = createClient(process.env.SUPABASE_URL ?? '', process.env.SUPABASE_ANON_KEY ?? '');
+      this.client = createClient(process.env.SUPABASE_URL ?? '', process.env.SUPABASE_SERVICE_ROLE_KEY ?? '');
     }
     return this.client;
   }

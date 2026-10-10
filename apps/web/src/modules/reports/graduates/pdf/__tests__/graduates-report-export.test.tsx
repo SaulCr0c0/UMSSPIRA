@@ -25,7 +25,7 @@ jest.mock('react-pdf', () => ({
     return <div>{children}</div>;
   },
   Page: ({ pageNumber }: { pageNumber: number }) => <div>Página {pageNumber}</div>,
-}));
+}), { virtual: true });
 
 const fetchMock = fetchGraduatesReportPdf as jest.MockedFunction<typeof fetchGraduatesReportPdf>;
 const pdf: ReportPdfFile = {
