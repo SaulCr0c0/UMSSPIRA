@@ -43,9 +43,6 @@ interface ApplicationRow {
   id_detalle_solicitud: string | null;
 }
 
-const escapeLike = (value: string) =>
-  value.replace(/[\\%_]/g, (char) => `\\${char}`);
-
 /**
  * Lectura de la bandeja (CA-04.1 y CA-04.2).
  * Une en memoria solicitud + detalle + carrera para no depender de los nombres
