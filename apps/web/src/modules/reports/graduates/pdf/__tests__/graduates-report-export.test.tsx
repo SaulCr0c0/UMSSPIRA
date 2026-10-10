@@ -14,24 +14,18 @@ jest.mock('../services/graduates-report-service', () => {
   return { ...actual, fetchGraduatesReportPdf: jest.fn() };
 });
 jest.mock('../lib/pdf-worker', () => ({}));
-jest.mock(
-  'react-pdf',
-  () => ({
-    Document: ({ children, onLoadSuccess }: any) => {
-      const hasLoaded = useRef(false);
-      useEffect(() => {
-        if (!hasLoaded.current && onLoadSuccess) {
-          hasLoaded.current = true;
-          onLoadSuccess({ numPages: 2 });
-        }
-      }, [onLoadSuccess]);
-      return <div>{children}</div>;
-    },
-    Page: () => <div data-testid="pdf-page" />,
-    pdfjs: { GlobalWorkerOptions: { workerSrc: '' } },
-  }),
-  { virtual: true },
-);
+jest.mock('react-pdf', () => ({
+  Document: ({ children, onLoadSuccess }: { children: ReactNode; onLoadSuccess: (pdf: { numPages: number }) => void }) => {
+    const hasLoaded = useRef(false);
+    useEffect(() => {
+      if (hasLoaded.current) return;
+      hasLoaded.current = true;
+      onLoadSuccess({ numPages: 3 });
+    });
+    return <div>{children}</div>;
+  },
+  Page: ({ pageNumber }: { pageNumber: number }) => <div>Página {pageNumber}</div>,
+}), { virtual: true });
 
 const fetchMock = fetchGraduatesReportPdf as jest.MockedFunction<typeof fetchGraduatesReportPdf>;
 const pdf: ReportPdfFile = {
