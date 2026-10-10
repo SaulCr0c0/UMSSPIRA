@@ -66,21 +66,74 @@ describe('ReviewsService: notificaciones del dictamen', () => {
     jest.restoreAllMocks();
   });
 
-  // Este sprint solo se registra el dictamen: sin correos ni códigos (ver
-  // REVIEW_NOTIFICATIONS_ENABLED). El aviso al titulado llega el siguiente sprint.
-  it.each([
-    ['al aprobar', approved],
-    ['al observar', observed],
-    ['al rechazar', rejected],
-  ])('%s registra el dictamen sin notificar', async (_case, dto) => {
-    const review = await service.createReview('app-1', dto, 'admin-1');
+  it('al aprobar genera el código y envía el correo con su vigencia', async () => {
+    await service.createReview('app-1', approved, 'admin-1');
     await flush();
 
-    expect(review.applicationId).toBe('app-1');
+    expect(activationCode.issue).toHaveBeenCalledWith('app-1');
+    expect(mailService.sendReviewApproved).toHaveBeenCalledWith({
+      to: 'titulado@umss.edu.bo',
+      fullName: 'Ana Pérez',
+      code: '048213',
+      expiresInHours: 24,
+    });
+  });
+
+  it('al observar envía la categoría y la nota, sin generar código', async () => {
+    await service.createReview('app-1', observed, 'admin-1');
+    await flush();
+
+    expect(mailService.sendReviewObserved).toHaveBeenCalledWith({
+      to: 'titulado@umss.edu.bo',
+      fullName: 'Ana Pérez',
+      observation: 'Documento ilegible\n\nLa imagen no se lee con claridad.',
+    });
+    expect(activationCode.issue).not.toHaveBeenCalled();
+  });
+
+  it('al rechazar envía la causal y la justificación, sin generar código', async () => {
+    await service.createReview('app-1', rejected, 'admin-1');
+    await flush();
+
+    expect(mailService.sendReviewRejected).toHaveBeenCalledWith({
+      to: 'titulado@umss.edu.bo',
+      fullName: 'Ana Pérez',
+      justification:
+        'Trámite duplicado\n\nYa existe una solicitud aprobada con estos datos.',
+    });
+    expect(activationCode.issue).not.toHaveBeenCalled();
+  });
+
+  it('el dictamen no falla si el correo no se puede enviar', async () => {
+    mailService.sendReviewRejected.mockRejectedValue(new Error('SMTP caído'));
+
+    const review = await service.createReview('app-1', rejected, 'admin-1');
+    await flush();
+
+    expect(review.decision).toBe('REJECTED');
+    expect(Logger.prototype.error).toHaveBeenCalled();
+  });
+
+  it('no envía correo si falla la generación del código', async () => {
+    activationCode.issue.mockRejectedValue(new Error('Redis caído'));
+
+    const review = await service.createReview('app-1', approved, 'admin-1');
+    await flush();
+
+    expect(review.decision).toBe('APPROVED');
+    expect(mailService.sendReviewApproved).not.toHaveBeenCalled();
+    expect(Logger.prototype.error).toHaveBeenCalled();
+  });
+
+  it('registra una advertencia si no hay datos del titulado', async () => {
+    repository.getApplicantContact.mockResolvedValue(null);
+
+    await service.createReview('app-1', approved, 'admin-1');
+    await flush();
+
     expect(activationCode.issue).not.toHaveBeenCalled();
     expect(mailService.sendReviewApproved).not.toHaveBeenCalled();
-    expect(mailService.sendReviewObserved).not.toHaveBeenCalled();
-    expect(mailService.sendReviewRejected).not.toHaveBeenCalled();
+    expect(Logger.prototype.warn).toHaveBeenCalled();
   });
 
   it('no notifica si la solicitud ya fue dictaminada', async () => {
