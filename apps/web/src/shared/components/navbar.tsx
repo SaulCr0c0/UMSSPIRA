@@ -16,7 +16,6 @@ import {
 
 import Logo from './logo';
 
-// Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
 
 // Items del menú principal: agregar o quitar un enlace se hace aquí
@@ -70,7 +69,6 @@ export const Navbar: React.FC = () => {
     bellPadding: "p-2 lg:p-2.5",           // Área de toque de la campanita
   };
 
-  // Estado inicial en null para que al inicio NINGUNO esté seleccionado ni tenga efectos
   const [activeTab, setActiveTab] = useState<string | null>(null);
 
   // Estado para controlar la apertura y cierre del menú desplegable del avatar (Épica 2)
@@ -103,7 +101,7 @@ export const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <header className={`w-full bg-[#0F172A] text-white shadow-md font-sans relative z-50`}>
+    <header className="w-full bg-umss-navy text-white shadow-md font-sans relative z-50">
       <div className={`max-w-7xl mx-auto ${config.containerPadding} ${config.height} flex items-center justify-between ${config.containerGap}`}>
 
         {/* Logo Institucional en la esquina superior izquierda */}
@@ -130,16 +128,16 @@ export const Navbar: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-colors relative whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162] ${
+                className={`flex shrink-0 ${config.itemLayout} items-center ${config.itemGap} ${config.itemPaddingX} ${config.itemPaddingY} rounded-xl transition-colors relative whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-umss-orange ${
                   isActive
-                    ? 'bg-[#1E293B] text-white'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-umss-navy/80 text-white'
+                    : 'text-white/70 hover:text-white hover:bg-umss-navy/50'
                 }`}
               >
                 <Icon className={`${config.iconSize} shrink-0`} aria-hidden="true" />
                 <span>{label}</span>
                 {isActive && (
-                  <span className={`absolute bottom-0 ${config.underlineInset} h-0.5 bg-[#FFB162] rounded-full`}></span>
+                  <span className={`absolute bottom-0 ${config.underlineInset} h-0.5 bg-umss-orange rounded-full`}></span>
                 )}
               </button>
             );
@@ -150,9 +148,9 @@ export const Navbar: React.FC = () => {
         <div className={`flex shrink-0 items-center ${config.rightSectionGap} ${config.rightSectionPadding}`}>
 
           {/* Notificaciones (Control independiente de posición) */}
-          <div className={`${config.bellPadding} rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
+          <div className={`${config.bellPadding} rounded-full hover:bg-umss-navy/50 transition-colors relative text-white/70 hover:text-white cursor-pointer transform ${config.notificationPosition}`}>
             <Bell className="w-6 h-6" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-umss-orange rounded-full"></span>
           </div>
 
           {/* Contenedor del Avatar con Dropdown (Control independiente de posición) */}
@@ -164,47 +162,44 @@ export const Navbar: React.FC = () => {
               aria-label="Menú de perfil"
               aria-expanded={isProfileDropdownOpen}
               aria-controls="profile-menu"
-              className="flex items-center gap-1 lg:gap-2 pl-1 lg:pl-2 cursor-pointer group py-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB162]"
+              className="flex items-center gap-1 lg:gap-2 pl-1 lg:pl-2 cursor-pointer group py-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-umss-orange"
             >
-              <div className="w-9 h-9 shrink-0 rounded-full bg-white flex items-center justify-center text-slate-900 shadow-inner group-hover:bg-slate-100 transition-colors">
-                <User className="w-6 h-6 text-slate-800" aria-hidden="true" />
+              <div className="w-9 h-9 shrink-0 rounded-full bg-white flex items-center justify-center text-umss-navy shadow-inner group-hover:bg-umss-cream transition-colors">
+                <User className="w-6 h-6 text-umss-navy" aria-hidden="true" />
               </div>
               <ChevronDown
                 aria-hidden="true"
-                className={`w-5 h-5 shrink-0 text-slate-400 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`}
+                className={`w-5 h-5 shrink-0 text-white/70 group-hover:text-white transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`}
               />
             </button>
 
-            {/* Menú Desplegable Flotante */}
             {isProfileDropdownOpen && (
               <div
                 id="profile-menu"
-                className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-100 py-3 px-2 z-50"
+                className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white text-umss-dark rounded-2xl shadow-2xl border border-umss-navy/10 py-3 px-2 z-50"
               >
 
-                {/* Cabecera del Usuario */}
-                <div className="px-3 py-2.5 border-b border-slate-100 flex items-center space-x-3">
-                  <div className="w-10 h-10 shrink-0 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                <div className="px-3 py-2.5 border-b border-umss-navy/10 flex items-center space-x-3">
+                  <div className="w-10 h-10 shrink-0 rounded-xl bg-umss-cream text-umss-orange flex items-center justify-center font-bold">
                     <User className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">Usuario UMSS</p>
-                    <p className="text-xs text-slate-500">Titulado / Egresado</p>
+                    <p className="text-sm font-bold text-umss-dark">Usuario UMSS</p>
+                    <p className="text-xs text-umss-navy/60">Titulado / Egresado</p>
                   </div>
                 </div>
 
-                {/* Opciones del Menú (Épica 2: Mi Perfil /profile) */}
                 <div className="py-2 space-y-1">
                   <Link
                     href="/profile"
                     onClick={() => setIsProfileDropdownOpen(false)}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-umss-cream/50 transition-colors text-xs font-semibold text-umss-dark"
                   >
                     <div className="flex items-center space-x-2.5">
-                      <User className="w-4 h-4 text-slate-500" />
+                      <User className="w-4 h-4 text-umss-navy/60" />
                       <span>Mi perfil</span>
                     </div>
-                    <span className="text-slate-400">›</span>
+                    <span className="text-umss-navy/40">›</span>
                   </Link>
                 </div>
 
@@ -217,3 +212,5 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
+
+export default Navbar;
