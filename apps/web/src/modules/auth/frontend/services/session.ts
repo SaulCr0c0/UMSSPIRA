@@ -12,3 +12,19 @@ export function clearSession(): void {
   document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0`;
   document.cookie = `${ROLE_COOKIE}=; path=/; max-age=0`;
 }
+
+// El estado en memoria se pierde al recargar la página; la cookie sobrevive
+// y mantiene la sesión activa en la misma pestaña o ventana.
+export function getSessionToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const found = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${TOKEN_COOKIE}=`));
+  if (!found) return null;
+  try {
+    return decodeURIComponent(found.slice(TOKEN_COOKIE.length + 1)) || null;
+  } catch {
+    return null;
+  }
+}

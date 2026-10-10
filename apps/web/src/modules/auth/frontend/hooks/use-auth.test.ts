@@ -15,6 +15,17 @@ describe("useAuth", () => {
   beforeEach(() => {
     mockPush.mockClear();
     authStore.reset();
+    // Emula el endpoint real POST /api/auth/login (USE_MOCK = false).
+    global.fetch = jest.fn(async (_url: unknown, options?: { body?: unknown }) => {
+      const body = JSON.parse(String((options?.body ?? "{}") as string));
+      if (body.email === "admin@umss.edu.bo" && body.password === "admin1234") {
+        return { ok: true, json: async () => ({ data: { accessToken: "token-admin", role: "administrador" } }) };
+      }
+      if (body.email === "titulado@umss.edu.bo" && body.password === "titulado1234") {
+        return { ok: true, json: async () => ({ data: { accessToken: "token-titulado", role: "titulado" } }) };
+      }
+      return { ok: false, status: 401, json: async () => ({ message: "Correo electrónico o contraseña incorrectos" }) };
+    }) as jest.Mock;
   });
 
   it("inicia sesión como administrador y redirige a /applications", async () => {

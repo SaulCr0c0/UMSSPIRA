@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { clearSession, saveSession } from "./session";
+import { clearSession, getSessionToken, saveSession } from "./session";
 
 describe("sesión en cookies", () => {
   afterEach(() => {
@@ -20,5 +20,15 @@ describe("sesión en cookies", () => {
 
     expect(document.cookie).not.toContain("umsspira_token");
     expect(document.cookie).not.toContain("umsspira_role");
+  });
+
+  it("recupera el token de la cookie tras recargar la página", () => {
+    saveSession("token-de-prueba", "administrador", false);
+
+    expect(getSessionToken()).toBe("token-de-prueba");
+  });
+
+  it("devuelve null sin sesión guardada", () => {
+    expect(getSessionToken()).toBeNull();
   });
 });

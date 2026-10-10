@@ -16,9 +16,9 @@ export interface LoginResult {
 // Mensaje fijo por CA-05.4: no revela si falló el correo o la contraseña
 export const LOGIN_ERROR_MESSAGE = "Correo electrónico o contraseña incorrectos";
 
-// Mientras el PR de authApi no esté fusionado y el backend corriendo, se usa el mock.
-// Cambiar a false cuando el endpoint real esté disponible.
-const USE_MOCK = true;
+// El endpoint real ya está fusionado y verificado: se usa siempre.
+// (El mock de abajo queda solo como referencia para pruebas locales sin backend.)
+const USE_MOCK = false;
 
 // El backend corre en el puerto 3000 y su controlador ya incluye el prefijo "api/auth"
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
