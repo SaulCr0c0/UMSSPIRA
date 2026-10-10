@@ -16,25 +16,20 @@ interface MockDocumentProps {
 }
 
 jest.mock('../lib/pdf-worker', () => ({}));
-jest.mock(
-  'react-pdf',
-  () => ({
-    Document: ({ children, onLoadSuccess, onLoadError }: MockDocumentProps) => {
-      const hasLoaded = useRef(false);
-      if (mockViewer === 'crash') throw new TypeError('Promise.withResolvers is not a function');
-      useEffect(() => {
-        if (hasLoaded.current) return;
-        hasLoaded.current = true;
-        if (mockViewer === 'loadError') onLoadError(new Error('Setting up fake worker failed'));
-        else onLoadSuccess({ numPages: 7 });
-      });
-      return <div data-testid="pdf-document">{children}</div>;
-    },
-    Page: ({ pageNumber }: { pageNumber: number }) => <div data-testid="pdf-page">Página {pageNumber}</div>,
-  }),
-  { virtual: true },
-);
-
+jest.mock('react-pdf', () => ({
+  Document: ({ children, onLoadSuccess, onLoadError }: MockDocumentProps) => {
+    const hasLoaded = useRef(false);
+    if (mockViewer === 'crash') throw new TypeError('Promise.withResolvers is not a function');
+    useEffect(() => {
+      if (hasLoaded.current) return;
+      hasLoaded.current = true;
+      if (mockViewer === 'loadError') onLoadError(new Error('Setting up fake worker failed'));
+      else onLoadSuccess({ numPages: 7 });
+    });
+    return <div data-testid="pdf-document">{children}</div>;
+  },
+  Page: ({ pageNumber }: { pageNumber: number }) => <div data-testid="pdf-page">Página {pageNumber}</div>,
+}), { virtual: true });
 jest.mock('../utils/download-pdf', () => ({ downloadPdf: jest.fn() }));
 jest.mock('../utils/print-pdf', () => ({ printPdf: jest.fn(), disposePrintFrame: jest.fn() }));
 

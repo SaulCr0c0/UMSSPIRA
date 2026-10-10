@@ -6,3 +6,4 @@ allowBuilds:
   '@parcel/watcher': true
   canvas: true
   unrs-resolver: false
+  esbuild: true

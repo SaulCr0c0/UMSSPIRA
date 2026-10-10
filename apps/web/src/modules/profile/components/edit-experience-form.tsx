@@ -113,12 +113,12 @@ function EditExperienceFields({ experience }: { experience: ExperienceRecord }) 
         </FormField>
       </div>
 
-      <label className="flex w-fit items-center gap-2 text-[13px] text-umss-navy">
+      <label className="flex w-fit items-center gap-2 text-[13px] text-blue-fantastic">
         <input
           type="checkbox"
           checked={isCurrentJob}
           onChange={handleCurrentJobChange}
-          className="h-4 w-4 accent-umss-terracotta"
+          className="h-4 w-4 accent-truffle-trouble"
         />
         Actualmente trabajo aquí
       </label>
