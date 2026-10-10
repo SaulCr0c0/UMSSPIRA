@@ -36,7 +36,7 @@ export function statusVariants(status: ApplicationStatus): string[] {
     );
 }
 
-// Codigo visible del expediente (CA-04.1): EGR-AAAA-XXXXXX, determinista por solicitud.
+// Codigo visible del expediente (CA-04.1): TIT-AAAA-XXXXXX, determinista por solicitud.
 export function applicationCode(id: string, fechaCreacion: string | null): string {
   const year = fechaCreacion ? new Date(fechaCreacion).getFullYear() : new Date().getFullYear();
   const short = String(id ?? '')
@@ -44,7 +44,7 @@ export function applicationCode(id: string, fechaCreacion: string | null): strin
     .slice(0, 6)
     .toUpperCase()
     .padStart(6, '0');
-  return `EGR-${year}-${short}`;
+  return `TIT-${year}-${short}`;
 }
 
 export interface ApplicationListItem {

@@ -85,7 +85,7 @@ describe('ApplicationsRepository', () => {
 
     expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ id: '11111111-1111-4111-8111-111111111111', fullName: 'Alejandro Rojas Torrico', status: 'PENDING' });
-    expect(items[0].code).toMatch(/^EGR-\d{4}-[0-9A-F]{6}$/);
+    expect(items[0].code).toMatch(/^TIT-\d{4}-[0-9A-F]{6}$/);
     expect(items[1].status).toBe('APPROVED');
   });
 
