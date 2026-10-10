@@ -12,6 +12,8 @@ dist/
 AGENTS.md
 *.tsbuildinfo
 .tmp-chrome-*/
+.vercel
+.env*
 .context/
 .vscode/
 supabase/.temp/

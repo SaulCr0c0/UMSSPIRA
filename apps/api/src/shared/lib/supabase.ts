@@ -66,3 +66,9 @@ export const supabase = new Proxy({} as SupabaseClient, {
     return typeof value === 'function' ? value.bind(client) : value;
   },
 });
+
+
+// Alias para el módulo de perfil (usa supabaseClient().storage...): es el mismo cliente compartido
+export function supabaseClient(): SupabaseClient {
+  return supabase;
+}

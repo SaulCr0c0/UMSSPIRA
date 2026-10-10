@@ -12,6 +12,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { EventsModule } from './modules/events/events.module';
 import { MentorshipModule } from './modules/mentorship/mentorship.module';
+import { PerfilModule } from './modules/perfil/perfil.module';
 import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     JobPostingsModule,
     EventsModule,
     MentorshipModule,
+    PerfilModule,
     ReportsModule,
     MailModule,
     AuthModule,
