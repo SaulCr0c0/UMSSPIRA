@@ -101,7 +101,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   });
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/portal' });
     listenForUpdates(registration);
     listenForForeground(registration);
     sendDeviceProfile().catch((error) => {

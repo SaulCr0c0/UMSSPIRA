@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import { SiteHeader } from "./site-header";
+import { PortalSiteHeader } from "./portal-site-header";
 
-describe("SiteHeader", () => {
+describe("PortalSiteHeader", () => {
   it("el logo enlaza a la pagina de inicio", () => {
-    render(<SiteHeader />);
+    render(<PortalSiteHeader />);
     const logo = screen.getByRole("link", { name: /umsspira/i });
-    expect(logo).toHaveAttribute("href", "/");
+    expect(logo).toHaveAttribute("href", "/portal");
   });
 });
