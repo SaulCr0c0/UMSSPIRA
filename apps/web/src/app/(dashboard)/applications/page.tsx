@@ -101,7 +101,7 @@ export default function ApplicationsPage() {
           </span>
         </h1>
         <p className="mt-1 text-sm text-abyssal-blue/70">
-          Gestión y auditoría de expedientes de egresados de Ingeniería de Sistemas
+          Gestión y auditoría de expedientes de titulados de Ingeniería de Sistemas e Ingeniería Informática 
         </p>
       </header>
 

@@ -42,7 +42,7 @@ export function ApproveDialog({
       <InfoBox>
         Expediente: <strong>#{expedienteCode}</strong> • {applicantName}. Al
         aprobar, se generará el código de activación (válido por 24 horas) y se
-        notificará al egresado por correo.
+        notificará al titulado por correo.
       </InfoBox>
 
       {error && <FieldError>{error}</FieldError>}

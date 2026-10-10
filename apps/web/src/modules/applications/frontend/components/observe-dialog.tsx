@@ -133,7 +133,7 @@ export function ObserveDialog({
           maxLength={MAX_NOTE_LENGTH}
           disabled={isLoading}
           aria-invalid={showNoteError}
-          placeholder="Explique qué debe corregir el egresado..."
+          placeholder="Explique qué debe corregir el titulado..."
           className={fieldClass(showNoteError)}
         />
         {showNoteError ? (
@@ -154,7 +154,7 @@ export function ObserveDialog({
         onChange={setNotifyDean}
         disabled={isLoading}
       >
-        Notificar inmediatamente al correo institucional del egresado con copia
+        Notificar inmediatamente al correo institucional del titulado con copia
         al decanato de facultad.
       </CheckboxRow>
 
