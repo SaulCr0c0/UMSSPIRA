@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { CompaniesModule } from './modules/companies/companies.module';
+import { JobPostingsModule } from './modules/job-postings/job-postings.module';
+import { HealthController } from './health.controller';
 import { MailModule } from './modules/mail/mail.module';
 import { AuthModule } from './modules/auth';
 import { RegistrationsModule } from './modules/registrations/registrations.module';
@@ -15,8 +18,10 @@ import { ReportsModule } from './modules/reports/reports.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      envFilePath: ['.env', '../../.env'],
     }),
+    CompaniesModule,
+    JobPostingsModule,
     EventsModule,
     MentorshipModule,
     ReportsModule,
@@ -27,7 +32,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     EmailVerificationModule,
     ReviewsModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

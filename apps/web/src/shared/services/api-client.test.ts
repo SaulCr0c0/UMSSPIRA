@@ -1,4 +1,4 @@
-import { apiClient, ApiException } from './api-client';
+import { apiClient, ApiException, apiFetch, ApiError, TOKEN_KEY, clearToken, hasValidSession } from './api-client';
 
 describe('compatibilidad del cliente HTTP entre eventos y afinidad', () => {
   const originalFetch = global.fetch;
@@ -6,11 +6,37 @@ describe('compatibilidad del cliente HTTP entre eventos y afinidad', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
+    localStorage.clear();
     global.fetch = fetchMock;
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    localStorage.clear();
+  });
+
+  it('conserva el token de empresas y su llamada HTTP', async () => {
+    localStorage.setItem(TOKEN_KEY, 'token-empresa');
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ nombre: 'Empresa' }) });
+
+    await expect(apiFetch('/api/empresa/perfil/header')).resolves.toEqual({ nombre: 'Empresa' });
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer token-empresa');
+  });
+
+  it('conserva el error de sesión de empresas con estado 401', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    await expect(apiFetch('/api/empresa/perfil/header')).rejects.toMatchObject({
+      name: 'ApiError', status: 401,
+    });
+    expect(new ApiError(401, 'Sesión vencida')).toBeInstanceOf(Error);
+  });
+
+  it('conserva la comprobación y eliminación de la sesión de empresas', () => {
+    const payload = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 60 }));
+    localStorage.setItem(TOKEN_KEY, `header.${payload}.firma`);
+    expect(hasValidSession()).toBe(true);
+    clearToken();
+    expect(hasValidSession()).toBe(false);
   });
 
   it('conserva la llamada de eventos, los encabezados y la serialización del cuerpo', async () => {
