@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: "Egresados UMSS",
-  shortName: "Egresados UMSS",
-  description: "Plataforma de egresados de la UMSS",
+  name: "UMSSPIRA",
+  shortName: "UMSSPIRA",
+  description: "Egresados que inspiran, talento que conecta",
 } as const;
