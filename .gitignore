@@ -12,3 +12,5 @@ dist/
 AGENTS.md
 *.tsbuildinfo
 .tmp-chrome-*/
+.context/
+.vscode/
