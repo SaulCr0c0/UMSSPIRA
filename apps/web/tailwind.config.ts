@@ -13,6 +13,10 @@ const config: Config = {
     extend: {
       colors: {
         umss: {
+          navy: '#1E3A5F',
+          orange: '#E8503A',
+          cream: '#F5F0E8',
+          light: '#F5F5F5',
           dark: '#1B2632',
           sand: '#EEE9DF',
           red: '#8B0000',
@@ -25,7 +29,12 @@ const config: Config = {
         "abyssal-blue": "#1B2632",
         abyssal: "#1B2632",
       },
+      boxShadow: {
+        umss: '0 4px 14px 0 rgba(30, 58, 95, 0.10)',
+        'umss-lg': '0 10px 30px 0 rgba(30, 58, 95, 0.15)',
+      },
       fontFamily: {
+        poppins: ['var(--font-poppins)', 'sans-serif'],
         display: ["var(--font-playfair)", "serif"],
         sans: ["var(--font-inter)", "sans-serif"],
       },
