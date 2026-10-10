@@ -1,89 +1,4 @@
-const CACHE_NAME = 'umsspira-core-v2';
-
-
-
-const CORE_ASSETS = [
-  '/',
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_ASSETS);
-    })
-  );
-
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      );
-    })
-  );
-
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-
-        return networkResponse;
-      })
-      .catch(async () => {
-        const cachedResponse = await caches.match(event.request);
-
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        if (event.request.mode === 'navigate') {
-          return new Response(
-            `
-              <!DOCTYPE html>
-              <html lang="es">
-                <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Sin conexión</title>
-                </head>
-                <body>
-                  <h1>Sin conexión</h1>
-                  <p>No fue posible cargar esta página porque no hay conexión a Internet.</p>
-                  <p>Cuando se restablezca la conexión, intenta nuevamente.</p>
-                </body>
-              </html>
-            `,
-            {
-              status: 200,
-              headers: {
-                'Content-Type': 'text/html; charset=utf-8',
-              },
-            }
-          );
-        }
-
-        return new Response('', {
-          status: 503,
-          statusText: 'Servicio no disponible',
-        });
-      })
-  );
-
+const CACHE_NAME = 'umsspira-core-portal-v3';
 
 const VERSION = 'v1';
 const STATIC_CACHE = `umsspira-static-${VERSION}`;
@@ -92,7 +7,7 @@ const CONFIG_CACHE = `umsspira-config-${VERSION}`;
 const ALL_CACHES = [CACHE_NAME, STATIC_CACHE, ASSETS_CACHE, CONFIG_CACHE];
 
 const CORE_ASSETS = [
-  "/",
+  "/portal",
 ];
 
 const PRECACHE_URLS = ['/manifest.webmanifest', '/favicon.ico'];
@@ -171,6 +86,15 @@ function getHandledUrl(request) {
     return null;
   }
 
+  // El portal conserva su caché sin almacenar vistas de otras épicas.
+  if (request.mode === 'navigate' && url.pathname !== '/portal' && !url.pathname.startsWith('/portal/')) return null;
+  if (request.headers.get('Authorization')) return null;
+  if (
+    url.pathname !== '/portal' && !url.pathname.startsWith('/portal/') &&
+    !url.pathname.startsWith('/_next/static/') && !url.pathname.startsWith('/_next/image') &&
+    !url.pathname.startsWith('/icons/') && url.pathname !== '/manifest.webmanifest'
+  ) return null;
+
   return url;
 }
 
@@ -237,7 +161,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = getHandledUrl(request);
 
-  if (!url || request.mode === 'navigate') return;
+  if (!url) return;
 
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
@@ -263,7 +187,7 @@ self.addEventListener("fetch", (event) => {
     networkFirst(request, CACHE_NAME).catch(() =>
       caches.match(request).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse;
-        return caches.match("/");
+        return caches.match('/portal').then((portal) => portal || new Response('<!DOCTYPE html><html lang=es><title>Sin conexión</title><h1>Sin conexión</h1><p>No fue posible cargar esta página porque no hay conexión a Internet.</p></html>', { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
       })
     )
   );
