@@ -8,11 +8,13 @@ const config: Config = {
     extend: {
       colors: {
         umss: {
-          navy: '#1E3A5F',
-          orange: '#E8503A',
-          cream: '#F5F0E8',
+          navy: '#1E293B',
+          navydark: '#0F172A',
+          orange: '#FFB162',
+          brick: '#A34739',
+          cream: '#FDFBF7',
           light: '#F5F5F5',
-          dark: '#1A1A2E',
+          dark: '#111827',
         },
       },
       fontFamily: {
@@ -20,8 +22,8 @@ const config: Config = {
         poppins: ['var(--font-poppins)', 'sans-serif'],
       },
       boxShadow: {
-        umss: '0 4px 14px 0 rgba(30, 58, 95, 0.10)',
-        'umss-lg': '0 10px 30px 0 rgba(30, 58, 95, 0.15)',
+        umss: '0 4px 14px 0 rgba(30, 41, 59, 0.10)',
+        'umss-lg': '0 10px 30px 0 rgba(30, 41, 59, 0.15)',
       },
     },
   },

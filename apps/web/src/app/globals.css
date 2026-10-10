@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --umss-navy: #1E3A5F;
-  --umss-orange: #E85D3A;
-  --umss-cream: #F5F0E8;
-  --umss-dark: #1A1A2E;
+  --umss-navy: #1E293B;
+  --umss-orange: #FFB162;
+  --umss-cream: #FDFBF7;
+  --umss-dark: #111827;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -18,7 +18,7 @@ html, body {
   max-width: 100%;
   overflow-x: hidden;
   font-family: var(--font-poppins), system-ui, sans-serif;
-  color: #1A1A2E;
+  color: #111827;
 }
 
 body {
