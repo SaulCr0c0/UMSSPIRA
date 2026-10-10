@@ -26,6 +26,10 @@ const STATUS_BY_DECISION: Record<
 // Vigencia del código de activación (la misma que usa Redis)
 const ACTIVATION_CODE_HOURS = 24;
 
+// Este sprint solo se registra el dictamen: el aviso al titulado
+// (correo + código de activación) se activa el siguiente sprint.
+const REVIEW_NOTIFICATIONS_ENABLED = false;
+
 @Injectable()
 export class ReviewsService {
   private readonly logger = new Logger(ReviewsService.name);
@@ -70,9 +74,11 @@ export class ReviewsService {
       `Dictamen ${review.decision} registrado para ${applicationId} por ${reviewerId}`,
     );
 
-    // El dictamen ya está guardado. La notificación no bloquea la respuesta
-    // (un SMTP lento no debe congelar el panel) y sus errores no lo deshacen.
-    void this.notifyApplicant(applicationId, dto);
+    // El dictamen ya está guardado. Cuando se activen, la notificación no
+    // bloquea la respuesta (un SMTP lento no debe congelar el panel).
+    if (REVIEW_NOTIFICATIONS_ENABLED) {
+      void this.notifyApplicant(applicationId, dto);
+    }
 
     return review;
   }
