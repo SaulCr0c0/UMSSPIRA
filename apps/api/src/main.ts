@@ -1,30 +1,46 @@
+import './load-env';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, type ArgumentMetadata } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { resolve } from 'path';
-
-/**
- * La API lee un archivo de entorno:
- *   - (por defecto) `.env`                -> proyecto de Supabase / local
- *   - SUPABASE_ENV=local `.env.localstack` -> stack Docker local
- */
-const usarStackLocal = process.env.SUPABASE_ENV === 'local';
-const envPath = resolve(process.cwd(), usarStackLocal ? '.env.localstack' : '.env');
-
-try {
-  // Carga nativa de Node.js 20+ sin depender del paquete externo 'dotenv'
-  if (typeof process.loadEnvFile === 'function') {
-    process.loadEnvFile(envPath);
-  }
-} catch {
-  // Si el archivo no existe, continúa con las variables ya exportadas en el entorno
-}
+import { AppExceptionFilter } from './shared/filters/app-exception.filter';
+import { CreateEventDto } from './modules/events/dto/create-event.dto';
+import { UpdateDraftEventDto } from './modules/events/dto/update-draft-event.dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Uno o varios origenes separados por coma:
+  //   WEB_ORIGIN=https://app.vercel.app,https://preview.vercel.app
+  const origenesPermitidos = (process.env.WEB_ORIGIN || 'http://localhost:3001')
+    .split(',')
+    .map((origen) => origen.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.WEB_ORIGIN || 'http://localhost:3001',
+    origin: origenesPermitidos,
     credentials: true,
   });
-  await app.listen(3000);
+
+  const validationPipe = new ValidationPipe({ whitelist: true, transform: true });
+  const eventsValidationPipe = new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  });
+  // Conserva la validación estricta de eventos sin cambiar la de las otras épicas.
+  app.useGlobalPipes({
+    transform(value: unknown, metadata: ArgumentMetadata) {
+      const pipe = metadata.metatype === CreateEventDto || metadata.metatype === UpdateDraftEventDto
+        ? eventsValidationPipe : validationPipe;
+      return pipe.transform(value, metadata);
+    },
+  });
+  app.useGlobalFilters(new AppExceptionFilter());
+
+  // Las plataformas de despliegue asignan el puerto con PORT: hay que respetarlo.
+  const puerto = Number(process.env.PORT ?? 3000);
+  await app.listen(puerto);
+
+  console.log(`API ejecutándose en http://localhost:${puerto}`);
 }
 bootstrap();

@@ -27,7 +27,8 @@
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  padding: 0;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   color: var(--ink);
   line-height: 1.5;
 }
@@ -87,4 +88,20 @@ svg {
 
 .icon-success {
   color: var(--success);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #EEE9DF;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9C1B1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2C3B4D;
 }
