@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "../identidad";
 
 export function PortalSiteHeader() {
   return (
@@ -7,9 +8,9 @@ export function PortalSiteHeader() {
         <Link
           href="/portal"
           aria-label="Ir a la página de inicio de UMSSPIRA"
-          className="text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
-          UMSSPIRA
+          <Logo />
         </Link>
         <nav aria-label="Principal">{/* tu <Navbar /> aquí si ya existe */}</nav>
       </div>

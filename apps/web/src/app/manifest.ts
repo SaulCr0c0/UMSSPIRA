@@ -1,20 +1,20 @@
 import type { MetadataRoute } from 'next'
+import { BRAND } from '../shared/identidad/brand'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'UMSSPIRA — Egresados UMSS',
-    short_name: 'UMSSPIRA',
-    description: 'Egresados que inspiran, talento que conecta',
+    name: BRAND.name,
+    short_name: BRAND.shortName,
+    description: BRAND.description,
     start_url: '/portal',
     scope: '/portal',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#1E3A5F',
-    theme_color: '#1E3A5F',
+    background_color: '#FDFBF7',
+    theme_color: '#0F172A',
     icons: [
-      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/brand/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/brand/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
   }
 }

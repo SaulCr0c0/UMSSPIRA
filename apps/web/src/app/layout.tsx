@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
+import "../shared/identidad/tokens.css";
+import { BRAND } from "../shared/identidad/brand";
 
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
@@ -16,8 +18,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "UMSSPIRA",
-  description: "Tu comunidad, siempre conectada.",
+  title: BRAND.name,
+  description: BRAND.description,
+  icons: {
+    icon: "/brand/icons/icon-192.png?v=2",
+    apple: "/brand/icons/icon-192.png?v=2",
+  },
 };
 
 export default function RootLayout({
