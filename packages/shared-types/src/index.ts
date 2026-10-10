@@ -8,3 +8,7 @@ export * from './company';
 export * from './job-posting';
 export * from './events';
 export * from './mentor';
+export * from './auth';
+export * from './email-verification';
+export * from './review';
+export * from './affinity';

@@ -6,7 +6,7 @@ interface ApiClientOptions
   body?: unknown;
 }
 
-export async function apiClient<TResponse>(
+async function apiRequest<TResponse>(
   path: string,
   options: ApiClientOptions = {},
 ): Promise<TResponse> {
@@ -64,3 +64,36 @@ function getErrorMessage(responseData: unknown): string | null {
 
   return typeof message === 'string' ? message : null;
 }
+
+export class ApiException extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiException';
+    this.status = status;
+  }
+}
+
+async function request<TResponse>(path: string, init?: RequestInit): Promise<TResponse> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  });
+
+  if (!response.ok) {
+    throw new ApiException(response.status, `Error ${response.status} al consultar ${path}`);
+  }
+
+  return (await response.json()) as TResponse;
+}
+
+// Conserva las dos formas usadas por eventos y afinidad.
+export const apiClient = Object.assign(apiRequest, {
+  get: <TResponse>(path: string) => request<TResponse>(path),
+  post: <TResponse, TBody = unknown>(path: string, body?: TBody) =>
+    request<TResponse>(path, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+});
