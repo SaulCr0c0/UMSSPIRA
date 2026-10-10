@@ -6,7 +6,7 @@ import { DashboardShell } from '@/shared/components/dashboard-shell';
 // y el mismo estado de datos de prueba
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-umss-cream font-sans text-umss-navy">
+    <div className="bg-palladian font-sans text-blue-fantastic">
       <DashboardShell activeHref="/profile" userName={profileHeader.name} userRole="Egresado">
         <ProfileStoreProvider>{children}</ProfileStoreProvider>
       </DashboardShell>

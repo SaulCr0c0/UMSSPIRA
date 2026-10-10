@@ -14,3 +14,6 @@ AGENTS.md
 .tmp-chrome-*/
 .vercel
 .env*
+.context/
+.vscode/
+supabase/.temp/

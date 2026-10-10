@@ -40,7 +40,7 @@ export default function DownloadProfileButton({ header, sections }: DownloadProf
       onClick={() => downloadProfile(header, sections)}
       disabled={disabled}
       title={disabled ? 'Completa al menos un bloque de tu perfil para descargarlo' : undefined}
-      className="inline-flex items-center justify-center gap-2 rounded-lg bg-umss-navy px-6 py-3.5 text-sm font-bold text-umss-cream transition hover:bg-umss-ink disabled:cursor-not-allowed disabled:bg-umss-sand disabled:text-umss-navy/50"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-fantastic px-6 py-3.5 text-sm font-bold text-palladian transition hover:bg-abyssal-blue disabled:cursor-not-allowed disabled:bg-oatmeal disabled:text-blue-fantastic/50"
     >
       <Download className="h-4 w-4" aria-hidden="true" />
       Descargar

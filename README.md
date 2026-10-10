@@ -32,29 +32,14 @@ Esto instala las dependencias de **todos** los workspaces (`apps/api`, `apps/web
 
 ## Variables de entorno
 
-La API lee **un solo** archivo de entorno en `apps/api/`, elegido al arrancar:
+El servicio de base de datos usa un archivo `.env` en la raíz del repositorio:
 
-| Archivo | Uso | ¿Se sube a Git? |
-| --- | --- | --- |
-| `.env` | Proyecto de Supabase **en la nube** (fuente de verdad) | No — contiene secretos |
-| `.env.localstack` | Stack **local** de Docker, como respaldo sin red | No — lo genera cada quien |
-| `.env.localstack.example` | Plantilla con las instrucciones | Sí |
+Si crean uno pasan la informacion al grupo 
+para evitar problemas de seguridad.
 
-Para usar el respaldo local, una sola vez por máquina:
-
-```bash
-cp apps/api/.env.localstack.example apps/api/.env.localstack
-npx supabase status   # copiar el valor de SECRET_KEY dentro del archivo creado
-```
-
-```bash
-pnpm dev                      # usa apps/api/.env (nube)
-pnpm --filter api dev:local   # usa apps/api/.env.localstack (stack local de Docker)
-```
-
-Las claves de la nube (`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`) las comparte el equipo por el grupo de WhatsApp. **Nunca** se commitean: `.env` ya está en `.gitignore`.
-
-El frontend usa `apps/web/.env.local` con `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3000`).
+Por ahora solo hay uno que es de la contrasenia
+de la base de datos, se les pasara por el grupo 
+de whatsapp.
 
 ## Levantar servicios locales (Docker)
 
@@ -62,7 +47,7 @@ El frontend usa `apps/web/.env.local` con `NEXT_PUBLIC_API_URL` (por defecto `ht
 docker compose up -d
 ```
 
-Levanta los servicios de soporte (hoy solo **Redis**). La base de datos **no** vive en Docker: es Supabase, y se configura en `apps/api/.env` (ver *Variables de entorno*). El stack local de Supabase es opcional y solo sirve como respaldo.
+Levanta y crea la base de datos, con esto ya tienen corriendo la base de datos de manera local. 
 
 Para poder ejecutar y configurar la base de datos de manera local se puede utilizar dos extensiones o el 
 el cliente de postgresql
@@ -102,15 +87,6 @@ pnpm --filter web dev
 - API por defecto en `http://localhost:3000` (revisar `apps/api/src/main.ts`)
 - Web por defecto en `http://localhost:3001`
 
-### Probar el backend con Postman
-
-1. Inicia el API desde la raiz del repositorio: `pnpm.cmd --filter api dev` en Windows PowerShell (o `pnpm --filter api dev` en otras terminales).
-2. Deja abierta la terminal mientras el API se ejecuta en modo watch. No hace falta abrir una pagina web ni iniciar Docker para probar los perfiles de ejemplo en modo demo.
-3. En Postman, importa `collection/mentorship-api.postman_collection.json` y luego importa `collection/environments/local.postman_environment.json` como environment.
-4. Selecciona el environment **UMSSPIRA - Local API** y ejecuta las solicitudes en la carpeta **Mentorship API**. Para probar los mismos escenarios que antes ofrecía la consola, ejecuta **Evaluar perfil elegible**, **Evaluar perfil incompleto** y **Evaluar perfil con restricciones**; cada solicitud muestra el resultado y comprueba automáticamente la respuesta en la pestaña **Test Results**.
-5. Para probar la desactivacion, ejecuta primero **Listar perfiles** (guarda automaticamente el identificador del primer perfil) y despues **Desactivar mentor**. Vuelve a **Listar perfiles** para ver el cambio. En modo demo, **Restablecer perfiles demo** revierte los datos.
-
-Todas las solicitudes usan `http://localhost:3000` y envian/reciben JSON. La elegibilidad requiere un perfil activo, egresado, verificado y aprobado, sin restricciones, con todos los campos minimos validos; la respuesta indica campos faltantes/invalidos y condiciones incumplidas. La desactivacion solo aplica a mentores activos y conserva su configuracion. Si Postman indica que no puede conectarse, confirma que la terminal donde ejecutaste el API sigue abierta y que Nest no mostro errores de inicio. El endpoint raiz `/` no sirve un panel web; la API se prueba con las solicitudes de Postman. Al configurar Supabase, el restablecimiento demo deja de estar disponible.
 
 ## Despliegue
 
@@ -150,7 +126,9 @@ Al importar el repo hay que indicar **Root Directory = `apps/web`** y definir `N
 
 ## Colección de API (Postman)
 
-Importar estos dos archivos en Postman: la coleccion `collection/mentorship-api.postman_collection.json` y el environment `collection/environments/local.postman_environment.json`.
+Importar en Postman:
+- `collection/companies.postman_collection.json`
+- Environment: `collection/environments/local.postman_environment.json`
 
 ## Tests (web)
 
@@ -209,12 +187,12 @@ Se importan en ambas apps como `@umsspira/shared-types`.
 
 | Tarea | Archivo |
 |---|---|
-| Nuevos endpoints a probar manualmente | Agregar request a `collection/mentorship-api.postman_collection.json` (o crear colección nueva por módulo) |
+| Nuevos endpoints a probar manualmente | Agregar request a `collection/companies.postman_collection.json` (o crear colección nueva por módulo) |
 | Tests de componentes/páginas web | Junto al archivo o en `__tests__/`, config en `jest.config.js` / `jest.setup.js` |
 
 ---
 
-Las pruebas manuales del backend se hacen con Postman; las pruebas del frontend estan configuradas con Jest.
+Los tests para el backend seran con postman y los test del frontend estan configurados con jest, tomenlo en cuenta para su implementacion
 
 ## Convenciones de commits
 
