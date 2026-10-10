@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authStore } from "@/modules/auth/frontend/store/auth.store";
+import { getSessionToken } from "@/modules/auth/frontend/services/session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
@@ -48,7 +49,7 @@ export function useReview({ applicationId, onSuccess }: Options) {
     setError(null);
 
     try {
-      const token = authStore.getState().accessToken;
+      const token = authStore.getState().accessToken ?? getSessionToken();
       const response = await fetch(
         `${API_BASE_URL}/api/applications/${encodeURIComponent(applicationId)}/review`,
         {

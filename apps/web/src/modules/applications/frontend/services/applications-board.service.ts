@@ -1,4 +1,5 @@
 import { authStore } from '@/modules/auth/frontend/store/auth.store';
+import { getSessionToken } from '@/modules/auth/frontend/services/session';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const APPLICATIONS_URL = `${API_BASE_URL}/api/applications`;
@@ -52,7 +53,8 @@ export type BoardResult<T> =
 type ApiErrorBody = { message?: string | string[]; error?: string };
 
 function authHeaders(): Record<string, string> {
-  const token = authStore.getState().accessToken;
+  // Al recargar, el estado en memoria se vacía pero la cookie sigue vigente.
+  const token = authStore.getState().accessToken ?? getSessionToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
