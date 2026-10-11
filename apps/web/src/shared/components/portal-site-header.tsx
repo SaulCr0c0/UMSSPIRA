@@ -1,6 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function PortalSiteHeader() {
+  const pathname = usePathname();
+
+  // En /portal la página ya incluye su propio Navbar, así que no se duplica el encabezado
+  if (pathname === "/portal") {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2">
