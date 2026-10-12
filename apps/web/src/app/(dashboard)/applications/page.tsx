@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
   }, [filters, page, loadBoard]);
 
   useEffect(() => {
-    fetch(CAREERS_URL)
+    fetch(CAREERS_URL, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((body) => {
         if (Array.isArray(body?.data)) setCareers(body.data);

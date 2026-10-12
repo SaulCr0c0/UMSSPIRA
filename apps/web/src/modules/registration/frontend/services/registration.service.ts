@@ -40,8 +40,10 @@ function getErrorMessage(body: ApiErrorBody | null, fallback: string): string {
 }
 
 // Catalogo de carreras registradas en la base de datos (no se usan valores inventados).
+// cache: 'no-store' evita que el navegador reutilice una copia vieja (304) y la
+// lista aparezca vacía aunque la API ya tenga datos.
 export async function fetchCareers(): Promise<Career[]> {
-  const response = await fetch(`${API_BASE_URL}/registrations/careers`);
+  const response = await fetch(`${API_BASE_URL}/registrations/careers`, { cache: 'no-store' });
   const body = await readJson<{ data?: Career[] } & ApiErrorBody>(response);
   if (!response.ok || !Array.isArray(body?.data)) {
     throw new Error(getErrorMessage(body, 'No se pudieron cargar las carreras.'));
@@ -79,7 +81,10 @@ export async function createRegistrationSession(data: Record<string, unknown>): 
 // CA-01.6: consulta si la sesion temporal (2 horas) sigue vigente en el servidor.
 export async function checkRegistrationSession(sessionToken: string): Promise<SessionCheckResult> {
   try {
-    const response = await fetch(`${API_BASE_URL}/registrations/sessions/${encodeURIComponent(sessionToken)}`);
+    const response = await fetch(
+      `${API_BASE_URL}/registrations/sessions/${encodeURIComponent(sessionToken)}`,
+      { cache: 'no-store' },
+    );
     const body = await readJson<{ data?: { expiresInSeconds: number } } & ApiErrorBody>(response);
 
     if (response.ok && body?.data) {
