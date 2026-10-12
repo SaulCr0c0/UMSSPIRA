@@ -46,6 +46,20 @@ describe('AuthService', () => {
     });
   });
 
+  it('devuelve el rol desde user_metadata cuando app_metadata no lo trae', async () => {
+    signInWithPassword.mockResolvedValue({
+      data: {
+        session: { access_token: 'token-123' },
+        user: { app_metadata: { provider: 'email' }, user_metadata: { rol: 'titulado' } },
+      },
+      error: null,
+    });
+    await expect(service.login(input)).resolves.toEqual({
+      accessToken: 'token-123',
+      role: 'titulado',
+    });
+  });
+
   it('responde con el mensaje genérico si Supabase rechaza las credenciales (CA-05.4)', async () => {
     signInWithPassword.mockResolvedValue({
       data: { session: null, user: null },

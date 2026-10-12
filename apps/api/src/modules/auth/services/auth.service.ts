@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthRepository } from '../repositories/auth.repository';
 import { UnauthorizedError } from '@/shared/errors';
-import { isUserRole } from '@/shared/guards/user-roles';
+import { resolveUserRole } from '@/shared/guards/user-roles';
 import type { LoginInput, LoginResponse } from '@umsspira/shared-types';
 
 @Injectable()
@@ -22,9 +22,9 @@ export class AuthService {
       throw new UnauthorizedError();
     }
 
-    const role: unknown = data.user.app_metadata?.role;
-    if (!isUserRole(role)) {
-      this.logger.warn(`Login rechazado: rol inválido o ausente (${String(role ?? 'sin rol')})`);
+    const role = resolveUserRole(data.user);
+    if (!role) {
+      this.logger.warn('Login rechazado: rol inválido o ausente en app_metadata/user_metadata');
       throw new UnauthorizedError();
     }
 
