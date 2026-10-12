@@ -1,4 +1,7 @@
 import Redis, { RedisOptions } from 'ioredis';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('Redis');
 
 const DEFAULT_REDIS_PORT = 6379;
 
@@ -27,7 +30,20 @@ export function getRedisOptions(): RedisOptions {
 }
 
 export function createRedisClient(): Redis {
-  return new Redis(getRedisOptions());
+  // REDIS_URL es la forma que entrega Render (Key Value): redis://host:puerto.
+  // Si existe, manda sobre las variables sueltas de desarrollo local.
+  const url = process.env.REDIS_URL;
+
+  const client = url
+    ? new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 3 })
+    : new Redis(getRedisOptions());
+
+  // Sin oyente, ioredis emite "Unhandled error event" y llena los logs.
+  client.on('error', (error: Error) => {
+    logger.error(`[redis] ${error.message}`);
+  });
+
+  return client;
 }
 
 export const redisClient = createRedisClient();
