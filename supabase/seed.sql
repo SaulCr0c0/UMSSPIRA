@@ -62,8 +62,17 @@
 --     'REJECTED' (dictamen) y 'verificado'/'observado' (reporte PDF).
 --   * Los eventos guardan `estado` en minúsculas ('publicado'/'borrador') tal
 --     como los escribe la API, aunque los DTO usen 'BORRADOR'/'PUBLICADO'.
---   * Este seed NO crea usuarios de Supabase Auth ni toca Storage: las pruebas
---     usan los tokens de desarrollo (scripts/dev-token.js y el guard de mentor).
+--   * Este seed NO crea usuarios de Supabase Auth ni toca Storage. El login de
+--     la web valida contra Supabase Auth (panel > Authentication > Users) y lee
+--     el rol de app_metadata.role ('administrador' | 'titulado'); al crearlos,
+--     ponga también user_metadata con { nombre, rol } para que el trigger
+--     on_auth_user_created deje la fila de usuario con el mismo nombre y rol.
+--     Quedaron creados los dos usuarios de demostración (mismas credenciales
+--     que el mock de apps/web/.../auth.service.ts):
+--       admin@umss.edu.bo / admin1234      -> administrador
+--       titulado@umss.edu.bo / titulado1234 -> titulado
+--     El resto de pruebas usa los tokens de desarrollo (scripts/dev-token.js y
+--     el guard de mentor).
 --   * No se usan las columnas vacante.nivel_experiencia,
 --     vacante.descripcion_tecnica ni detalle_solicitud.expedido_en porque no
 --     están aplicadas en todas las bases (migraciones 0002_ajuste_detalle_solicitud
@@ -583,6 +592,27 @@ INSERT INTO carrera (id, nombre) VALUES
   ('10000000-0000-4000-8000-000000000002', 'Ingeniería Informática')
 ON CONFLICT (id) DO UPDATE SET nombre = EXCLUDED.nombre;
 
+-- Unificación de la carrera de Sistemas: versiones anteriores de este seed la
+-- crearon con otro id (10000000-...-001). Se mueve todo lo que la referencie a
+-- la fila definitiva y se elimina la duplicada, así cualquier BD queda igual.
+DO $$
+DECLARE
+  t RECORD;
+BEGIN
+  FOR t IN
+    SELECT table_name FROM information_schema.columns
+    WHERE table_schema = 'public' AND column_name = 'id_carrera'
+  LOOP
+    EXECUTE format(
+      'UPDATE public.%I SET id_carrera = %L WHERE id_carrera = %L',
+      t.table_name,
+      '94c12c08-2743-40c2-a75a-6818391091b8',
+      '10000000-0000-4000-8000-000000000001'
+    );
+  END LOOP;
+  DELETE FROM carrera WHERE id = '10000000-0000-4000-8000-000000000001';
+END $$;
+
 -- ------------------------------------------------------------
 -- 2. Tipos de archivo: primero los formatos que busca el registro de
 --    titulación (PDF/PNG/JPG según el MIME del archivo) y luego los tipos
@@ -728,10 +758,12 @@ ON CONFLICT (id) DO NOTHING;
 -- 10. Vacantes de la empresa demo (POST /api/vacantes)
 --     estado 'PUBLICADO' es el literal que escribe la API.
 -- ------------------------------------------------------------
-INSERT INTO vacante (id, id_empresa, titulo, salario, modalidad, estado, created_at) VALUES
-  ('30000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Desarrollador Backend Junior', 4500.00, 'HIBRIDO', 'PUBLICADO', NOW()),
-  ('30000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Analista de Datos', 5200.00, 'REMOTO', 'PUBLICADO', NOW())
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO vacante (id, id_empresa, titulo, salario, modalidad, nivel_experiencia, descripcion_tecnica, estado, created_at) VALUES
+  ('30000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Desarrollador Backend Junior', 4500.00, 'HIBRIDO', 'JUNIOR', 'Desarrollo de APIs REST con Node.js, TypeScript y PostgreSQL. Se requiere manejo de Git y pruebas unitarias.', 'PUBLICADO', NOW()),
+  ('30000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Analista de Datos', 5200.00, 'REMOTO', 'SEMI_SENIOR', 'Análisis de datos con Python y SQL, construcción de reportes y apoyo a la toma de decisiones con métricas de negocio.', 'PUBLICADO', NOW())
+ON CONFLICT (id) DO UPDATE SET
+  nivel_experiencia   = EXCLUDED.nivel_experiencia,
+  descripcion_tecnica = EXCLUDED.descripcion_tecnica;
 
 -- ------------------------------------------------------------
 -- 11. Eventos (POST /api/events)
