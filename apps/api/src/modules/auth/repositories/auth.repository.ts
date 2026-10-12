@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getSupabaseClient } from '@/shared/lib/supabase';
+import { getSupabaseAuthClient } from '@/shared/lib/supabase';
 
 @Injectable()
 export class AuthRepository {
@@ -8,10 +8,12 @@ export class AuthRepository {
    * Devuelve tal cual lo que responde Supabase (datos o error);
    * no decide si el login es válido, esa decisión es del Service.
    *
-   * Usa el cliente con SUPABASE_SERVICE_ROLE_KEY (regla del repo: la BD y la
-   * autenticación se leen con la clave de servicio, nunca SUPABASE_ANON_KEY).
+   * Usa el cliente DEDICADO a autenticación: el cliente de consultas a la BD
+   * no debe quedarse con la sesión del usuario, porque supabase-js la adjuntaría
+   * a las consultas siguientes y la BD se leería con los permisos del usuario
+   * (RLS) en lugar de con los de servicio.
    */
   async signInWithPassword(email: string, password: string) {
-    return getSupabaseClient().auth.signInWithPassword({ email, password });
+    return getSupabaseAuthClient().auth.signInWithPassword({ email, password });
   }
 }
