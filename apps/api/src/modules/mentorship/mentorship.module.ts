@@ -5,7 +5,7 @@ import { MentorshipInterestsController } from './mentorship-interests.controller
 import { MentorshipInterestsService } from './mentorship-interests.service';
 import { MentorshipController } from './mentorship.controller';
 import { MentorshipService } from './mentorship.service';
-import { MentorTestAuthGuard } from './mentor-test-auth.guard';
+import { MentorAuthGuard } from './mentor-test-auth.guard';
 
 @Module({
   controllers: [
@@ -17,7 +17,7 @@ import { MentorTestAuthGuard } from './mentor-test-auth.guard';
     MentorshipService,
     MentorshipInterestsService,
     MentorshipAvailabilityService,
-    MentorTestAuthGuard,
+    MentorAuthGuard,
   ],
   // MentorshipInterestsService se exporta para que el módulo de áreas use
   // removeInterestsByArea (regla 7 de HU-03). MentorshipAvailabilityService se
