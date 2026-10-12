@@ -26,7 +26,7 @@ import {
   MentorshipService,
   ModuleStatus,
 } from './mentorship.service';
-import { MentorTestAuthGuard } from './mentor-test-auth.guard';
+import { MentorAuthGuard } from './mentor-test-auth.guard';
 
 /** Se asume que el guard de autenticación del equipo inyecta req.user.id. */
 type AuthenticatedRequest = Request & { user?: { id?: string } };
@@ -48,13 +48,13 @@ export class MentorshipController {
   }
 
   @Get('my-profile')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   getMyProfile(@Req() req: AuthenticatedRequest): Promise<Mentor> {
     return this.mentorshipService.getMyProfile(this.userId(req));
   }
 
   @Get('my-profile/information')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   getMyProfileInformation(
     @Req() req: AuthenticatedRequest,
   ): Promise<MentorProfileInformationState> {
@@ -62,7 +62,7 @@ export class MentorshipController {
   }
 
   @Patch('my-profile/information')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -79,7 +79,7 @@ export class MentorshipController {
   }
 
   @Delete('my-profile/information')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   deleteMyProfileInformation(
     @Req() req: AuthenticatedRequest,
   ): Promise<MentorProfileInformationState> {
@@ -94,13 +94,13 @@ export class MentorshipController {
 
   @Post('eligibility')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   checkEligibility(@Req() req: AuthenticatedRequest): Promise<{ eligible: boolean }> {
     return this.mentorshipService.checkEligibility(this.userId(req));
   }
 
   @Patch('my-profile/participation')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   setParticipation(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateParticipationDto,
@@ -110,13 +110,13 @@ export class MentorshipController {
 
   // Areas tecnicas configuradas por el mentor autenticado.
   @Get('my-profile/areas')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   getMyAreas(@Req() req: AuthenticatedRequest): Promise<MentorAreasState> {
     return this.mentorshipService.getMyAreas(this.userId(req));
   }
 
   @Patch('my-profile/areas')
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   updateMyAreas(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateMentorAreasDto,
@@ -127,7 +127,7 @@ export class MentorshipController {
   // TODO: restringir a administradores con el guard de roles del proyecto.
   // Mientras tanto exige autenticacion: sin este guard el endpoint quedaba
   // abierto a cualquiera para desactivar cualquier mentor.
-  @UseGuards(MentorTestAuthGuard)
+  @UseGuards(MentorAuthGuard)
   @Patch('deactivate/:userId')
   deactivate(@Param('userId', ParseUUIDPipe) userId: string): Promise<Mentor> {
     return this.mentorshipService.deactivateByAdmin(userId);
