@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
     rightSectionGap: "space-x-2 lg:space-x-4",
   };
 
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
