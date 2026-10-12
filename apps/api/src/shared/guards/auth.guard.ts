@@ -2,8 +2,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import type { AuthenticatedUser } from '@umsspira/shared-types';
 import { UnauthorizedError } from '../errors';
-import { getSupabase } from '../lib/supabase';
-import { isUserRole } from './user-roles';
+import { getSupabaseClient } from '../lib/supabase';
+import { resolveUserRole } from './user-roles';
 
 export type RequestWithUser = {
   headers: Record<string, string | string[] | undefined>;
@@ -22,13 +22,13 @@ export class AuthGuard implements CanActivate {
     }
 
     // Supabase valida firma, vigencia y que la cuenta siga existiendo
-    const { data, error } = await getSupabase().auth.getUser(token);
+    const { data, error } = await getSupabaseClient().auth.getUser(token);
     if (error || !data.user) {
       throw new UnauthorizedError(SESSION_REQUIRED);
     }
 
-    const role: unknown = data.user.app_metadata?.role;
-    if (!isUserRole(role)) {
+    const role = resolveUserRole(data.user);
+    if (!role) {
       throw new UnauthorizedError(SESSION_REQUIRED);
     }
 

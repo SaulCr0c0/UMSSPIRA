@@ -5,7 +5,7 @@ import { AuthGuard } from './auth.guard';
 const mockGetUser = jest.fn();
 
 jest.mock('../lib/supabase', () => ({
-  getSupabase: () => ({ auth: { getUser: mockGetUser } }),
+  getSupabaseClient: () => ({ auth: { getUser: mockGetUser } }),
 }));
 
 function contextWith(request: object): ExecutionContext {
@@ -62,5 +62,25 @@ describe('AuthGuard', () => {
     await expect(guard.canActivate(contextWith(request))).resolves.toBe(true);
     expect(mockGetUser).toHaveBeenCalledWith('token-valido');
     expect(request.user).toEqual({ id: 'u1', email: 'admin@example.com', role: 'administrador' });
+  });
+
+  it('resuelve el rol desde user_metadata cuando app_metadata no lo trae', async () => {
+    mockGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'u2',
+          email: 'titulado@example.com',
+          app_metadata: { provider: 'email' },
+          user_metadata: { rol: 'titulado' },
+        },
+      },
+      error: null,
+    });
+    const request: { headers: Record<string, string>; user?: unknown } = {
+      headers: { authorization: 'Bearer token-valido' },
+    };
+
+    await expect(guard.canActivate(contextWith(request))).resolves.toBe(true);
+    expect(request.user).toEqual({ id: 'u2', email: 'titulado@example.com', role: 'titulado' });
   });
 });
