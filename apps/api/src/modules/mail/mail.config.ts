@@ -1,3 +1,9 @@
+import { setDefaultResultOrder } from 'node:dns';
+
+// Render no tiene ruta IPv6: sin esto, Node prefiere el registro IPv6 de
+// smtp.gmail.com y la conexión falla con ENETUNREACH. Se fuerza IPv4 primero.
+setDefaultResultOrder('ipv4first');
+
 // Tokens de inyeccion para NestJS: permiten inyectar configuraciones u objetos que no son clases.
 export const MAIL_CONFIG = Symbol('MAIL_CONFIG');
 export const MAIL_TRANSPORTER = Symbol('MAIL_TRANSPORTER');

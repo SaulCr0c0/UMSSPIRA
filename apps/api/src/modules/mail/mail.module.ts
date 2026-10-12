@@ -25,6 +25,11 @@ import { MailService } from './services/mail.service';
           port: config.port,
           secure: config.secure,
           auth: config.auth,
+          // Sin estos límites, un servidor de correo inalcanzable mantiene la
+          // petición colgada ~2 minutos (timeout por defecto de nodemailer).
+          connectionTimeout: 10_000,
+          greetingTimeout: 10_000,
+          socketTimeout: 20_000,
         }),
     },
     MailService,
