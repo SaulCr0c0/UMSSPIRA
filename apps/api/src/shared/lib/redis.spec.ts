@@ -1,4 +1,4 @@
-import { getRedisOptions } from './redis';
+import { createRedisClient, getRedisOptions } from './redis';
 
 describe('getRedisOptions', () => {
   const originalEnv = process.env;
@@ -8,6 +8,7 @@ describe('getRedisOptions', () => {
     delete process.env.REDIS_HOST;
     delete process.env.REDIS_PORT;
     delete process.env.REDIS_PASSWORD;
+    delete process.env.REDIS_URL;
   });
 
   afterAll(() => {
@@ -39,5 +40,24 @@ describe('getRedisOptions', () => {
     expect(() => getRedisOptions()).toThrow(
       'REDIS_PORT debe ser un puerto válido',
     );
+  });
+
+  it('createRedisClient usa REDIS_URL cuando existe (la forma que entrega Render)', () => {
+    process.env.REDIS_URL = 'redis://red-ejemplo:6379';
+
+    const client = createRedisClient();
+    expect(client.options.host).toBe('red-ejemplo');
+    expect(client.options.port).toBe(6379);
+    client.disconnect();
+  });
+
+  it('createRedisClient usa host/puerto cuando no hay REDIS_URL', () => {
+    process.env.REDIS_HOST = 'redis-interno';
+    process.env.REDIS_PORT = '6381';
+
+    const client = createRedisClient();
+    expect(client.options.host).toBe('redis-interno');
+    expect(client.options.port).toBe(6381);
+    client.disconnect();
   });
 });
