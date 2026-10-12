@@ -137,4 +137,53 @@ describe('MailService', () => {
       }),
     ).rejects.toThrow(ServiceUnavailableException);
   });
+
+  describe('cuando esta configurada la API de Brevo (Render bloquea SMTP)', () => {
+    let brevoFetch: jest.Mock;
+
+    beforeEach(() => {
+      brevoFetch = jest.fn().mockResolvedValue({ ok: true, status: 201, text: async () => '' });
+      global.fetch = brevoFetch as unknown as typeof fetch;
+      mailService = new MailService(
+        mockTransporter as unknown as ConstructorParameters<typeof MailService>[0],
+        { ...mockConfig, brevoApiKey: 'api-key-de-brevo' },
+      );
+    });
+
+    afterEach(() => {
+      delete (global as { fetch?: unknown }).fetch;
+    });
+
+    it('envia el codigo por HTTPS en lugar de SMTP', async () => {
+      await mailService.sendOtpVerification({
+        to: 'egresado@umss.edu.bo',
+        code: '741852',
+        expiresInMinutes: 5,
+      });
+
+      expect(mockTransporter.sendMail).not.toHaveBeenCalled();
+      expect(brevoFetch).toHaveBeenCalledTimes(1);
+
+      const [url, init] = brevoFetch.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://api.brevo.com/v3/smtp/email');
+      expect((init.headers as Record<string, string>)['api-key']).toBe('api-key-de-brevo');
+
+      const body = JSON.parse(String(init.body));
+      expect(body.to).toEqual([{ email: 'egresado@umss.edu.bo' }]);
+      expect(body.subject).toBe('Tu código de verificación');
+      expect(body.htmlContent).toContain('741852');
+    });
+
+    it('lanza ServiceUnavailableException si Brevo responde con error', async () => {
+      brevoFetch.mockResolvedValue({ ok: false, status: 401, text: async () => 'Invalid API key' });
+
+      await expect(
+        mailService.sendOtpVerification({
+          to: 'egresado@umss.edu.bo',
+          code: '123456',
+          expiresInMinutes: 5,
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
 });

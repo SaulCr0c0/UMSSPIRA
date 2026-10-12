@@ -132,6 +132,10 @@ export class MailService {
 
   private async send(message: OutgoingMessage): Promise<void> {
     try {
+      if (this.config.brevoApiKey) {
+        await this.sendViaBrevo(message);
+        return;
+      }
       await this.transporter.sendMail({
         from: { name: this.config.fromName, address: this.config.fromAddress },
         ...message,
@@ -141,6 +145,33 @@ export class MailService {
       const reason = error instanceof Error ? error.message : 'error desconocido';
       this.logger.error(`Falló el envío del correo "${message.subject}": ${reason}`);
       throw new ServiceUnavailableException(SEND_ERROR_MESSAGE);
+    }
+  }
+
+  /**
+   * Envío por la API HTTPS de Brevo (puerto 443). Alternativa a SMTP para
+   * plataformas que bloquean el correo saliente, como Render en plan free.
+   */
+  private async sendViaBrevo(message: OutgoingMessage): Promise<void> {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': this.config.brevoApiKey!,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: this.config.fromName, email: this.config.fromAddress },
+        to: [{ email: message.to }],
+        subject: message.subject,
+        htmlContent: message.html,
+        textContent: message.text,
+      }),
+    });
+
+    if (!response.ok) {
+      const detalle = await response.text().catch(() => '');
+      throw new Error(`Brevo respondió ${String(response.status)}: ${detalle.slice(0, 200)}`);
     }
   }
 
