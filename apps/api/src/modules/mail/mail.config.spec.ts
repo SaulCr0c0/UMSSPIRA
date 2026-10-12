@@ -62,4 +62,14 @@ describe('readMailConfig', () => {
       pass: 'secretpassword',
     });
   });
+
+  it('lee la api key de Brevo cuando existe (envio por HTTPS)', () => {
+    const config = readMailConfig({ ...validEnv, BREVO_API_KEY: 'api-key-123' });
+    expect(config.brevoApiKey).toBe('api-key-123');
+  });
+
+  it('deja brevoApiKey indefinida si no esta configurada', () => {
+    const config = readMailConfig(validEnv);
+    expect(config.brevoApiKey).toBeUndefined();
+  });
 });

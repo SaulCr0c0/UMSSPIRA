@@ -15,6 +15,12 @@ export type MailConfig = {
   auth?: { user: string; pass: string };
   fromName: string;
   fromAddress: string;
+  /**
+   * Si existe, los correos se envían por la API HTTPS de Brevo en lugar de
+   * SMTP: hay plataformas (Render plan free) que bloquean el correo saliente
+   * por SMTP pero no las llamadas HTTPS al puerto 443.
+   */
+  brevoApiKey?: string;
 };
 
 const REQUIRED_VARIABLES = [
@@ -55,5 +61,6 @@ export function readMailConfig(env: NodeJS.ProcessEnv = process.env): MailConfig
     auth: user && pass ? { user, pass } : undefined,
     fromName: env.MAIL_FROM_NAME!,
     fromAddress: env.MAIL_FROM_ADDRESS!,
+    brevoApiKey: env.BREVO_API_KEY || undefined,
   };
 }
