@@ -4,6 +4,7 @@
  */
 
 type DeviceProfile = 'desktop' | 'mobile' | 'default';
+export type UpdateHandler = (applyUpdate: () => void) => void;
 
 let isReloading = false;
 
@@ -11,30 +12,31 @@ function activateWorker(worker: ServiceWorker): void {
   worker.postMessage({ type: 'SKIP_WAITING' });
 }
 
-// Cuando una versión nueva termina de instalarse, se activa de inmediato
-function trackInstalling(worker: ServiceWorker): void {
+// Cuando una versión nueva termina de instalarse, se AVISA al usuario
+function trackInstalling(worker: ServiceWorker, onUpdate?: UpdateHandler): void {
   worker.addEventListener('statechange', () => {
     if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-      activateWorker(worker);
+      onUpdate?.(() => activateWorker(worker));
     }
   });
 }
 
-function listenForUpdates(registration: ServiceWorkerRegistration): void {
-  // Si ya hay una versión nueva esperando, se activa de una vez
+function listenForUpdates(
+  registration: ServiceWorkerRegistration,
+  onUpdate?: UpdateHandler,
+): void {
   if (registration.waiting && navigator.serviceWorker.controller) {
-    activateWorker(registration.waiting);
+    const waiting = registration.waiting;
+    onUpdate?.(() => activateWorker(waiting));
   }
 
-  // Si ya hay una versión nueva instalándose
   if (registration.installing) {
-    trackInstalling(registration.installing);
+    trackInstalling(registration.installing, onUpdate);
   }
 
-  // Si aparece una versión nueva mientras la app está abierta
   registration.addEventListener('updatefound', () => {
     if (registration.installing) {
-      trackInstalling(registration.installing);
+      trackInstalling(registration.installing, onUpdate);
     }
   });
 }
@@ -64,16 +66,13 @@ async function sendDeviceProfile(): Promise<DeviceProfile> {
   const registration = await navigator.serviceWorker.ready;
   registration.active?.postMessage({ type: 'SET_DEVICE_PROFILE', profile });
 
-  // Solo en escritorio se pide almacenamiento persistente
   if (profile === 'desktop') {
     await requestPersistentStorage();
   }
   return profile;
 }
 
-// En móvil la app pasa horas o días en segundo plano sin recargarse.
-// Al volver a primer plano: se reenvía el perfil (el sistema pudo borrar
-// la caché de configuración) y se busca una versión nueva del SW.
+// Al volver a primer plano en móvil: se reenvía el perfil y se busca una versión nueva del SW
 function listenForForeground(registration: ServiceWorkerRegistration): void {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
@@ -86,7 +85,9 @@ function listenForForeground(registration: ServiceWorkerRegistration): void {
   });
 }
 
-export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
+export async function registerServiceWorker(
+  onUpdate?: UpdateHandler,
+): Promise<ServiceWorkerRegistration | undefined> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
     return undefined;
   }
@@ -102,7 +103,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/portal' });
-    listenForUpdates(registration);
+    listenForUpdates(registration, onUpdate);
     listenForForeground(registration);
     sendDeviceProfile().catch((error) => {
       console.error('[SW] No se pudo enviar el perfil de dispositivo:', error);

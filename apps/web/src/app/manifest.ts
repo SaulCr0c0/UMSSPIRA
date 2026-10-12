@@ -2,11 +2,13 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: '/portal',
     name: 'UMSSPIRA — Egresados UMSS',
     short_name: 'UMSSPIRA',
     description: 'Egresados que inspiran, talento que conecta',
+    lang: 'es',
     start_url: '/portal',
-    scope: '/portal',
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#1E3A5F',

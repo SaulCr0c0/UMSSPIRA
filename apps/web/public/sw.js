@@ -1,6 +1,6 @@
 const CACHE_NAME = 'umsspira-core-portal-v3';
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `umsspira-static-${VERSION}`;
 const ASSETS_CACHE = `umsspira-assets-${VERSION}`;
 const CONFIG_CACHE = `umsspira-config-${VERSION}`;
@@ -11,6 +11,12 @@ const CORE_ASSETS = [
 ];
 
 const PRECACHE_URLS = ['/manifest.webmanifest', '/favicon.ico'];
+const PRECACHE_ICONS = [
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
+  '/icons/favicon-32.png',
+];
 
 const PROFILES = {
   default: { maxAssets: 80 },
@@ -19,6 +25,31 @@ const PROFILES = {
 };
 const DEFAULT_PROFILE = 'default';
 const PROFILE_KEY = '/__sw-profile';
+
+// ---------------------------------------------------------------------
+// PUNTO DE EXTENSIÓN para otros equipos (Eventos: QR offline, Chat: Push).
+// Se agregan en /sw-extensions.js, sin modificar este archivo.
+// ---------------------------------------------------------------------
+const EXT = (self.UMSSPIRA_SW = { routes: [], messages: {} });
+try {
+  if (typeof importScripts === 'function') importScripts('/sw-extensions.js');
+} catch (error) {
+  // Las extensiones son opcionales: si fallan, el núcleo sigue funcionando
+}
+
+// Lee el HTML del shell y precachea su JS, CSS y fuentes
+async function precacheShellAssets(staticCache) {
+  const response = await fetch('/portal');
+  if (!response.ok) return;
+  const html = await response.text();
+  const urls = [...new Set(html.match(/\/_next\/static\/[^"'\s)\\]+/g) || [])];
+  await Promise.allSettled(
+    urls.map(async (url) => {
+      const res = await fetch(url);
+      if (res.ok) await staticCache.put(url, res);
+    })
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -33,10 +64,19 @@ self.addEventListener("install", (event) => {
           if (response.ok) await staticCache.put(url, response);
         })
       );
+
+      const assetsCache = await caches.open(ASSETS_CACHE);
+      await Promise.allSettled(
+        PRECACHE_ICONS.map(async (url) => {
+          const response = await fetch(url);
+          if (response.ok) await assetsCache.put(url, response);
+        })
+      );
+
+      await precacheShellAssets(staticCache).catch(() => undefined);
     })()
   );
-
-  self.skipWaiting();
+  // Sin skipWaiting: la versión nueva espera a que el usuario acepte el aviso
 });
 
 self.addEventListener("activate", (event) => {
@@ -81,7 +121,8 @@ function getHandledUrl(request) {
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/auth/') ||
     url.pathname.includes('webpack-hmr') ||
-    url.pathname === '/sw.js'
+    url.pathname === '/sw.js' ||
+    url.pathname === '/sw-extensions.js'
   ) {
     return null;
   }
@@ -159,6 +200,19 @@ async function staleWhileRevalidate(request, cacheName, maxEntries) {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+
+  // Rutas registradas por otros equipos (Eventos, Chat)
+  for (const route of EXT.routes) {
+    try {
+      if (route.match(new URL(request.url), request)) {
+        event.respondWith(route.handle(event));
+        return;
+      }
+    } catch (error) {
+      // Una extensión con error no debe romper el núcleo
+    }
+  }
+
   const url = getHandledUrl(request);
 
   if (!url) return;
@@ -192,11 +246,12 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
-//h
+
 self.addEventListener('message', (event) => {
   const data = event.data;
   if (!data) return;
 
+  // El usuario aceptó el aviso de nueva versión
   if (data.type === 'SKIP_WAITING') {
     self.skipWaiting();
     return;
@@ -204,5 +259,10 @@ self.addEventListener('message', (event) => {
 
   if (data.type === 'SET_DEVICE_PROFILE') {
     event.waitUntil(saveProfile(data.profile));
+    return;
   }
+
+  // Mensajes de otros equipos
+  const handler = EXT.messages[data.type];
+  if (typeof handler === 'function') handler(event);
 });
