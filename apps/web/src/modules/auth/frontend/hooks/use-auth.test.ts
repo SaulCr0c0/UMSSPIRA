@@ -3,6 +3,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { authStore } from "../store";
 import { LOGIN_ERROR_MESSAGE } from "../services";
+import { getAccessToken } from "@/shared/services/auth-session";
 import { useAuth } from "./use-auth";
 
 const mockPush = jest.fn();
@@ -51,6 +52,16 @@ describe("useAuth", () => {
     expect(result.current.status).toBe("authenticated");
     expect(result.current.role).toBe("titulado");
     expect(mockPush).toHaveBeenCalledWith("/me");
+  });
+
+  it("publica el token en el almacén que usan las pantallas de mentoría", async () => {
+    const { result } = renderHook(() => useAuth());
+
+    await act(async () => {
+      await result.current.signIn({ email: "titulado@umss.edu.bo", password: "titulado1234" });
+    });
+
+    expect(getAccessToken()).toBe("token-titulado");
   });
 
   it("guarda el mensaje genérico cuando las credenciales son incorrectas", async () => {

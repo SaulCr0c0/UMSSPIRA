@@ -23,6 +23,7 @@ export function useAuth() {
         const { role, accessToken } = await login(credentials);
         authStore.setState({ status: "authenticated", role, accessToken });
         saveSession(accessToken, role, remember);
+        setAccessToken(accessToken);
         router.push(getRedirectPath(role));
       } catch {
         // CA-05.4: siempre el mismo mensaje, sin decir qué dato falló
