@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { authStore } from "../store";
+import { clearAccessToken } from "@/shared/services/auth-session";
 import { clearSession } from "../services";
 
 export function LogoutButton() {
@@ -9,6 +10,7 @@ export function LogoutButton() {
 
   function handleLogout() {
     clearSession();
+    clearAccessToken();
     authStore.reset();
     router.push("/login");
   }

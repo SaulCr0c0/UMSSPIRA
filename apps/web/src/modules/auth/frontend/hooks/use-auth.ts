@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { authStore, useAuthStore } from "../store";
+import { clearAccessToken, setAccessToken } from "@/shared/services/auth-session";
 import {
   getRedirectPath,
   login,
