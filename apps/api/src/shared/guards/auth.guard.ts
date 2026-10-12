@@ -2,7 +2,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import type { AuthenticatedUser } from '@umsspira/shared-types';
 import { UnauthorizedError } from '../errors';
-import { getSupabaseClient } from '../lib/supabase';
+import { getSupabaseAuthClient } from '../lib/supabase';
 import { resolveUserRole } from './user-roles';
 
 export type RequestWithUser = {
@@ -21,8 +21,10 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedError(SESSION_REQUIRED);
     }
 
-    // Supabase valida firma, vigencia y que la cuenta siga existiendo
-    const { data, error } = await getSupabaseClient().auth.getUser(token);
+    // Supabase valida firma, vigencia y que la cuenta siga existiendo.
+    // Cliente dedicado a autenticación: la validación no debe tocar el cliente
+    // de consultas de la BD (ver shared/lib/supabase.ts).
+    const { data, error } = await getSupabaseAuthClient().auth.getUser(token);
     if (error || !data.user) {
       throw new UnauthorizedError(SESSION_REQUIRED);
     }

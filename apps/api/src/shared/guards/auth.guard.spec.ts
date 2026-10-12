@@ -5,7 +5,7 @@ import { AuthGuard } from './auth.guard';
 const mockGetUser = jest.fn();
 
 jest.mock('../lib/supabase', () => ({
-  getSupabaseClient: () => ({ auth: { getUser: mockGetUser } }),
+  getSupabaseAuthClient: () => ({ auth: { getUser: mockGetUser } }),
 }));
 
 function contextWith(request: object): ExecutionContext {

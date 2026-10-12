@@ -56,6 +56,32 @@ export function getSupabaseClient(): SupabaseClient {
 }
 
 /**
+ * Cliente DEDICADO a autenticación (inicio de sesión y validación de tokens).
+ * Jamás usarlo para consultas a tablas: supabase-js guarda la sesión del
+ * usuario en memoria y la adjunta como Authorization a las consultas
+ * siguientes del MISMO cliente, con lo que la BD se leería con los permisos
+ * del usuario (RLS) y tablas sin política de lectura (carrera, mentor)
+ * volverían vacías. Las consultas a tablas usan getSupabaseClient().
+ */
+let authClient: SupabaseClient | null = null;
+
+export function getSupabaseAuthClient(): SupabaseClient {
+  if (authClient) return authClient;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new SupabaseConfigError();
+  }
+
+  authClient = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  return authClient;
+}
+
+/**
  * Acceso compatible con `supabase.from(...)` (forma usada por otros modulos del monorepo).
  * Delega en getSupabaseClient(), por lo que tampoco detiene la API al importar el archivo.
  */
