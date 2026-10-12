@@ -14,6 +14,7 @@ import { EventsModule } from './modules/events/events.module';
 import { MentorshipModule } from './modules/mentorship/mentorship.module';
 import { PerfilModule } from './modules/perfil/perfil.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { assertServiceRoleKey } from './shared/lib/supabase-key-guard';
 
 @Module({
   imports: [
@@ -35,6 +36,16 @@ import { ReportsModule } from './modules/reports/reports.module';
     ReviewsModule,
   ],
   controllers: [HealthController],
-  providers: [],
+  providers: [
+    {
+      // Fail-fast al arrancar: si SUPABASE_SERVICE_ROLE_KEY no es la clave
+      // service_role, la API no levanta y el error queda claro en los logs.
+      provide: 'SUPABASE_KEY_GUARD',
+      useFactory: () => {
+        assertServiceRoleKey();
+        return true;
+      },
+    },
+  ],
 })
 export class AppModule {}
