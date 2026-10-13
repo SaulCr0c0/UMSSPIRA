@@ -10,7 +10,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { ApiError, apiFetch, clearToken } from "@/shared/services/api-client";
+import { apiFetch } from "@/shared/services/api-client";
 
 interface VacancyFormData {
   title: string;
@@ -25,7 +25,7 @@ const initialFormData: VacancyFormData = {
   experienceLevel: "",
   technicalDescription: "",
 };
-
+const MIN_DESCRIPTION_LENGTH = 50;
 type Feedback = { type: "success" | "error"; text: string } | null;
 
 const inputBase =
@@ -68,8 +68,11 @@ export function PublishVacancyForm() {
     if (!formData.title.trim()) next.title = "El título es obligatorio";
     if (!formData.modality) next.modality = "Selecciona la modalidad";
     if (!formData.experienceLevel) next.experienceLevel = "Selecciona el nivel de experiencia";
-    if (!formData.technicalDescription.trim()) {
+    const description = formData.technicalDescription.trim();
+    if (!description) {
       next.technicalDescription = "La descripción técnica es obligatoria";
+    } else if (description.length < MIN_DESCRIPTION_LENGTH) {
+      next.technicalDescription = `La descripción técnica debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`;
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -95,11 +98,6 @@ export function PublishVacancyForm() {
       setErrors({});
       setFeedback({ type: "success", text: "Vacante publicada correctamente ✅" });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        clearToken();
-        window.location.href = "/login";
-        return;
-      }
       setFeedback({
         type: "error",
         text: error instanceof Error ? error.message : "Ocurrió un error inesperado",
