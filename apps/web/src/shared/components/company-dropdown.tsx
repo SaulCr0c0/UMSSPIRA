@@ -110,7 +110,7 @@ export function CompanyDropdown({
           {/* CA3, CA4, CA6, CA7, CA8, CA9, CA10: enlaces que cierran el menú al hacer clic */}
           <div className="py-2 bg-white">
             <Link
-              href="/companies"
+              href="/empresa/perfil"
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >

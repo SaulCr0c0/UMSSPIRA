@@ -1,39 +1,36 @@
-import { IsIn, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
-import { Transform } from 'class-transformer'
-
-const MODALIDADES = ['PRESENCIAL', 'HIBRIDO', 'REMOTO'] as const
-
-const NIVELES_EXPERIENCIA = ['SIN_EXPERIENCIA', 'JUNIOR', 'SEMI_SENIOR', 'SENIOR'] as const
+import {
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateJobPostingDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString({ message: 'El tÃ­tulo debe ser texto' })
-  @IsNotEmpty({ message: 'El tÃ­tulo es obligatorio' })
-  @MaxLength(150, {
-    message: 'El tÃ­tulo no puede superar los 150 caracteres'
-  })
-  titulo: string
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsNotEmpty({ message: 'El título es obligatorio' })
+  @MaxLength(150, { message: 'El título no puede superar los 150 caracteres' })
+  titulo: string;
 
-  @IsString({ message: 'La modalidad debe ser texto' })
+  @IsString()
   @IsNotEmpty({ message: 'La modalidad es obligatoria' })
-  @IsIn(MODALIDADES, {
-    message: 'La modalidad debe ser PRESENCIAL, HIBRIDO o REMOTO'
+  @IsIn(['PRESENCIAL', 'HIBRIDO', 'REMOTO'], {
+    message: 'La modalidad debe ser PRESENCIAL, HIBRIDO o REMOTO',
   })
-  modalidad: 'PRESENCIAL' | 'HIBRIDO' | 'REMOTO'
+  modalidad: 'PRESENCIAL' | 'HIBRIDO' | 'REMOTO';
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString({ message: 'El nivel de experiencia debe ser texto' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
   @IsNotEmpty({ message: 'El nivel de experiencia es obligatorio' })
-  @IsIn(NIVELES_EXPERIENCIA, {
-    message: 'El nivel de experiencia debe ser SIN_EXPERIENCIA, JUNIOR, SEMI_SENIOR o SENIOR'
-  })
-  nivelExperiencia: 'SIN_EXPERIENCIA' | 'JUNIOR' | 'SEMI_SENIOR' | 'SENIOR'
+  nivelExperiencia: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString({ message: 'La descripciÃ³n tÃ©cnica debe ser texto' })
-  @IsNotEmpty({ message: 'La descripciÃ³n tÃ©cnica es obligatoria' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsNotEmpty({ message: 'La descripción técnica es obligatoria' })
   @MinLength(50, {
-    message: 'La descripciÃ³n tÃ©cnica debe tener al menos 50 caracteres'
+    message: 'La descripción técnica debe tener al menos 50 caracteres',
   })
-  descripcionTecnica: string
+  descripcionTecnica: string;
 }
