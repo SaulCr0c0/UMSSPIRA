@@ -79,5 +79,4 @@ export interface Company {
   bannerUrl?: string;
 }
 
-/** @deprecated Usar UpdateCompanyRequest */
 export type UpdateCompanyPayload = Omit<Company, 'id' | 'nit'>;
