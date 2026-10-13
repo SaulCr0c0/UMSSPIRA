@@ -36,6 +36,17 @@ export function hasValidSession(): boolean {
   }
 }
 
+/** true solo si el token es un JWT con fecha de expiracion ya cumplida. */
+
+function isExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return Boolean(payload.exp) && payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
 /** Convierte el cuerpo de error de Nest (string | string[]) en un texto legible. */
 function errorMessage(body: unknown, fallback: string): string {
   const msg = (body as { message?: string | string[] } | null)?.message;
@@ -43,7 +54,8 @@ function errorMessage(body: unknown, fallback: string): string {
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = hasValidSession() ? getToken() : null;
+  const stored = getToken();
+  const token = stored && !isExpired(stored) ? stored : null;
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
