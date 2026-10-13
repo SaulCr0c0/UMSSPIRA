@@ -55,7 +55,7 @@ function readReportsListState(): ReportsListState | null {
     }
 
     return {
-      searchTerm,
+      searchTerm: searchTerm.slice(0, 60),
       selectedStatus,
       currentPage,
     };
