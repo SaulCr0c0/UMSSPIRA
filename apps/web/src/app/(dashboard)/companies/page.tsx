@@ -11,7 +11,6 @@ import type {
 import { CompanyDetails } from './company-details';
 import { CompanyHeader } from './company-header';
 import { EditCompanyForm } from '@/shared/components/edit-company-form';
-import { ApiError, clearToken } from '@/shared/services/api-client';
 import {
   getCompanyContact,
   getCompanyHeader,
@@ -49,12 +48,7 @@ export default function CompaniesPage() {
       const [h, c] = await Promise.all([getCompanyHeader(), getCompanyContact()]);
       setHeader(h);
       setContact(c);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) {
-        clearToken();
-        window.location.href = '/login';
-        return;
-      }
+    } catch {
       setLoadError('No fue posible cargar los datos del perfil.');
     } finally {
       setLoading(false);

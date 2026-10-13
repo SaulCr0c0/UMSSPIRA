@@ -43,7 +43,7 @@ function errorMessage(body: unknown, fallback: string): string {
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
+  const token = hasValidSession() ? getToken() : null;
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
