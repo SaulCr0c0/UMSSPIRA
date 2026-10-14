@@ -96,20 +96,33 @@ export function aCertificationRecord(certificacion: CertificacionApi): Certifica
   };
 }
 
-// POST /api/v1/perfil/formacion-academica -> 201 con el registro creado, 400 por campo o 409 si ya existe
-export async function crearFormacion(formacion: FormacionAcademica): Promise<EducationRecord> {
-  const cuerpo: FormacionCuerpo = {
+function cuerpoFormacion(formacion: FormacionAcademica): FormacionCuerpo {
+  return {
     institucion: formacion.institucion.trim(),
     titulo: formacion.titulo.trim(),
     grado: formacion.grado,
     // El formulario guarda el año como texto y el DTO del backend exige un entero
     anioEgreso: Number(formacion.anioEgreso),
   };
+}
+
+// POST /api/v1/perfil/formacion-academica -> 201 con el registro creado, 400 por campo o 409 si ya existe
+export async function crearFormacion(formacion: FormacionAcademica): Promise<EducationRecord> {
   const creada = await apiFetch<FormacionApi>(`${PERFIL_URL}/formacion-academica`, {
     method: 'POST',
-    body: JSON.stringify(cuerpo),
+    body: JSON.stringify(cuerpoFormacion(formacion)),
   });
   return aEducationRecord(creada);
+}
+
+// PUT /api/v1/perfil/formacion-academica/:id -> registro actualizado, 400 por campo
+// o 409 si queda igual a otra formación (el propio registro no cuenta)
+export async function actualizarFormacion(id: string, formacion: FormacionAcademica): Promise<EducationRecord> {
+  const actualizada = await apiFetch<FormacionApi>(`${PERFIL_URL}/formacion-academica/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(cuerpoFormacion(formacion)),
+  });
+  return aEducationRecord(actualizada);
 }
 
 // POST /api/v1/perfil/experiencia-laboral -> 201 con el registro creado o 400 por campo
