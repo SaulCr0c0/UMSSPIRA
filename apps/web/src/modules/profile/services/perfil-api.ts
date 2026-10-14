@@ -125,8 +125,7 @@ export async function actualizarFormacion(id: string, formacion: FormacionAcadem
   return aEducationRecord(actualizada);
 }
 
-// POST /api/v1/perfil/experiencia-laboral -> 201 con el registro creado o 400 por campo
-export async function crearExperiencia(experiencia: Experiencia): Promise<ExperienceRecord> {
+function cuerpoExperiencia(experiencia: Experiencia): ExperienciaCuerpo {
   const cuerpo: ExperienciaCuerpo = {
     empresa: experiencia.empresa.trim(),
     cargo: experiencia.cargo.trim(),
@@ -134,11 +133,26 @@ export async function crearExperiencia(experiencia: Experiencia): Promise<Experi
   };
   // Trabajo actual: fechaFin no se envía (ni vacía ni null), porque @IsDateString rechazaría ""
   if (experiencia.fechaFin) cuerpo.fechaFin = experiencia.fechaFin;
+  return cuerpo;
+}
+
+// POST /api/v1/perfil/experiencia-laboral -> 201 con el registro creado o 400 por campo
+export async function crearExperiencia(experiencia: Experiencia): Promise<ExperienceRecord> {
   const creada = await apiFetch<ExperienciaApi>(`${PERFIL_URL}/experiencia-laboral`, {
     method: 'POST',
-    body: JSON.stringify(cuerpo),
+    body: JSON.stringify(cuerpoExperiencia(experiencia)),
   });
   return aExperienceRecord(creada);
+}
+
+// PUT /api/v1/perfil/experiencia-laboral/:id -> registro actualizado o 400 por campo.
+// Sin fechaFin el backend la guarda como null (trabajo actual) en vez de conservar la anterior
+export async function actualizarExperiencia(id: string, experiencia: Experiencia): Promise<ExperienceRecord> {
+  const actualizada = await apiFetch<ExperienciaApi>(`${PERFIL_URL}/experiencia-laboral/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(cuerpoExperiencia(experiencia)),
+  });
+  return aExperienceRecord(actualizada);
 }
 
 // GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil

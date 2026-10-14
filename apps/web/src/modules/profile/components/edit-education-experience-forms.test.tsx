@@ -185,13 +185,74 @@ describe('EditExperienceForm', () => {
     expect(screen.getByLabelText('Actualmente trabajo aquí')).not.toBeChecked();
   });
 
-  it('al marcar "Actualmente trabajo aquí" deshabilita la fecha fin y guarda como trabajo actual', () => {
+  const exp2 = {
+    id: 'exp-2',
+    idTitulado: 'titulado-1',
+    fechaCreacion: null,
+    empresa: 'Jalasoft',
+    cargo: 'Desarrollador Senior',
+    fechaInicio: '2021-01-04',
+    fechaFin: '2023-06-30',
+  };
+
+  it('guarda los cambios con PUT en la API y en el estado compartido', async () => {
+    responder(200, { ...exp2, empresa: 'Jala' });
+    renderWith(<EditExperienceForm />);
+
+    fireEvent.change(screen.getByLabelText('Empresa'), { target: { value: ' Jala ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
+    expect(screen.getByTestId('guardado')).toHaveTextContent('Jala|2023-06-30');
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/v1\/perfil\/experiencia-laboral\/exp-2$/);
+    expect(opciones.method).toBe('PUT');
+    expect(JSON.parse(opciones.body)).toEqual({
+      empresa: 'Jala',
+      cargo: 'Desarrollador Senior',
+      fechaInicio: '2021-01-04',
+      fechaFin: '2023-06-30',
+    });
+  });
+
+  it('al marcar "Actualmente trabajo aquí" deshabilita la fecha fin y guarda como trabajo actual sin enviar fechaFin', async () => {
+    responder(200, { ...exp2, fechaFin: null });
     renderWith(<EditExperienceForm />);
     fireEvent.click(screen.getByLabelText('Actualmente trabajo aquí'));
     expect(screen.getByLabelText('Fecha fin')).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
     expect(screen.getByTestId('guardado')).toHaveTextContent('Jalasoft|actual');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('fechaFin');
+  });
+
+  it('400: muestra el mensaje del backend y no guarda', async () => {
+    const mensaje = 'La fecha de fin no puede ser posterior a hoy';
+    responder(400, { statusCode: 400, message: [mensaje], error: mensaje });
+    renderWith(<EditExperienceForm />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByText(mensaje)).toHaveAttribute('id', 'error-experience-save');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByTestId('guardado')).toHaveTextContent('Jalasoft|2023-06-30');
+  });
+
+  it('no llama a la API si la fecha fin es anterior a la fecha inicio y quita el error al corregirla', () => {
+    renderWith(<EditExperienceForm />);
+    const fin = screen.getByLabelText('Fecha fin');
+
+    fireEvent.change(fin, { target: { value: '2020-03-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(screen.getByText("La fecha 'Hasta' no puede ser anterior a 'Desde'")).toHaveAttribute('id', 'error-endDate');
+    expect(fin).toHaveAttribute('aria-invalid', 'true');
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.change(fin, { target: { value: '2023-06-30' } });
+    expect(screen.queryByText("La fecha 'Hasta' no puede ser anterior a 'Desde'")).not.toBeInTheDocument();
   });
 
   it('Cancelar vuelve a Gestionar registros', () => {
