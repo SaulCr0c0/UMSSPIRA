@@ -20,6 +20,7 @@ describe('build-profile-json', () => {
     expect(json.educacion[0]).toEqual({
       institucion: 'Universidad Mayor de San Simón',
       titulo: 'Licenciatura en Ingeniería de Sistemas',
+      grado: 'Licenciatura',
       anio: 2018,
     });
     expect(json.experienciaLaboral).toHaveLength(3);
