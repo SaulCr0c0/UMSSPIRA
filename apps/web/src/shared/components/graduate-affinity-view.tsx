@@ -20,6 +20,11 @@ import { useRouter } from 'next/navigation';
 // Ruta de Épica 2 almacenada en una constante a nivel de módulo
 const RUTA_EPICA_2_CERTIFICACIONES = '/epica-2/certificaciones/nueva?returnTo=/afinidad';
 
+const formatLastUpdate = (isoDate: string): string => {
+  const formatted = new Date(isoDate).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+};
+
 // Áreas que espera el panel de inspección (se deriva de sus props para no duplicar el tipo)
 type InspectionAreas = NonNullable<React.ComponentProps<typeof RadarInspection>['areas']>;
 
@@ -30,6 +35,7 @@ export const GraduateAffinityView: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasRadarError, setHasRadarError] = useState<boolean>(false);
   const [hasValidRadar, setHasValidRadar] = useState<boolean>(false);
+  const [calculatedAt, setCalculatedAt] = useState<string | null>(null);
   const [changeVersion, setChangeVersion] = useState<number>(0);
   const [isPendingDialogOpen, setIsPendingDialogOpen] = useState<boolean>(false);
   const [isSuccessToastOpen, setIsSuccessToastOpen] = useState<boolean>(false);
@@ -67,6 +73,7 @@ export const GraduateAffinityView: React.FC = () => {
             affinity: a.affinity,
           }))
         );
+        setCalculatedAt(result.calculatedAt);
         setHasValidRadar(true);
         setHasRadarError(false);
       } catch {
@@ -112,6 +119,7 @@ export const GraduateAffinityView: React.FC = () => {
       if (changeVersionRef.current === versionAtStart) {
         clearPendingChanges();
       }
+      setCalculatedAt(result.calculatedAt);
       setHasRadarError(false);
       setHasValidRadar(true);
       setIsSuccessToastOpen(true);
@@ -197,10 +205,10 @@ export const GraduateAffinityView: React.FC = () => {
               <div className="flex items-center justify-between border-b border-palladian pb-4 mb-4">
                 <h3 className="font-bold text-abyssal-blue text-base">Gráfico de afinidad</h3>
                 {/* La etiqueta solo aparece cuando existe un radar válido, no durante una falla inicial */}
-                {hasValidRadar && (
+                {hasValidRadar && calculatedAt && (
                   <span className="text-xs font-mono font-semibold text-truffle-trouble bg-palladian px-2.5 py-1 rounded-md border border-oatmeal flex items-center space-x-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-truffle-trouble" />
-                    <span>Vector Calculado</span>
+                    <span>Última actualización {formatLastUpdate(calculatedAt)}</span>
                   </span>
                 )}
               </div>
