@@ -9,7 +9,8 @@ import { PendingChangesDialog } from './pending-changes-dialog';
 import { RadarErrorState } from './radar-error-state';
 import { SuccessToast } from './success-toast';
 import { AffinitySkeleton } from './affinity-skeleton';
-import RadarInspection from './radar-inspection';
+import RadarInspection, { AREA_NAMES_MAP } from './radar-inspection';
+import { formatPercentage } from '../utils/percentage';
 import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
@@ -173,6 +174,16 @@ export const GraduateAffinityView: React.FC = () => {
     evidence: mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [],
   }));
 
+  // Top 3 áreas del vector cargado, para el bloque debajo del radar (mockup HU-3)
+  const topAffinityAreas = [...orderedCandidateAreas]
+    .sort((a, b) => b.affinity - a.affinity)
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.area,
+      label: AREA_NAMES_MAP[item.area] ?? item.area,
+      score: item.affinity,
+    }));
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -232,6 +243,31 @@ export const GraduateAffinityView: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {hasValidRadar && !hasRadarError && !isLoading && (
+                <div className="mt-6 bg-palladian rounded-xl border border-oatmeal/60 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />
+                    <span className="text-sm font-bold text-gray-800">Áreas con mayor afinidad identificadas:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {topAffinityAreas.map((area, index) => (
+                      <div
+                        key={area.id}
+                        className={`px-3 py-1 text-sm rounded-md font-medium ${
+                          index === 0
+                            ? 'bg-[#FDBA74] text-gray-900'
+                            : index === 1
+                              ? 'bg-[#1E293B] text-white'
+                              : 'bg-white border border-gray-300 text-gray-900'
+                        }`}
+                      >
+                        {index + 1}. {area.label} ({formatPercentage(area.score)})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-6 border-t border-palladian mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
