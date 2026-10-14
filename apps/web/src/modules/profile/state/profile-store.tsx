@@ -13,7 +13,8 @@ import type {
   RecordSection,
 } from '@/modules/profile/types/profile-record';
 
-type NewRecord<T> = Omit<T, 'id' | 'ownerId'>;
+// id es el que devuelve la API al crear; sin id se genera uno local
+type NewRecord<T> = Omit<T, 'id' | 'ownerId'> & { id?: string };
 
 type ProfileStore = {
   records: ProfileRecords;
@@ -62,8 +63,8 @@ export function ProfileStoreProvider({
     };
   }, [cargarDesdeApi]);
 
-  const addRecord = useCallback((section: RecordSection, record: Omit<ProfileRecord, 'id' | 'ownerId'>) => {
-    const created = { ...record, id: createId(section), ownerId: CURRENT_GRADUATE_ID } as ProfileRecord;
+  const addRecord = useCallback((section: RecordSection, record: NewRecord<ProfileRecord>) => {
+    const created = { ...record, id: record.id ?? createId(section), ownerId: CURRENT_GRADUATE_ID } as ProfileRecord;
     setRecords((current) => ({ ...current, [section]: [...current[section], created] }));
   }, []);
 

@@ -2,7 +2,7 @@ import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data
 import type { CertificationRecord } from '@/modules/profile/types/profile-record';
 import { ApiError } from '@/shared/services/api-client';
 
-import { obtenerPerfil, type PerfilApi } from './perfil-api';
+import { crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
 
 // jsdom no trae fetch: se simula con la forma mínima que usa apiFetch
 const fetchMock = jest.fn();
@@ -84,5 +84,63 @@ describe('obtenerPerfil', () => {
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 403, message: 'El usuario no es un titulado' });
+  });
+});
+
+describe('crearFormacion', () => {
+  const formacion = { institucion: '  UMSS ', titulo: ' Ingeniería de Sistemas ', anioEgreso: '2018', grado: 'Licenciatura' };
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
+    delete global.fetch;
+  });
+
+  it('envía POST con el año como número y los textos sin espacios', async () => {
+    responder(201, { ...base, id: 'f-1', institucion: 'UMSS', titulo: 'Ingeniería de Sistemas', grado: 'Licenciatura', anioEgreso: 2018 });
+
+    await crearFormacion(formacion);
+
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/v1\/perfil\/formacion-academica$/);
+    expect(opciones.method).toBe('POST');
+    expect(JSON.parse(opciones.body)).toEqual({
+      institucion: 'UMSS',
+      titulo: 'Ingeniería de Sistemas',
+      grado: 'Licenciatura',
+      anioEgreso: 2018,
+    });
+  });
+
+  it('201: devuelve el registro creado con su id real', async () => {
+    responder(201, { ...base, id: 'f-1', institucion: 'UMSS', titulo: 'Ingeniería de Sistemas', grado: 'Licenciatura', anioEgreso: 2018 });
+
+    await expect(crearFormacion(formacion)).resolves.toEqual({
+      id: 'f-1',
+      ownerId: CURRENT_GRADUATE_ID,
+      institution: 'UMSS',
+      title: 'Ingeniería de Sistemas',
+      graduationYear: '2018',
+      degree: 'Licenciatura',
+    });
+  });
+
+  it('409: rechaza con el mensaje del backend', async () => {
+    responder(409, { statusCode: 409, message: 'La formación académica ya se encuentra registrada.', error: 'La formación académica ya se encuentra registrada.' });
+
+    await expect(crearFormacion(formacion)).rejects.toMatchObject({
+      status: 409,
+      message: 'La formación académica ya se encuentra registrada.',
+    });
+  });
+
+  it('400: rechaza con los mensajes del backend', async () => {
+    responder(400, { statusCode: 400, message: ['La institución es obligatoria'], error: 'La institución es obligatoria' });
+
+    await expect(crearFormacion(formacion)).rejects.toMatchObject({ status: 400, message: 'La institución es obligatoria' });
   });
 });
