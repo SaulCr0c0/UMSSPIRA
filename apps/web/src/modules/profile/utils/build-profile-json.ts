@@ -13,7 +13,8 @@ export type ProfileJson = {
   nombre: string;
   carrera: string;
   promocion: number;
-  educacion: { institucion: string; titulo: string; grado: string; anio: number | null }[];
+  // respaldo: nombre del archivo adjunto, null si no tiene
+  educacion: { institucion: string; titulo: string; grado: string; anio: number | null; respaldo: string | null }[];
   // Fechas AAAA-MM-DD; fechaFin null = trabajo actual
   experienciaLaboral: { empresa: string; cargo: string; fechaInicio: string; fechaFin: string | null }[];
   certificaciones: { nombre: string; entidad: string; anio: number | null; grado: string }[];
@@ -42,6 +43,7 @@ export function buildProfileJson(header: ProfileHeader, records: ProfileRecords,
       titulo: record.title,
       grado: record.degree,
       anio: toYear(record.graduationYear),
+      respaldo: record.backupFile ?? null,
     })),
     experienciaLaboral: (records.experience as ExperienceRecord[]).map((record) => ({
       empresa: record.company,

@@ -22,6 +22,7 @@ describe('build-profile-json', () => {
       titulo: 'Licenciatura en Ingeniería de Sistemas',
       grado: 'Licenciatura',
       anio: 2018,
+      respaldo: 'respaldo.pdf',
     });
     expect(json.experienciaLaboral).toHaveLength(3);
     expect(json.experienciaLaboral[0]).toEqual({
@@ -45,6 +46,15 @@ describe('build-profile-json', () => {
   });
 
   const empty: ProfileRecords = { education: [], experience: [], certification: [] };
+
+  it('exporta respaldo null en una formación sin archivo adjunto', () => {
+    const records: ProfileRecords = {
+      ...PROFILE_RECORDS_MOCK,
+      education: [{ ...PROFILE_RECORDS_MOCK.education[0], backupFile: undefined }],
+    };
+
+    expect(buildProfileJson(profileHeader, records, date).educacion[0].respaldo).toBeNull();
+  });
 
   it('devuelve listas vacías cuando las secciones no tienen registros', () => {
     const json = buildProfileJson(profileHeader, empty, date);
