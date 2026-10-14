@@ -24,6 +24,8 @@ interface GraduateCsvExportProps {
   filters?: GraduateCsvFilters;
   apiBaseUrl?: string;
   onPdfExport?: () => void;
+  // El PDF (HU4) se está generando: el botón Exportar muestra «Generando...» y queda deshabilitado
+  isPdfGenerating?: boolean;
 }
 
 type Feedback =
@@ -63,12 +65,14 @@ export function GraduateCsvExport({
   filters = {},
   apiBaseUrl,
   onPdfExport,
+  isPdfGenerating = false,
 }: GraduateCsvExportProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const isBusy = isGenerating || isPdfGenerating;
 
   const status = filters.status ?? 'TODOS';
   const statusText = getStatusText(status);
@@ -159,19 +163,28 @@ export function GraduateCsvExport({
         type="button"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        disabled={isGenerating}
+        disabled={isBusy}
         onClick={() => {
           setMenuOpen((current) => !current);
           setFeedback(null);
         }}
         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#2C3B4D] px-5 py-3 font-semibold text-[#EEE9DF] transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <Download aria-hidden="true" className="h-5 w-5" />
-        Exportar
-        <ChevronDown aria-hidden="true" className="h-4 w-4" />
+        {isPdfGenerating ? (
+          <>
+            <LoaderCircle aria-hidden="true" className="h-5 w-5 animate-spin" />
+            Generando...
+          </>
+        ) : (
+          <>
+            <Download aria-hidden="true" className="h-5 w-5" />
+            Exportar
+            <ChevronDown aria-hidden="true" className="h-4 w-4" />
+          </>
+        )}
       </button>
 
-      {menuOpen && !isGenerating && (
+      {menuOpen && !isBusy && (
         <div
           role="menu"
           aria-label="Formatos de exportación"
@@ -214,7 +227,7 @@ export function GraduateCsvExport({
               <span className="block text-sm text-[#2C3B4D]">
                 {onPdfExport
                   ? 'Reporte institucional'
-                  : 'Se habilitará al integrar HU4'}
+                  : 'Seleccione Verificados u Observados'}
               </span>
             </span>
           </button>

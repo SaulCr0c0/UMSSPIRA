@@ -339,3 +339,27 @@ test('delega la opción PDF al flujo de HU4 cuando está disponible', () => {
 
   expect(onPdfExport).toHaveBeenCalledTimes(1);
 });
+
+test('mientras se genera el PDF muestra «Generando...» y deshabilita el botón Exportar', () => {
+  render(
+    <GraduateCsvExport
+      totalRecords={12}
+      filters={{ status: 'VERIFICADO' }}
+      onPdfExport={jest.fn()}
+      isPdfGenerating
+    />,
+  );
+
+  const button = screen.getByRole('button', { name: /generando/i });
+  expect(button).toBeDisabled();
+  expect(screen.queryByRole('button', { name: /^exportar/i })).not.toBeInTheDocument();
+});
+
+test('sin estado seleccionado (TODOS) la opción PDF queda deshabilitada', () => {
+  render(<GraduateCsvExport totalRecords={90} filters={{ status: 'TODOS' }} />);
+
+  fireEvent.click(screen.getByRole('button', { name: /exportar/i }));
+
+  expect(screen.getByRole('menuitem', { name: /pdf/i })).toBeDisabled();
+  expect(screen.getByText('Seleccione Verificados u Observados')).toBeInTheDocument();
+});

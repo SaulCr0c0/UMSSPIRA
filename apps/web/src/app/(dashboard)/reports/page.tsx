@@ -262,7 +262,7 @@ export default function ReportsPage() {
           <GraduatesReportExport
             status={pdfExportStatus}
             onBackToListStart={() => setCurrentPage(1)}
-            renderTrigger={({ exportPdf }) => (
+            renderTrigger={({ exportPdf, isGenerating }) => (
               <div className="w-48">
                 <GraduateCsvExport
                   totalRecords={filteredGraduates.length}
@@ -270,7 +270,13 @@ export default function ReportsPage() {
                     status: selectedStatus,
                     search: searchTerm,
                   }}
-                  onPdfExport={() => exportPdf(pdfExportStatus)}
+                  isPdfGenerating={isGenerating}
+                  // El PDF de la HU4 es sólo de Verificados u Observados: con TODOS queda deshabilitado
+                  onPdfExport={
+                    selectedStatus === 'TODOS'
+                      ? undefined
+                      : () => exportPdf(pdfExportStatus)
+                  }
                 />
               </div>
             )}
