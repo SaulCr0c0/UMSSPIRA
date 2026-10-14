@@ -14,22 +14,14 @@ export type ProfileJson = {
   carrera: string;
   promocion: number;
   educacion: { institucion: string; titulo: string; grado: string; anio: number | null }[];
-  experienciaLaboral: { empresa: string; cargo: string; periodo: string }[];
+  // Fechas AAAA-MM-DD; fechaFin null = trabajo actual
+  experienciaLaboral: { empresa: string; cargo: string; fechaInicio: string; fechaFin: string | null }[];
   certificaciones: { nombre: string; entidad: string; anio: number | null; grado: string }[];
 };
-
-const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function toYear(value: string | undefined): number | null {
   const match = value?.match(/\d{4}/);
   return match ? Number(match[0]) : null;
-}
-
-/** "2021-01-04" -> "Ene 2021"; vacío -> "Presente". */
-function formatMonthYear(date: string): string {
-  if (!date) return 'Presente';
-  const [year, month] = date.split('-');
-  return `${MONTHS[Number(month) - 1]} ${year}`;
 }
 
 /** El perfil se puede exportar si al menos una sección tiene registros. */
@@ -54,7 +46,8 @@ export function buildProfileJson(header: ProfileHeader, records: ProfileRecords,
     experienciaLaboral: (records.experience as ExperienceRecord[]).map((record) => ({
       empresa: record.company,
       cargo: record.position,
-      periodo: `${formatMonthYear(record.startDate)} – ${formatMonthYear(record.endDate)}`,
+      fechaInicio: record.startDate,
+      fechaFin: record.endDate || null,
     })),
     certificaciones: (records.certification as CertificationRecord[]).map((record) => ({
       nombre: record.name,

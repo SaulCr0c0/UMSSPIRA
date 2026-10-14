@@ -27,7 +27,14 @@ describe('build-profile-json', () => {
     expect(json.experienciaLaboral[0]).toEqual({
       empresa: 'NTT DATA',
       cargo: 'Tech Lead',
-      periodo: 'Jul 2023 – Presente',
+      fechaInicio: '2023-07-01',
+      fechaFin: null,
+    });
+    expect(json.experienciaLaboral[1]).toEqual({
+      empresa: 'Jalasoft',
+      cargo: 'Desarrollador Senior',
+      fechaInicio: '2021-01-04',
+      fechaFin: '2023-06-30',
     });
     expect(json.certificaciones[0]).toEqual({
       nombre: 'AWS Solutions Architect',
