@@ -124,7 +124,7 @@ export default function RadarInspection({
 
       {/* Panel derecho: Inspección detallada y respaldos filtrados */}
       <div className="flex flex-col p-4 border border-gray-200 rounded-lg bg-gray-50">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800">Respaldos e Inspección</h3>
+        <h3 className="text-lg font-semibold mb-3 text-gray-800">Respaldos e inspección</h3>
         
         {selectedArea ? (
           <div className="space-y-4">
