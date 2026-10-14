@@ -1,5 +1,7 @@
+import { ValidationPipe } from '@nestjs/common';
 import { describe, it, beforeEach } from 'node:test';
 import { strictEqual, ok } from 'node:assert';
+import { GetGraduatesQueryDto } from './dto/get-graduates-query.dto';
 import { ReportsService } from './reports.service';
 
 describe('ReportsService', () => {
@@ -32,6 +34,30 @@ describe('ReportsService', () => {
     strictEqual(res.meta.total, 90);
     strictEqual(res.meta.totalPages, 18);
     strictEqual(res.meta.page, 1);
+  });
+
+
+  it('debe conservar page, limit, search y status con el whitelist global', async () => {
+    const pipe = new ValidationPipe({ whitelist: true, transform: true });
+
+    const query = (await pipe.transform(
+      {
+        page: '1',
+        limit: '1000',
+        search: 'quispe',
+        status: 'VERIFICADO',
+      },
+      {
+        type: 'query',
+        metatype: GetGraduatesQueryDto,
+        data: undefined,
+      },
+    )) as GetGraduatesQueryDto;
+
+    strictEqual(query.page, '1');
+    strictEqual(query.limit, '1000');
+    strictEqual(query.search, 'quispe');
+    strictEqual(query.status, 'VERIFICADO');
   });
 
   it('debe filtrar por estado OBSERVADO', () => {
