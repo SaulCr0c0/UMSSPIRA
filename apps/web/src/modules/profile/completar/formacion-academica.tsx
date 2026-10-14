@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { GraduationCap, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
-import { validarAnioEgreso } from '@/modules/profile/validation/reglas-perfil';
+import { validarAnioEgreso, validarFormacionDuplicada } from '@/modules/profile/validation/reglas-perfil';
 
 const GRADOS = ['Técnico superior', 'Licenciatura', 'Maestría', 'Doctorado'];
 
@@ -30,9 +30,12 @@ export function FormacionAcademicaForm({ formaciones, onAgregar }: FormacionAcad
   const [datos, setDatos] = useState<FormacionAcademica>(VACIO);
   // Error del año de egreso; una vez mostrado se recalcula mientras se corrige
   const [errorAnio, setErrorAnio] = useState<string>();
+  // Formación ya registrada (Institución + Título + Año); se quita al cambiar cualquier campo
+  const [errorDuplicada, setErrorDuplicada] = useState<string>();
 
   function cambiar(campo: keyof FormacionAcademica, valor: string) {
     setDatos({ ...datos, [campo]: valor });
+    setErrorDuplicada(undefined);
     if (campo === 'anioEgreso' && errorAnio) setErrorAnio(validarAnioEgreso(valor));
   }
 
@@ -41,6 +44,9 @@ export function FormacionAcademicaForm({ formaciones, onAgregar }: FormacionAcad
     const error = validarAnioEgreso(datos.anioEgreso);
     setErrorAnio(error);
     if (error) return;
+    const duplicada = validarFormacionDuplicada(datos, formaciones);
+    setErrorDuplicada(duplicada);
+    if (duplicada) return;
     onAgregar({
       institucion: datos.institucion.trim(),
       titulo: datos.titulo.trim(),
@@ -145,6 +151,8 @@ export function FormacionAcademicaForm({ formaciones, onAgregar }: FormacionAcad
             </select>
           </div>
         </div>
+
+        <MensajeError id="error-formacion-duplicada" mensaje={errorDuplicada} />
 
         <button
           type="submit"

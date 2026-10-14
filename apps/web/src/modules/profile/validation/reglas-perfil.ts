@@ -5,6 +5,7 @@ export const MENSAJE_ANIO_EGRESO_FUTURO = 'El año de egreso no puede ser poster
 export const MENSAJE_HASTA_ANTERIOR_A_DESDE = "La fecha 'Hasta' no puede ser anterior a 'Desde'";
 export const MENSAJE_RESPALDO_FORMATO = 'Formato no permitido. Solo JPG';
 export const MENSAJE_RESPALDO_TAMANIO = 'El archivo no puede superar 5 MB';
+export const MENSAJE_FORMACION_DUPLICADA = 'La formación académica ya se encuentra registrada';
 
 // Solo JPG: es el formato con el que trabaja el motor NLP (mismas reglas que ArchivoRespaldoPipe del backend)
 const TIPO_RESPALDO = 'image/jpeg';
@@ -15,6 +16,26 @@ export const TAMANIO_MAXIMO_RESPALDO = 5 * 1024 * 1024;
 export function validarAnioEgreso(anio: string): string | undefined {
   if (!/^\d{4}$/.test(anio)) return undefined;
   return Number(anio) > new Date().getFullYear() ? MENSAJE_ANIO_EGRESO_FUTURO : undefined;
+}
+
+type FormacionComparable = { institucion: string; titulo: string; anioEgreso: string | number };
+
+// Ignora mayúsculas/minúsculas y espacios al inicio y al final
+const normalizar = (texto: string) => texto.trim().toLowerCase();
+
+// Duplicada = misma Institución + Título + Año de egreso que una ya registrada.
+// Misma regla que esFormacionDuplicada del backend (apps/api/src/modules/perfil/validators/formacion-duplicada.ts).
+export function validarFormacionDuplicada(
+  nueva: FormacionComparable,
+  existentes: FormacionComparable[],
+): string | undefined {
+  const duplicada = existentes.some(
+    (guardada) =>
+      normalizar(guardada.institucion) === normalizar(nueva.institucion) &&
+      normalizar(guardada.titulo) === normalizar(nueva.titulo) &&
+      Number(guardada.anioEgreso) === Number(nueva.anioEgreso),
+  );
+  return duplicada ? MENSAJE_FORMACION_DUPLICADA : undefined;
 }
 
 // Fechas AAAA-MM-DD de experiencia laboral: 'Hasta' puede ser igual a 'Desde', pero no anterior.
