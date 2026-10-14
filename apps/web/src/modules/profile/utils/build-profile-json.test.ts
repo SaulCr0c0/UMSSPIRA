@@ -1,5 +1,6 @@
-import { profileHeader, profileTimeline } from '@/modules/profile/data/profile-data';
-import type { TimelineSection } from '@/modules/profile/data/profile-data';
+import { profileHeader } from '@/modules/profile/data/profile-data';
+import { PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
+import type { ProfileRecords } from '@/modules/profile/types/profile-record';
 
 import { buildProfileJson, hasProfileBlocks } from './build-profile-json';
 
@@ -7,7 +8,7 @@ describe('build-profile-json', () => {
   const date = new Date(2026, 9, 2);
 
   it('arma el JSON con los campos del perfil', () => {
-    const json = buildProfileJson(profileHeader, profileTimeline, date);
+    const json = buildProfileJson(profileHeader, PROFILE_RECORDS_MOCK, date);
 
     expect(json).toMatchObject({
       idEgresado: '000452',
@@ -35,8 +36,10 @@ describe('build-profile-json', () => {
     });
   });
 
-  it('devuelve listas vacías cuando falta una sección', () => {
-    const json = buildProfileJson(profileHeader, [], date);
+  const empty: ProfileRecords = { education: [], experience: [], certification: [] };
+
+  it('devuelve listas vacías cuando las secciones no tienen registros', () => {
+    const json = buildProfileJson(profileHeader, empty, date);
 
     expect(json.educacion).toEqual([]);
     expect(json.experienciaLaboral).toEqual([]);
@@ -44,13 +47,7 @@ describe('build-profile-json', () => {
   });
 
   it('detecta si el perfil tiene al menos un bloque con registros', () => {
-    const empty: TimelineSection[] = [
-      { title: 'EDUCACIÓN', items: [] },
-      { title: 'EXPERIENCIA LABORAL', items: [] },
-      { title: 'CERTIFICACIONES', items: [] },
-    ];
-
-    expect(hasProfileBlocks(profileTimeline)).toBe(true);
+    expect(hasProfileBlocks(PROFILE_RECORDS_MOCK)).toBe(true);
     expect(hasProfileBlocks(empty)).toBe(false);
   });
 });

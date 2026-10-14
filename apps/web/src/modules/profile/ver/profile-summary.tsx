@@ -47,7 +47,7 @@ export default function ProfileSummary() {
             <Pencil className="h-4 w-4" aria-hidden="true" />
             Editar perfil
           </Link>
-          <DownloadProfileButton header={profileHeader} sections={timeline} />
+          <DownloadProfileButton header={profileHeader} records={records} />
         </div>
       </header>
 
