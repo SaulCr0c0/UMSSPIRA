@@ -33,6 +33,16 @@ const AREA_NAMES_MAP: Record<string, string> = {
   "it-management": "Gestión TI",
 };
 
+// Colores del mockup por área, asociados al id técnico (no a la posición en la lista)
+const AREA_COLORS_MAP: Record<string, { bar: string; text: string }> = {
+  "software-development": { bar: "bg-orange-300", text: "text-orange-300" },
+  "cloud-devops": { bar: "bg-[#A94B3A]", text: "text-[#A94B3A]" },
+  "data-ai": { bar: "bg-slate-800", text: "text-slate-800" },
+  "quality-assurance": { bar: "bg-[#CBBFB0]", text: "text-[#CBBFB0]" },
+  "cybersecurity-networks": { bar: "bg-slate-500", text: "text-slate-500" },
+  "it-management": { bar: "bg-slate-800", text: "text-slate-800" },
+};
+
 export default function RadarInspection({ 
   selectedAreaId, 
   onSelectArea,
@@ -73,6 +83,7 @@ export default function RadarInspection({
             // Se usa el diccionario de la HU2-C3 en lugar de replace("-", " ")
             const displayName = AREA_NAMES_MAP[item.area] || item.area;
             const isSelected = selectedAreaId === item.area;
+            const colors = AREA_COLORS_MAP[item.area] ?? { bar: "bg-blue-600", text: "text-blue-600" };
 
             return (
               <div
@@ -87,11 +98,11 @@ export default function RadarInspection({
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-medium text-gray-700">{displayName}</span>
-                  <span className="text-sm font-semibold text-blue-600">{formatPercentage(item.affinity)}</span>
+                  <span className={`text-sm font-semibold ${colors.text}`}>{formatPercentage(item.affinity)}</span>
                 </div>
                 <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-blue-600 h-full rounded-full transition-all duration-300" 
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${colors.bar}`}
                     style={{ width: `${item.affinity}%` }}
                   />
                 </div>
