@@ -52,7 +52,18 @@
         "Machine Learning",
         "SQL"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "type": "certification",
+          "title": "Certificación Profesional de Machine Learning",
+          "detail": "Emitido por Coursera."
+        },
+        {
+          "type": "project",
+          "title": "Modelo de predicción de ventas con Python",
+          "detail": "Análisis de datos con Pandas y Scikit-learn."
+        }
+      ]
     },
     {
       "area": "quality-assurance",
@@ -61,7 +72,18 @@
         "Jest",
         "Cypress"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "type": "certification",
+          "title": "ISTQB Foundation Level",
+          "detail": "Certified Tester."
+        },
+        {
+          "type": "project",
+          "title": "Suite de pruebas E2E para plataforma e-commerce",
+          "detail": "Automatización con Cypress."
+        }
+      ]
     },
     {
       "area": "cybersecurity-networks",
