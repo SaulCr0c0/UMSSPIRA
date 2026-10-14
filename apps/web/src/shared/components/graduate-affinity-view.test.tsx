@@ -206,7 +206,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    const summarySection = (await screen.findByText('Resumen de tu afinidad')).parentElement;
+    const summarySection = (await screen.findByText('Resumen de tu afinidad')).closest('.flex-col');
     expect(summarySection).not.toBeNull();
 
     const labels = EXPECTED_LABELS.map((label) =>
