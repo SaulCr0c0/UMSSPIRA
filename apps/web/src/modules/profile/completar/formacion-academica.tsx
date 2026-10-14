@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { GraduationCap, Plus } from 'lucide-react';
+import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
+import { validarAnioEgreso } from '@/modules/profile/validation/reglas-perfil';
 
 const GRADOS = ['Técnico superior', 'Licenciatura', 'Maestría', 'Doctorado'];
 
@@ -26,13 +28,19 @@ const inputClase =
 
 export function FormacionAcademicaForm({ formaciones, onAgregar }: FormacionAcademicaFormProps) {
   const [datos, setDatos] = useState<FormacionAcademica>(VACIO);
+  // Error del año de egreso; una vez mostrado se recalcula mientras se corrige
+  const [errorAnio, setErrorAnio] = useState<string>();
 
   function cambiar(campo: keyof FormacionAcademica, valor: string) {
     setDatos({ ...datos, [campo]: valor });
+    if (campo === 'anioEgreso' && errorAnio) setErrorAnio(validarAnioEgreso(valor));
   }
 
   function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    const error = validarAnioEgreso(datos.anioEgreso);
+    setErrorAnio(error);
+    if (error) return;
     onAgregar({
       institucion: datos.institucion.trim(),
       titulo: datos.titulo.trim(),
@@ -114,8 +122,11 @@ export function FormacionAcademicaForm({ formaciones, onAgregar }: FormacionAcad
               placeholder="AAAA"
               value={datos.anioEgreso}
               onChange={(e) => cambiar('anioEgreso', e.target.value.replace(/\D/g, ''))}
-              className={inputClase}
+              aria-invalid={Boolean(errorAnio)}
+              aria-describedby="error-anioEgreso"
+              className={claseCampo(inputClase, errorAnio)}
             />
+            <MensajeError id="error-anioEgreso" mensaje={errorAnio} />
           </div>
 
           <div>
