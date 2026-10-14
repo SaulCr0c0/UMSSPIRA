@@ -21,14 +21,15 @@ jest.mock('@/shared/components/affinity-radar', () => ({
 
 jest.mock('../services/affinity-service');
 
-// Nombres que muestra el panel de inspección (HU2-C3)
+// Nombres que muestra el panel de inspección, en el orden del mockup:
+// de mayor a menor porcentaje (HU-3)
 const EXPECTED_LABELS = [
   'Desarrollo de Software',
-  'Cloud/DevOps',
-  'Ciencia de Datos/IA',
-  'QA',
-  'Ciberseguridad',
-  'Gestión TI',
+  'Ciencia de Datos / IA',
+  'Cloud, DevOps & Infraestructura',
+  'Aseguramiento de Calidad (QA)',
+  'Gestión de TI / Gobernanza',
+  'Ciberseguridad / Redes',
 ];
 
 describe('GraduateAffinityView', () => {
@@ -240,7 +241,7 @@ describe('GraduateAffinityView', () => {
     await screen.findByText('Resumen de tu afinidad');
     fireEvent.click(screen.getByRole('button', { name: 'Seleccionar eje de prueba' }));
 
-    expect(await screen.findByText(/Área: Cloud\/DevOps/)).toBeInTheDocument();
+    expect(await screen.findByText(/Área: Cloud, DevOps & Infraestructura/)).toBeInTheDocument();
     expect(screen.getByText('AWS Certified Cloud Practitioner')).toBeInTheDocument();
   });
 
