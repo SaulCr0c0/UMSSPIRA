@@ -56,6 +56,47 @@ describe('FormacionAcademicaForm', () => {
   });
 });
 
+describe('FormacionAcademicaForm · formación duplicada (BUG-HU2-002)', () => {
+  const registrada = {
+    institucion: 'Universidad Mayor de San Simón',
+    titulo: 'Licenciatura en Ingeniería de Sistemas',
+    anioEgreso: '2018',
+    grado: 'Licenciatura',
+  };
+
+  function llenarDuplicada() {
+    fireEvent.change(screen.getByLabelText('Institución'), { target: { value: 'universidad mayor de san simón' } });
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'LICENCIATURA EN INGENIERÍA DE SISTEMAS' } });
+    fireEvent.change(screen.getByLabelText('Año de egreso'), { target: { value: '2018' } });
+    fireEvent.change(screen.getByLabelText('Grado'), { target: { value: 'Licenciatura' } });
+  }
+
+  it('muestra el mensaje y no agrega una formación ya registrada', () => {
+    const onAgregar = jest.fn();
+    render(<FormacionAcademicaForm formaciones={[registrada]} onAgregar={onAgregar} />);
+    llenarDuplicada();
+
+    fireEvent.click(screen.getByRole('button', { name: /agregar formación/i }));
+
+    expect(screen.getByText('La formación académica ya se encuentra registrada')).toBeInTheDocument();
+    expect(screen.getByLabelText('Institución')).toHaveValue('universidad mayor de san simón');
+    expect(onAgregar).not.toHaveBeenCalled();
+  });
+
+  it('quita el mensaje al cambiar un campo y deja agregar si ya no es duplicada', () => {
+    const onAgregar = jest.fn();
+    render(<FormacionAcademicaForm formaciones={[registrada]} onAgregar={onAgregar} />);
+    llenarDuplicada();
+    fireEvent.click(screen.getByRole('button', { name: /agregar formación/i }));
+
+    fireEvent.change(screen.getByLabelText('Año de egreso'), { target: { value: '2019' } });
+    expect(screen.queryByText('La formación académica ya se encuentra registrada')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /agregar formación/i }));
+    expect(onAgregar).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('FormacionAcademicaForm · año de egreso (BUG-HU2-001)', () => {
   it('muestra el error junto al campo y no agrega una formación con año posterior al actual', () => {
     const onAgregar = jest.fn();

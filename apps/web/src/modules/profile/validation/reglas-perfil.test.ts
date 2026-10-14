@@ -1,10 +1,12 @@
 import {
   MENSAJE_ANIO_EGRESO_FUTURO,
+  MENSAJE_FORMACION_DUPLICADA,
   MENSAJE_HASTA_ANTERIOR_A_DESDE,
   MENSAJE_RESPALDO_FORMATO,
   MENSAJE_RESPALDO_TAMANIO,
   TAMANIO_MAXIMO_RESPALDO,
   validarAnioEgreso,
+  validarFormacionDuplicada,
   validarRangoFechas,
   validarRespaldo,
 } from './reglas-perfil';
@@ -35,6 +37,36 @@ describe('validarAnioEgreso', () => {
   it('no evalúa valores vacíos o sin 4 dígitos', () => {
     expect(validarAnioEgreso('')).toBeUndefined();
     expect(validarAnioEgreso('99999')).toBeUndefined();
+  });
+});
+
+describe('validarFormacionDuplicada', () => {
+  const guardadas = [
+    { institucion: 'Universidad Mayor de San Simón', titulo: 'Licenciatura en Ingeniería de Sistemas', anioEgreso: '2018' },
+  ];
+
+  it('usa el texto del criterio', () => {
+    expect(MENSAJE_FORMACION_DUPLICADA).toBe('La formación académica ya se encuentra registrada');
+  });
+
+  it('detecta el duplicado ignorando mayúsculas y espacios (caso de QA)', () => {
+    const nueva = {
+      institucion: '  universidad mayor de san simón ',
+      titulo: 'LICENCIATURA EN INGENIERÍA DE SISTEMAS',
+      anioEgreso: '2018',
+    };
+    expect(validarFormacionDuplicada(nueva, guardadas)).toBe(MENSAJE_FORMACION_DUPLICADA);
+  });
+
+  it('no es duplicado si cambia la institución, el título o el año', () => {
+    const base = guardadas[0];
+    expect(validarFormacionDuplicada({ ...base, institucion: 'Universidad Católica Boliviana' }, guardadas)).toBeUndefined();
+    expect(validarFormacionDuplicada({ ...base, titulo: 'Maestría en Gestión de TI' }, guardadas)).toBeUndefined();
+    expect(validarFormacionDuplicada({ ...base, anioEgreso: '2019' }, guardadas)).toBeUndefined();
+  });
+
+  it('no hay duplicado si todavía no hay formaciones', () => {
+    expect(validarFormacionDuplicada(guardadas[0], [])).toBeUndefined();
   });
 });
 
