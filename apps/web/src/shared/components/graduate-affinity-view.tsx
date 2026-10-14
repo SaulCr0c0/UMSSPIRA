@@ -15,7 +15,7 @@ import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Ruta de Épica 2 almacenada en una constante a nivel de módulo
@@ -177,6 +177,11 @@ export const GraduateAffinityView: React.FC = () => {
       score: item.affinity,
     }));
 
+  // Palabras clave consolidadas del mock que alimenta la vista
+  const influentialKeywords = [
+    ...new Set(affinityVectorMock.areas.flatMap((area) => area.keywords)),
+  ];
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -283,6 +288,22 @@ export const GraduateAffinityView: React.FC = () => {
                         {index + 1}. {area.label} ({formatPercentage(area.score)})
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4 text-gray-700 shrink-0" />
+                      <span className="text-sm font-bold text-gray-800">Palabras clave más influyentes:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {influentialKeywords.map((keyword) => (
+                        <span
+                          key={keyword}
+                          className="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full text-gray-600"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

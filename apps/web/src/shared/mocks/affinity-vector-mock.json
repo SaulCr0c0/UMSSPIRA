@@ -9,7 +9,9 @@
       "keywords": [
         "React",
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "JavaScript",
+        "Backend"
       ],
       "evidence": [
         {
@@ -30,7 +32,8 @@
       "keywords": [
         "AWS",
         "Docker",
-        "CI/CD"
+        "CI/CD",
+        "Git"
       ],
       "evidence": [
         {
@@ -46,7 +49,8 @@
       "keywords": [
         "Python",
         "Pandas",
-        "Machine Learning"
+        "Machine Learning",
+        "SQL"
       ],
       "evidence": []
     },
@@ -64,7 +68,8 @@
       "affinity": 27.5,
       "keywords": [
         "SecOps",
-        "Firewalls"
+        "Firewalls",
+        "Redes"
       ],
       "evidence": []
     },
