@@ -59,7 +59,13 @@ export default function RadarInspection({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 p-6 bg-white rounded-xl shadow-md border border-gray-100">
       {/* Panel izquierdo: Resumen de las áreas */}
       <div className="flex flex-col space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Resumen de Afinidad por Área</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-lg font-bold text-gray-800 leading-tight">Resumen de tu afinidad</h3>
+          <div className="text-sm text-gray-500 text-right leading-tight shrink-0">
+            <span className="block">{areas.length} áreas</span>
+            <span className="block">evaluadas</span>
+          </div>
+        </div>
         <p className="text-sm text-gray-500">Haz clic en un área para inspeccionar sus respaldos</p>
         
         <div className="space-y-3">
