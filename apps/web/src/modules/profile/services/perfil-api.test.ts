@@ -2,7 +2,7 @@ import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data
 import type { CertificationRecord } from '@/modules/profile/types/profile-record';
 import { ApiError } from '@/shared/services/api-client';
 
-import { crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
+import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
 
 // jsdom no trae fetch: se simula con la forma mínima que usa apiFetch
 const fetchMock = jest.fn();
@@ -142,5 +142,59 @@ describe('crearFormacion', () => {
     responder(400, { statusCode: 400, message: ['La institución es obligatoria'], error: 'La institución es obligatoria' });
 
     await expect(crearFormacion(formacion)).rejects.toMatchObject({ status: 400, message: 'La institución es obligatoria' });
+  });
+});
+
+describe('crearExperiencia', () => {
+  const experiencia = { empresa: ' Jalasoft ', cargo: ' Dev ', fechaInicio: '2023-08-01', fechaFin: '2024-01-31' };
+  const creada = { ...base, id: 'e-1', empresa: 'Jalasoft', cargo: 'Dev', fechaInicio: '2023-08-01', fechaFin: '2024-01-31' };
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
+    delete global.fetch;
+  });
+
+  it('envía POST con las fechas y los textos sin espacios', async () => {
+    responder(201, creada);
+
+    await crearExperiencia(experiencia);
+
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/v1\/perfil\/experiencia-laboral$/);
+    expect(opciones.method).toBe('POST');
+    expect(JSON.parse(opciones.body)).toEqual({ empresa: 'Jalasoft', cargo: 'Dev', fechaInicio: '2023-08-01', fechaFin: '2024-01-31' });
+  });
+
+  it('no envía fechaFin cuando es "Actualmente trabajo aquí"', async () => {
+    responder(201, { ...creada, fechaFin: null });
+
+    await crearExperiencia({ ...experiencia, fechaFin: undefined });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('fechaFin');
+  });
+
+  it('201: devuelve el registro creado; fechaFin null queda como trabajo actual', async () => {
+    responder(201, { ...creada, fechaFin: null });
+
+    await expect(crearExperiencia({ ...experiencia, fechaFin: undefined })).resolves.toEqual({
+      id: 'e-1',
+      ownerId: CURRENT_GRADUATE_ID,
+      company: 'Jalasoft',
+      position: 'Dev',
+      startDate: '2023-08-01',
+      endDate: '',
+    });
+  });
+
+  it('400: rechaza con el mensaje del backend', async () => {
+    const mensaje = 'La fecha de inicio no puede ser posterior a hoy';
+    responder(400, { statusCode: 400, message: [mensaje], error: mensaje });
+
+    await expect(crearExperiencia(experiencia)).rejects.toMatchObject({ status: 400, message: mensaje });
   });
 });

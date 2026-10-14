@@ -1,3 +1,4 @@
+import type { Experiencia } from '@/modules/profile/completar/experiencia-laboral';
 import type { FormacionAcademica } from '@/modules/profile/completar/formacion-academica';
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
 import type {
@@ -28,10 +29,16 @@ type FormacionCuerpo = {
 
 export type FormacionApi = RegistroApi & FormacionCuerpo;
 
-export type ExperienciaApi = RegistroApi & {
+// Cuerpo de POST/PUT de experiencia laboral (CrearExperienciaLaboralDto del backend)
+type ExperienciaCuerpo = {
   empresa: string;
   cargo: string;
   fechaInicio: string;
+  // Sin fechaFin = trabajo actual
+  fechaFin?: string;
+};
+
+export type ExperienciaApi = RegistroApi & Omit<ExperienciaCuerpo, 'fechaFin'> & {
   // null = trabajo actual
   fechaFin: string | null;
 };
@@ -103,6 +110,22 @@ export async function crearFormacion(formacion: FormacionAcademica): Promise<Edu
     body: JSON.stringify(cuerpo),
   });
   return aEducationRecord(creada);
+}
+
+// POST /api/v1/perfil/experiencia-laboral -> 201 con el registro creado o 400 por campo
+export async function crearExperiencia(experiencia: Experiencia): Promise<ExperienceRecord> {
+  const cuerpo: ExperienciaCuerpo = {
+    empresa: experiencia.empresa.trim(),
+    cargo: experiencia.cargo.trim(),
+    fechaInicio: experiencia.fechaInicio,
+  };
+  // Trabajo actual: fechaFin no se envía (ni vacía ni null), porque @IsDateString rechazaría ""
+  if (experiencia.fechaFin) cuerpo.fechaFin = experiencia.fechaFin;
+  const creada = await apiFetch<ExperienciaApi>(`${PERFIL_URL}/experiencia-laboral`, {
+    method: 'POST',
+    body: JSON.stringify(cuerpo),
+  });
+  return aExperienceRecord(creada);
 }
 
 // GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
