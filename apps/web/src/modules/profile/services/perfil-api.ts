@@ -1,3 +1,4 @@
+import type { FormacionAcademica } from '@/modules/profile/completar/formacion-academica';
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
 import type {
   CertificationRecord,
@@ -17,12 +18,15 @@ type RegistroApi = {
   fechaCreacion: string | null;
 };
 
-export type FormacionApi = RegistroApi & {
+// Cuerpo de POST/PUT de formación académica (CrearFormacionAcademicaDto del backend)
+type FormacionCuerpo = {
   institucion: string;
   titulo: string;
   grado: string;
   anioEgreso: number;
 };
+
+export type FormacionApi = RegistroApi & FormacionCuerpo;
 
 export type ExperienciaApi = RegistroApi & {
   empresa: string;
@@ -83,6 +87,22 @@ export function aCertificationRecord(certificacion: CertificacionApi): Certifica
     backupFile: certificacion.respaldo?.tieneRespaldo ? 'respaldo.jpg' : undefined,
     backupVerified: false,
   };
+}
+
+// POST /api/v1/perfil/formacion-academica -> 201 con el registro creado, 400 por campo o 409 si ya existe
+export async function crearFormacion(formacion: FormacionAcademica): Promise<EducationRecord> {
+  const cuerpo: FormacionCuerpo = {
+    institucion: formacion.institucion.trim(),
+    titulo: formacion.titulo.trim(),
+    grado: formacion.grado,
+    // El formulario guarda el año como texto y el DTO del backend exige un entero
+    anioEgreso: Number(formacion.anioEgreso),
+  };
+  const creada = await apiFetch<FormacionApi>(`${PERFIL_URL}/formacion-academica`, {
+    method: 'POST',
+    body: JSON.stringify(cuerpo),
+  });
+  return aEducationRecord(creada);
 }
 
 // GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
