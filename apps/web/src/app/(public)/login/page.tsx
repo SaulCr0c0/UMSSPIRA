@@ -118,7 +118,7 @@ export default function LoginPage() {
           </header>
 
           <div className="rounded-2xl border border-oatmeal/70 bg-[#F5F2EA] p-8 shadow-xl shadow-abyssal-blue/10">
-            <h1 className="text-3xl font-bold tracking-tight text-abyssal-blue">Iniciar Sesión</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-abyssal-blue">Bienvenido de vuelta</h1>
             <p className="mt-2 text-sm text-abyssal-blue/70">
               Ingresa a la plataforma institucional con tu cuenta universitaria
             </p>
