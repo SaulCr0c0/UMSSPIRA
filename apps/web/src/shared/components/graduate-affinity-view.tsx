@@ -212,7 +212,7 @@ export const GraduateAffinityView: React.FC = () => {
           <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-oatmeal flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-palladian pb-4 mb-4">
-                <h3 className="font-bold text-abyssal-blue text-base">Gráfico de afinidad</h3>
+                <h3 className="font-bold text-abyssal-blue text-xl">Gráfico de afinidad</h3>
                 {/* La etiqueta solo aparece cuando existe un radar válido, no durante una falla inicial */}
                 {hasValidRadar && !isEmptyVector && (
                   <span className="text-xs font-mono font-semibold text-truffle-trouble bg-palladian px-2.5 py-1 rounded-md border border-oatmeal flex items-center space-x-1">
