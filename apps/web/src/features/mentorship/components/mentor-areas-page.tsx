@@ -258,7 +258,7 @@ export function MentorAreasPage() {
         <p className="areas-footer-note">Mínimo 1 área técnica y máximo 5. {dirty ? 'Cambios sin guardar.' : saved ? 'Especialidades guardadas.' : 'Selecciona tus especialidades del catálogo oficial.'}</p>
       </section>
       <ConfirmModal className="mentor-areas-modal" open={dialog === 'discard'} icon={Undo2Icon} eyebrow="Cambios sin guardar" title="Descartar cambios en áreas técnicas" description="Tienes cambios sin guardar. ¿Deseas descartarlos?" cancelLabel="Seguir editando" confirmLabel="Descartar cambios" onCancel={() => setDialog(null)} onConfirm={() => { setSelectedIds(savedIds); setDialog(null); router.push(destination); }}>
-        <div className="areas-modal-hero"><Undo2Icon aria-hidden="true" /><strong>¿Quieres descartar los {changedCount} cambios realizados?</strong></div>
+        <div className="areas-modal-hero"><Undo2Icon aria-hidden="true" /><strong>{changedCount === 1 ? '¿Quieres descartar el cambio realizado?' : `¿Quieres descartar los ${changedCount} cambios realizados?`}</strong></div>
         <ul className="areas-change-list">{addedIds.map(id => <li key={id}><PlusIcon size={16} aria-hidden="true" /><strong>{areas.find(area => area.id === id)?.nombre}</strong><span>Se quitará</span></li>)}
           {removedIds.map(id => <li key={id}><Undo2Icon size={16} aria-hidden="true" /><strong>{areas.find(area => area.id === id)?.nombre}</strong><span>Se restaurará</span></li>)}</ul>
       </ConfirmModal>
