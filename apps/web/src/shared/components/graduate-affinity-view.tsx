@@ -178,9 +178,9 @@ export const GraduateAffinityView: React.FC = () => {
     }));
 
   // Palabras clave consolidadas del mock que alimenta la vista
-  const influentialKeywords = [
-    ...new Set(affinityVectorMock.areas.flatMap((area) => area.keywords)),
-  ];
+  const influentialKeywords = Array.from(
+    new Set(affinityVectorMock.areas.flatMap((area) => area.keywords)),
+  );
 
   return (
     <div className="space-y-6 animate-fadeIn">
