@@ -99,71 +99,60 @@ export function GraduatesTable({
       <div className="space-y-3 md:hidden">
         {graduates.map((record) => (
           <article
-            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-lg border border-[#d8d1c3] bg-[#fffaf0] p-2 shadow-sm"
             key={record.id}
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <div className="flex items-start justify-between gap-2 border-b border-[#e4ded2] px-1 pb-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {record.registrationNumber}
                 </p>
-                <h3 className="mt-1 font-bold text-slate-900">{record.fullName}</h3>
-                <p className="mt-1 text-sm text-slate-600">Código SIS: {record.sisCode}</p>
+                <h3 className="mt-2 truncate text-xs font-bold text-slate-900">
+                  {record.fullName}
+                </h3>
+                <p className="mt-0.5 truncate text-[10px] text-slate-600">{record.email}</p>
               </div>
               <StatusBadge status={record.status} />
             </div>
 
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-3 py-4 text-sm sm:grid-cols-2">
+            <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-[#eee8dd] bg-white px-2 py-2 text-[9px]">
               <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">Teléfono</dt>
+                <dt className="font-semibold uppercase text-slate-500">Código SIS</dt>
+                <dd className="mt-0.5 font-semibold text-slate-800">{record.sisCode}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold uppercase text-slate-500">Teléfono</dt>
                 <dd className="mt-0.5 break-words text-slate-800">{record.phone}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">
-                  Correo electrónico
-                </dt>
-                <dd className="mt-0.5 break-all text-slate-800">{record.email}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">
-                  Fecha de ingreso
-                </dt>
+                <dt className="font-semibold uppercase text-slate-500">Fecha de ingreso</dt>
                 <dd className="mt-0.5 text-slate-800">{record.admissionDate}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">
-                  Fecha de titulación
-                </dt>
+                <dt className="font-semibold uppercase text-slate-500">Fecha de titulación</dt>
                 <dd className="mt-0.5 text-slate-800">{record.degreeDate ?? '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">
-                  Duración de estudio
-                </dt>
+                <dt className="font-semibold uppercase text-slate-500">Duración de estudio</dt>
                 <dd className="mt-0.5 text-slate-800">{record.studyDuration}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase text-slate-500">
-                  Fecha de revisión
-                </dt>
+                <dt className="font-semibold uppercase text-slate-500">Fecha de revisión</dt>
                 <dd className="mt-0.5 text-slate-800">{record.reviewDate}</dd>
               </div>
             </dl>
 
-            <div className="border-t border-slate-100 pt-3">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Motivo de rechazo
-              </p>
+            <div className="pt-2">
               {record.status === 'VERIFICADO' ? (
-                <span className="text-sm text-slate-400">—</span>
+                <span className="block text-center text-[10px] text-slate-400">—</span>
               ) : (
                 <button
-                  className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  className="inline-flex min-h-6 w-full items-center justify-center gap-1 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
                   onClick={() => onViewReason(record)}
                   type="button"
                 >
-                  <Eye aria-hidden="true" size={16} />
-                  Ver motivo
+                  <Eye aria-hidden="true" size={12} />
+                  Ver motivo de observación
                 </button>
               )}
             </div>
