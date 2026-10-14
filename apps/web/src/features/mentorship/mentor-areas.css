@@ -440,6 +440,12 @@
   background: #ffa44f;
 }
 
+.mentor-areas-page .mentor-button-primary:disabled {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #4b5563;
+}
+
 .areas-footer-note {
   font-size: .625rem;
   color: var(--ink-70);
