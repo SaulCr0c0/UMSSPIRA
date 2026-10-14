@@ -206,7 +206,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    const summarySection = (await screen.findByText('Resumen de Afinidad por Área')).parentElement;
+    const summarySection = (await screen.findByText('Resumen de tu afinidad')).parentElement;
     expect(summarySection).not.toBeNull();
 
     const labels = EXPECTED_LABELS.map((label) =>
@@ -237,7 +237,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    await screen.findByText('Resumen de Afinidad por Área');
+    await screen.findByText('Resumen de tu afinidad');
     fireEvent.click(screen.getByRole('button', { name: 'Seleccionar eje de prueba' }));
 
     expect(await screen.findByText(/Área: Cloud\/DevOps/)).toBeInTheDocument();
@@ -249,7 +249,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    await screen.findByText('Resumen de Afinidad por Área');
+    await screen.findByText('Resumen de tu afinidad');
     fireEvent.click(screen.getByRole('button', { name: 'Seleccionar eje de prueba' }));
     fireEvent.click(await screen.findByRole('button', { name: /volver al resumen/i }));
 
@@ -265,7 +265,7 @@ describe('GraduateAffinityView', () => {
 
     expect(await screen.findByText(/No se pudo actualizar tu radar/)).toBeInTheDocument();
     expect(screen.queryByText('Sin datos de historial laboral')).not.toBeInTheDocument();
-    expect(screen.queryByText('Resumen de Afinidad por Área')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resumen de tu afinidad')).not.toBeInTheDocument();
   });
 
   it('muestra el skeleton mientras carga y no presenta el perfil como vacío', () => {
