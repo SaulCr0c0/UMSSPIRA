@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { ApiError } from '@/shared/services/api-client';
+
 import { FormularioExperiencia } from './experiencia-laboral';
 
 const MENSAJE = "La fecha 'Hasta' no puede ser anterior a 'Desde'";
@@ -70,5 +72,32 @@ describe('FormularioExperiencia · rango de fechas (BUG-HU2-003)', () => {
 
     agregar();
     expect(onAgregar).toHaveBeenCalledWith({ empresa: 'Jalasoft', cargo: 'Dev', fechaInicio: '2023-08-01', fechaFin: undefined });
+  });
+});
+
+describe('FormularioExperiencia · error al guardar en la API', () => {
+  it('muestra el mensaje del backend, no limpia y lo quita al cambiar un campo', async () => {
+    const mensaje = 'La fecha de inicio no puede ser posterior a hoy';
+    const onAgregar = jest.fn().mockRejectedValue(new ApiError(400, mensaje));
+    const { container } = render(<FormularioExperiencia experiencias={[]} onAgregar={onAgregar} />);
+    llenarFormulario(container, '2023-08-01', '2024-01-31');
+
+    agregar();
+
+    expect(await screen.findByText(mensaje)).toHaveAttribute('id', 'error-experiencia-guardar');
+    expect(screen.getByPlaceholderText('Ej. Jalasoft')).toHaveValue('Jalasoft');
+
+    fireEvent.change(screen.getByPlaceholderText('Ej. Desarrollador Frontend'), { target: { value: 'Tech Lead' } });
+    expect(screen.queryByText(mensaje)).not.toBeInTheDocument();
+  });
+
+  it('no llama a la API si la fecha fin es anterior a la fecha inicio', () => {
+    const onAgregar = jest.fn();
+    const { container } = render(<FormularioExperiencia experiencias={[]} onAgregar={onAgregar} />);
+    llenarFormulario(container, '2023-08-01', '2022-03-01');
+
+    agregar();
+
+    expect(onAgregar).not.toHaveBeenCalled();
   });
 });

@@ -9,7 +9,7 @@ import { SeccionAcordeon } from './seccion-acordeon';
 import { FormularioExperiencia, type Experiencia } from './experiencia-laboral';
 import { FormacionAcademicaForm, type FormacionAcademica } from './formacion-academica';
 import { FormularioCertificaciones, type Certificacion } from './certificaciones';
-import { crearFormacion } from '@/modules/profile/services/perfil-api';
+import { crearExperiencia, crearFormacion } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import type {
   CertificationRecord,
@@ -133,14 +133,10 @@ export function AcordeonPerfil() {
       >
         <FormularioExperiencia
           experiencias={experiencias}
-          onAgregar={(experiencia) =>
-            addExperience({
-              company: experiencia.empresa,
-              position: experiencia.cargo,
-              startDate: experiencia.fechaInicio,
-              endDate: experiencia.fechaFin ?? '',
-            })
-          }
+          onAgregar={async (experiencia) => {
+            // Solo se agrega al estado lo que la API guardó (201), con su id real
+            addExperience(await crearExperiencia(experiencia));
+          }}
         />
       </SeccionAcordeon>
       <SeccionAcordeon
