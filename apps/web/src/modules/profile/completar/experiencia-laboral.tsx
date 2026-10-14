@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Briefcase } from 'lucide-react';
+import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
+import { validarRangoFechas } from '@/modules/profile/validation/reglas-perfil';
 
 export type Experiencia = {
   empresa: string;
@@ -38,6 +40,8 @@ function mostrarFecha(fecha: string) {
 export function FormularioExperiencia({experiencias, onAgregar }: FormularioExperienciaProps) {
   const [datos, setDatos] = useState<Datos>(VACIO);
   const [trabajoActual, setTrabajoActual] = useState(false);
+  // Error de la fecha fin ('Hasta' anterior a 'Desde'); una vez mostrado se recalcula mientras se corrige
+  const [errorFechaFin, setErrorFechaFin] = useState<string>();
   const completo = CAMPOS.every((campo) => (campo.nombre === 'fechaFin' && trabajoActual) || datos[campo.nombre].trim() !== '',
   );
 
@@ -46,6 +50,9 @@ export function FormularioExperiencia({experiencias, onAgregar }: FormularioExpe
   function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!completo) return;
+    const error = trabajoActual ? undefined : validarRangoFechas(datos.fechaInicio, datos.fechaFin);
+    setErrorFechaFin(error);
+    if (error) return;
     onAgregar({
       empresa: datos.empresa.trim(),
       cargo: datos.cargo.trim(),
@@ -54,6 +61,12 @@ export function FormularioExperiencia({experiencias, onAgregar }: FormularioExpe
     });
     setDatos(VACIO);
     setTrabajoActual(false);
+  }
+
+  function cambiar(campo: keyof Datos, valor: string) {
+    const nuevos = { ...datos, [campo]: valor };
+    setDatos(nuevos);
+    if (errorFechaFin) setErrorFechaFin(validarRangoFechas(nuevos.fechaInicio, nuevos.fechaFin));
   }
   return (
     <div className="flex flex-col gap-5">
@@ -93,11 +106,17 @@ export function FormularioExperiencia({experiencias, onAgregar }: FormularioExpe
             <input
               type={campo.tipo}
               value={datos[campo.nombre]}
-              onChange={(e) => setDatos({ ...datos, [campo.nombre]: e.target.value })}
+              onChange={(e) => cambiar(campo.nombre, e.target.value)}
               placeholder={campo.ejemplo}
               disabled={deshabilitado}
-              className="h-11 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] px-3 text-sm text-[#1B2632] outline-none placeholder:text-[#2C3B4D]/40 focus:border-2 focus:border-[#2C3B4D] focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              aria-invalid={esFin ? Boolean(errorFechaFin) : undefined}
+              aria-describedby={esFin ? 'error-fechaFin' : undefined}
+              className={claseCampo(
+                'h-11 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] px-3 text-sm text-[#1B2632] outline-none placeholder:text-[#2C3B4D]/40 focus:border-2 focus:border-[#2C3B4D] focus:bg-white disabled:cursor-not-allowed disabled:opacity-50',
+                esFin ? errorFechaFin : undefined,
+              )}
             />
+            {esFin && <MensajeError id="error-fechaFin" mensaje={errorFechaFin} />}
           </label>
         );
       })}
@@ -109,6 +128,7 @@ export function FormularioExperiencia({experiencias, onAgregar }: FormularioExpe
             onChange={(e) => {
               setTrabajoActual(e.target.checked);
               setDatos({ ...datos, fechaFin: '' });
+              setErrorFechaFin(undefined);
             }}
             className="h-4 w-4 accent-[#A35139]"
           />
