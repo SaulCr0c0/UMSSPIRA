@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award, Menu, X, LogOut } from 'lucide-react';
+import { CompanyDropdown } from '@/shared/components/company-dropdown';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
@@ -17,7 +18,11 @@ const navItems = [
   { href: '/portal/comunidad', label: 'Comunidad', Icon: Users },
 ];
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  role?: string;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ role }) => {
   // =====================================================================
   // 🎛️ PANEL DE CONTROL DE TAMAÑOS Y DISPOSICIÓN INDEPENDIENTE
   // =====================================================================
@@ -143,6 +148,10 @@ export const Navbar: React.FC = () => {
 
             {/* Avatar con dropdown (solo escritorio) */}
             <div className={`relative hidden lg:block transform ${config.profilePosition}`} ref={dropdownRef}>
+              {role === 'empresa' ? (
+                <CompanyDropdown />
+              ) : (
+                <>
               <div
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 className="flex items-center space-x-2 pl-2 cursor-pointer group py-1"
@@ -180,6 +189,8 @@ export const Navbar: React.FC = () => {
                   </div>
                 </div>
               )}
+               </>
+               )}
             </div>
 
             {/* Botón hamburguesa (< 1024 px) */}
@@ -252,13 +263,23 @@ export const Navbar: React.FC = () => {
               );
             })}
             <li>
-              <Link
-                href="/profile"
-                className="flex min-h-[44px] items-center space-x-3 rounded-xl px-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white"
-              >
-                <User className="w-4 h-4" />
-                <span>Perfil</span>
-              </Link>
+              {role === 'empresa' ? (
+                <Link
+                  href="/companies"
+                  className="flex min-h-[44px] items-center space-x-3 rounded-xl px-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Perfil Empresa</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/profile"
+                  className="flex min-h-[44px] items-center space-x-3 rounded-xl px-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Perfil</span>
+                </Link>
+              )}
             </li>
           </ul>
         </nav>
