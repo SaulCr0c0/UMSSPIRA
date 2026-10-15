@@ -28,7 +28,7 @@ const VALIDATION_MESSAGES = new Map([
 
 async function request(path: string, options: RequestInit = {}): Promise<unknown> {
   const token = getAccessToken();
-  if (!token) throw new Error('Inicia sesión para configurar tus áreas técnicas.');
+  if (!token) throw new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401);
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,

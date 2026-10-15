@@ -92,3 +92,38 @@ it('muestra una validación útil y segura cuando guardar devuelve 422', async (
   expect(screen.queryByText(/SELECT|private\.ts|postgres\.internal/)).not.toBeInTheDocument();
   expect(screen.getByRole('checkbox', { name: 'Bases de datos' })).toBeChecked();
 });
+
+it('ante un 401 al consultar solicita login sin ofrecer reintentos ni repetir peticiones', async () => {
+  getStatus = 401;
+  render(<MentorAreasPage />);
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Inicia sesión para configurar tus áreas técnicas.');
+  expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
+  const requests = jest.mocked(global.fetch).mock.calls.filter(([url]) => String(url).endsWith('/areas'));
+  expect(requests).toHaveLength(1);
+});
+
+it('sin token solicita login sin intentar una petición de áreas', async () => {
+  clearAccessToken();
+  render(<MentorAreasPage />);
+
+  expect(await screen.findByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+it('ante un 401 al guardar bloquea nuevos intentos con la sesión inválida', async () => {
+  patchStatus = 401;
+  render(<MentorAreasPage />);
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'Bases de datos' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+  expect(await screen.findByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+  const writes = jest.mocked(global.fetch).mock.calls.filter(([, options]) => options?.method === 'PATCH');
+  expect(writes).toHaveLength(1);
+});

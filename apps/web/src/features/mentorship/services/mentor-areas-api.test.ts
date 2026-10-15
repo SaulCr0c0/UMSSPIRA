@@ -65,4 +65,6 @@ it('mantiene la invalidación actual del token cuando la API responde 401', asyn
   fetchMock.mockResolvedValue({ ok: false, status: 401 });
   await expect(getMentorAreas()).rejects.toMatchObject({ status: 401, message: 'Inicia sesión para configurar tus áreas técnicas.' });
   expect(getAccessToken()).toBeNull();
+  await expect(getMentorAreas()).rejects.toMatchObject({ status: 401 });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
 });

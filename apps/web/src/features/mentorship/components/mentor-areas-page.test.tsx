@@ -85,7 +85,7 @@ it('guarda las áreas elegidas y confirma el guardado', async () => {
 });
 
 it('sin sesión solicita autenticación y no ofrece usuarios ficticios', async () => {
-  getAreas.mockRejectedValue(new Error('Inicia sesión para configurar tus áreas técnicas.'));
+  getAreas.mockRejectedValue(new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401));
   render(<MentorAreasPage />);
   expect(await screen.findByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
   expect(screen.queryByRole('button', { name: 'Entrar como mentor de prueba' })).not.toBeInTheDocument();

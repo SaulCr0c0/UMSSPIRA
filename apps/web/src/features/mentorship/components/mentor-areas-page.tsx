@@ -41,6 +41,7 @@ export function MentorAreasPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const [areas, setAreas] = useState<MentorArea[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -71,12 +72,14 @@ export function MentorAreasPage() {
       setCatalogFromDatabase(true);
       setInterests(state.intereses);
       setForbidden(false);
+      setRequiresLogin(false);
     } catch (reason) {
       setAreas([]);
       setSavedIds([]);
       setSelectedIds([]);
       setCatalogFromDatabase(false);
       setForbidden(reason instanceof MentorAreasError && reason.status === 403);
+      setRequiresLogin(reason instanceof MentorAreasError && reason.status === 401);
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo de áreas.');
     } finally {
       setLoading(false);
@@ -131,7 +134,7 @@ export function MentorAreasPage() {
   }
 
   async function save() {
-    if (busy.current || !valid || !catalogFromDatabase || forbidden) return;
+    if (busy.current || !valid || !catalogFromDatabase || forbidden || requiresLogin) return;
     busy.current = true;
     setSaving(true);
     setError('');
@@ -147,6 +150,10 @@ export function MentorAreasPage() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las áreas.');
       if (reason instanceof MentorAreasError && reason.status === 403) setForbidden(true);
+      if (reason instanceof MentorAreasError && reason.status === 401) {
+        setRequiresLogin(true);
+        setDialog(null);
+      }
     } finally {
       setSaving(false);
       busy.current = false;
@@ -197,8 +204,8 @@ export function MentorAreasPage() {
         {loading && <p className="mentor-areas-message" role="status">Cargando catálogo…</p>}
         {error && dialog !== 'dependencies' && <div className="mentor-areas-error" role="alert">
           <p>{error}</p>
-          {error.startsWith('Inicia sesión') && <Link href="/login" className="mentor-button mentor-button-secondary">Iniciar sesión</Link>}
-          {!catalogFromDatabase && <SecondaryButton disabled={saving || loading} onClick={() => void loadAreas()}>Reintentar</SecondaryButton>}
+          {requiresLogin && <Link href="/login" className="mentor-button mentor-button-secondary">Iniciar sesión</Link>}
+          {!catalogFromDatabase && !requiresLogin && <SecondaryButton disabled={saving || loading} onClick={() => void loadAreas()}>Reintentar</SecondaryButton>}
         </div>}
         {!loading && catalogFromDatabase && areas.length === 0 && <p role="alert" className="mentor-areas-message">No hay áreas técnicas disponibles. Contacta al administrador</p>}
         {!loading && catalogFromDatabase && areas.length > 0 && selectedIds.length === 0 && <div className="areas-minimum-notice"><p role="alert">Debes seleccionar al menos un área técnica</p><button type="button" onClick={() => setDialog('minimum')}>Ver requisito de selección</button></div>}
@@ -250,7 +257,7 @@ export function MentorAreasPage() {
             <PrimaryButton onClick={() => {
               if (removedIds.length && (interests === undefined || interests.some(interest => removedIds.includes(interest.id_area)))) setDialog('dependencies');
               else void save();
-            }} disabled={loading || saving || !valid || !catalogFromDatabase || areas.length === 0 || !dirty}>
+            }} disabled={loading || saving || requiresLogin || !valid || !catalogFromDatabase || areas.length === 0 || !dirty}>
               {saving ? 'Guardando…' : 'Guardar'}
             </PrimaryButton>
           </div>
