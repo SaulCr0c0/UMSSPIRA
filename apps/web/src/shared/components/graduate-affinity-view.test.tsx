@@ -21,14 +21,15 @@ jest.mock('@/shared/components/affinity-radar', () => ({
 
 jest.mock('../services/affinity-service');
 
-// Nombres que muestra el panel de inspección (HU2-C3)
+// Nombres que muestra el panel de inspección, en el orden del mockup:
+// de mayor a menor porcentaje (HU-3)
 const EXPECTED_LABELS = [
   'Desarrollo de Software',
-  'Cloud/DevOps',
-  'Ciencia de Datos/IA',
-  'QA',
-  'Ciberseguridad',
-  'Gestión TI',
+  'Ciencia de Datos & IA',
+  'Cloud, DevOps & Infraestructura',
+  'Aseguramiento de Calidad (QA)',
+  'Gestión de TI & Gobernanza',
+  'Ciberseguridad & Redes',
 ];
 
 describe('GraduateAffinityView', () => {
@@ -206,7 +207,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    const summarySection = (await screen.findByText('Resumen de Afinidad por Área')).parentElement;
+    const summarySection = (await screen.findByText('Resumen de tu afinidad')).closest('.flex-col');
     expect(summarySection).not.toBeNull();
 
     const labels = EXPECTED_LABELS.map((label) =>
@@ -237,10 +238,10 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    await screen.findByText('Resumen de Afinidad por Área');
+    await screen.findByText('Resumen de tu afinidad');
     fireEvent.click(screen.getByRole('button', { name: 'Seleccionar eje de prueba' }));
 
-    expect(await screen.findByText(/Área: Cloud\/DevOps/)).toBeInTheDocument();
+    expect(await screen.findByText(/Área: Cloud, DevOps & Infraestructura/)).toBeInTheDocument();
     expect(screen.getByText('AWS Certified Cloud Practitioner')).toBeInTheDocument();
   });
 
@@ -249,7 +250,7 @@ describe('GraduateAffinityView', () => {
       render(<GraduateAffinityView />);
     });
 
-    await screen.findByText('Resumen de Afinidad por Área');
+    await screen.findByText('Resumen de tu afinidad');
     fireEvent.click(screen.getByRole('button', { name: 'Seleccionar eje de prueba' }));
     fireEvent.click(await screen.findByRole('button', { name: /volver al resumen/i }));
 
@@ -265,7 +266,7 @@ describe('GraduateAffinityView', () => {
 
     expect(await screen.findByText(/No se pudo actualizar tu radar/)).toBeInTheDocument();
     expect(screen.queryByText('Sin datos de historial laboral')).not.toBeInTheDocument();
-    expect(screen.queryByText('Resumen de Afinidad por Área')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resumen de tu afinidad')).not.toBeInTheDocument();
   });
 
   it('muestra el skeleton mientras carga y no presenta el perfil como vacío', () => {
@@ -274,5 +275,75 @@ describe('GraduateAffinityView', () => {
 
     expect(screen.getByRole('status', { name: 'Cargando tu radar de afinidad' })).toBeInTheDocument();
     expect(screen.queryByText('Sin datos de historial laboral')).not.toBeInTheDocument();
+  });
+
+  it('muestra en el bloque destacado solo áreas con respaldos en el mock', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-30T12:00:00.000Z',
+      areas: [
+        { area: 'cybersecurity-networks', affinity: 95 },
+        { area: 'software-development', affinity: 85 },
+        { area: 'data-ai', affinity: 71 },
+        { area: 'cloud-devops', affinity: 64 },
+        { area: 'quality-assurance', affinity: 58 },
+        { area: 'it-management', affinity: 50 },
+      ],
+    });
+
+    await act(async () => {
+      render(<GraduateAffinityView />);
+    });
+
+    expect(await screen.findByText('1. Desarrollo de Software (85%)')).toBeInTheDocument();
+    expect(screen.getByText('2. Ciencia de Datos & IA (71%)')).toBeInTheDocument();
+    expect(screen.getByText('3. Cloud, DevOps & Infraestructura (64%)')).toBeInTheDocument();
+    expect(screen.queryByText(/Ciberseguridad & Redes \(\d+%\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Gestión de TI & Gobernanza \(\d+%\)/)).not.toBeInTheDocument();
+  });
+
+  it('cambia las palabras clave del bloque al recalcular con el snapshot cargado', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-28T12:00:00.000Z',
+      areas: [
+        { area: 'software-development', affinity: 85, keywords: ['Node.js', 'React'] },
+        { area: 'cloud-devops', affinity: 64, keywords: ['AWS'] },
+        { area: 'data-ai', affinity: 71, keywords: ['Python'] },
+        { area: 'quality-assurance', affinity: 58, keywords: ['Jest'] },
+        { area: 'cybersecurity-networks', affinity: 42, keywords: ['SecOps'] },
+        { area: 'it-management', affinity: 50, keywords: ['Agile'] },
+      ],
+    });
+    mockRecalculateAffinity.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-28T12:00:00.000Z',
+      areas: [
+        { area: 'software-development', affinity: 85, keywords: ['Kubernetes', 'Go'] },
+        { area: 'cloud-devops', affinity: 64, keywords: ['Terraform'] },
+        { area: 'data-ai', affinity: 71, keywords: ['PyTorch'] },
+        { area: 'quality-assurance', affinity: 58, keywords: ['Selenium'] },
+        { area: 'cybersecurity-networks', affinity: 42, keywords: ['SIEM'] },
+        { area: 'it-management', affinity: 50, keywords: ['ITIL'] },
+      ],
+    });
+
+    await act(async () => {
+      render(<GraduateAffinityView />);
+    });
+
+    expect(await screen.findByText('Node.js')).toBeInTheDocument();
+
+    openSimulationModal();
+    const simulateButton = within(screen.getByRole('dialog')).getByRole('button', { name: /simular cambio en el perfil/i });
+
+    await act(async () => {
+      fireEvent.click(simulateButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Kubernetes')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Node.js')).not.toBeInTheDocument();
   });
 });

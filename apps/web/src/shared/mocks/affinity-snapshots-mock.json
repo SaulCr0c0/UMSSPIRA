@@ -3,36 +3,180 @@
     "graduateId": "00000000-0000-0000-0000-000000000001",
     "calculatedAt": "2026-09-28T12:00:00.000Z",
     "areas": [
-      { "area": "software-development", "affinity": 88 },
-      { "area": "cloud-devops", "affinity": 62 },
-      { "area": "data-ai", "affinity": 74 },
-      { "area": "quality-assurance", "affinity": 45 },
-      { "area": "cybersecurity-networks", "affinity": 31 },
-      { "area": "it-management", "affinity": 53 }
+      {
+        "area": "software-development",
+        "affinity": 88,
+        "keywords": [
+          "Go",
+          "Kubernetes",
+          "Backend"
+        ]
+      },
+      {
+        "area": "cloud-devops",
+        "affinity": 62,
+        "keywords": [
+          "Terraform",
+          "Ansible",
+          "GCP"
+        ]
+      },
+      {
+        "area": "data-ai",
+        "affinity": 74,
+        "keywords": [
+          "PyTorch",
+          "NLP",
+          "R"
+        ]
+      },
+      {
+        "area": "quality-assurance",
+        "affinity": 45,
+        "keywords": [
+          "Selenium",
+          "Playwright",
+          "TDD"
+        ]
+      },
+      {
+        "area": "cybersecurity-networks",
+        "affinity": 31,
+        "keywords": [
+          "Pentesting",
+          "SIEM",
+          "Cisco"
+        ]
+      },
+      {
+        "area": "it-management",
+        "affinity": 53,
+        "keywords": [
+          "ITIL",
+          "PMP",
+          "SAP"
+        ]
+      }
     ]
   },
   {
     "graduateId": "00000000-0000-0000-0000-000000000001",
     "calculatedAt": "2026-09-29T12:00:00.000Z",
     "areas": [
-      { "area": "software-development", "affinity": 79 },
-      { "area": "cloud-devops", "affinity": 71 },
-      { "area": "data-ai", "affinity": 58 },
-      { "area": "quality-assurance", "affinity": 52 },
-      { "area": "cybersecurity-networks", "affinity": 36 },
-      { "area": "it-management", "affinity": 44 }
+      {
+        "area": "software-development",
+        "affinity": 79,
+        "keywords": [
+          "Vue",
+          "Spring Boot",
+          "Microservices"
+        ]
+      },
+      {
+        "area": "cloud-devops",
+        "affinity": 71,
+        "keywords": [
+          "Azure",
+          "Jenkins",
+          "Helm"
+        ]
+      },
+      {
+        "area": "data-ai",
+        "affinity": 58,
+        "keywords": [
+          "TensorFlow",
+          "Spark",
+          "Airflow"
+        ]
+      },
+      {
+        "area": "quality-assurance",
+        "affinity": 52,
+        "keywords": [
+          "JMeter",
+          "K6",
+          "BDD"
+        ]
+      },
+      {
+        "area": "cybersecurity-networks",
+        "affinity": 36,
+        "keywords": [
+          "Wireshark",
+          "IDS",
+          "VPN"
+        ]
+      },
+      {
+        "area": "it-management",
+        "affinity": 44,
+        "keywords": [
+          "COBIT",
+          "Scrum",
+          "Power BI"
+        ]
+      }
     ]
   },
   {
     "graduateId": "00000000-0000-0000-0000-000000000001",
     "calculatedAt": "2026-09-30T12:00:00.000Z",
     "areas": [
-      { "area": "software-development", "affinity": 65 },
-      { "area": "cloud-devops", "affinity": 57 },
-      { "area": "data-ai", "affinity": 83 },
-      { "area": "quality-assurance", "affinity": 40 },
-      { "area": "cybersecurity-networks", "affinity": 29 },
-      { "area": "it-management", "affinity": 61 }
+      {
+        "area": "software-development",
+        "affinity": 65,
+        "keywords": [
+          "Next.js",
+          "GraphQL",
+          "Redis"
+        ]
+      },
+      {
+        "area": "cloud-devops",
+        "affinity": 57,
+        "keywords": [
+          "Docker Swarm",
+          "Pulumi",
+          "Datadog"
+        ]
+      },
+      {
+        "area": "data-ai",
+        "affinity": 83,
+        "keywords": [
+          "LangChain",
+          "dbt",
+          "Airflow"
+        ]
+      },
+      {
+        "area": "quality-assurance",
+        "affinity": 40,
+        "keywords": [
+          "TestCafe",
+          "Appium",
+          "Unit Testing"
+        ]
+      },
+      {
+        "area": "cybersecurity-networks",
+        "affinity": 29,
+        "keywords": [
+          "Burp Suite",
+          "Zero Trust",
+          "Forensics"
+        ]
+      },
+      {
+        "area": "it-management",
+        "affinity": 61,
+        "keywords": [
+          "TOGAF",
+          "Kanban",
+          "Salesforce"
+        ]
+      }
     ]
   }
 ]

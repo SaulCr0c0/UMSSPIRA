@@ -9,16 +9,21 @@ import { PendingChangesDialog } from './pending-changes-dialog';
 import { RadarErrorState } from './radar-error-state';
 import { SuccessToast } from './success-toast';
 import { AffinitySkeleton } from './affinity-skeleton';
-import RadarInspection from './radar-inspection';
+import RadarInspection, { AREA_NAMES_MAP } from './radar-inspection';
+import { formatPercentage } from '../utils/percentage';
 import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Ruta de Épica 2 almacenada en una constante a nivel de módulo
 const RUTA_EPICA_2_CERTIFICACIONES = '/epica-2/certificaciones/nueva?returnTo=/afinidad';
+
+// Las keywords vienen en los mocks pero no en el tipo del contrato; se leen con este cast
+const extractKeywords = (areas: AffinityAreaScore[]): string[] =>
+  (areas as Array<AffinityAreaScore & { keywords?: string[] }>).flatMap((area) => area.keywords ?? []);
 
 // Áreas que espera el panel de inspección (se deriva de sus props para no duplicar el tipo)
 type InspectionAreas = NonNullable<React.ComponentProps<typeof RadarInspection>['areas']>;
@@ -45,6 +50,7 @@ export const GraduateAffinityView: React.FC = () => {
     { area: 'cybersecurity-networks', affinity: 42 },
     { area: 'it-management', affinity: 50 },
   ]);
+  const [loadedKeywords, setLoadedKeywords] = useState<string[]>([]);
 
   const isRecalculatingRef = useRef<boolean>(false);
   const changeVersionRef = useRef<number>(0);
@@ -67,6 +73,7 @@ export const GraduateAffinityView: React.FC = () => {
             affinity: a.affinity,
           }))
         );
+        setLoadedKeywords(extractKeywords(result.areas));
         setHasValidRadar(true);
         setHasRadarError(false);
       } catch {
@@ -108,6 +115,7 @@ export const GraduateAffinityView: React.FC = () => {
 
       setChangedAreaIds(modifiedIds);
       setCandidateAreas(newAreasMapped);
+      setLoadedKeywords(extractKeywords(result.areas));
 
       if (changeVersionRef.current === versionAtStart) {
         clearPendingChanges();
@@ -166,6 +174,20 @@ export const GraduateAffinityView: React.FC = () => {
     evidence: mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [],
   }));
 
+  // Top 3 áreas del vector cargado con respaldos en el mock, para el bloque debajo del radar (mockup HU-3)
+  const topAffinityAreas = [...orderedCandidateAreas]
+    .filter((item) => (mockAreas.find((mock) => mock.area === item.area)?.evidence ?? []).length > 0)
+    .sort((a, b) => b.affinity - a.affinity)
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.area,
+      label: AREA_NAMES_MAP[item.area] ?? item.area,
+      score: item.affinity,
+    }));
+
+  // Palabras clave consolidadas del vector o snapshot cargado
+  const influentialKeywords = Array.from(new Set(loadedKeywords));
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -196,7 +218,7 @@ export const GraduateAffinityView: React.FC = () => {
           <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-oatmeal flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-palladian pb-4 mb-4">
-                <h3 className="font-bold text-abyssal-blue text-base">Gráfico de afinidad</h3>
+                <h3 className="font-bold text-abyssal-blue text-xl">Gráfico de afinidad</h3>
                 {/* La etiqueta solo aparece cuando existe un radar válido, no durante una falla inicial */}
                 {hasValidRadar && !isEmptyVector && (
                   <span className="text-xs font-mono font-semibold text-truffle-trouble bg-palladian px-2.5 py-1 rounded-md border border-oatmeal flex items-center space-x-1">
@@ -250,6 +272,47 @@ export const GraduateAffinityView: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {hasValidRadar && !hasRadarError && !isLoading && (topAffinityAreas.length > 0 || influentialKeywords.length > 0) && (
+                <div className="mt-6 bg-palladian rounded-xl border border-oatmeal/60 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />
+                    <span className="text-sm font-bold text-gray-800">Áreas con mayor afinidad identificadas:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {topAffinityAreas.map((area, index) => (
+                      <div
+                        key={area.id}
+                        className={`px-3 py-1 text-sm rounded-md font-medium ${
+                          index === 0
+                            ? 'bg-[#FDBA74] text-gray-900'
+                            : index === 1
+                              ? 'bg-[#1E293B] text-white'
+                              : 'bg-white border border-gray-300 text-gray-900'
+                        }`}
+                      >
+                        {index + 1}. {area.label} ({formatPercentage(area.score)})
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4 text-gray-700 shrink-0" />
+                      <span className="text-sm font-bold text-gray-800">Palabras clave más influyentes:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {influentialKeywords.map((keyword) => (
+                        <span
+                          key={keyword}
+                          className="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full text-gray-600"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-6 border-t border-palladian mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
