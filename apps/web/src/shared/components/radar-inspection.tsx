@@ -33,6 +33,13 @@ const AREA_NAMES_MAP: Record<string, string> = {
   "it-management": "Gestión TI",
 };
 
+function getSafeAffinity(value: unknown): number {
+  if (value === null || value === undefined || value === "") return 0;
+  const num = Number(value);
+  if (isNaN(num)) return 0;
+  return Math.min(100, Math.max(0, num));
+}
+
 export default function RadarInspection({ 
   selectedAreaId, 
   onSelectArea,
@@ -67,6 +74,8 @@ export default function RadarInspection({
             // Se usa el diccionario de la HU2-C3 en lugar de replace("-", " ")
             const displayName = AREA_NAMES_MAP[item.area] || item.area;
             const isSelected = selectedAreaId === item.area;
+            const safeAffinity = getSafeAffinity(item.affinity);
+
 
             return (
               <div
@@ -81,12 +90,12 @@ export default function RadarInspection({
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-medium text-gray-700">{displayName}</span>
-                  <span className="text-sm font-semibold text-blue-600">{formatPercentage(item.affinity)}</span>
+                  <span className="text-sm font-semibold text-blue-600">{formatPercentage(safeAffinity)}</span>
                 </div>
                 <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-blue-600 h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${item.affinity}%` }}
+                    style={{ width: `${safeAffinity}%` }}
                   />
                 </div>
               </div>

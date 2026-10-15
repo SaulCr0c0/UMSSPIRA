@@ -60,13 +60,14 @@ export const GraduateAffinityView: React.FC = () => {
     async function loadInitialVector() {
       try {
         setIsLoading(true);
-        const result = await getAffinityVector();
+       const result = await getAffinityVector();
         setCandidateAreas(
-          result.areas.map((a) => ({
-            area: a.area,
-            affinity: a.affinity,
-          }))
-        );
+       result.areas.map((a: any) => ({
+       area: a.area,
+       affinity: a.affinity,
+       evidence: a.evidence || [],
+     }))
+  );
         setHasValidRadar(true);
         setHasRadarError(false);
       } catch {
@@ -91,9 +92,10 @@ export const GraduateAffinityView: React.FC = () => {
     try {
       const previousAreas = [...candidateAreas];
       const result = await recalculateAffinity();
-      const newAreasMapped = result.areas.map((a) => ({
-        area: a.area,
-        affinity: a.affinity,
+      const newAreasMapped = result.areas.map((a: any) => ({
+      area: a.area,
+      affinity: a.affinity,
+      evidence: a.evidence || [],
       }));
 
       const modifiedIds: string[] = [];
@@ -145,8 +147,8 @@ export const GraduateAffinityView: React.FC = () => {
     setIsLoading(false);
   }, []);
 
-  const isEmptyVector = candidateAreas.length === 0;
-  const orderedCandidateAreas = AFFINITY_AREAS.map((areaKey) => {
+    const isEmptyVector = candidateAreas.length === 0;
+    const orderedCandidateAreas = AFFINITY_AREAS.map((areaKey) => {
     const found = candidateAreas.find((item) => item.area === areaKey);
     return found || { area: areaKey, affinity: 0 };
   });
@@ -158,13 +160,22 @@ export const GraduateAffinityView: React.FC = () => {
   // Mientras no llega el primer vector ni ocurre un error, se muestra el skeleton para no presentar el perfil como vacío (HU-2, escenarios de carga y error).
   const isInitialLoading = !hasValidRadar && !hasRadarError;
 
-  // Los porcentajes del panel salen del mismo vector que dibuja el radar; los respaldos vienen del mock en el Sprint 1.
   const mockAreas = affinityVectorMock.areas as unknown as InspectionAreas;
-  const inspectionAreas: InspectionAreas = orderedCandidateAreas.map((item) => ({
-    area: item.area,
-    affinity: item.affinity,
-    evidence: mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [],
-  }));
+
+  const inspectionAreas: InspectionAreas = orderedCandidateAreas.map((item: any) => {
+    // 1. Busca si el elemento tiene evidencias dinámicas de la API/estado
+    const dynamicEvidence = item.evidence ?? (candidateAreas.find((c: any) => c.area === item.area) as any)?.evidence;
+    
+    // 2. Busca la evidencia correspondiente en el mock estático
+    const mockEvidence = mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [];
+
+    return {
+      area: item.area,
+      affinity: item.affinity,
+      // Si la API trae evidencias (ej. SW-01/SW-02 en D1), las usa prioritariamente; si no vienen, recurre al mock para los tests
+      evidence: (dynamicEvidence && dynamicEvidence.length > 0) ? dynamicEvidence : mockEvidence,
+    };
+  });
 
   return (
     <div className="space-y-6 animate-fadeIn">
