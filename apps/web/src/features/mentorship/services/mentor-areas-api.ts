@@ -19,6 +19,13 @@ export class MentorAreasError extends Error {
   constructor(message: string, public readonly status: number) { super(message); }
 }
 
+const VALIDATION_MESSAGES = new Map([
+  ['CANTIDAD_AREAS_INVALIDA', 'Debes seleccionar entre 1 y 5 áreas técnicas.'],
+  ['AREA_NO_EXISTE', 'Una o más áreas seleccionadas ya no están disponibles en el catálogo.'],
+  ['AREA_NO_VALIDA', 'Selecciona únicamente áreas técnicas del catálogo.'],
+  ['AREA_INACTIVA', 'Una o más áreas seleccionadas están inactivas. Revisa tu selección.'],
+]);
+
 async function request(path: string, options: RequestInit = {}): Promise<unknown> {
   const token = getAccessToken();
   if (!token) throw new Error('Inicia sesión para configurar tus áreas técnicas.');
@@ -36,22 +43,25 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
 
   if (!response.ok) {
     if (response.status === 401 && getAccessToken() === token) clearAccessToken();
-    let serverMessage = '';
-    if (response.status >= 500) {
-      const body = await response.text();
-      if (body) {
-        try {
-          const parsed: unknown = JSON.parse(body);
-          if (parsed && typeof parsed === 'object' && 'message' in parsed) {
-            const message = parsed.message;
-            serverMessage = Array.isArray(message)
-              ? message.filter((item): item is string => typeof item === 'string').join(' ')
-              : typeof message === 'string' ? message : '';
-          }
-        } catch {
-          serverMessage = body;
+    if (response.status >= 500 && response.status <= 599) {
+      throw new MentorAreasError(
+        options.method === 'PATCH'
+          ? 'No pudimos guardar tus áreas técnicas. Intenta nuevamente en unos momentos.'
+          : 'No pudimos cargar las áreas técnicas. Intenta nuevamente en unos momentos.',
+        response.status,
+      );
+    }
+    if (response.status === 400 || response.status === 422) {
+      let message = 'Revisa las áreas seleccionadas e intenta nuevamente.';
+      try {
+        const body: unknown = await response.json();
+        if (body && typeof body === 'object' && 'code' in body && typeof body.code === 'string') {
+          message = VALIDATION_MESSAGES.get(body.code) ?? message;
         }
+      } catch {
+        // Un cuerpo vacío o inválido conserva el mensaje local de validación.
       }
+      throw new MentorAreasError(message, response.status);
     }
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tus áreas técnicas.',
@@ -60,7 +70,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
     };
     throw new MentorAreasError(
       messages[response.status]
-      || `No se pudieron guardar las áreas (HTTP ${response.status})${serverMessage ? `: ${serverMessage}` : '.'}`, response.status,
+      || `No se pudieron guardar las áreas (HTTP ${response.status}).`, response.status,
     );
   }
   return response.json();
