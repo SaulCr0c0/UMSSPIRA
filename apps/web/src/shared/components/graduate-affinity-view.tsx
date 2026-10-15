@@ -145,6 +145,7 @@ export const GraduateAffinityView: React.FC = () => {
     setIsLoading(false);
   }, []);
 
+  const isEmptyVector = candidateAreas.length === 0;
   const orderedCandidateAreas = AFFINITY_AREAS.map((areaKey) => {
     const found = candidateAreas.find((item) => item.area === areaKey);
     return found || { area: areaKey, affinity: 0 };
@@ -197,7 +198,7 @@ export const GraduateAffinityView: React.FC = () => {
               <div className="flex items-center justify-between border-b border-palladian pb-4 mb-4">
                 <h3 className="font-bold text-abyssal-blue text-base">Gráfico de afinidad</h3>
                 {/* La etiqueta solo aparece cuando existe un radar válido, no durante una falla inicial */}
-                {hasValidRadar && (
+                {hasValidRadar && !isEmptyVector && (
                   <span className="text-xs font-mono font-semibold text-truffle-trouble bg-palladian px-2.5 py-1 rounded-md border border-oatmeal flex items-center space-x-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-truffle-trouble" />
                     <span>Vector Calculado</span>
@@ -206,18 +207,43 @@ export const GraduateAffinityView: React.FC = () => {
               </div>
 
               <div className="relative py-4 flex flex-col items-center justify-center bg-palladian/40 rounded-xl border border-oatmeal/60">
-                <div className={hasRadarError && hasValidRadar ? 'opacity-40' : undefined}>
-                  {/* Se remueve variant="full" porque el componente usa la renderización estándar */}
-                  <AffinityRadar
-                    affinityData={radarData}
-                    hasData={hasValidRadar}
-                    isLoading={isLoading}
-                    changedAreaIds={changedAreaIds}
-                    selectedAreaId={selectedAreaId}
-                    onSelectArea={setSelectedAreaId}
-                  />
-                </div>
+          <div className={hasRadarError && hasValidRadar ? 'opacity-40' : undefined}>
+            {/* Se remueve variant="full" porque el componente usa la renderización estándar */}
+            <AffinityRadar
+              affinityData={radarData}
+              hasData={hasValidRadar && !isEmptyVector}
+              isLoading={isLoading}
+              changedAreaIds={changedAreaIds}
+              selectedAreaId={selectedAreaId}
+              onSelectArea={setSelectedAreaId}
+            />
+          </div>
 
+          {/* ESTADO VACÍO SUPERPUESTO (BUG-HU2-01) */}
+          {hasValidRadar && isEmptyVector && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-white/40 backdrop-blur-[3px] rounded-xl border border-white/50 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">
+                Completa tu perfil para<br />descubrir tu afinidad profesional
+              </h3>
+              <p className="text-xs text-slate-500 mb-5 max-w-[260px] mx-auto leading-relaxed">
+                Aún no podemos calcular tus áreas de mayor afinidad. Necesitamos algunos datos de tu perfil para generar tu mapa de afinidad.
+              </p>
+              <button 
+                type="button"
+                onClick={() => router.push('/profile')} 
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+              >
+                Completar perfil
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </button>
+            </div>
+          )}
+                {/* MENSAJE DE ERROR DENTRO DEL CONTENEDOR RELATIVE */}
                 {hasRadarError && (
                   <div className="absolute inset-0 flex items-center justify-center p-4">
                     <RadarErrorState onRetry={handleRecalculate} isRetrying={isLoading} />
