@@ -114,6 +114,32 @@ describe('AffinityRadar Component', () => {
     expect(onSelectArea).toHaveBeenCalledWith('software-development');
     expect(screen.getByText('ÁREA SELECCIONADA (CLICK)')).toBeInTheDocument();
   });
+  it('llama a onSelectArea cuando se hace clic sobre la línea del eje', () => {
+    const handleSelectArea = jest.fn();
+    const { container } = render(
+      <AffinityRadar
+        affinityData={mockData as any}
+        hasData={true}
+        onSelectArea={handleSelectArea}
+      />
+    );
+
+    // Selecciona el primer eje por su línea interactiva
+    const axisLine = container.querySelector('g.cursor-pointer line[stroke="transparent"]');
+    expect(axisLine).toBeInTheDocument();
+
+    if (axisLine) {
+      fireEvent.click(axisLine);
+      expect(handleSelectArea).toHaveBeenCalledWith('software-development');
+    }
+  });
+
+  it('no muestra el panel de selección cuando hasData={false}', () => {
+    render(<AffinityRadar affinityData={[]} hasData={false} />);
+
+    expect(screen.queryByText(/ÁREA SELECCIONADA/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Vector Calculado/i)).not.toBeInTheDocument();
+  });
 });
 
 // Para el radar miniatura

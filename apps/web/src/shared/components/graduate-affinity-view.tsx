@@ -227,7 +227,9 @@ export const GraduateAffinityView: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">Completa tu perfil para<br/>descubrir tu afinidad profesional</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">
+                Completa tu perfil para<br />descubrir tu afinidad profesional
+              </h3>
               <p className="text-xs text-slate-500 mb-5 max-w-[260px] mx-auto leading-relaxed">
                 Aún no podemos calcular tus áreas de mayor afinidad. Necesitamos algunos datos de tu perfil para generar tu mapa de afinidad.
               </p>
@@ -241,14 +243,14 @@ export const GraduateAffinityView: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
-
+                {/* MENSAJE DE ERROR DENTRO DEL CONTENEDOR RELATIVE */}
                 {hasRadarError && (
                   <div className="absolute inset-0 flex items-center justify-center p-4">
                     <RadarErrorState onRetry={handleRecalculate} isRetrying={isLoading} />
                   </div>
                 )}
               </div>
+            </div>
 
             <div className="pt-6 border-t border-palladian mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-[13px] text-blue-fantastic">
