@@ -6,8 +6,10 @@ import { ConnectedNavbar } from "@/shared/components/navbar/index";
 
 // Encabezado único del portal: el Navbar se monta una sola vez para todas las rutas
 export function PortalSiteHeader() {
-  const pathname = usePathname() ?? "";
-  return pathname.replace(/\/$/, "") === "/portal/institucional"
+  const pathname = (usePathname() ?? "").replace(/\/$/, "");
+  const usesSharedNavbar = ["/portal/institucional", "/portal/comunidad"].includes(pathname);
+
+  return usesSharedNavbar
     ? <ConnectedNavbar />
     : <LegacyNavbar />;
 }

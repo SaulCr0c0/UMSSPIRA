@@ -20,14 +20,14 @@ describe("PortalSiteHeader", () => {
     expect(logo).toHaveAttribute("href", "/portal");
   });
 
-  it("mantiene el encabezado anterior en las demás páginas del portal", () => {
-    jest.mocked(usePathname).mockReturnValue("/portal/comunidad");
+  it("mantiene el encabezado anterior en otras páginas del portal", () => {
+    jest.mocked(usePathname).mockReturnValue("/portal/beneficios");
     render(<PortalSiteHeader />);
     expect(screen.getByRole("link", { name: /umsspira/i })).toHaveAttribute("href", "/portal");
     expect(screen.queryByRole("link", { name: "Iniciar sesión" })).not.toBeInTheDocument();
   });
 
-  it.each(["/portal/institucional", "/portal/institucional/"])(
+  it.each(["/portal/institucional", "/portal/institucional/", "/portal/comunidad", "/portal/comunidad/"])(
     "muestra una sola navbar oficial para visitantes en %s",
     (pathname) => {
       jest.mocked(usePathname).mockReturnValue(pathname);
