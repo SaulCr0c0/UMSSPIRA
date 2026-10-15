@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   EVENT_STATUS,
   type EventItem,
@@ -13,9 +13,9 @@ import {
   Bell,
   Check,
   ChevronDown,
+  Eye,
   Menu,
   MessageSquare,
-  MoreVertical,
   Plus,
   Search,
 } from 'lucide-react';
@@ -23,11 +23,21 @@ import {
   getAdminEvents,
   publishDraftEvent,
 } from '@/shared/services/events-service';
+import {
+  useAuthenticatedUserId,
+} from '@/modules/auth/frontend/components/authenticated-user-context';
+import {
+  formatEventDate,
+  formatEventDateTime,
+  formatEventMonth,
+  formatEventSchedule,
+  getEventMonthKey,
+} from '@/shared/utils/event-date-time';
 
 type AdminSection = 'management' | 'create' | 'drafts';
 
 export function EventsHeader({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const eventsMenuRef = useRef<HTMLDivElement>(null);
   const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
   const eventMenuItems = [
@@ -49,10 +59,7 @@ export function EventsHeader({ children }: { children: React.ReactNode }) {
     if (!isEventsMenuOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (
-        eventsMenuRef.current &&
-        !eventsMenuRef.current.contains(event.target as Node)
-      ) {
+      if (eventsMenuRef.current && !eventsMenuRef.current.contains(event.target as Node)) {
         setIsEventsMenuOpen(false);
       }
     };
@@ -72,21 +79,11 @@ export function EventsHeader({ children }: { children: React.ReactNode }) {
     <div className="events-app">
       <header className="events-desktop-header">
         <Link href="/events" className="events-logo-link" aria-label="UMSSPIRA - Eventos">
-          <Image
-            src="/assets/events/umsspira-logo-desktop.png"
-            alt="UMSSPIRA"
-            width={170}
-            height={56}
-            priority
-          />
+          <Image src="/assets/events/umsspira-logo-desktop.png" alt="UMSSPIRA" width={170} height={56} priority />
         </Link>
-
         <nav className="events-main-nav" aria-label="Navegación principal">
-          <span>Inicio</span>
-          <span>Comunidad</span>
-          <span>Directorio</span>
-          <span>Bolsa de trabajo</span>
-          <span>Mentorías</span>
+          <span>Inicio</span><span>Comunidad</span><span>Directorio</span>
+          <span>Bolsa de trabajo</span><span>Mentorías</span>
           <div className="events-nav-dropdown" ref={eventsMenuRef}>
             <button
               type="button"
@@ -106,9 +103,7 @@ export function EventsHeader({ children }: { children: React.ReactNode }) {
                     role="menuitem"
                     aria-current={activeEventHref === item.href ? 'page' : undefined}
                     className={activeEventHref === item.href ? 'is-active' : undefined}
-                    onClick={() => {
-                      if (activeEventHref === item.href) setIsEventsMenuOpen(false);
-                    }}
+                    onClick={() => setIsEventsMenuOpen(false)}
                   >
                     {item.label}
                   </Link>
@@ -117,42 +112,25 @@ export function EventsHeader({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
         </nav>
-
         <div className="events-header-actions" aria-label="Acciones de cuenta">
-          <Search size={22} />
-          <MessageSquare size={22} />
-          <span className="events-notification-icon">
-            <Bell size={22} />
-          </span>
-          <span className="events-profile-separator" />
-          <span className="events-avatar">AD</span>
-          <span className="events-profile-copy">
-            <strong>Administración</strong>
-            <small>Sin sesión</small>
-          </span>
+          <Search size={22} /><MessageSquare size={22} />
+          <span className="events-notification-icon"><Bell size={22} /></span>
+          <span className="events-profile-separator" /><span className="events-avatar">AD</span>
+          <span className="events-profile-copy"><strong>Administración</strong><small>Sin sesión</small></span>
           <ChevronDown size={15} />
         </div>
       </header>
-
       <header className="events-mobile-header">
         <Menu size={24} aria-hidden="true" />
         <Link href="/events" aria-label="UMSSPIRA - Eventos">
-          <Image
-            src="/assets/events/umsspira-logo-2.png"
-            alt="UMSSPIRA"
-            width={107}
-            height={30}
-            priority
-          />
+          <Image src="/assets/events/umsspira-logo-2.png" alt="UMSSPIRA" width={107} height={30} priority />
         </Link>
         <span className="events-mobile-avatar" aria-label="Administración">AD</span>
       </header>
-
       {children}
     </div>
   );
 }
-
 export function EventAdminTabs({ active }: { active: AdminSection }) {
   const tabs: Array<{ key: AdminSection; label: string; href: string }> = [
     { key: 'management', label: 'Gestión', href: '/events' },
@@ -181,11 +159,13 @@ const MISSING_EVENTS_IDENTITY =
 
 export function EventManagementContent({
   compact = false,
-  userId,
+  userId: providedUserId,
 }: {
   compact?: boolean;
   userId?: string;
 }) {
+  const authenticatedUserId = useAuthenticatedUserId();
+  const userId = providedUserId ?? authenticatedUserId;
   const router = useRouter();
   const {
     events,
@@ -196,13 +176,45 @@ export function EventManagementContent({
   } = useAdminEvents(userId, !compact);
   const [pendingPublication, setPendingPublication] = useState<EventItem | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [publicationSucceeded, setPublicationSucceeded] = useState(false);
-  const publishedCount = events.filter(
-    (event) => event.status === EVENT_STATUS.PUBLICADO,
-  ).length;
-  const draftCount = events.filter(
-    (event) => event.status === EVENT_STATUS.BORRADOR,
-  ).length;
+  const [publishedEventId, setPublishedEventId] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [monthFilter, setMonthFilter] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const filteredEvents = useMemo(() => {
+    const normalizedSearch = searchFilter.trim().toLocaleLowerCase('es');
+    return events.filter((event) => {
+      const matchesSearch = event.title
+        .toLocaleLowerCase('es')
+        .includes(normalizedSearch);
+      const matchesMonth = monthFilter === 'all'
+        || getEventMonthKey(event.startDate) === monthFilter;
+      const matchesStatus = statusFilter === 'all'
+        || event.status === statusFilter;
+
+      return matchesSearch && matchesMonth && matchesStatus;
+    });
+  }, [events, monthFilter, searchFilter, statusFilter]);
+  const availableMonths = useMemo(
+    () => Array.from(
+      new Set(events.map((event) => getEventMonthKey(event.startDate))),
+    ).sort(),
+    [events],
+  );
+  const { publishedCount, draftCount } = useMemo(
+    () => events.reduce(
+      (counts, event) => ({
+        publishedCount: counts.publishedCount
+          + Number(event.status === EVENT_STATUS.PUBLICADO),
+        draftCount: counts.draftCount
+          + Number(event.status === EVENT_STATUS.BORRADOR),
+      }),
+      { publishedCount: 0, draftCount: 0 },
+    ),
+    [events],
+  );
 
   const confirmPublication = async () => {
     if (!pendingPublication || !userId) return;
@@ -221,7 +233,7 @@ export function EventManagementContent({
         ),
       );
       setPendingPublication(null);
-      setPublicationSucceeded(true);
+      setPublishedEventId(publishedEvent.id);
     } catch (error) {
       setPendingPublication(null);
       setErrorMessage(getRequestErrorMessage(error));
@@ -252,14 +264,45 @@ export function EventManagementContent({
 
       <section className="events-list-panel">
         <div className="events-filters">
-          <input aria-label="Buscar" placeholder="Buscar eventos por título…" readOnly />
-          <select aria-label="Fecha" defaultValue="all" disabled title="El filtrado no forma parte de HU1">
+          <input
+            aria-label="Buscar"
+            placeholder="Buscar eventos por título…"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+          />
+          <select
+            aria-label="Fecha"
+            value={selectedMonth}
+            onChange={(event) => setSelectedMonth(event.target.value)}
+          >
             <option value="all">Todas las fechas</option>
+            {availableMonths.map((month) => (
+              <option key={month} value={month}>
+                {formatEventMonth(month)}
+              </option>
+            ))}
           </select>
-          <select aria-label="Estado" defaultValue="all" disabled title="El filtrado no forma parte de HU1">
+          <select
+            aria-label="Estado"
+            value={selectedStatus}
+            onChange={(event) => setSelectedStatus(event.target.value)}
+          >
             <option value="all">Todos los estados</option>
+            <option value={EVENT_STATUS.BORRADOR}>Borrador</option>
+            <option value={EVENT_STATUS.PUBLICADO}>Publicado</option>
+            <option value={EVENT_STATUS.CANCELADO}>Cancelado</option>
           </select>
-          <button type="button" className="event-button event-button-primary" disabled title="El filtrado no forma parte de HU1">Filtrar</button>
+          <button
+            type="button"
+            className="event-button event-button-primary"
+            onClick={() => {
+              setSearchFilter(searchInput);
+              setMonthFilter(selectedMonth);
+              setStatusFilter(selectedStatus);
+            }}
+          >
+            Filtrar
+          </button>
         </div>
 
         <h2>Listado de eventos</h2>
@@ -272,7 +315,7 @@ export function EventManagementContent({
             <span>Evento</span><span>Fecha y hora</span><span>Ubicación</span>
             <span>Cupo</span><span>Estado</span><span>Acciones</span>
           </div>
-          {!isLoading && !errorMessage && events.map((event) => (
+          {!isLoading && !errorMessage && filteredEvents.map((event) => (
             <article className="events-table-row" role="row" key={event.id}>
               <div className="event-list-title">
                 <span className="event-thumb">
@@ -280,32 +323,47 @@ export function EventManagementContent({
                 </span>
                 <span>
                   <strong>{event.title}</strong>
-                  <small>Creado por {event.createdBy} · {formatEventDate(event.createdAt)}</small>
+                  <small>
+                    Creado por {event.creatorName || 'Administrador'}
+                    <br />
+                    Creado el {formatEventDateTime(event.createdAt)}
+                  </small>
                 </span>
               </div>
-              <span className="event-date"><strong>{formatEventDate(event.startDate)}</strong><small>{formatEventTimeRange(event)}</small></span>
+              <span className="event-date"><strong>{formatEventSchedule(event.startDate, event.endDate)}</strong></span>
               <span className="event-location">{event.location ?? 'Sin ubicación'}</span>
               <span className="event-capacity">{event.maxCapacity}</span>
               <StatusChip status={event.status} />
               <div className={`event-row-actions ${event.status === EVENT_STATUS.PUBLICADO ? 'is-published' : 'is-draft'}`}>
                 {event.status === EVENT_STATUS.PUBLICADO ? (
-                  <button type="button" className="event-button event-button-secondary event-action-view" disabled title="La ruta de detalle pertenece a HU2 y aún no existe">Ver</button>
+                  <button
+                    type="button"
+                    className="event-button event-button-secondary event-action-view"
+                    onClick={() => router.push(`/events/${event.id}`)}
+                  >
+                    <Eye size={15} aria-hidden="true" /> Ver
+                  </button>
                 ) : event.status === EVENT_STATUS.BORRADOR ? (
                   <>
                     <button type="button" className="event-button event-button-secondary event-action-edit" onClick={() => router.push(`/events/drafts/${event.id}`)}>Editar</button>
                     <button type="button" className="event-button event-button-primary event-action-publish" onClick={() => setPendingPublication(event)} disabled={isPublishing}>Publicar</button>
                   </>
                 ) : null}
-                {event.status === EVENT_STATUS.PUBLICADO ? <MoreVertical size={18} aria-hidden="true" /> : null}
               </div>
             </article>
           ))}
         </div>
-        {!isLoading && !errorMessage && events.length === 0 ? (
-          <p className="events-list-footer" role="status">No hay eventos registrados.</p>
+        {!isLoading && !errorMessage && filteredEvents.length === 0 ? (
+          <p className="events-list-footer" role="status">
+            {events.length === 0
+              ? 'No hay eventos registrados.'
+              : 'No se encontraron eventos que coincidan con los filtros.'}
+          </p>
         ) : null}
-        {!isLoading && !errorMessage && events.length > 0 ? (
-          <p className="events-list-footer">Mostrando 1–{events.length} de {events.length} eventos</p>
+        {!isLoading && !errorMessage && filteredEvents.length > 0 ? (
+          <p className="events-list-footer">
+            Mostrando {filteredEvents.length} de {events.length} eventos
+          </p>
         ) : null}
       </section>
 
@@ -318,14 +376,23 @@ export function EventManagementContent({
         />
       ) : null}
 
-      {publicationSucceeded ? (
-        <EventSuccessDialog onBack={() => setPublicationSucceeded(false)} />
+      {publishedEventId ? (
+        <EventSuccessDialog
+          eventId={publishedEventId}
+          onBack={() => setPublishedEventId(null)}
+        />
       ) : null}
     </main>
   );
 }
 
-export function EventDraftsContent({ userId }: { userId?: string }) {
+export function EventDraftsContent({
+  userId: providedUserId,
+}: {
+  userId?: string;
+}) {
+  const authenticatedUserId = useAuthenticatedUserId();
+  const userId = providedUserId ?? authenticatedUserId;
   const router = useRouter();
   const {
     events,
@@ -336,7 +403,7 @@ export function EventDraftsContent({ userId }: { userId?: string }) {
   } = useAdminEvents(userId);
   const [pendingPublication, setPendingPublication] = useState<EventItem | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [publicationSucceeded, setPublicationSucceeded] = useState(false);
+  const [publishedEventId, setPublishedEventId] = useState<string | null>(null);
   const drafts = events.filter(
     (event) => event.status === EVENT_STATUS.BORRADOR,
   );
@@ -358,7 +425,7 @@ export function EventDraftsContent({ userId }: { userId?: string }) {
         ),
       );
       setPendingPublication(null);
-      setPublicationSucceeded(true);
+      setPublishedEventId(publishedEvent.id);
     } catch (error) {
       setPendingPublication(null);
       setErrorMessage(getRequestErrorMessage(error));
@@ -403,7 +470,7 @@ export function EventDraftsContent({ userId }: { userId?: string }) {
                 </span>
               </div>
               <span className="draft-date">
-                <span>{formatEventDate(draft.startDate)}</span>
+                <span>{formatEventSchedule(draft.startDate, draft.endDate)}</span>
                 <span>{draft.location ?? 'Sin ubicación'}</span>
               </span>
               <StatusChip status={draft.status} />
@@ -425,8 +492,11 @@ export function EventDraftsContent({ userId }: { userId?: string }) {
         />
       ) : null}
 
-      {publicationSucceeded ? (
-        <EventSuccessDialog onBack={() => router.push('/events')} />
+      {publishedEventId ? (
+        <EventSuccessDialog
+          eventId={publishedEventId}
+          onBack={() => router.push('/events')}
+        />
       ) : null}
     </main>
   );
@@ -518,39 +588,6 @@ function useAdminEvents(
   };
 }
 
-const eventDateFormatter = new Intl.DateTimeFormat('es-BO', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-});
-
-const eventTimeFormatter = new Intl.DateTimeFormat('es-BO', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
-
-function formatEventDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? 'Fecha no disponible'
-    : eventDateFormatter.format(date);
-}
-
-function formatEventTimeRange(event: EventItem): string {
-  const start = new Date(event.startDate);
-  const end = new Date(event.endDate);
-
-  if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime())
-  ) {
-    return 'Horario no disponible';
-  }
-
-  return `${eventTimeFormatter.format(start)}–${eventTimeFormatter.format(end)}`;
-}
-
 function getEventInitials(title: string): string {
   const words = title.trim().split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase() || 'EV';
@@ -559,7 +596,7 @@ function getEventInitials(title: string): string {
 function toEventSummary(event: EventItem): EventSummary {
   return {
     title: event.title,
-    dateLabel: `${formatEventDate(event.startDate)} · ${formatEventTimeRange(event)}`,
+    dateLabel: formatEventSchedule(event.startDate, event.endDate),
     location: event.location ?? '',
     maxCapacity: event.maxCapacity,
   };
@@ -599,7 +636,8 @@ export function EventConfirmDialog({
           <div>
             <strong>{event.title}</strong>
             <span>{event.dateLabel}</span>
-            <span>{event.location || 'Ubicación por definir'} · Cupo {event.maxCapacity}</span>
+            <span>Ubicación: {event.location || 'Por definir'}</span>
+            <span>Cupo máximo: {event.maxCapacity}</span>
           </div>
         </div>
         <div className="event-dialog-actions">
@@ -613,7 +651,13 @@ export function EventConfirmDialog({
   );
 }
 
-export function EventSuccessDialog({ onBack }: { onBack: () => void }) {
+export function EventSuccessDialog({
+  eventId,
+  onBack,
+}: {
+  eventId: string;
+  onBack: () => void;
+}) {
   return (
     <div className="event-modal-layer" role="presentation">
       <section className="event-success-dialog" role="dialog" aria-modal="true" aria-labelledby="event-success-title">
@@ -622,7 +666,12 @@ export function EventSuccessDialog({ onBack }: { onBack: () => void }) {
         <p>El evento ya está disponible en el catálogo.</p>
         <div className="event-dialog-actions">
           <button type="button" className="event-button event-button-secondary event-back-button" onClick={onBack}>Volver a eventos</button>
-          <button type="button" className="event-button event-button-primary event-view-button" disabled title="La ruta de detalle depende de HU2 y aún no existe">Ver evento</button>
+          <Link
+            href={`/events/${encodeURIComponent(eventId)}`}
+            className="event-button event-button-primary event-view-button"
+          >
+            Ver evento
+          </Link>
         </div>
       </section>
     </div>
