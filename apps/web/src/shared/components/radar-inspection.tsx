@@ -1,15 +1,9 @@
 "use client";
 
 import React from "react";
-import mockData from "../mocks/affinity-vector-mock.json";
+import type { EvidenceItem } from "@umsspira/shared-types/src/affinity";
 import { formatPercentage } from "@/shared/utils/percentage";
 
-// 1. Tipado estricto de la evidencia tal como viene en el JSON
-export interface EvidenceItem {
-  type: 'certification' | 'project';
-  title: string;
-  detail?: string;
-}
 
 export interface AreaData {
   area: string;
@@ -33,17 +27,18 @@ const AREA_NAMES_MAP: Record<string, string> = {
   "it-management": "Gestión TI",
 };
 
-function getSafeAffinity(value: unknown): number {
-  if (value === null || value === undefined || value === "") return 0;
-  const num = Number(value);
-  if (isNaN(num)) return 0;
-  return Math.min(100, Math.max(0, num));
+function getSafeAffinity(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return Math.min(100, Math.max(0, value));
 }
 
-export default function RadarInspection({ 
-  selectedAreaId, 
+export default function RadarInspection({
+  selectedAreaId,
   onSelectArea,
-  areas = (mockData.areas || []) as unknown as AreaData[]
+  areas = [],
 }: RadarInspectionProps) {
 
   // 3. Estado vacío actualizado: SOLO muestra el mensaje, sin botón "Completar perfil"
@@ -75,6 +70,10 @@ export default function RadarInspection({
             const displayName = AREA_NAMES_MAP[item.area] || item.area;
             const isSelected = selectedAreaId === item.area;
             const safeAffinity = getSafeAffinity(item.affinity);
+            const displayAffinity =
+             safeAffinity === null ? "Sin dato" : formatPercentage(safeAffinity);
+
+            const barWidth = safeAffinity === null ? 0 : safeAffinity;
 
 
             return (
@@ -90,12 +89,14 @@ export default function RadarInspection({
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-medium text-gray-700">{displayName}</span>
-                  <span className="text-sm font-semibold text-blue-600">{formatPercentage(safeAffinity)}</span>
+                  <span className="text-sm font-semibold text-blue-600">
+                   {displayAffinity}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-blue-600 h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${safeAffinity}%` }}
+                    style={{ width: `${barWidth}%` }}
                   />
                 </div>
               </div>

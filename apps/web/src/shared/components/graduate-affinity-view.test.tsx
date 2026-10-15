@@ -37,12 +37,30 @@ describe('GraduateAffinityView', () => {
   const mockGetAffinityVector = affinityService.getAffinityVector as jest.Mock;
 
   const recalculatedAreas = [
-    { area: 'software-development', affinity: 85 },
-    { area: 'cloud-devops', affinity: 64 },
-    { area: 'data-ai', affinity: 71 },
-    { area: 'quality-assurance', affinity: 58 },
-    { area: 'cybersecurity-networks', affinity: 42 },
-    { area: 'it-management', affinity: 50 },
+   {
+     area: 'software-development',
+     affinity: 85,
+     evidence: [
+       {
+         type: 'certification' as const,
+         title: 'Certificado React Avanzado',
+       },
+     ],
+   },
+   {
+     area: 'cloud-devops',
+     affinity: 64,
+     evidence: [
+       {
+         type: 'certification' as const,
+         title: 'AWS Certified Cloud Practitioner',
+       },
+     ],
+   },
+   { area: 'data-ai', affinity: 71, evidence: [] },
+   { area: 'quality-assurance', affinity: 58, evidence: [] },
+   { area: 'cybersecurity-networks', affinity: 42, evidence: [] },
+   { area: 'it-management', affinity: 50, evidence: [] },
   ];
 
   const openSimulationModal = () => {
@@ -86,7 +104,7 @@ describe('GraduateAffinityView', () => {
 
   it('muestra el error con el mensaje exacto, conserva el radar anterior y permite reintentar', async () => {
     mockGetAffinityVector.mockRejectedValueOnce(new Error('fallo de red'));
-    
+
     await act(async () => {
       render(<GraduateAffinityView />);
     });
@@ -101,7 +119,7 @@ describe('GraduateAffinityView', () => {
     });
 
     await waitFor(() => expect(mockGetAffinityVector).toHaveBeenCalled());
-    
+
     const recalculateButton = screen.getByRole('button', { name: /simular actualización del radar/i });
     expect(recalculateButton).toBeInTheDocument();
   });
@@ -117,7 +135,7 @@ describe('GraduateAffinityView', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const simulateButton = within(screen.getByRole('dialog')).getByRole('button', { name: /simular cambio en el perfil/i });
-    
+
     await act(async () => {
       fireEvent.click(simulateButton);
     });
@@ -138,7 +156,7 @@ describe('GraduateAffinityView', () => {
 
     openSimulationModal();
     const simulateButton = within(screen.getByRole('dialog')).getByRole('button', { name: /simular cambio en el perfil/i });
-    
+
     await act(async () => {
       fireEvent.click(simulateButton);
     });
@@ -151,10 +169,10 @@ describe('GraduateAffinityView', () => {
     await act(async () => {
       render(<GraduateAffinityView />);
     });
-    
+
     const addButton = await screen.findByRole('button', { name: /añadir certificaciones/i });
     fireEvent.click(addButton);
-    
+
     expect(mockPush).toHaveBeenCalledWith(
       expect.stringContaining('returnTo=/afinidad')
     );
@@ -162,7 +180,7 @@ describe('GraduateAffinityView', () => {
 
   it('simula timeout con temporizadores falsos y muestra error con Reintentar manteniendo el último radar válido', async () => {
     jest.useFakeTimers();
-    
+
     await act(async () => {
       render(<GraduateAffinityView />);
     });
@@ -172,7 +190,7 @@ describe('GraduateAffinityView', () => {
     });
 
     const timeoutButton = screen.getByRole('button', { name: /simular timeout/i });
-    
+
     act(() => {
       fireEvent.click(timeoutButton);
     });
@@ -275,4 +293,44 @@ describe('GraduateAffinityView', () => {
     expect(screen.getByRole('status', { name: 'Cargando tu radar de afinidad' })).toBeInTheDocument();
     expect(screen.queryByText('Sin datos de historial laboral')).not.toBeInTheDocument();
   });
+
+  it('BUG-HU2-07: muestra únicamente las evidencias del área seleccionada', async () => {
+    const areasWithEvidence = recalculatedAreas.map((area) => {
+      if (area.area === 'quality-assurance') {
+        return {
+          ...area,
+          evidence: [
+            {
+              type: 'certification' as const,
+              title: 'QA-01',
+              detail: 'Evidencia de prueba de QA',
+            },
+          ],
+        };
+      }
+
+      return area;
+    });
+
+    mockGetAffinityVector.mockResolvedValue({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-30T12:00:00.000Z',
+      areas: areasWithEvidence,
+    });
+
+    await act(async () => {
+      render(<GraduateAffinityView />);
+    });
+
+    await waitFor(() => {
+      expect(mockGetAffinityVector).toHaveBeenCalledTimes(1);
+    });
+
+    // Selecciona QA desde el radar de inspección.
+    fireEvent.click(screen.getByText('QA'));
+
+    expect(await screen.findByText('QA-01')).toBeInTheDocument();
+    expect(screen.queryByText('Certificado React Avanzado')).not.toBeInTheDocument();
+  });
+
 });

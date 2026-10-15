@@ -1,96 +1,147 @@
+
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import RadarInspection from './radar-inspection';
 
-// Mock del JSON para controlar los escenarios de prueba
-jest.mock('../mocks/affinity-vector-mock.json', () => ({
-  areas: [
+describe('RadarInspection Component', () => {
+  const mockOnSelectArea = jest.fn();
+
+  const mockAreas = [
     {
       area: 'software-development',
       affinity: 85.6,
       evidence: [
-        { type: 'certification', title: 'Certificado React Avanzado' },
-        { type: 'project', title: 'Sistema de Gestión' }
-      ]
+        { type: 'certification' as const, title: 'Certificado React Avanzado' },
+        { type: 'project' as const, title: 'Sistema de Gestión' },
+      ],
     },
     {
       area: 'cloud-devops',
       affinity: 70,
-      evidence: [] // Área sin respaldos (HU2-C9)
-    }
-  ]
-}));
-
-describe('RadarInspection Component', () => {
-  const mockOnSelectArea = jest.fn();
+      evidence: [],
+    },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('C2: Renderiza el estado vacío correctamente cuando no hay áreas', () => {
-    // Pasamos un array vacío mediante la prop 'areas' para probar el estado vacío sin botones (CA-HU2-05)
+  test('C2: Renderiza el estado vacío cuando no hay áreas', () => {
     render(
-      <RadarInspection 
-        selectedAreaId={null} 
-        onSelectArea={mockOnSelectArea} 
-        areas={[]} 
+      <RadarInspection
+        selectedAreaId={null}
+        onSelectArea={mockOnSelectArea}
+        areas={[]}
       />
     );
 
-    // Verificamos que se muestre el texto de estado vacío obligatorio
     expect(
       screen.getByText(/Sin datos de historial laboral/i)
     ).toBeInTheDocument();
 
-    // Verificamos rigurosamente que NO se renderice ningún botón
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  test('C4, C6 & C3: Muestra las áreas con sus nombres oficiales, porcentajes enteros y permite seleccionar un área', () => {
-    render(<RadarInspection selectedAreaId={null} onSelectArea={mockOnSelectArea} />);
+  test('C4, C6 y C3: Muestra las áreas, porcentajes y permite seleccionar un área', () => {
+    render(
+      <RadarInspection
+        selectedAreaId={null}
+        onSelectArea={mockOnSelectArea}
+        areas={mockAreas}
+      />
+    );
 
-    // Verifica que se muestre el texto de ayuda y los nombres de las áreas mapeadas
-    expect(screen.getByText('Haz clic en un área para inspeccionar sus respaldos')).toBeInTheDocument();
+    expect(
+      screen.getByText('Haz clic en un área para inspeccionar sus respaldos')
+    ).toBeInTheDocument();
+
     expect(screen.getByText('Desarrollo de Software')).toBeInTheDocument();
     expect(screen.getByText('Cloud/DevOps')).toBeInTheDocument();
-
-    // Verifica porcentaje entero (85.6% formateado o redondeado según tu utilidad)
     expect(screen.getByText(/86%/i)).toBeInTheDocument();
 
-    // Simula clic en un área para verificar la prop onSelectArea
     fireEvent.click(screen.getByText('Desarrollo de Software'));
+
     expect(mockOnSelectArea).toHaveBeenCalledWith('software-development');
   });
 
-  test('C4: Muestra únicamente los respaldos del área seleccionada', () => {
-    render(<RadarInspection selectedAreaId="software-development" onSelectArea={mockOnSelectArea} />);
+  test('BUG-HU2-03: Muestra Sin dato para afinidades inválidas', () => {
+    const invalidAreas = [
+      { area: 'software-development', affinity: null },
+      { area: 'cloud-devops', affinity: '' },
+      { area: 'data-ai', affinity: 'abc' },
+    ] as any[];
 
-    // Debe mostrar los respaldos de desarrollo de software
+    render(
+      <RadarInspection
+        selectedAreaId={null}
+        onSelectArea={mockOnSelectArea}
+        areas={invalidAreas}
+      />
+    );
+
+    expect(screen.getAllByText('Sin dato')).toHaveLength(3);
+    const bars = document.querySelectorAll('[style*="width"]');
+
+expect(bars).toHaveLength(3);
+
+bars.forEach((bar) => {
+  expect((bar as HTMLElement).style.width).toBe('0%');
+});
+  });
+
+
+  test('C4: Muestra únicamente los respaldos del área seleccionada', () => {
+    render(
+      <RadarInspection
+        selectedAreaId="software-development"
+        onSelectArea={mockOnSelectArea}
+        areas={mockAreas}
+      />
+    );
+
     expect(screen.getByText('Certificado React Avanzado')).toBeInTheDocument();
     expect(screen.getByText('Sistema de Gestión')).toBeInTheDocument();
   });
 
-  test('C5: Permite reemplazar la selección anterior enviando el nuevo ID o null al hacer clic', () => {
+  test('C5: Permite volver al resumen y cambiar el área seleccionada', () => {
     const { rerender } = render(
-      <RadarInspection selectedAreaId="software-development" onSelectArea={mockOnSelectArea} />
+      <RadarInspection
+        selectedAreaId="software-development"
+        onSelectArea={mockOnSelectArea}
+        areas={mockAreas}
+      />
     );
 
-    // Si hacemos clic en "Volver al resumen" o en otra área, se dispara la prop
-    const backButton = screen.getByText(/Volver al resumen/i);
-    fireEvent.click(backButton);
+    fireEvent.click(screen.getByText(/Volver al resumen/i));
+
     expect(mockOnSelectArea).toHaveBeenCalledWith(null);
 
-    // Simulamos cambio de selección por props
-    rerender(<RadarInspection selectedAreaId="cloud-devops" onSelectArea={mockOnSelectArea} />);
+    rerender(
+      <RadarInspection
+        selectedAreaId="cloud-devops"
+        onSelectArea={mockOnSelectArea}
+        areas={mockAreas}
+      />
+    );
+
     expect(screen.getByText('Área: Cloud/DevOps')).toBeInTheDocument();
   });
 
-  test('C9: Muestra el mensaje adecuado cuando el área seleccionada no tiene respaldos asociados', () => {
-    render(<RadarInspection selectedAreaId="cloud-devops" onSelectArea={mockOnSelectArea} />);
+  test('C9: Muestra el mensaje adecuado cuando el área no tiene respaldos', () => {
+    render(
+      <RadarInspection
+        selectedAreaId="cloud-devops"
+        onSelectArea={mockOnSelectArea}
+        areas={mockAreas}
+      />
+    );
 
-    // Como cloud-devops tiene evidence: [], debe mostrar los mensajes de ausencia de respaldos
-    expect(screen.getAllByText(/No hay certificaciones registradas para esta área/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Esta área no tiene respaldos asociados/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/No hay certificaciones registradas para esta área/i).length
+    ).toBeGreaterThan(0);
+
+    expect(
+      screen.getByText(/Esta área no tiene respaldos asociados/i)
+    ).toBeInTheDocument();
   });
 });

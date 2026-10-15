@@ -10,7 +10,6 @@ import { RadarErrorState } from './radar-error-state';
 import { SuccessToast } from './success-toast';
 import { AffinitySkeleton } from './affinity-skeleton';
 import RadarInspection from './radar-inspection';
-import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
@@ -62,12 +61,12 @@ export const GraduateAffinityView: React.FC = () => {
         setIsLoading(true);
        const result = await getAffinityVector();
         setCandidateAreas(
-       result.areas.map((a: any) => ({
-       area: a.area,
-       affinity: a.affinity,
-       evidence: a.evidence || [],
-     }))
+       result.areas.map((area) => ({
+       ...area,
+       evidence: area.evidence ?? [],
+    }))
   );
+
         setHasValidRadar(true);
         setHasRadarError(false);
       } catch {
@@ -92,11 +91,17 @@ export const GraduateAffinityView: React.FC = () => {
     try {
       const previousAreas = [...candidateAreas];
       const result = await recalculateAffinity();
-      const newAreasMapped = result.areas.map((a: any) => ({
-      area: a.area,
-      affinity: a.affinity,
-      evidence: a.evidence || [],
-      }));
+      const newAreasMapped = result.areas.map((area) => {
+      const previousArea = previousAreas.find(
+       (previous) => previous.area === area.area
+     );
+
+     return {
+      ...area,
+      evidence: area.evidence ?? previousArea?.evidence ?? [],
+    };
+   });
+
 
       const modifiedIds: string[] = [];
       result.areas.forEach((newAreaItem) => {
@@ -160,23 +165,16 @@ export const GraduateAffinityView: React.FC = () => {
   // Mientras no llega el primer vector ni ocurre un error, se muestra el skeleton para no presentar el perfil como vacío (HU-2, escenarios de carga y error).
   const isInitialLoading = !hasValidRadar && !hasRadarError;
 
-  const mockAreas = affinityVectorMock.areas as unknown as InspectionAreas;
+  const inspectionAreas: InspectionAreas = orderedCandidateAreas.map((item) => {
+  const sourceArea = candidateAreas.find(
+    (candidate) => candidate.area === item.area
+  );
 
-  const inspectionAreas: InspectionAreas = orderedCandidateAreas.map((item: any) => {
-    // 1. Busca si el elemento tiene evidencias dinámicas de la API/estado
-    const dynamicEvidence = item.evidence ?? (candidateAreas.find((c: any) => c.area === item.area) as any)?.evidence;
-    
-    // 2. Busca la evidencia correspondiente en el mock estático
-    const mockEvidence = mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [];
-
-    return {
-      area: item.area,
-      affinity: item.affinity,
-      // Si la API trae evidencias (ej. SW-01/SW-02 en D1), las usa prioritariamente; si no vienen, recurre al mock para los tests
-      evidence: (dynamicEvidence && dynamicEvidence.length > 0) ? dynamicEvidence : mockEvidence,
-    };
+  return {
+    ...item,
+    evidence: sourceArea?.evidence ?? [],
+  };
   });
-
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

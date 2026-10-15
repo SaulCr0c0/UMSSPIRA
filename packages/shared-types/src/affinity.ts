@@ -1,3 +1,4 @@
+
 export const AFFINITY_AREAS = [
   "software-development",
   "cloud-devops",
@@ -9,15 +10,23 @@ export const AFFINITY_AREAS = [
 
 export type AffinityArea = (typeof AFFINITY_AREAS)[number];
 
+export interface EvidenceItem {
+  type: "certification" | "project";
+  title: string;
+  detail?: string;
+}
+
 export interface AffinityAreaScore {
   area: AffinityArea;
-  // Porcentaje de afinidad de 0 a 100 (la BD guarda NUMERIC(5,2))
+  // Porcentaje de afinidad de 0 a 100.
   affinity: number;
+  // Respaldos correspondientes a esta área.
+  evidence?: EvidenceItem[];
 }
 
 export interface AffinityVectorResponse {
   graduateId: string;
   calculatedAt: string;
-  // Siempre 6 áreas, en el orden fijo definido en la HU-2
+  // Siempre 6 áreas, en el orden fijo definido en la HU-2.
   areas: AffinityAreaScore[];
 }
