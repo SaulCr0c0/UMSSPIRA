@@ -215,8 +215,8 @@ export function MentorAvailabilityPage() {
     <section className="mentor-availability-card" aria-labelledby="mentor-availability-heading">
       <div className="mentor-availability-intro">
         <div className="mentor-availability-statuses" aria-live="polite">
-          <span className={`mentor-availability-chip${savedStatus ? ` is-${savedStatus.toLowerCase()}` : ''}`}>
-            {loadFailed ? 'Estado no disponible' : loading ? 'Cargando disponibilidad…' : savedStatus ? statusLabels[savedStatus] : 'Disponibilidad sin configurar'}
+          <span className={`mentor-availability-chip${!loading && !loadFailed && savedStatus ? ` is-${savedStatus.toLowerCase()}` : ''}`}>
+            {loading ? 'Cargando disponibilidad…' : loadFailed ? 'No se pudo cargar la disponibilidad' : savedStatus ? statusLabels[savedStatus] : 'Disponibilidad sin configurar'}
           </span>
           <span className="mentor-availability-chip mentor-availability-chip-approved">
             <CheckCircle2Icon aria-hidden="true" /> Titulado aprobado
@@ -242,10 +242,10 @@ export function MentorAvailabilityPage() {
 
       <div className="mentor-availability-section-heading">
         <h2 id="mentor-availability-heading">Estado de disponibilidad</h2>
-        <span><i aria-hidden="true" />{loadFailed ? 'Estado no disponible' : selectedStatus ? dirty ? 'Cambio pendiente de guardar' : 'Estado guardado' : 'Selecciona una opción'}</span>
+        <span><i aria-hidden="true" />{loading ? 'Cargando disponibilidad…' : loadFailed ? 'Consulta pendiente de reintento' : selectedStatus ? dirty ? 'Cambio pendiente de guardar' : 'Estado guardado' : 'Selecciona una opción'}</span>
       </div>
 
-      {loading ? <p className="mentor-availability-loading" role="status"><LoaderCircleIcon aria-hidden="true" /> Cargando disponibilidad…</p> : (
+      {loading ? <p className="mentor-availability-loading" role="status"><LoaderCircleIcon aria-hidden="true" /> Cargando disponibilidad…</p> : !loadFailed && (
         <div className="mentor-availability-options" role="group" aria-label="Selecciona tu disponibilidad">
           {options.map(({ status, title, description, visibility, icon: Icon }) => {
             const selected = selectedStatus === status;
