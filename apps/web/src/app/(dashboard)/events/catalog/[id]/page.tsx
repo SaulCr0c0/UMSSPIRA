@@ -1,102 +1,149 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { apiClient } from '@/shared/services/api-client'; // Tu ruta correcta
+import type { EventItem } from '@umsspira/shared-types';
+
+import { ApiClientError } from '@/shared/services/api-client';
+import { getPublishedEvent } from '@/shared/services/events-service';
+import { formatPeopleCount } from '@/shared/utils/event-copy';
+import { formatEventDateTime } from '@/shared/utils/event-date-time';
 
 interface EventDetailPageProps {
   params: { id: string };
 }
 
-export default async function EventDetailPage({ params }: EventDetailPageProps) {
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export default function EventDetailPage({ params }: EventDetailPageProps) {
   const { id } = params;
-  let event: any = null;
+  const isValidId = UUID_PATTERN.test(id);
+  const [event, setEvent] = useState<EventItem | null>(null);
+  const [isLoading, setIsLoading] = useState(isValidId);
+  const [errorState, setErrorState] = useState<'invalid' | 'not-found' | 'unavailable' | null>(
+    isValidId ? null : 'invalid',
+  );
 
-  try {
-    // Intentamos consumir la API real
-    event = await apiClient(`/api/events/${id}`);
-  } catch (error) {
-    // Como Supabase tiene error de permisos, usamos un mock para que no te bloquees
-    console.log("Error de backend detectado. Usando mock para probar la interfaz.");
-    event = {
-      id: id,
-      title: "Evento de Prueba UMSSPIRA (Mock)",
-      description: "Como la base de datos de Supabase tiene error de permisos, estamos mostrando estos datos de prueba para que puedas verificar tu Tarea 11.",
-      startDate: "2026-10-15T09:00:00Z",
-      endDate: "2026-10-15T18:00:00Z",
-      location: "Auditorio de la Facultad de Tecnología",
-      maxCapacity: 100,
-      status: "publicado",
-      imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2000&auto=format&fit=crop"
-    };
+  const loadEvent = useCallback(async () => {
+    if (!isValidId) return;
+
+    setIsLoading(true);
+    setErrorState(null);
+
+    try {
+      setEvent(await getPublishedEvent(id));
+    } catch (error) {
+      setEvent(null);
+      setErrorState(
+        error instanceof ApiClientError && error.status === 404
+          ? 'not-found'
+          : 'unavailable',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, isValidId]);
+
+  useEffect(() => {
+    void loadEvent();
+  }, [loadEvent]);
+
+  if (isLoading) {
+    return (
+      <main className="hu2-detail-page">
+        <p className="hu2-detail-loading" role="status">
+          Cargando evento...
+        </p>
+      </main>
+    );
   }
 
-  if (!event) {
-    return notFound();
+  if (errorState || !event) {
+    const message = errorState === 'invalid'
+      ? 'El identificador del evento no es válido.'
+      : errorState === 'not-found'
+        ? 'El evento no fue encontrado o ya no está disponible.'
+        : 'No se pudo cargar el evento en este momento.';
+
+    return (
+      <main className="hu2-detail-page">
+        <section className="hu2-detail-unavailable">
+          <h1>Evento no disponible</h1>
+          <p role="alert">{message}</p>
+          <div>
+            <Link
+              href="/events/catalog"
+              className="hu2-primary-action"
+            >
+              Regresar al catálogo
+            </Link>
+            {errorState === 'unavailable' ? (
+              <button
+                type="button"
+                onClick={() => void loadEvent()}
+                className="hu2-secondary-action"
+              >
+                Reintentar
+              </button>
+            ) : null}
+          </div>
+        </section>
+      </main>
+    );
   }
 
-  // Formateo de fechas
-  const startDate = new Date(event.startDate).toLocaleString('es-BO');
-  const endDate = new Date(event.endDate).toLocaleString('es-BO');
-  const imageUrl = event.imageUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2000&auto=format&fit=crop";
   return (
-    <div className="min-h-screen bg-[#F4EFE6] p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* Navegación para regresar al catálogo */}
+    <main className="hu2-detail-page">
+      <div className="hu2-detail-shell">
         <Link
           href="/events/catalog"
-          className="inline-flex items-center text-sm font-semibold text-slate-600 hover:text-[#F89C4B] transition-colors"
+          className="hu2-back-link"
         >
           ← Regresar al catálogo
         </Link>
 
-        {/* Tarjeta de Detalle del Evento */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          
-          <div className="w-full h-72 bg-slate-100 relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-              <h1 className="text-3xl font-bold text-[#1A202C]">{event.title}</h1>
-              <span className="mt-3 md:mt-0 px-4 py-1.5 text-xs font-bold rounded-full bg-green-100 text-green-800 uppercase tracking-wide">
-                {event.status}
-              </span>
+        <div className="hu2-detail-grid">
+          <article className="hu2-detail-hero">
+            <header
+              className={`hu2-detail-cover ${event.imageUrl ? 'has-image' : ''}`}
+              style={event.imageUrl ? {
+                backgroundImage: `linear-gradient(90deg, rgba(22, 32, 44, .46), rgba(22, 32, 44, .1)), url("${event.imageUrl}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              } : undefined}
+            >
+              <span className="hu2-cover-accent" aria-hidden="true" />
+              <span className="hu2-cover-circle hu2-cover-circle-large" aria-hidden="true" />
+              <span className="hu2-cover-circle hu2-cover-circle-small" aria-hidden="true" />
+              <p>Evento universitario</p>
+              <strong>{event.title.toLocaleUpperCase('es')}</strong>
+              <span className="hu2-detail-status">{event.status}</span>
+            </header>
+            <div className="hu2-detail-hero-copy">
+              <h1 className="min-w-0 max-w-full break-words">
+                {event.title}
+              </h1>
             </div>
+          </article>
 
-            <div className="mb-8">
-              <h3 className="text-sm font-bold text-slate-500 uppercase mb-2">Descripción</h3>
-              <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap">
-                {event.description || 'Sin descripción disponible.'}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-lg border border-slate-100">
-              <div>
-                <h3 className="text-sm font-bold text-slate-500 uppercase mb-1">Fecha y Hora</h3>
-                <p className="text-slate-900 font-medium">Inicio: <span className="font-normal">{startDate}</span></p>
-                <p className="text-slate-900 font-medium">Fin: <span className="font-normal">{endDate}</span></p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-slate-500 uppercase mb-1">Ubicación</h3>
-                <p className="text-slate-900">{event.location || 'Por definir'}</p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-slate-500 uppercase mb-1">Cupo Máximo</h3>
-                <p className="text-slate-900">{event.maxCapacity} personas</p>
-              </div>
-            </div>
-            
-          </div>
+          <aside className="hu2-detail-info">
+            <h2>Información del evento</h2>
+            <dl>
+              <div><dt>Inicio</dt><dd>{formatEventDateTime(event.startDate)}</dd></div>
+              <div><dt>Fin</dt><dd>{formatEventDateTime(event.endDate)}</dd></div>
+              <div><dt>Ubicación</dt><dd>{event.location || 'Por definir'}</dd></div>
+              <div><dt>Cupo máximo</dt><dd>{formatPeopleCount(event.maxCapacity)}</dd></div>
+              <div><dt>Organiza</dt><dd>UMSSPIRA</dd></div>
+            </dl>
+          </aside>
         </div>
+
+        <section className="hu2-detail-description">
+          <h2>Descripción</h2>
+          <p>{event.description || 'Sin descripción disponible.'}</p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
