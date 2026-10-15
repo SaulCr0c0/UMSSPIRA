@@ -25,11 +25,11 @@ jest.mock('../services/affinity-service');
 // de mayor a menor porcentaje (HU-3)
 const EXPECTED_LABELS = [
   'Desarrollo de Software',
-  'Ciencia de Datos / IA',
+  'Ciencia de Datos & IA',
   'Cloud, DevOps & Infraestructura',
   'Aseguramiento de Calidad (QA)',
-  'Gestión de TI / Gobernanza',
-  'Ciberseguridad / Redes',
+  'Gestión de TI & Gobernanza',
+  'Ciberseguridad & Redes',
 ];
 
 describe('GraduateAffinityView', () => {

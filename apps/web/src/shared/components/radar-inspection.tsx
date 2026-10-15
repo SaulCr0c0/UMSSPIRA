@@ -27,10 +27,10 @@ interface RadarInspectionProps {
 export const AREA_NAMES_MAP: Record<string, string> = {
   "software-development": "Desarrollo de Software",
   "cloud-devops": "Cloud, DevOps & Infraestructura",
-  "data-ai": "Ciencia de Datos / IA",
+  "data-ai": "Ciencia de Datos & IA",
   "quality-assurance": "Aseguramiento de Calidad (QA)",
-  "cybersecurity-networks": "Ciberseguridad / Redes",
-  "it-management": "Gestión de TI / Gobernanza",
+  "cybersecurity-networks": "Ciberseguridad & Redes",
+  "it-management": "Gestión de TI & Gobernanza",
 };
 
 // Colores del mockup por área, asociados al id técnico (no a la posición en la lista)
