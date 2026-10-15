@@ -16,6 +16,21 @@ function setup() { render(<MentorInterests catalog={catalog} initialConfiguratio
 function add() { fireEvent.click(screen.getByRole('button', { name: 'APIs REST' })); }
 function openSave() { fireEvent.click(screen.getByRole('button', { name: /Guardar configuración/ })); }
 
+it.each([
+  [0, 'tópicos', 'intereses', 'seleccionados'],
+  [1, 'tópico', 'interés', 'seleccionado'],
+  [2, 'tópicos', 'intereses', 'seleccionados'],
+] as const)('actualiza los textos al seleccionar o quitar hasta tener %i intereses y al guardar', async (count, topicsLabel, interestsLabel, selectedLabel) => {
+  render(<MentorInterests catalog={catalog} initialConfiguration={{ areaIds: ['web'], topicIds: count === 1 ? [] : ['react'] }} onSave={onSave} />);
+  fireEvent.click(screen.getByRole('button', { name: count === 2 ? 'APIs REST' : 'React' }));
+  expect(screen.getByRole('heading', { name: `En tu perfil · ${count} ${topicsLabel}` })).toBeInTheDocument();
+  expect(screen.getByText(`${count} de 2 ${selectedLabel}`)).toBeInTheDocument();
+  openSave();
+  expect(screen.getByRole('alertdialog')).toHaveTextContent(`Tu perfil quedará con ${count} ${interestsLabel} de mentoría.`);
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+  expect(await screen.findByText(`Guardaste ${count} ${interestsLabel} de mentoría.`)).toBeInTheDocument();
+});
+
 it('bloquea tópicos de áreas no seleccionadas y permite cambiar las áreas', () => {
   setup();
   expect(screen.getByRole('button', { name: 'PostgreSQL' })).toBeDisabled();

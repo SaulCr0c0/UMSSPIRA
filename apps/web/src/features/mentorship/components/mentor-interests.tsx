@@ -102,12 +102,12 @@ export function MentorInterests({ catalog, initialConfiguration, onSave, areasHr
         <p>{area.description}</p></div></div>
         {enabled && area.topics.length === 0 && <p>Esta área todavía no tiene tópicos disponibles en el catálogo.</p>}
         {enabled ? <>
-          <h4>En tu perfil · {selected.length} tópicos</h4>
+          <h4>En tu perfil · {selected.length} {selected.length === 1 ? 'tópico' : 'tópicos'}</h4>
           {selected.length === 0 && <p>Aún no seleccionaste intereses en esta área.</p>}
           <div className="interest-topics">{selected.map(topic => <button key={topic.id} type="button" aria-pressed="true" disabled={saving} onClick={() => change({ ...draft, topicIds: draft.topicIds.filter(id => id !== topic.id) })}>{topic.name}<XIcon size={14} aria-hidden="true" /></button>)}</div>
           <h4>Sugeridos</h4>
           <div className="interest-topics">{area.topics.filter(topic => !draft.topicIds.includes(topic.id)).map(topic => <button key={topic.id} type="button" aria-pressed="false" disabled={saving} onClick={() => change({ ...draft, topicIds: [...draft.topicIds, topic.id] })}><PlusIcon size={14} aria-hidden="true" />{topic.name}</button>)}</div>
-          <div className="interest-area-footer"><span>{selected.length} de {area.topics.length} seleccionados</span><button type="button" disabled={saving || draft.areaIds.length <= minimumAreas} title={draft.areaIds.length <= minimumAreas ? 'Debes conservar al menos un área técnica.' : undefined} onClick={() => setDialog(`area:${area.id}`)}><Trash2Icon size={14} aria-hidden="true" />Quitar área</button></div>
+          <div className="interest-area-footer"><span>{selected.length} de {area.topics.length} {selected.length === 1 ? 'seleccionado' : 'seleccionados'}</span><button type="button" disabled={saving || draft.areaIds.length <= minimumAreas} title={draft.areaIds.length <= minimumAreas ? 'Debes conservar al menos un área técnica.' : undefined} onClick={() => setDialog(`area:${area.id}`)}><Trash2Icon size={14} aria-hidden="true" />Quitar área</button></div>
         </> : <>
           <p>Área no incluida en tu selección técnica. Para seleccionar estos tópicos, primero debes agregar esta área en Áreas técnicas.</p>
           <div className="interest-topics">{area.topics.map(topic => <button key={topic.id} type="button" disabled>{topic.name}</button>)}</div>
@@ -117,14 +117,14 @@ export function MentorInterests({ catalog, initialConfiguration, onSave, areasHr
     })}</div>
     <p className="interests-catalog-note">Solo se muestran tópicos de tus áreas técnicas. <button type="button" disabled={saving} onClick={() => leave(areasHref)}>Agregar otra área</button></p>
     <section className="interests-progress" aria-label="Configuración del perfil"><div className="interests-progress-heading"><h2>Completa tu perfil de mentor</h2><span><strong>{completedSteps}</strong> de 3 pasos completados</span></div><div className="interests-progress-track"><span style={{ width: `${(completedSteps / 3) * 100}%` }} /></div><ol><li><span className="interests-step-number"><CheckIcon size={16} aria-hidden="true" /></span><div><small>Paso 1</small><strong>Áreas técnicas</strong></div></li><li aria-current="step"><span className="interests-step-label">En edición</span><span className="interests-step-number">2</span><div><small>Paso actual</small><strong>Intereses de mentoría</strong></div></li><li><span className="interests-step-number">3</span><div><small>Paso 3</small><strong>Disponibilidad</strong></div></li></ol></section>
-    {success && <div role="status" className="interests-success"><span><CheckIcon size={16} aria-hidden="true" /></span><div><strong>Intereses guardados correctamente</strong><p>Guardaste {saved.topicIds.length} intereses de mentoría.</p></div></div>}
+    {success && <div role="status" className="interests-success"><span><CheckIcon size={16} aria-hidden="true" /></span><div><strong>Intereses guardados correctamente</strong><p>Guardaste {saved.topicIds.length} {saved.topicIds.length === 1 ? 'interés' : 'intereses'} de mentoría.</p></div></div>}
     <footer className="interests-actions"><SecondaryButton disabled={saving} onClick={() => leave(areasHref)}><ArrowLeftIcon size={16} aria-hidden="true" />Volver a Áreas técnicas</SecondaryButton>
       <span role="status">{dirty ? 'Cambios sin guardar' : 'Sin cambios pendientes'}</span>
       <SecondaryButton disabled={!dirty || saving} onClick={() => setDialog('discard')}>Descartar cambios</SecondaryButton>
       <PrimaryButton disabled={!dirty} loading={saving} onClick={() => setDialog('save')}>Guardar configuración ({draft.topicIds.length})</PrimaryButton>
       {success && <SecondaryButton className="interests-return-profile" onClick={() => leave('/mentorship/profile')}><CheckIcon size={16} aria-hidden="true" />Volver a mi perfil</SecondaryButton>}
     </footer>
-    <ConfirmModal open={dialog === 'save'} icon={SaveIcon} title="¿Guardar cambios en tus intereses?" description={`Tu perfil quedará con ${draft.topicIds.length} intereses de mentoría.`} cancelLabel="Seguir editando" confirmLabel="Guardar cambios" confirming={saving} onCancel={() => { setDialog(null); setError(''); }} onConfirm={() => void save()}>
+    <ConfirmModal open={dialog === 'save'} icon={SaveIcon} title="¿Guardar cambios en tus intereses?" description={`Tu perfil quedará con ${draft.topicIds.length} ${draft.topicIds.length === 1 ? 'interés' : 'intereses'} de mentoría.`} cancelLabel="Seguir editando" confirmLabel="Guardar cambios" confirming={saving} onCancel={() => { setDialog(null); setError(''); }} onConfirm={() => void save()}>
       <p>Se agregarán ({added.length}): {added.map(topicName).join(', ') || 'Ninguno'}.</p><p>Se quitarán ({removed.length}): {removed.map(topicName).join(', ') || 'Ninguno'}.</p>
       {saved.areaIds.some(id => !draft.areaIds.includes(id)) && <p>También se actualizarán las áreas técnicas que quitaste.</p>}
       {error && <p role="alert">{error}</p>}
