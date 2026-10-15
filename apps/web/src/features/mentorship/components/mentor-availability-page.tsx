@@ -87,6 +87,8 @@ export function MentorAvailabilityPage() {
   const [requiresLogin, setRequiresLogin] = useState(false);
   const busy = useRef(false);
   const dirty = selectedStatus !== savedStatus;
+  const ready = !loading && !loadFailed && !forbidden && !requiresLogin;
+  const canSave = ready && !saving && selectedStatus !== null && dirty;
 
   const loadAvailability = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -140,7 +142,7 @@ export function MentorAvailabilityPage() {
   }, [dirty]);
 
   function choose(status: MentorAvailabilityStatus) {
-    if (busy.current || saving || loadFailed) return;
+    if (busy.current || saving || !ready) return;
     setError('');
     setBanner('');
     setToast('');
@@ -153,7 +155,7 @@ export function MentorAvailabilityPage() {
   }
 
   async function save() {
-    if (busy.current || !selectedStatus || !dirty || loading || loadFailed || forbidden || requiresLogin) return;
+    if (busy.current || !canSave || !selectedStatus) return;
     busy.current = true;
     const startedAt = Date.now();
     setSaving(true);
@@ -252,7 +254,7 @@ export function MentorAvailabilityPage() {
             return <article key={status} className={`mentor-availability-option${selected ? ` is-selected is-${status.toLowerCase()}` : ''}`}>
               <div className="mentor-availability-option-top">
                 <span className="mentor-availability-option-icon"><Icon aria-hidden="true" /></span>
-                <button type="button" className={selected ? 'mentor-availability-selected' : 'mentor-availability-choose'} onClick={() => choose(status)} disabled={saving || loadFailed} aria-pressed={selected}>
+                <button type="button" className={selected ? 'mentor-availability-selected' : 'mentor-availability-choose'} onClick={() => choose(status)} disabled={saving || !ready} aria-pressed={selected}>
                   {selected ? <><CheckCircle2Icon aria-hidden="true" /> Seleccionado</> : 'Elegir'}
                 </button>
               </div>
@@ -284,7 +286,7 @@ export function MentorAvailabilityPage() {
         }}><ArrowLeftIcon aria-hidden="true" /> Volver a Mi perfil de mentor</Link>
         <div className="mentor-availability-action-buttons">
           {dirty && <SecondaryButton onClick={discard} disabled={saving}>Descartar cambios</SecondaryButton>}
-          <PrimaryButton onClick={() => void save()} disabled={!dirty || !selectedStatus || loading || loadFailed || saving} loading={saving} loadingLabel="Guardando…" iconRight={savedFeedback ? CheckCircle2Icon : ArrowRightIcon} className={`mentor-availability-save${savedFeedback ? ' is-saved' : ''}`}>
+          <PrimaryButton onClick={() => void save()} disabled={!canSave} loading={saving} loadingLabel="Guardando…" iconRight={savedFeedback ? CheckCircle2Icon : ArrowRightIcon} className={`mentor-availability-save${savedFeedback ? ' is-saved' : ''}`}>
             {savedFeedback ? '¡Guardado!' : 'Guardar disponibilidad'}
           </PrimaryButton>
         </div>
