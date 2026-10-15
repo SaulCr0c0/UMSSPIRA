@@ -123,7 +123,7 @@ export function LoginForm() {
       {/* Bug 5: etiqueta e icono del correo */}
       <div className="space-y-2">
         <label htmlFor="email" className={labelClass}>
-          CORREO ELECTRÓNICO INSTITUCIONAL O PERSONAL
+          CORREO ELECTRÓNICO
           <span className="text-truffle-trouble"> *</span>
         </label>
 
@@ -163,7 +163,7 @@ export function LoginForm() {
           className={`${fieldWrapper} ${fieldState(Boolean(fieldErrors.password))}`}
         >
           <LockIcon />
-
+        
           <input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -175,7 +175,7 @@ export function LoginForm() {
             aria-required="true"
             className={fieldInput}
           />
-
+        
           <button
             type="button"
             onClick={() => setShowPassword((visible) => !visible)}
@@ -187,7 +187,16 @@ export function LoginForm() {
             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         </div>
-
+              {/* BUG1 y BUG4: preferencia de sesión persistente */}
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-abyssal-blue">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+            className="h-4 w-4 rounded border-oatmeal accent-abyssal-blue"
+          />
+          Recordar mi sesión en este equipo
+        </label>
         {fieldErrors.password && (
           <p className="text-xs text-truffle-trouble">
             {fieldErrors.password}
