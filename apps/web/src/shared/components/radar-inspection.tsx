@@ -129,7 +129,7 @@ export default function RadarInspection({
         {selectedArea ? (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h4 className="text-md font-bold text-blue-700">
+              <h4 className="text-md font-bold text-blue-fantastic">
                 Área: {AREA_NAMES_MAP[selectedArea.area] || selectedArea.area}
               </h4>
               <button 
