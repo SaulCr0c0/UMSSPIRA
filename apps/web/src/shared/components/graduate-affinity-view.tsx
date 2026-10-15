@@ -21,6 +21,10 @@ import { useRouter } from 'next/navigation';
 // Ruta de Épica 2 almacenada en una constante a nivel de módulo
 const RUTA_EPICA_2_CERTIFICACIONES = '/epica-2/certificaciones/nueva?returnTo=/afinidad';
 
+// Las keywords vienen en los mocks pero no en el tipo del contrato; se leen con este cast
+const extractKeywords = (areas: AffinityAreaScore[]): string[] =>
+  (areas as Array<AffinityAreaScore & { keywords?: string[] }>).flatMap((area) => area.keywords ?? []);
+
 // Áreas que espera el panel de inspección (se deriva de sus props para no duplicar el tipo)
 type InspectionAreas = NonNullable<React.ComponentProps<typeof RadarInspection>['areas']>;
 
@@ -46,6 +50,7 @@ export const GraduateAffinityView: React.FC = () => {
     { area: 'cybersecurity-networks', affinity: 42 },
     { area: 'it-management', affinity: 50 },
   ]);
+  const [loadedKeywords, setLoadedKeywords] = useState<string[]>([]);
 
   const isRecalculatingRef = useRef<boolean>(false);
   const changeVersionRef = useRef<number>(0);
@@ -68,6 +73,7 @@ export const GraduateAffinityView: React.FC = () => {
             affinity: a.affinity,
           }))
         );
+        setLoadedKeywords(extractKeywords(result.areas));
         setHasValidRadar(true);
         setHasRadarError(false);
       } catch {
@@ -109,6 +115,7 @@ export const GraduateAffinityView: React.FC = () => {
 
       setChangedAreaIds(modifiedIds);
       setCandidateAreas(newAreasMapped);
+      setLoadedKeywords(extractKeywords(result.areas));
 
       if (changeVersionRef.current === versionAtStart) {
         clearPendingChanges();
@@ -167,8 +174,9 @@ export const GraduateAffinityView: React.FC = () => {
     evidence: mockAreas.find((mock) => mock.area === item.area)?.evidence ?? [],
   }));
 
-  // Top 3 áreas del vector cargado, para el bloque debajo del radar (mockup HU-3)
+  // Top 3 áreas del vector cargado con respaldos en el mock, para el bloque debajo del radar (mockup HU-3)
   const topAffinityAreas = [...orderedCandidateAreas]
+    .filter((item) => (mockAreas.find((mock) => mock.area === item.area)?.evidence ?? []).length > 0)
     .sort((a, b) => b.affinity - a.affinity)
     .slice(0, 3)
     .map((item) => ({
@@ -177,10 +185,8 @@ export const GraduateAffinityView: React.FC = () => {
       score: item.affinity,
     }));
 
-  // Palabras clave consolidadas del mock que alimenta la vista
-  const influentialKeywords = Array.from(
-    new Set(affinityVectorMock.areas.flatMap((area) => area.keywords)),
-  );
+  // Palabras clave consolidadas del vector o snapshot cargado
+  const influentialKeywords = Array.from(new Set(loadedKeywords));
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -267,7 +273,7 @@ export const GraduateAffinityView: React.FC = () => {
                 )}
               </div>
 
-              {hasValidRadar && !hasRadarError && !isLoading && (
+              {hasValidRadar && !hasRadarError && !isLoading && (topAffinityAreas.length > 0 || influentialKeywords.length > 0) && (
                 <div className="mt-6 bg-palladian rounded-xl border border-oatmeal/60 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />

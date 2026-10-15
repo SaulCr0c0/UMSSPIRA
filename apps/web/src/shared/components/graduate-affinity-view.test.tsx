@@ -276,4 +276,74 @@ describe('GraduateAffinityView', () => {
     expect(screen.getByRole('status', { name: 'Cargando tu radar de afinidad' })).toBeInTheDocument();
     expect(screen.queryByText('Sin datos de historial laboral')).not.toBeInTheDocument();
   });
+
+  it('muestra en el bloque destacado solo áreas con respaldos en el mock', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-30T12:00:00.000Z',
+      areas: [
+        { area: 'cybersecurity-networks', affinity: 95 },
+        { area: 'software-development', affinity: 85 },
+        { area: 'data-ai', affinity: 71 },
+        { area: 'cloud-devops', affinity: 64 },
+        { area: 'quality-assurance', affinity: 58 },
+        { area: 'it-management', affinity: 50 },
+      ],
+    });
+
+    await act(async () => {
+      render(<GraduateAffinityView />);
+    });
+
+    expect(await screen.findByText('1. Desarrollo de Software (85%)')).toBeInTheDocument();
+    expect(screen.getByText('2. Ciencia de Datos & IA (71%)')).toBeInTheDocument();
+    expect(screen.getByText('3. Cloud, DevOps & Infraestructura (64%)')).toBeInTheDocument();
+    expect(screen.queryByText(/Ciberseguridad & Redes \(\d+%\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Gestión de TI & Gobernanza \(\d+%\)/)).not.toBeInTheDocument();
+  });
+
+  it('cambia las palabras clave del bloque al recalcular con el snapshot cargado', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-28T12:00:00.000Z',
+      areas: [
+        { area: 'software-development', affinity: 85, keywords: ['Node.js', 'React'] },
+        { area: 'cloud-devops', affinity: 64, keywords: ['AWS'] },
+        { area: 'data-ai', affinity: 71, keywords: ['Python'] },
+        { area: 'quality-assurance', affinity: 58, keywords: ['Jest'] },
+        { area: 'cybersecurity-networks', affinity: 42, keywords: ['SecOps'] },
+        { area: 'it-management', affinity: 50, keywords: ['Agile'] },
+      ],
+    });
+    mockRecalculateAffinity.mockResolvedValueOnce({
+      graduateId: 'id-1',
+      calculatedAt: '2026-09-28T12:00:00.000Z',
+      areas: [
+        { area: 'software-development', affinity: 85, keywords: ['Kubernetes', 'Go'] },
+        { area: 'cloud-devops', affinity: 64, keywords: ['Terraform'] },
+        { area: 'data-ai', affinity: 71, keywords: ['PyTorch'] },
+        { area: 'quality-assurance', affinity: 58, keywords: ['Selenium'] },
+        { area: 'cybersecurity-networks', affinity: 42, keywords: ['SIEM'] },
+        { area: 'it-management', affinity: 50, keywords: ['ITIL'] },
+      ],
+    });
+
+    await act(async () => {
+      render(<GraduateAffinityView />);
+    });
+
+    expect(await screen.findByText('Node.js')).toBeInTheDocument();
+
+    openSimulationModal();
+    const simulateButton = within(screen.getByRole('dialog')).getByRole('button', { name: /simular cambio en el perfil/i });
+
+    await act(async () => {
+      fireEvent.click(simulateButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Kubernetes')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Node.js')).not.toBeInTheDocument();
+  });
 });
