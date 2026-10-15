@@ -4,7 +4,7 @@ import { AdminNavbar } from "@/shared/components/admin-navbar";
 import { LogoutButton } from "../../modules/auth/frontend/components/logout-button";
 import { TituladoHeader } from "../../modules/auth/frontend/components/titulado-header";
 import { ROLE_COOKIE } from "../../modules/auth/frontend/services/route-access";
-
+import { RevalidateOnPageShow } from "../../modules/auth/frontend/components/revalidate-on-pageshow";
 export default function DashboardLayout({
   children,
 }: {
@@ -14,6 +14,7 @@ export default function DashboardLayout({
 
   return (
     <div className="dashboard-container">
+      <RevalidateOnPageShow />
       {role === "titulado" ? (
         <TituladoHeader />
       ) : (
