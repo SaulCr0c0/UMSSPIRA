@@ -84,6 +84,7 @@ export function MentorAvailabilityPage() {
   const [banner, setBanner] = useState('');
   const [toast, setToast] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const busy = useRef(false);
   const dirty = selectedStatus !== savedStatus;
 
@@ -96,11 +97,13 @@ export function MentorAvailabilityPage() {
       setSavedStatus(state.availabilityStatus);
       setSelectedStatus(state.availabilityStatus);
       setForbidden(false);
+      setRequiresLogin(false);
       setLoadFailed(false);
     } catch (reason) {
       if (signal?.aborted) return;
       const denied = reason instanceof MentorAvailabilityError && reason.status === 403;
       setForbidden(denied);
+      setRequiresLogin(reason instanceof MentorAvailabilityError && reason.status === 401);
       setLoadFailed(true);
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar la disponibilidad.');
     } finally {
@@ -150,7 +153,7 @@ export function MentorAvailabilityPage() {
   }
 
   async function save() {
-    if (busy.current || !selectedStatus || !dirty || loading || forbidden) return;
+    if (busy.current || !selectedStatus || !dirty || loading || loadFailed || forbidden || requiresLogin) return;
     busy.current = true;
     const startedAt = Date.now();
     setSaving(true);
@@ -172,6 +175,11 @@ export function MentorAvailabilityPage() {
         ? reason.message
         : 'No se pudo actualizar la disponibilidad. Inténtalo de nuevo.');
       if (reason instanceof MentorAvailabilityError && reason.status === 403) setForbidden(true);
+      if (reason instanceof MentorAvailabilityError && reason.status === 401) {
+        setRequiresLogin(true);
+        setConfirmStatus(null);
+        setConfirmDiscard(false);
+      }
     } finally {
       const remaining = 1000 - (Date.now() - startedAt);
       if (remaining > 0) await wait(remaining);
@@ -187,6 +195,13 @@ export function MentorAvailabilityPage() {
     setBanner('');
     setToast('');
     setSavedFeedback(false);
+  }
+
+  if (requiresLogin) {
+    return <div className="mentor-availability-error" role="alert">
+      <p>Inicia sesión para configurar tu disponibilidad.</p>
+      <Link href="/login">Iniciar sesión</Link>
+    </div>;
   }
 
   if (forbidden) {
