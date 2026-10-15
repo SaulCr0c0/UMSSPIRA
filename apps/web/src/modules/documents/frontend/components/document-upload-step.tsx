@@ -49,9 +49,9 @@ export function DocumentUploadStep() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const personalData = useRegistrationStore((state) => state.personalData);
 
-  const { file, previewUrl, previewKind, fileError, setFileError, isUploading, selectFile, upload } =
+  const { file, previewUrl, previewKind, fileError, setFileError, isUploading, isValidating, selectFile, upload } =
     useDocumentUpload();
-  const isLocked = isUploading || isSubmitting || !!submitted;
+  const isLocked = isValidating || isUploading || isSubmitting || !!submitted;
   const isSending = isUploading || isSubmitting;
 
   useEffect(() => {
@@ -60,6 +60,7 @@ export function DocumentUploadStep() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isValidating) return;
     setGeneralError(null);
 
     // CA-03.5: no se envia sin tipo de documento ni archivo; tambien se exige la declaracion jurada.
