@@ -55,8 +55,7 @@ describe('RadarInspection Component', () => {
     // Verifica que se muestre el texto de ayuda y los nombres de las áreas mapeadas
     expect(screen.getByText('Haz clic en un área para inspeccionar sus respaldos')).toBeInTheDocument();
     expect(screen.getByText('Desarrollo de Software')).toBeInTheDocument();
-    // Acepta varias formas razonables de formatear el nombre "Cloud/DevOps"
-   expect(screen.getByText(/Cloud\s*[,/]?\s*DevOps/i)).toBeInTheDocument();
+    expect(screen.getByText('Cloud, DevOps & Infraestructura')).toBeInTheDocument();
 
     // Verifica porcentaje entero (85.6% formateado o redondeado según tu utilidad)
     expect(screen.getByText(/86%/i)).toBeInTheDocument();
@@ -86,13 +85,13 @@ describe('RadarInspection Component', () => {
 
     // Simulamos cambio de selección por props
     rerender(<RadarInspection selectedAreaId="cloud-devops" onSelectArea={mockOnSelectArea} />);
-      expect(screen.getByText(/Área:\s*Cloud\s*[,/]?\s*DevOps/i)).toBeInTheDocument();
+    expect(screen.getByText('Área: Cloud, DevOps & Infraestructura')).toBeInTheDocument();
   });
 
   test('C9: Muestra el mensaje adecuado cuando el área seleccionada no tiene respaldos asociados', () => {
     render(<RadarInspection selectedAreaId="cloud-devops" onSelectArea={mockOnSelectArea} />);
 
-    // Si no tiene tiene evidence: [], debe mostrar los mensajes de ausencia de respaldos
+    // Si no tiene evidencia: [], debe mostrar los mensajes de ausencia de respaldos
     expect(screen.getAllByText(/No hay certificaciones registradas para esta área/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Esta área no tiene respaldos asociados/i)).toBeInTheDocument();
   });
