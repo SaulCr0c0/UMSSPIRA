@@ -26,12 +26,12 @@ const AREA_LABELS: Record<AreaId, string> = {
 };
 
 const AREA_SHORT_LABELS: Record<AreaId, string> = {
-  'software-development': 'Desarrollo',
-  'cloud-devops': 'Cloud',
-  'data-ai': 'Datos & IA',
-  'quality-assurance': 'QA & Testing',
-  'cybersecurity-networks': 'Ciberseg.',
-  'it-management': 'Gestión',
+  'software-development': 'Desarrollo de Software',
+  'cloud-devops': 'Cloud/Devops',
+  'data-ai': 'Cienci de Datos/IA',
+  'quality-assurance': 'QA',
+  'cybersecurity-networks': 'Ciberseguridad',
+  'it-management': 'Gestión TI',
 };  
 
 const AREA_ICONS: Record<AreaId, React.ElementType> = {
