@@ -1,5 +1,4 @@
 import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
-import { getSessionToken } from '@/modules/auth/frontend/services/session';
 
 export const mentorAvailabilityStatuses = ['AVAILABLE', 'PAUSED', 'UNAVAILABLE'] as const;
 
@@ -39,8 +38,7 @@ function parseAvailability(value: unknown): MentorAvailability {
 }
 
 async function requestAvailability(options: RequestInit, action: 'consultar' | 'actualizar') {
-  // La sesión del login también sobrevive a la apertura de otra pestaña.
-  const token = getSessionToken() || getAccessToken();
+  const token = getAccessToken();
   if (!token) {
     throw new MentorAvailabilityError('Inicia sesión para configurar tu disponibilidad.', 401);
   }

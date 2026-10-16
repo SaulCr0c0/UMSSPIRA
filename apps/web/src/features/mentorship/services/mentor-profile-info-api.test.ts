@@ -107,4 +107,18 @@ describe('mentor-profile-info-api', () => {
 
     await expect(getMentorProfileInformation()).rejects.toThrow(MentorProfileInfoError);
   });
+
+  it('no expone al usuario detalles técnicos del backend ante un error 5xx', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => JSON.stringify({ message: 'detalle de Supabase' }),
+    });
+
+    await expect(getMentorProfileInformation()).rejects.toMatchObject({
+      name: 'MentorProfileInfoError',
+      status: 500,
+      message: 'Ocurrió un error interno. Intenta nuevamente más tarde.',
+    });
+  });
 });

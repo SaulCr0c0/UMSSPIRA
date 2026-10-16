@@ -1,4 +1,4 @@
-import { ForbiddenException, PayloadTooLargeException } from '@nestjs/common';
+import { ForbiddenException, HttpException, Logger, PayloadTooLargeException } from '@nestjs/common';
 import { DocumentsExceptionFilter } from './documents-exception.filter';
 import { DOCUMENT_MESSAGES } from '../contracts/document.constants';
 
@@ -12,6 +12,8 @@ function runFilter(exception: unknown) {
 }
 
 describe('DocumentsExceptionFilter', () => {
+  afterEach(() => jest.restoreAllMocks());
+
   it('responde 413 con el mensaje oficial cuando el archivo supera 5 MB (CA-03.3)', () => {
     const { json, status } = runFilter(new PayloadTooLargeException('File too large'));
 
@@ -34,5 +36,17 @@ describe('DocumentsExceptionFilter', () => {
 
     expect(status).toHaveBeenCalledWith(403);
     expect(json).toHaveBeenCalledWith(body);
+  });
+
+  it('oculta detalles internos de errores 5xx', () => {
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const { json, status } = runFilter(new HttpException('detalle del storage', 500));
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      statusCode: 500,
+      message: 'Ocurrió un error interno. Intenta nuevamente más tarde.',
+      error: 'Error interno del servidor',
+    });
   });
 });

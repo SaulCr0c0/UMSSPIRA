@@ -1,4 +1,5 @@
 import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
@@ -36,23 +37,6 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
 
   if (!response.ok) {
     if (response.status === 401 && getAccessToken() === token) clearAccessToken();
-    let serverMessage = '';
-    if (response.status >= 500) {
-      const body = await response.text();
-      if (body) {
-        try {
-          const parsed: unknown = JSON.parse(body);
-          if (parsed && typeof parsed === 'object' && 'message' in parsed) {
-            const message = parsed.message;
-            serverMessage = Array.isArray(message)
-              ? message.filter((item): item is string => typeof item === 'string').join(' ')
-              : typeof message === 'string' ? message : '';
-          }
-        } catch {
-          serverMessage = body;
-        }
-      }
-    }
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tus áreas técnicas.',
       403: 'No tienes permisos para acceder a esta sección',
@@ -60,7 +44,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
     };
     throw new MentorAreasError(
       messages[response.status]
-      || `No se pudieron guardar las áreas (HTTP ${response.status})${serverMessage ? `: ${serverMessage}` : '.'}`, response.status,
+      || (response.status >= 500 ? SERVER_ERROR_MESSAGE : 'No se pudieron guardar las áreas. Inténtalo de nuevo.'), response.status,
     );
   }
   return response.json();

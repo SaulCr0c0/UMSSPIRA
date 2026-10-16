@@ -28,6 +28,7 @@ export class UpdateMentorProfileInformationDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(7 * 1024 * 1024)
   foto_perfil?: string | null;
 
   @IsOptional()
