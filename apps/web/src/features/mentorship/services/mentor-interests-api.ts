@@ -1,6 +1,7 @@
 import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
 import { updateMentorAreas } from './mentor-areas-api';
 import { normalizeInterests, type InterestArea, type InterestConfiguration } from '../model/mentor-interests';
+import { getAreaDescription } from '../model/area-descriptions';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const BASE = '/mentorship/interests';
@@ -70,7 +71,7 @@ export async function getMentorInterests(signal?: AbortSignal): Promise<MentorIn
     if (!group.intereses.every((item: unknown) => isInterest(item) && item.area.id === area.id)) {
       throw new Error('El backend devolvió tópicos que no corresponden a su área.');
     }
-    return { id: area.id, name: area.nombre, description: typeof area.descripcion === 'string' ? area.descripcion : '', topics: group.intereses.map(item => ({ id: item.id, name: item.nombre })) };
+    return { id: area.id, name: area.nombre, description: getAreaDescription(area.nombre, area.descripcion), topics: group.intereses.map(item => ({ id: item.id, name: item.nombre })) };
   });
   return {
     catalog,

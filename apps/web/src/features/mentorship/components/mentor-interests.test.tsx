@@ -16,6 +16,17 @@ function setup() { render(<MentorInterests catalog={catalog} initialConfiguratio
 function add() { fireEvent.click(screen.getByRole('button', { name: 'APIs REST' })); }
 function openSave() { fireEvent.click(screen.getByRole('button', { name: /Guardar configuración/ })); }
 
+it('muestra la descripción de cada área debajo de su nombre', () => {
+  setup();
+  expect(screen.getByText('Desarrollo web')).toBeInTheDocument();
+  expect(screen.getByText('Consultas')).toBeInTheDocument();
+});
+
+it('no deja un párrafo vacío cuando el área no tiene descripción', () => {
+  const { container } = render(<MentorInterests catalog={[{ ...catalog[0], description: '' }]} initialConfiguration={initialConfiguration} onSave={onSave} />);
+  expect([...container.querySelectorAll('p')].some(p => p.textContent === '')).toBe(false);
+});
+
 it.each([
   [0, 'tópicos', 'intereses', 'seleccionados'],
   [1, 'tópico', 'interés', 'seleccionado'],
