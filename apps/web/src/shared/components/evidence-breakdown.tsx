@@ -204,7 +204,7 @@ export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateN
 
       {/* Evidence Cards List */}
       <div className="space-y-4">
-        {currentEvidenceList.map((item, idx) => (
+        {currentEvidenceList.map((item: any, idx: number) => (
           <div
             key={idx}
             className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 hover:border-slate-300 transition-all space-y-2"
