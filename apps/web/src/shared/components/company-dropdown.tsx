@@ -112,7 +112,7 @@ export function CompanyDropdown({
           {/* CA3, CA4, CA6, CA7, CA8, CA9, CA10: enlaces que cierran el menú al hacer clic */}
           <div className="py-2 bg-white">
             <Link
-              href={isMock ? "/portal-corporativo/perfil" : "/companies"}
+              href= "/companies"
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
@@ -124,7 +124,7 @@ export function CompanyDropdown({
             </Link>
 
             <Link
-              href={isMock ? "/portal-corporativo/publicar-vacante" : "/empresa/vacantes/publicar"}
+              href="/empresa/vacantes/publicar"
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
@@ -136,19 +136,23 @@ export function CompanyDropdown({
             </Link>
 
             <Link
-              href={isMock ? "/portal-corporativo/mis-vacantes" : "/empresa/vacantes"}
-              className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
-              onClick={() => setIsOpen(false)}
-            >
-              <div className="flex items-center text-[#1B2632]">
-                <FileText className="w-[18px] h-[18px] mr-3 text-[#1B2632]/70 group-hover:text-[#FFB162] transition-colors" />
-                <span className="text-[14px] font-medium">Mis Vacantes</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#1B2632]/40" />
-            </Link>
+                 href="#"
+               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
+              onClick={(e) => {
+               e.preventDefault(); // Evita que intente navegar a otra ruta
+                alert("En el segundo sprint se implementará");
+                 setIsOpen(false); // Cierra el menú desplegable como lo hacía antes
+                  } }
+                >
+                    <div className="flex items-center text-[#1B2632]">
+                     <FileText className="w-[18px] h-[18px] mr-3 text-[#1B2632]/70 group-hover:text-[#FFB162] transition-colors" />
+                       <span className="text-[14px] font-medium">Mis Vacantes</span>
+                           </div>
+                         <ChevronRight className="w-4 h-4 text-[#1B2632]/40" />
+                            </Link>
 
-            <Link
-              href={isMock ? "/portal-corporativo/postulantes" : "/empresa/postulantes"}
+             <Link
+              href="/empresa/postulantes"
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >

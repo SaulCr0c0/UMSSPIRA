@@ -18,9 +18,6 @@ interface VacancyFormData {
   experienceLevel: string;
   technicalDescription: string;
 }
-interface PublishVacancyFormProps {
-  onSubmit?: (data: VacancyFormData) => void;
-}
 
 const initialFormData: VacancyFormData = {
   title: "",
@@ -34,7 +31,7 @@ type Feedback = { type: "success" | "error"; text: string } | null;
 const inputBase =
   "w-full rounded-lg border bg-[#EEE9DF] text-sm text-abyssal outline-none transition focus:bg-white focus:ring-1 focus:ring-[#2C3B4D]";
 
-export function PublishVacancyForm({ onSubmit }: PublishVacancyFormProps) {
+export function PublishVacancyForm() {
   const [formData, setFormData] = useState<VacancyFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -81,10 +78,7 @@ export function PublishVacancyForm({ onSubmit }: PublishVacancyFormProps) {
   const handleSubmit = async () => {
     if (loading) return;
     if (!validate()) return;
-        if (onSubmit) {
-      onSubmit(formData);
-      return; 
-    }
+
     setLoading(true);
     setFeedback(null);
     try {
