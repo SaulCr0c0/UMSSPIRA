@@ -161,7 +161,7 @@ export default function Home() {
                     <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
                   </div>
                   <div className="pt-3">
-                    <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
+                    <h3 className="font-bold text-[#0F172A] text-sm">{ev.title}</h3>
                     <div className="space-y-1 mt-2 text-xs text-slate-500">
                       <p className="flex items-center space-x-1.5"><span>📍</span><span>{ev.place}</span></p>
                       <p className="flex items-center space-x-1.5"><span>⏰</span><span>{ev.time}</span></p>
