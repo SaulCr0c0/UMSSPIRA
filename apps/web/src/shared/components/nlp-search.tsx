@@ -62,7 +62,7 @@ export const NlpSearch: React.FC<NlpSearchProps> = ({
       {/* Botón de Volver a Reclutador (Bug 10) */}
       <div className="w-full">
         <a 
-          href="/reclutador/perfil" 
+          href="/companies"
           className="inline-flex items-center text-sm font-bold text-burning-flame hover:opacity-80 transition-opacity cursor-pointer"
         >
           <span className="mr-1.5 text-lg leading-none">←</span> Volver a mi perfil
