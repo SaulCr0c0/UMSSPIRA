@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import { usePathname } from "next/navigation";
 import { PortalSiteHeader } from "./portal-site-header";
 
+const mockUsePathname = jest.fn((): string | null => null);
+
 jest.mock("next/navigation", () => ({
-  usePathname: jest.fn(),
+  usePathname: () => mockUsePathname(),
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
@@ -16,7 +17,7 @@ jest.mock("next/navigation", () => ({
 
 describe("PortalSiteHeader", () => {
   beforeEach(() => {
-    jest.mocked(usePathname).mockReturnValue(null);
+    mockUsePathname.mockReturnValue(null);
     sessionStorage.clear();
     localStorage.clear();
   });
@@ -28,7 +29,7 @@ describe("PortalSiteHeader", () => {
   });
 
   it("mantiene el encabezado anterior en las demás páginas del portal", () => {
-    jest.mocked(usePathname).mockReturnValue("/portal/comunidad");
+    mockUsePathname.mockReturnValue("/portal/comunidad");
     render(<PortalSiteHeader />);
     expect(screen.getByRole("link", { name: /umsspira/i })).toHaveAttribute("href", "/portal");
     expect(screen.queryByRole("link", { name: "Iniciar sesión" })).not.toBeInTheDocument();
@@ -37,7 +38,7 @@ describe("PortalSiteHeader", () => {
   it.each(["/portal/institucional", "/portal/institucional/"])(
     "no renderiza encabezado en %s para evitar la doble cabecera",
     (pathname) => {
-      jest.mocked(usePathname).mockReturnValue(pathname);
+      mockUsePathname.mockReturnValue(pathname);
       const { container } = render(<PortalSiteHeader />);
       expect(container).toBeEmptyDOMElement();
     },
