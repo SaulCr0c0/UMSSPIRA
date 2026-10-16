@@ -7,10 +7,9 @@ import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award,
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
-import { authStore } from '@/modules/auth/frontend/store';
+import { authStore } from '@/modules/auth/frontend/store/auth.store';
 import { clearSession } from '@/modules/auth/frontend/services/session';
-import { clearAccessToken } from '@/shared/services/auth-session';
-import { clearToken } from '@/shared/services/api-client';
+import { hardRedirect } from '@/modules/auth/frontend/services/navigation';
 
 const navItems = [
   { href: '/portal', label: 'Inicio', Icon: Home, exact: true },
@@ -59,14 +58,11 @@ export const Navbar: React.FC = () => {
   // Cierre de sesión común: borra cookies, tokens y estado, y luego abre el login
   const handleLogout = () => {
     clearSession();
-    clearAccessToken();
-    clearToken();
     authStore.reset();
     setIsDrawerOpen(false);
     setIsProfileDropdownOpen(false);
     setIsNotificationsOpen(false);
-    router.push('/login');
-    router.refresh();
+    hardRedirect('/login');
   };
 
   // Cerrar el menú del avatar y el panel de notificaciones al hacer clic fuera
@@ -212,18 +208,19 @@ export const Navbar: React.FC = () => {
                         <User className="w-4 h-4 text-slate-500" />
                         <span>Mi perfil</span>
                       </div>
-                      
-
-                    <span className="text-slate-400">›</span>
+                      <span className="text-slate-400">›</span>
                     </Link>
 
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex w-full items-center space-x-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
+                      className="flex w-full items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
                     >
-                      <LogOut className="w-4 h-4 text-slate-500" />
-                      <span>Cerrar sesión</span>
+                      <div className="flex items-center space-x-2.5">
+                        <LogOut className="w-4 h-4 text-slate-500" />
+                        <span>Cerrar sesión</span>
+                      </div>
+                      <span className="text-slate-400">›</span>
                     </button>
                   </div>
                 </div>
@@ -255,7 +252,7 @@ export const Navbar: React.FC = () => {
         }`}
       />
 
-      {/* Menú lateral (móvil y tablet). Cerrado: "invisible" lo saca del foco y de los lectores de pantalla */}
+      {/* Menú lateral (móvil y tablet) */}
       <aside
         id="mobile-drawer"
         role="dialog"
@@ -274,7 +271,7 @@ export const Navbar: React.FC = () => {
             type="button"
             onClick={() => setIsDrawerOpen(false)}
             aria-label="Cerrar menú"
-            className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            aria-className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
