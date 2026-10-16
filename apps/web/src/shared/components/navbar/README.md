@@ -124,8 +124,9 @@ la barra no implementa esos módulos.
 
 ## Sesión real
 
-`ConnectedNavbar` restaura el token de la sesión del proyecto (cookie, servicio de
-sesión o almacenamiento empresarial existente) y consulta `GET /api/auth/me`.
+`ConnectedNavbar` restaura el token de la sesión del proyecto (el almacén de
+autenticación, el token de sessionStorage o el token legado de localStorage) y
+consulta `GET /api/auth/me`.
 Solo muestra la variante autenticada con un rol reconocido devuelto por la API.
 No confía en la cookie del rol para decidir qué opciones mostrar. Sin token,
 con sesión rechazada o sin poder validarla, se presenta como visitante.

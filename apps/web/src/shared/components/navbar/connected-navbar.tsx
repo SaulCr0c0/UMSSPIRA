@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { authStore, useAuthStore } from '@/modules/auth/frontend/store';
-import { clearSession, getSessionToken } from '@/modules/auth/frontend/services/session';
+import { clearSession } from '@/modules/auth/frontend/services/session';
 import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
 import { clearToken, getToken } from '@/shared/services/api-client';
 import { Navbar } from './navbar';
@@ -39,9 +39,11 @@ export function ConnectedNavbar() {
       request?.abort();
       const controller = new AbortController();
       request = controller;
-      const token = getSessionToken() ?? getAccessToken() ?? getToken();
-      if (!token) { setSession(null); return; }
       try {
+        // La sesión se resuelve con las fuentes que existen en ambos modelos de auth:
+        // el almacén en memoria, el token de sessionStorage y el token legado.
+        const token = auth.accessToken ?? getAccessToken() ?? getToken();
+        if (!token) { setSession(null); return; }
         const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
@@ -65,7 +67,9 @@ export function ConnectedNavbar() {
   }, [pathname, auth.accessToken]);
 
   const logout = () => {
-    clearSession();
+    // clearSession puede ser asincrónico (cookie httpOnly vía /api/auth/session):
+    // un fallo de red no debe impedir limpiar la sesión local ni volver al login.
+    void Promise.resolve(clearSession()).catch(() => undefined);
     clearAccessToken();
     clearToken();
     authStore.reset();

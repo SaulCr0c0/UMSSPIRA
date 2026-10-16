@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ConnectedNavbar } from './connected-navbar';
-import { getSessionToken, clearSession } from '@/modules/auth/frontend/services/session';
+import { clearSession } from '@/modules/auth/frontend/services/session';
 import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
 import { clearToken, getToken } from '@/shared/services/api-client';
 import { authStore } from '@/modules/auth/frontend/store';
@@ -9,7 +9,7 @@ import type { NavbarProps } from './types';
 const push = jest.fn();
 const refresh = jest.fn();
 jest.mock('next/navigation', () => ({ usePathname: () => '/portal/institucional', useRouter: () => ({ push, refresh }) }));
-jest.mock('@/modules/auth/frontend/services/session', () => ({ getSessionToken: jest.fn(), clearSession: jest.fn() }));
+jest.mock('@/modules/auth/frontend/services/session', () => ({ clearSession: jest.fn() }));
 jest.mock('@/shared/services/auth-session', () => ({ getAccessToken: jest.fn(), clearAccessToken: jest.fn() }));
 jest.mock('@/shared/services/api-client', () => ({ getToken: jest.fn(), clearToken: jest.fn() }));
 jest.mock('@/modules/auth/frontend/store', () => ({ useAuthStore: () => ({ accessToken: null }), authStore: { reset: jest.fn() } }));
@@ -20,7 +20,6 @@ const fetchMock = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   global.fetch = fetchMock;
-  jest.mocked(getSessionToken).mockReturnValue(null);
   jest.mocked(getAccessToken).mockReturnValue(null);
   jest.mocked(getToken).mockReturnValue(null);
 });
@@ -33,8 +32,8 @@ it('no consulta la API ni toma el rol simulado del laboratorio cuando no hay tok
   sessionStorage.clear();
 });
 
-it('restaura el rol de empresa validado por la API y envía el token de la cookie', async () => {
-  jest.mocked(getSessionToken).mockReturnValue('token-real');
+it('restaura el rol de empresa validado por la API y envía el token de la sesión', async () => {
+  jest.mocked(getAccessToken).mockReturnValue('token-real');
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: { email: 'talento@ejemplo.com', role: 'empresa' } }) });
   render(<ConnectedNavbar />);
   expect(await screen.findByText('talento: empresa')).toBeInTheDocument();
@@ -42,7 +41,7 @@ it('restaura el rol de empresa validado por la API y envía el token de la cooki
 });
 
 it('permanece como visitante si la API rechaza el token', async () => {
-  jest.mocked(getSessionToken).mockReturnValue('token-rechazado');
+  jest.mocked(getAccessToken).mockReturnValue('token-rechazado');
   fetchMock.mockResolvedValue({ ok: false });
   render(<ConnectedNavbar />);
   await waitFor(() => expect(fetchMock).toHaveBeenCalled());
