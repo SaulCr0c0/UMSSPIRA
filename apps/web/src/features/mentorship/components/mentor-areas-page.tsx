@@ -176,7 +176,7 @@ export function MentorAreasPage() {
           <li aria-hidden="true">/</li>
           <li><Link href="/mentorship/profile" className="breadcrumb-link">Mi perfil de mentor</Link></li>
           <li aria-hidden="true">/</li>
-          <li aria-current="page" className="breadcrumb-current">Configurar áreas técnicas</li>
+          <li aria-current="page" className="breadcrumb-current">Áreas técnicas de especialidad</li>
         </ol>
       </nav>
 
@@ -246,14 +246,14 @@ export function MentorAreasPage() {
         <section className="areas-setup-progress" aria-labelledby="areas-progress-title">
           <div><h2 id="areas-progress-title">Completa tu perfil de mentor</h2><span>{savedIds.length ? 'Áreas técnicas guardadas' : 'En edición'}</span></div>
           <div className="areas-progress-track" aria-hidden="true"><span style={{ width: savedIds.length ? '33.333%' : '0%' }} /></div>
-          <ol><li aria-current="step"><span className="areas-step-number">1</span><div><small>Paso actual · En edición</small><strong>Áreas técnicas</strong></div></li>
+          <ol><li aria-current="step"><span className="areas-step-number">1</span><div><small>Paso actual · En edición</small><strong>Áreas técnicas de especialidad</strong></div></li>
             <li><span className="areas-step-number">2</span><div><small>Paso 2</small><strong>Intereses de mentoría</strong></div></li>
             <li><span className="areas-step-number">3</span><div><small>Paso 3</small><strong>Disponibilidad horaria</strong></div></li></ol>
         </section>
 
         <div className="mentor-areas-page-actions">
           <Link href="/mentorship/profile" className="mentor-areas-back">
-            <ArrowLeftIcon aria-hidden="true" className="icon-small" /> Volver a Mi perfil
+            <ArrowLeftIcon aria-hidden="true" className="icon-small" /> Volver a Mi perfil de mentor
           </Link>
           <div className="mentor-areas-actions">
             <SecondaryButton onClick={cancel} disabled={saving || loading}>Cancelar</SecondaryButton>

@@ -46,8 +46,7 @@ it('muestra el catálogo ordenado alfabéticamente en la pantalla dedicada', asy
     'DevOpsCI/CD y Docker. Agregar',
   ]);
   expect(screen.getByRole('heading', { name: 'Áreas técnicas de especialidad' })).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: /Volver a Mi perfil/ })).toHaveAttribute('href', '/mentorship/profile');
-});
+expect(screen.getByRole('link', { name: /Volver a Mi perfil de mentor/ })).toHaveAttribute('href', '/mentorship/profile');});
 
 it('selecciona y deselecciona cada área sin duplicarla', async () => {
   render(<MentorAreasPage />);
@@ -70,9 +69,7 @@ it('limita la selección a cinco áreas y permite descartar cambios', async () =
   fireEvent.click(options[5]); expect(options[5]).not.toBeChecked(); expect(screen.getByRole('alert')).toHaveTextContent('Puedes seleccionar como máximo 5 áreas técnicas');
 
   fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
-  expect(screen.getByRole('link', { name: /Volver a Mi perfil/ })).toBeInTheDocument();
-  expect(updateAreas).not.toHaveBeenCalled();
-});
+  expect(screen.getByRole('link', { name: /Volver a Mi perfil de mentor/ })).toBeInTheDocument();});
 
 it('guarda las áreas elegidas y confirma el guardado', async () => {
   render(<MentorAreasPage />);

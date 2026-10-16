@@ -632,6 +632,13 @@
   font-size: 12px;
 }
 
+.mentor-info-updated-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #1b2632;
+}
+
 .mentor-info-updated strong {
   color: #1B2632;
   font-weight: 500;
@@ -1169,5 +1176,42 @@
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* Estilos exclusivos del modal de eliminación de información del perfil. */
+.mentor-info-delete-modal .confirm-modal-icon {
+  background: #f8eeeb;
+  color: #a35139;
+}
+
+.mentor-info-delete-modal .confirm-modal-eyebrow {
+  color: #a35139;
+}
+
+.mentor-info-delete-modal .confirm-modal-title {
+  font-weight: 700;
+}
+
+.mentor-info-delete-modal .confirm-modal-description {
+  font-weight: 400;
+}
+
+.mentor-info-delete-modal .confirm-modal-description p:first-child {
+  font-weight: 700;
+}
+
+.mentor-info-delete-modal .confirm-modal-actions {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.mentor-info-delete-modal .confirm-modal-confirm {
+  gap: 0.375rem;
+  background: #a35139;
+  color: white;
+}
+
+.mentor-info-delete-modal .confirm-modal-confirm:hover:not(:disabled) {
+  background: #833f2b;
 }
 

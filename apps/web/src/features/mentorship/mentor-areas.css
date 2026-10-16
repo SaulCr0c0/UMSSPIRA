@@ -221,7 +221,8 @@
 }
 
 .mentor-areas-page .page-eyebrow {
-  color: #c65922;
+  background: #ffedd5;
+  color: #9a3412;
 }
 
 .areas-participation-bar {
@@ -266,7 +267,7 @@
   gap: .35rem;
   border-radius: 1rem;
   background: #fff0e5;
-  color: #c75c23;
+  color: #9a3412;
   padding: .35rem .6rem;
   font-size: .625rem;
 }
@@ -310,7 +311,7 @@
 .mentor-areas-page .mentor-area-option.is-selected .mentor-area-option-state {
   background: #e9f3ed;
   border-color: #e9f3ed;
-  color: #337c5e;
+  color: #225e44;
 }
 
 .mentor-areas-page .mentor-area-option input[type="checkbox"] {
@@ -438,6 +439,14 @@
 
 .mentor-areas-page .mentor-button-primary:hover:not(:disabled) {
   background: #ffa44f;
+}
+
+.mentor-areas-page .mentor-button-primary:disabled {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #374151;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .areas-footer-note {
