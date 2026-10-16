@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { decideAccess } from "./route-access";
+import { decideAccess, homeFor } from "./route-access";
 
 describe("decideAccess", () => {
   it("sin sesión redirige al login en el panel y en el área personal (CA-05.1)", () => {
@@ -33,5 +33,12 @@ describe("decideAccess", () => {
 
   it("el titulado entra a su área personal", () => {
     expect(decideAccess("/me", "token", "titulado")).toEqual({ allowed: true });
+  });
+
+  it("cada rol vuelve a su pantalla al visitar el login con sesión activa", () => {
+    expect(homeFor("administrador")).toBe("/applications");
+    expect(homeFor("empresa")).toBe("/companies");
+    expect(homeFor("titulado")).toBe("/me");
+    expect(homeFor(undefined)).toBe("/me");
   });
 });
