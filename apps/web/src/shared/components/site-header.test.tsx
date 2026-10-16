@@ -1,10 +1,45 @@
 import { render, screen } from "@testing-library/react";
+import { usePathname } from "next/navigation";
 import { PortalSiteHeader } from "./portal-site-header";
 
+jest.mock("next/navigation", () => ({
+  usePathname: jest.fn(),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 describe("PortalSiteHeader", () => {
-  it("el logo enlaza a la pagina de inicio", () => {
+  beforeEach(() => {
+    jest.mocked(usePathname).mockReturnValue(null);
+    sessionStorage.clear();
+    localStorage.clear();
+  });
+
+  it("mantiene el encabezado anterior si la ruta aún no está disponible", () => {
     render(<PortalSiteHeader />);
     const logo = screen.getByRole("link", { name: /umsspira/i });
     expect(logo).toHaveAttribute("href", "/portal");
   });
+
+  it("mantiene el encabezado anterior en las demás páginas del portal", () => {
+    jest.mocked(usePathname).mockReturnValue("/portal/comunidad");
+    render(<PortalSiteHeader />);
+    expect(screen.getByRole("link", { name: /umsspira/i })).toHaveAttribute("href", "/portal");
+    expect(screen.queryByRole("link", { name: "Iniciar sesión" })).not.toBeInTheDocument();
+  });
+
+  it.each(["/portal/institucional", "/portal/institucional/"])(
+    "no renderiza encabezado en %s para evitar la doble cabecera",
+    (pathname) => {
+      jest.mocked(usePathname).mockReturnValue(pathname);
+      const { container } = render(<PortalSiteHeader />);
+      expect(container).toBeEmptyDOMElement();
+    },
+  );
 });
