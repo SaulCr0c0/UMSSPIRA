@@ -43,7 +43,7 @@ export function PortalSiteFooter() {
   }
 
   return (
-    <footer className="mt-16 border-t border-white/10 bg-abyssal text-white">
+    <footer className="mt-16 border-t border-slate-800 bg-[#0F172A] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
@@ -67,7 +67,7 @@ export function PortalSiteFooter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-burning-flame hover:text-abyssal hover:text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-umss-orange hover:text-white"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -112,7 +112,7 @@ export function PortalSiteFooter() {
             </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-umss-orange" />
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <a href="mailto:contacto@umsspira.umss.edu.bo" className="transition-colors hover:text-umss-orange">
                   contacto@umsspira.umss.edu.bo
                 </a>
@@ -124,7 +124,7 @@ export function PortalSiteFooter() {
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-umss-orange" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <span>
                   Av. Ballivian s/n, Campus UMSS
                   <br />
@@ -153,7 +153,7 @@ export function PortalSiteFooter() {
               type="button"
               onClick={scrollToTop}
               aria-label="Volver arriba"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-burning-flame hover:text-abyssal hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-umss-orange hover:text-white"
             >
               <ArrowUp className="h-4 w-4" />
             </button>
