@@ -3,17 +3,36 @@ export const ROLE_COOKIE = "umsspira_role";
 
 export const LOGIN_PATH = "/login";
 export const ADMIN_HOME = "/applications";
-export const USER_HOME = "/me";
 export const COMPANY_HOME = "/companies";
 export const PORTAL_HOME = "/portal";
+export const USER_HOME = "/me";
 
-export type AccessDecision = { allowed: true } | { allowed: false; redirectTo: string };
+export type AccessDecision =
+  | { allowed: true }
+  | { allowed: false; redirectTo: string };
+
+const GRADUATE_AFFINITY_ROUTES = ["/afinidad/egresado"];
+const RECRUITER_ROUTES = [
+  "/afinidad/reclutador",
+  "/empresa/postulantes",
+  "/postulantes",
+];
+
+function matchesRoute(pathname: string, basePath: string): boolean {
+  return pathname === basePath || pathname.startsWith(`${basePath}/`);
+}
 
 export function homeFor(role: string | undefined): string {
-  if (role === "administrador") return ADMIN_HOME;
-  if (role === "empresa") return COMPANY_HOME;
-  if (role === "titulado") return PORTAL_HOME;
-  return USER_HOME;
+  switch (role) {
+    case "administrador":
+      return ADMIN_HOME;
+    case "empresa":
+      return COMPANY_HOME;
+    case "titulado":
+      return PORTAL_HOME;
+    default:
+      return USER_HOME;
+  }
 }
 
 export function decideAccess(
@@ -28,11 +47,33 @@ export function decideAccess(
   }
 
   // CA-05.1: sin sesión no se ve ninguna pantalla protegida
-  if (!token) return { allowed: false, redirectTo: LOGIN_PATH };
+  if (!token) {
+    return { allowed: false, redirectTo: LOGIN_PATH };
+  }
 
   // CA-05.5: solo el administrador entra al panel administrativo
-  if (pathname.startsWith(ADMIN_HOME) && role !== "administrador") {
+  if (matchesRoute(pathname, ADMIN_HOME) && role !== "administrador") {
     return { allowed: false, redirectTo: USER_HOME };
+  }
+
+  // Empresa y Administrador: /afinidad/reclutador, /empresa/postulantes y /postulantes
+  const isRecruiterRoute = RECRUITER_ROUTES.some((route) =>
+    matchesRoute(pathname, route),
+  );
+  if (isRecruiterRoute && role !== "empresa" && role !== "administrador") {
+    return { allowed: false, redirectTo: homeFor(role) };
+  }
+
+  // Titulado y Administrador: /afinidad y /afinidad/egresado
+  const isGraduateAffinityRoute =
+    pathname === "/afinidad" ||
+    GRADUATE_AFFINITY_ROUTES.some((route) => matchesRoute(pathname, route));
+  if (
+    isGraduateAffinityRoute &&
+    role !== "titulado" &&
+    role !== "administrador"
+  ) {
+    return { allowed: false, redirectTo: homeFor(role) };
   }
 
   return { allowed: true };
