@@ -1,46 +1,20 @@
-const CACHE_NAME = 'umsspira-core-v2';
 
-const CORE_ASSETS = [
-  '/',
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_ASSETS);
-    })
-  );
-
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      );
-    })
-  );
-
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
-  );
-=======
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `umsspira-static-${VERSION}`;
 const ASSETS_CACHE = `umsspira-assets-${VERSION}`;
 const ALL_CACHES = [STATIC_CACHE, ASSETS_CACHE];
 
-const PRECACHE_URLS = ['/manifest.webmanifest', '/favicon.ico'];
+const PRECACHE_URLS = [
+  '/offline',
+  '/manifest.webmanifest',
+  '/favicon.ico',
+];
+
+const MAX_ASSETS_ENTRIES = 80;
+
+const IS_LOCALHOST =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -50,47 +24,37 @@ self.addEventListener('install', (event) => {
       await Promise.allSettled(
         PRECACHE_URLS.map(async (url) => {
           const response = await fetch(url);
-          if (response.ok) await cache.put(url, response);
+
+          if (response.ok) {
+            await cache.put(url, response);
+          }
         })
       );
+
+      await self.skipWaiting();
     })()
   );
 });
-
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
+
       await Promise.all(
         names
-          .filter((name) => name.startsWith('umsspira-') && !ALL_CACHES.includes(name))
+          .filter(
+            (name) =>
+              name.startsWith('umsspira-') &&
+              !ALL_CACHES.includes(name)
+          )
           .map((name) => caches.delete(name))
       );
-      
+
       await self.clients.claim();
     })()
   );
 });
-
-
-const MAX_ASSETS_ENTRIES = 80;
-
-const IS_LOCALHOST =
-  self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
-
-async function trimCache(cacheName, maxEntries) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length > maxEntries) {
-    await cache.delete(keys[0]);
-    await trimCache(cacheName, maxEntries);
-  }
-}
-
-function isCacheable(response) {
-  return response && response.ok && (response.type === 'basic' || response.type === 'default');
-}
 
 function getHandledUrl(request) {
   if (request.method !== 'GET') return null;
@@ -111,61 +75,141 @@ function getHandledUrl(request) {
   return url;
 }
 
-async function networkFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
+function isCacheable(response) {
+  return (
+    response &&
+    response.ok &&
+    (response.type === 'basic' || response.type === 'default')
+  );
+}
+
+async function handleNavigation(request) {
   try {
     const response = await fetch(request);
-    if (isCacheable(response)) {
-      cache.put(request, response.clone());
+
+    if (response.ok) {
+      const cache = await caches.open(STATIC_CACHE);
+      await cache.put(request, response.clone());
     }
+
     return response;
-  } catch (error) {
+  } catch {
+    // 1. Intentar recuperar la ruta solicitada.
+    const cachedPage = await caches.match(request);
+
+    if (cachedPage) return cachedPage;
+
+    // 2. Mostrar el respaldo offline.
+    const offlinePage = await caches.match('/offline');
+
+    if (offlinePage) return offlinePage;
+
+    // 3. Último recurso si el respaldo tampoco está disponible.
+    return new Response(
+      `<!doctype html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Sin conexión | UMSSPIRA</title>
+        </head>
+        <body style="font-family:sans-serif;padding:2rem;text-align:center">
+          <h1>Sin conexión a Internet</h1>
+          <p>El contenido solicitado no está disponible sin conexión.</p>
+          <button onclick="location.reload()">Reintentar</button>
+        </body>
+      </html>`,
+      {
+        status: 503,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+      }
+    );
+  }
+}
+
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+
+  try {
+    const response = await fetch(request);
+
+    if (isCacheable(response)) {
+      await cache.put(request, response.clone());
+    }
+
+    return response;
+  } catch {
     const cached = await cache.match(request);
+
     if (cached) return cached;
-    throw error;
+
+    throw new Error('Recurso no disponible sin conexión');
   }
 }
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
+
   if (cached) return cached;
 
   const response = await fetch(request);
+
   if (isCacheable(response)) {
-    cache.put(request, response.clone());
+    await cache.put(request, response.clone());
   }
+
   return response;
 }
 
-async function staleWhileRevalidate(request, cacheName, maxEntries) {
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+
+  if (keys.length > maxEntries) {
+    await cache.delete(keys[0]);
+    await trimCache(cacheName, maxEntries);
+  }
+}
+
+async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
 
   const networkPromise = fetch(request)
-    .then((response) => {
+    .then(async (response) => {
       if (isCacheable(response)) {
-        cache.put(request, response.clone());
-        trimCache(cacheName, maxEntries);
+        await cache.put(request, response.clone());
+        await trimCache(cacheName, MAX_ASSETS_ENTRIES);
       }
+
       return response;
     })
     .catch(() => undefined);
 
-  return cached || (await networkPromise) || Response.error();
+  return cached || (await networkPromise) ||
+    new Response('', { status: 503 });
 }
-
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = getHandledUrl(request);
 
-  if (!url || request.mode === 'navigate') return;
+  if (!url) return;
 
-  // Archivos compilados de Next.js
+  // Navegaciones: ruta almacenada o respaldo offline.
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigation(request));
+    return;
+  }
+
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      IS_LOCALHOST ? networkFirst(request, STATIC_CACHE) : cacheFirst(request, STATIC_CACHE)
+      IS_LOCALHOST
+        ? networkFirst(request, STATIC_CACHE)
+        : cacheFirst(request, STATIC_CACHE)
     );
     return;
   }
@@ -175,12 +219,14 @@ self.addEventListener('fetch', (event) => {
     request.destination === 'font' ||
     url.pathname.startsWith('/_next/image')
   ) {
-    event.respondWith(staleWhileRevalidate(request, ASSETS_CACHE, MAX_ASSETS_ENTRIES));
+    event.respondWith(
+      staleWhileRevalidate(request, ASSETS_CACHE)
+    );
   }
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
