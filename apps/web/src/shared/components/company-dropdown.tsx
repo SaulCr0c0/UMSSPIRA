@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   User,
   Building2,
@@ -29,7 +29,9 @@ export function CompanyDropdown({
   const [fetchedName, setFetchedName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
+     const pathname = usePathname() || '';
+     // Esta es tu condición mágica (IF):
+     const isMock = pathname.startsWith('/portal-corporativo');
   // CA14: nombre de la empresa autenticada (sin datos de otra empresa por defecto)
   useEffect(() => {
     if (companyName || (!DEMO_MODE && !hasValidSession())) return;
@@ -110,7 +112,7 @@ export function CompanyDropdown({
           {/* CA3, CA4, CA6, CA7, CA8, CA9, CA10: enlaces que cierran el menú al hacer clic */}
           <div className="py-2 bg-white">
             <Link
-              href="/companies"
+              href={isMock ? "/portal-corporativo/perfil" : "/companies"}
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
@@ -122,7 +124,7 @@ export function CompanyDropdown({
             </Link>
 
             <Link
-              href="/empresa/vacantes/publicar"
+              href={isMock ? "/portal-corporativo/publicar-vacante" : "/empresa/vacantes/publicar"}
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
@@ -134,7 +136,7 @@ export function CompanyDropdown({
             </Link>
 
             <Link
-              href="/empresa/vacantes"
+              href={isMock ? "/portal-corporativo/mis-vacantes" : "/empresa/vacantes"}
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
@@ -146,7 +148,7 @@ export function CompanyDropdown({
             </Link>
 
             <Link
-              href="/empresa/postulantes"
+              href={isMock ? "/portal-corporativo/postulantes" : "/empresa/postulantes"}
               className="flex items-center justify-between px-5 py-2.5 hover:bg-[#EEE9DF]/50 transition-colors group"
               onClick={() => setIsOpen(false)}
             >
