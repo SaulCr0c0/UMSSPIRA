@@ -8,6 +8,7 @@ import { ConfirmModal } from '@/shared/components/confirm-modal';
 import { SecondaryButton, PrimaryButton } from './mentor-button';
 import { getMentorProfile } from '../services/mentorship-api';
 import type { MentorState } from '@umsspira/shared-types';
+import { getAccessToken } from '@/shared/services/auth-session';
 import { getMentorAreas, updateMentorAreas, MentorAreasError, type MentorArea, type MentorAreasState } from '../services/mentor-areas-api';
 
 const MAX_AREAS = 5;
@@ -74,13 +75,16 @@ export function MentorAreasPage() {
       setForbidden(false);
       setRequiresLogin(false);
     } catch (reason) {
+      const unauthorized = reason instanceof MentorAreasError && reason.status === 401;
+      const sessionChanged = unauthorized && getAccessToken() !== null;
       setAreas([]);
       setSavedIds([]);
       setSelectedIds([]);
       setCatalogFromDatabase(false);
       setForbidden(reason instanceof MentorAreasError && reason.status === 403);
-      setRequiresLogin(reason instanceof MentorAreasError && reason.status === 401);
-      setError(reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo de áreas.');
+      setRequiresLogin(unauthorized && !sessionChanged);
+      setError(sessionChanged ? 'Tu sesión cambió. Vuelve a intentar cargar las áreas.'
+        : reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo de áreas.');
     } finally {
       setLoading(false);
     }
@@ -92,6 +96,10 @@ export function MentorAreasPage() {
     getMentorProfile(controller.signal).then(state => { if (!controller.signal.aborted) setParticipation(state); }).catch(() => {});
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (requiresLogin) router.replace('/login');
+  }, [requiresLogin, router]);
 
   useEffect(() => {
     if (!forbidden) return;
@@ -151,7 +159,9 @@ export function MentorAreasPage() {
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las áreas.');
       if (reason instanceof MentorAreasError && reason.status === 403) setForbidden(true);
       if (reason instanceof MentorAreasError && reason.status === 401) {
-        setRequiresLogin(true);
+        const sessionChanged = getAccessToken() !== null;
+        setRequiresLogin(!sessionChanged);
+        if (sessionChanged) setError('Tu sesión cambió. Vuelve a intentar guardar las áreas.');
         setDialog(null);
       }
     } finally {
@@ -197,7 +207,9 @@ export function MentorAreasPage() {
         <div className="mentor-areas-page-list-heading">
           <h2>Catálogo de especialidades técnicas (selección múltiple)</h2>
           <span className="mentor-areas-count" aria-live="polite">
-            {selectedIds.length} de {MAX_AREAS} áreas seleccionadas
+            {selectedIds.length === 1
+              ? `1 de ${MAX_AREAS} áreas · 1 seleccionada`
+              : `${selectedIds.length} de ${MAX_AREAS} áreas seleccionadas`}
           </span>
         </div>
 

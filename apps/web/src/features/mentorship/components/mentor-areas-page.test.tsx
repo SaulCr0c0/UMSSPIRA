@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MentorAreasPage } from './mentor-areas-page';
 import { getMentorAreas, updateMentorAreas, MentorAreasError, type MentorArea } from '../services/mentor-areas-api';
-import { clearAccessToken } from '@/shared/services/auth-session';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 jest.mock('../services/mentor-areas-api', () => ({ ...jest.requireActual('../services/mentor-areas-api'), getMentorAreas: jest.fn(), updateMentorAreas: jest.fn() }));
 jest.mock('next/link', () => ({
@@ -55,7 +55,12 @@ it('selecciona y deselecciona cada área sin duplicarla', async () => {
 
   fireEvent.click(databases);
   expect(databases).toBeChecked();
-  expect(screen.getByText('1 de 5 áreas seleccionadas')).toBeInTheDocument();
+  expect(screen.getByText('1 de 5 áreas · 1 seleccionada')).toBeInTheDocument();
+  const devops = screen.getByRole('checkbox', { name: 'DevOps' });
+  fireEvent.click(devops);
+  expect(screen.getByText('2 de 5 áreas seleccionadas')).toBeInTheDocument();
+  fireEvent.click(devops);
+  expect(screen.getByText('1 de 5 áreas · 1 seleccionada')).toBeInTheDocument();
   fireEvent.click(databases);
   expect(databases).not.toBeChecked();
   expect(screen.getByText('0 de 5 áreas seleccionadas')).toBeInTheDocument();
@@ -172,4 +177,41 @@ it('redirige al inicio si la API rechaza el rol con 403', async () => {
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     await act(async () => { jest.advanceTimersByTime(2000); }); expect(replace).toHaveBeenCalledWith('/');
   } finally { jest.useRealTimers(); }
+});
+
+it('redirige al login al cargar con sesión vencida sin ofrecer reintento', async () => {
+  getAreas.mockRejectedValue(new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401));
+  render(<MentorAreasPage />);
+
+  await screen.findByRole('link', { name: 'Iniciar sesión' });
+  expect(replace).toHaveBeenCalledWith('/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
+});
+
+it('redirige al login si la sesión vence durante el guardado y no permite otro envío', async () => {
+  updateAreas.mockRejectedValue(new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401));
+  render(<MentorAreasPage />);
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'DevOps' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+  await screen.findByRole('link', { name: 'Iniciar sesión' });
+  expect(replace).toHaveBeenCalledWith('/login');
+  expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+  expect(updateAreas).toHaveBeenCalledTimes(1);
+});
+
+it('un 401 de un guardado anterior permite reintentar con un nuevo login sin redirigir', async () => {
+  updateAreas.mockImplementationOnce(async () => {
+    setAccessToken('new-login-token');
+    throw new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401);
+  });
+  render(<MentorAreasPage />);
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'DevOps' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Tu sesión cambió. Vuelve a intentar guardar las áreas.');
+  expect(replace).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Guardar' })).toBeEnabled();
 });
