@@ -32,6 +32,14 @@ const normalize = (text: string) =>
 export default function Home() {
   const [query, setQuery] = useState('');
 
+  const filteredQuickLinks = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return quickLinks;
+    return quickLinks.filter(({ title, text }) =>
+      normalize(`${title} ${text}`).includes(q)
+    );
+  }, [query]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
       {/* Banner principal */}
@@ -75,7 +83,7 @@ export default function Home() {
 
       {/* Accesos rápidos */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        {quickLinks.map(({ href, title, text, Icon, iconStyle }) => (
+        {filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
           <Link
             key={href}
             href={href}
