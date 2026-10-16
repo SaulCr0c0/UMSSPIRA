@@ -91,24 +91,30 @@ export default function Home() {
 
       {/* Accesos rápidos */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        {filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
-          <Link
-            key={href}
-            href={href}
-            className="h-full min-h-[44px] bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
-          >
-            <div className="flex items-start justify-between">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyle}`}>
-                <Icon className="w-5 h-5" />
+        {filteredQuickLinks.length > 0 ? (
+          filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
+            <Link
+              key={href}
+              href={href}
+              className="h-full min-h-[44px] bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyle}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-base">{title}</h3>
-              <p className="text-xs text-slate-500 mt-1">{text}</p>
-            </div>
-          </Link>
-        ))}
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">{title}</h3>
+                <p className="text-xs text-slate-500 mt-1">{text}</p>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <p className="col-span-full text-center text-sm text-slate-500 py-4">
+            No se encontraron accesos rápidos para &ldquo;{query}&rdquo;.
+          </p>
+        )}
       </section>
 
       {/* Próximos eventos */}
