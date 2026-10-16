@@ -11,6 +11,7 @@ import { FormacionAcademicaForm, type FormacionAcademica } from './formacion-aca
 import { FormularioCertificaciones, type Certificacion } from './certificaciones';
 import { crearExperiencia, crearFormacion } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
+import { urlDeArchivo } from '@/modules/profile/utils/backup-url';
 import type {
   CertificationRecord,
   EducationRecord,
@@ -165,6 +166,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
               degree: certificacion.grado,
               // Un respaldo recién subido queda en revisión hasta que la administración lo valide
               backupFile: certificacion.respaldo?.name,
+              backupUrl: urlDeArchivo(certificacion.respaldo),
               backupVerified: false,
             })
           }
