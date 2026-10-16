@@ -426,7 +426,7 @@ export function MentorProfileInfoPage() {
               </div>
 
               {/* Botones al pie en modo lectura */}
-              <div className="mentor-info-footer">
+              <div className="mentor-info-footer mentor-info-footer-read">
                 <SecondaryButton
                   onClick={() => setShowDeleteModal(true)}
                   className="mentor-info-btn-danger"
@@ -643,7 +643,7 @@ export function MentorProfileInfoPage() {
               </div>
 
               {/* Footer de formulario */}
-              <div className="mentor-info-footer">
+              <div className="mentor-info-footer mentor-info-footer-edit">
                 <button
                   type="button"
                   className="mentor-button mentor-button-secondary"
