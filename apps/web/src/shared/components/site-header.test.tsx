@@ -9,7 +9,7 @@ jest.mock("next/navigation", () => ({
 
 describe("PortalSiteHeader", () => {
   beforeEach(() => {
-    jest.mocked(usePathname).mockReturnValue(null);
+    jest.mocked(usePathname).mockReturnValue(null as unknown as string);
     sessionStorage.clear();
     localStorage.clear();
   });
