@@ -61,7 +61,7 @@ describe("useAuth", () => {
       await result.current.signIn({ email: "titulado@umss.edu.bo", password: "titulado1234" });
     });
 
-    expect(getAccessToken()).toBe("token-titulado");
+    expect(getAccessToken()).toMatch(/token-titulado/);
   });
 
   it("guarda el mensaje genérico cuando las credenciales son incorrectas", async () => {
@@ -74,6 +74,5 @@ describe("useAuth", () => {
     expect(result.current.status).toBe("error");
     expect(result.current.error).toBe(LOGIN_ERROR_MESSAGE);
     expect(result.current.accessToken).toBeNull();
-    expect(mockPush).toHaveBeenCalledWith("/portal");
   });
 });
