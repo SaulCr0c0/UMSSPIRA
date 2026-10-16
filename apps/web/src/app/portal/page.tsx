@@ -130,46 +130,52 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {filteredEvents.map((ev) => (
-            <article
-              key={ev.title}
-              className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-            >
-              <div className="h-32 bg-slate-200 relative">
-                <Image
-                  src={ev.img}
-                  alt={ev.title}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover"
-                />
-                <button
-                  type="button"
-                  aria-label={`Guardar ${ev.title}`}
-                  className="absolute top-1 right-1 z-10 w-11 h-11 flex items-center justify-center"
-                >
-                  <span className="bg-white/90 p-1.5 rounded-full text-slate-700 shadow">
-                    <Bookmark className="w-4 h-4" />
-                  </span>
-                </button>
-              </div>
-              <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
-                  <span className="block text-base font-bold leading-none">{ev.day}</span>
-                  <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
+        {filteredEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {filteredEvents.map((ev) => (
+              <article
+                key={ev.title}
+                className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+              >
+                <div className="h-32 bg-slate-200 relative">
+                  <Image
+                    src={ev.img}
+                    alt={ev.title}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Guardar ${ev.title}`}
+                    className="absolute top-1 right-1 z-10 w-11 h-11 flex items-center justify-center"
+                  >
+                    <span className="bg-white/90 p-1.5 rounded-full text-slate-700 shadow">
+                      <Bookmark className="w-4 h-4" />
+                    </span>
+                  </button>
                 </div>
-                <div className="pt-3">
-                  <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
-                  <div className="space-y-1 mt-2 text-xs text-slate-500">
-                    <p className="flex items-center space-x-1.5"><span>📍</span><span>{ev.place}</span></p>
-                    <p className="flex items-center space-x-1.5"><span>⏰</span><span>{ev.time}</span></p>
+                <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
+                  <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
+                    <span className="block text-base font-bold leading-none">{ev.day}</span>
+                    <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
+                  </div>
+                  <div className="pt-3">
+                    <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
+                    <div className="space-y-1 mt-2 text-xs text-slate-500">
+                      <p className="flex items-center space-x-1.5"><span>📍</span><span>{ev.place}</span></p>
+                      <p className="flex items-center space-x-1.5"><span>⏰</span><span>{ev.time}</span></p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-sm text-slate-500 py-8">
+            No se encontraron eventos para &ldquo;{query}&rdquo;.
+          </p>
+        )}
       </section>
     </div>
   );
