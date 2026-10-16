@@ -55,6 +55,9 @@ function buildYearOptions() {
   });
 }
 
+const sanitizeName = (value: string) =>
+  value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]/g, '').slice(0, 45);
+
 export function RegistrationForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -156,9 +159,9 @@ export function RegistrationForm() {
             Datos de identidad
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Nombres" required maxLength={45} autoComplete="given-name" error={errors.nombres?.message} aria-invalid={!!errors.nombres} {...register('nombres')} />
-            <Input label="Apellidos" required maxLength={45} autoComplete="family-name" error={errors.apellidos?.message} aria-invalid={!!errors.apellidos} {...register('apellidos')} />
-          </div>
+            <Input label="Nombres" required maxLength={45} autoComplete="given-name" error={errors.nombres?.message} aria-invalid={!!errors.nombres} {...register('nombres', { onChange: (e) => { e.target.value = sanitizeName(e.target.value); } })} />
+            <Input label="Apellidos" required maxLength={45} autoComplete="family-name" error={errors.apellidos?.message} aria-invalid={!!errors.apellidos} {...register('apellidos', { onChange: (e) => { e.target.value = sanitizeName(e.target.value); } })} />          
+            </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Input label="Número de C.I." required inputMode="numeric" maxLength={10} error={errors.ci?.message} aria-invalid={!!errors.ci} {...register('ci')} />
             <Input label="Complemento de C.I. (Opcional)" placeholder="Ej. 1A" maxLength={2} error={errors.complementoCi?.message} aria-invalid={!!errors.complementoCi} {...register('complementoCi')} />
