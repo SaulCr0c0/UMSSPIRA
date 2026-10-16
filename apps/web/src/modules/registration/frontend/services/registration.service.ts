@@ -1,3 +1,5 @@
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 const CONNECTION_ERROR_MESSAGE = 'No se pudo conectar con el servidor. Intenta nuevamente en unos minutos.';
@@ -46,7 +48,9 @@ export async function fetchCareers(): Promise<Career[]> {
   const response = await fetch(`${API_BASE_URL}/registrations/careers`, { cache: 'no-store' });
   const body = await readJson<{ data?: Career[] } & ApiErrorBody>(response);
   if (!response.ok || !Array.isArray(body?.data)) {
-    throw new Error(getErrorMessage(body, 'No se pudieron cargar las carreras.'));
+    throw new Error(response.status >= 500
+      ? SERVER_ERROR_MESSAGE
+      : getErrorMessage(body, 'No se pudieron cargar las carreras.'));
   }
   return body.data;
 }
@@ -70,7 +74,9 @@ export async function createRegistrationSession(data: Record<string, unknown>): 
   if (!response.ok || !body?.data) {
     return {
       ok: false,
-      message: getErrorMessage(body, 'No se pudo procesar el registro. Intenta nuevamente.'),
+      message: response.status >= 500
+        ? SERVER_ERROR_MESSAGE
+        : getErrorMessage(body, 'No se pudo procesar el registro. Intenta nuevamente.'),
       errors: Array.isArray(body?.errors) ? body.errors : [],
     };
   }

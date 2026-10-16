@@ -64,24 +64,27 @@ function defaultNavigate(url: string): void {
   }
 }
 
-export function handleSessionExpired(redirectUrl = '/login?expired=1'): void {
-  if (!isBrowser()) return;
+export function handleSessionExpired(redirectUrl = '/login?expired=1'): Promise<void> {
+  if (!isBrowser()) return Promise.resolve();
 
   // Evita bucle si ya estamos en la pantalla de login
-  if (window.location.pathname === '/login') return;
+  if (window.location.pathname === '/login') return Promise.resolve();
 
   // Evita redirecciones múltiples ante peticiones concurrentes con 401
-  if (isRedirecting) return;
+  if (isRedirecting) return Promise.resolve();
   isRedirecting = true;
 
   clearAccessToken();
-  clearSession();
   clearLocalStorageToken();
   authStore.reset();
 
-  if (customRedirect) {
-    customRedirect(redirectUrl);
-  } else {
-    defaultNavigate(redirectUrl);
-  }
+  return clearSession()
+    .catch(() => {})
+    .finally(() => {
+      if (customRedirect) {
+        customRedirect(redirectUrl);
+      } else {
+        defaultNavigate(redirectUrl);
+      }
+    });
 }

@@ -20,8 +20,6 @@ export const LOGIN_ERROR_MESSAGE = "Correo electrónico o contraseña incorrecto
 // (El mock de abajo queda solo como referencia para pruebas locales sin backend.)
 const USE_MOCK = false;
 
-// El backend corre en el puerto 3000 y su controlador ya incluye el prefijo "api/auth"
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 async function loginMock(credentials: LoginCredentials): Promise<LoginResult> {
   await new Promise((resolve) => setTimeout(resolve, 400));
@@ -49,12 +47,13 @@ async function loginMock(credentials: LoginCredentials): Promise<LoginResult> {
 }
 
 async function loginRequest(
-  credentials: LoginCredentials
+  credentials: LoginCredentials,
+  remember: boolean,
 ): Promise<LoginResult> {
-  const response = await fetch(`${API_URL}/api/auth/login`, {
+  const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify({ ...credentials, remember }),
   });
 
   // 401 (credenciales) y 400 (validación): siempre el mismo mensaje genérico
@@ -68,9 +67,10 @@ async function loginRequest(
 }
 
 export function login(
-  credentials: LoginCredentials
+  credentials: LoginCredentials,
+  remember = false,
 ): Promise<LoginResult> {
-  return USE_MOCK ? loginMock(credentials) : loginRequest(credentials);
+  return USE_MOCK ? loginMock(credentials) : loginRequest(credentials, remember);
 }
 
 // Destino tras iniciar sesión según el rol (CA-05.2 y CA-05.3)

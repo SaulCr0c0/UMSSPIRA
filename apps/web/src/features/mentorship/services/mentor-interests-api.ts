@@ -1,4 +1,5 @@
 import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 import { updateMentorAreas } from './mentor-areas-api';
 import { normalizeInterests, type InterestArea, type InterestConfiguration } from '../model/mentor-interests';
 
@@ -24,7 +25,7 @@ async function request(path: string, options: RequestInit): Promise<unknown> {
     headers: { Accept: 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    if (response.status === 401) handleSessionExpired();
+    if (response.status === 401 && getAccessToken() === token) handleSessionExpired();
     let message = '';
     try {
       const body = await response.json();
@@ -36,7 +37,9 @@ async function request(path: string, options: RequestInit): Promise<unknown> {
       403: 'No tienes permiso para configurar estos intereses.',
       409: 'La selección cambió. Vuelve a intentar guardar para actualizarla.',
     };
-    throw new MentorInterestsError(messages[response.status] || message || `No se pudieron procesar los intereses (HTTP ${response.status}).`, response.status);
+    throw new MentorInterestsError(messages[response.status] || message || (response.status >= 500
+      ? SERVER_ERROR_MESSAGE
+      : 'No se pudieron procesar los intereses. Inténtalo de nuevo.'), response.status);
   }
   return response.json();
 }

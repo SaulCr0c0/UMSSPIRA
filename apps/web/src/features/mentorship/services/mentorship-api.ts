@@ -1,5 +1,6 @@
 import type { MentorState } from '@umsspira/shared-types';
 import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const MISSING_PROFILE = Symbol('missing-profile');
@@ -27,7 +28,7 @@ async function request(path: string, options: RequestInit, allowMissingProfile =
     headers: { Accept: 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    if (response.status === 401) handleSessionExpired();
+    if (response.status === 401 && getAccessToken() === token) handleSessionExpired();
     if (allowMissingProfile && response.status === 404) {
       const error: unknown = await response.json();
       if (error && typeof error === 'object' && 'message' in error
@@ -38,7 +39,9 @@ async function request(path: string, options: RequestInit, allowMissingProfile =
       403: 'No tienes permiso o no cumples los requisitos para esta operación.',
       404: 'El backend no tiene disponible el endpoint de perfil de mentor.',
     };
-    throw new MentorshipApiError(messages[response.status] || `El backend respondió con un error (HTTP ${response.status}).`, response.status);
+    throw new MentorshipApiError(messages[response.status] || (response.status >= 500
+      ? SERVER_ERROR_MESSAGE
+      : 'No se pudo completar la solicitud. Inténtalo de nuevo.'), response.status);
   }
   const data: unknown = await response.json();
   return data;
