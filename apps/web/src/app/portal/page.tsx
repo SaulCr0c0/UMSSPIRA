@@ -1,5 +1,6 @@
 'use client';
-import React from 'react';
+
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
@@ -8,7 +9,6 @@ import umssBg from '@/shared/assets/images/14sept.webp';
 import eventImg1 from '@/shared/assets/images/reencuentro.jpg';
 import eventImg2 from '@/shared/assets/images/networking.jpg';
 import eventImg3 from '@/shared/assets/images/beneficios.jpg';
-
 
 const quickLinks = [
   { href: '/portal/eventos', title: 'Eventos', text: 'Participa en los próximos eventos y actividades.', Icon: Calendar, iconStyle: 'bg-amber-50 text-amber-600' },
