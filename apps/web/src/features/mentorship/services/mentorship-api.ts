@@ -10,9 +10,16 @@ function isMentorResponse(value: unknown): value is { esta_activo: boolean | nul
   return typeof state.esta_activo === 'boolean' || state.esta_activo === null;
 }
 
+export class MentorshipApiError extends Error {
+  constructor(message: string, public readonly status?: number) {
+    super(message);
+    this.name = 'MentorshipApiError';
+  }
+}
+
 async function request(path: string, options: RequestInit, allowMissingProfile = false): Promise<unknown> {
   const token = getAccessToken();
-  if (!token) throw new Error('Inicia sesión para consultar tu participación como mentor.');
+  if (!token) throw new MentorshipApiError('Inicia sesión para consultar tu participación como mentor.', 401);
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     credentials: 'omit',
@@ -31,7 +38,7 @@ async function request(path: string, options: RequestInit, allowMissingProfile =
       403: 'No tienes permiso o no cumples los requisitos para esta operación.',
       404: 'El backend no tiene disponible el endpoint de perfil de mentor.',
     };
-    throw new Error(messages[response.status] || `El backend respondió con un error (HTTP ${response.status}).`);
+    throw new MentorshipApiError(messages[response.status] || `El backend respondió con un error (HTTP ${response.status}).`, response.status);
   }
   const data: unknown = await response.json();
   return data;

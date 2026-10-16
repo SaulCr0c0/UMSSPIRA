@@ -81,10 +81,11 @@ it('guarda las áreas elegidas y confirma el guardado', async () => {
   expect(await screen.findByRole('status')).toHaveTextContent('Áreas técnicas actualizadas correctamente');
 });
 
-it('sin sesión solicita autenticación y no ofrece usuarios ficticios', async () => {
-  getAreas.mockRejectedValue(new Error('Inicia sesión para configurar tus áreas técnicas.'));
+it('sin sesión solicita autenticación y no ofrece usuarios ficticios ni Reintentar', async () => {
+  getAreas.mockRejectedValue(new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401));
   render(<MentorAreasPage />);
   expect(await screen.findByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Entrar como mentor de prueba' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled();
   expect(updateAreas).not.toHaveBeenCalled();
@@ -186,4 +187,16 @@ it('con la pestaña abierta, si la sesión expira (401 al guardar), limpia los d
   expect(screen.queryByRole('list', { name: 'Catálogo de áreas técnicas' })).not.toBeInTheDocument();
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+});
+
+it('un error HTTP 500 muestra error y permite reintentar la carga del catálogo', async () => {
+  getAreas.mockRejectedValueOnce(new MentorAreasError('Error interno del servidor', 500));
+  render(<MentorAreasPage />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Error interno del servidor');
+  const retryBtn = screen.getByRole('button', { name: 'Reintentar' });
+  expect(retryBtn).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument();
+  fireEvent.click(retryBtn);
+  await screen.findByRole('checkbox', { name: 'DevOps' });
 });

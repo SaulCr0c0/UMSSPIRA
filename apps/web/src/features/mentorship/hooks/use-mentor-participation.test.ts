@@ -44,6 +44,14 @@ it('no fabrica datos si la carga falla y permite reintentar', async () => {
   expect(result.current.error).toBe('');
 });
 
+it('marca requiresLogin en true ante un 401', async () => {
+  getProfile.mockRejectedValueOnce(Object.assign(new Error('Inicia sesión para consultar tu participación como mentor.'), { status: 401 }));
+  const { result } = renderHook(() => useMentorParticipation());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.requiresLogin).toBe(true);
+  expect(result.current.profile).toBeNull();
+});
+
 it('no envía una activación con requisitos incompletos', async () => {
   getProfile.mockResolvedValue({ ...inactive, requirements: { egresado: false } });
   const { result } = renderHook(() => useMentorParticipation());
