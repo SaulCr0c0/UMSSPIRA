@@ -99,7 +99,7 @@ export function LoginForm() {
       {/* Bug 5: etiqueta e icono del correo */}
       <div className="space-y-2">
         <label htmlFor="email" className={labelClass}>
-          CORREO ELECTRÓNICO INSTITUCIONAL O PERSONAL
+          CORREO ELECTRÓNICO
           <span className="text-truffle-trouble"> *</span>
         </label>
 

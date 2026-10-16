@@ -217,7 +217,11 @@ export function RegistrationForm() {
           <Button type="button" variant="secondary" onClick={() => router.push('/')}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="rounded-lg bg-burning-flame px-4 py-3.5 text-sm font-bold text-abyssal-blue shadow-sm transition hover:brightness-95 disabled:opacity-60"
+          >
             {isSubmitting ? 'Verificando...' : 'Continuar'}
           </Button>
         </div>
