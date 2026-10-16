@@ -11,13 +11,31 @@ export interface CandidateEvidenceProps {
 export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateName, candidateData }) => {
   const [activeAreaTab, setActiveAreaTab] = useState('desarrollo');
 
+  const AREA_KEY_MAP: Record<string, string> = {
+    desarrollo: 'desarrollo de software',
+    datos: 'ciencia de datos & ia',
+    cloud: 'cloud & devops',
+    gestion: 'gestion de ti & gobernanza',
+    ciberseguridad: 'ciberseguridad y redes',
+    qa: 'aseguramiento de calidad (qa)',
+  };
+
+  const getScore = (tabId: string, defaultScore: number): number => {
+    if (!candidateData?.areas || !Array.isArray(candidateData.areas)) return defaultScore;
+    const targetArea = AREA_KEY_MAP[tabId];
+    const matched = candidateData.areas.find(
+      (a: { area: string; affinity: number }) => a.area?.toLowerCase() === targetArea
+    );
+    return matched?.affinity !== undefined ? matched.affinity : defaultScore;
+  };
+
   const tabs = [
-    { id: 'desarrollo', label: 'Desarrollo de Software', score: 85, icon: Code },
-    { id: 'datos', label: 'Ciencia de Datos & IA', score: 74, icon: Database },
-    { id: 'cloud', label: 'Cloud & DevOps', score: 68, icon: Cloud },
-    { id: 'gestion', label: 'Gestión de TI & Gob.', score: 58, icon: ShieldAlert },
-    { id: 'ciberseguridad', label: 'Ciberseguridad & Redes', score: 52, icon: Lock },
-    { id: 'qa', label: 'Aseguramiento de Calidad (QA)', score: 45, icon: Target },
+    { id: 'desarrollo', label: 'Desarrollo de Software', score: getScore('desarrollo', 85), icon: Code },
+    { id: 'datos', label: 'Ciencia de Datos & IA', score: getScore('datos', 74), icon: Database },
+    { id: 'cloud', label: 'Cloud & DevOps', score: getScore('cloud', 68), icon: Cloud },
+    { id: 'gestion', label: 'Gestión de TI & Gob.', score: getScore('gestion', 58), icon: ShieldAlert },
+    { id: 'ciberseguridad', label: 'Ciberseguridad & Redes', score: getScore('ciberseguridad', 52), icon: Lock },
+    { id: 'qa', label: 'Aseguramiento de Calidad (QA)', score: getScore('qa', 45), icon: Target },
   ];
 
   const evidenceData: Record<string, Array<{
@@ -133,12 +151,15 @@ export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateN
     ]
   };
 
-  // Prioriza los datos reales del candidato seleccionado, si no existen usa el estático
-  const currentEvidenceList = candidateData?.evidence?.[activeAreaTab] || candidateData?.areas || evidenceData[activeAreaTab] || evidenceData['desarrollo'];
+  // Prioriza evidencias estructuradas del candidato si existen, o usa los respaldos formateados por área
+  const currentEvidenceList =
+    candidateData?.evidence?.[activeAreaTab] ||
+    evidenceData[activeAreaTab] ||
+    evidenceData['desarrollo'];
   const activeTabObj = tabs.find((t) => t.id === activeAreaTab) || tabs[0];
 
   return (
-    <div id="evidence-section" className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+    <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
       {/* Header Banner */}
       <div className="border-b border-slate-100 pb-4">
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-abyssal-blue text-white text-[10px] font-bold uppercase tracking-wider mb-2">
