@@ -27,21 +27,19 @@ async function request(path: string, options: RequestInit): Promise<unknown> {
   if (!response.ok) {
     if (response.status === 401 && getAccessToken() === token) clearAccessToken();
     let message = '';
-    if (response.status < 500) {
-      try {
-        const body = await response.json();
-        if (typeof body?.message === 'string') message = body.message;
-        else if (Array.isArray(body?.message)) message = body.message.filter((item: unknown) => typeof item === 'string').join(' ');
-      } catch { /* La respuesta de error puede no ser JSON. */ }
-    }
+    try {
+      const body = await response.json();
+      if (typeof body?.message === 'string') message = body.message;
+      else if (Array.isArray(body?.message)) message = body.message.filter((item: unknown) => typeof item === 'string').join(' ');
+    } catch { /* La respuesta de error puede no ser JSON. */ }
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tus intereses.',
       403: 'No tienes permiso para configurar estos intereses.',
       409: 'La selección cambió. Vuelve a intentar guardar para actualizarla.',
     };
-    throw new MentorInterestsError(messages[response.status] || (response.status >= 500
+    throw new MentorInterestsError(messages[response.status] || message || (response.status >= 500
       ? SERVER_ERROR_MESSAGE
-      : message || 'No se pudieron procesar los intereses. Inténtalo de nuevo.'), response.status);
+      : 'No se pudieron procesar los intereses. Inténtalo de nuevo.'), response.status);
   }
   return response.json();
 }
