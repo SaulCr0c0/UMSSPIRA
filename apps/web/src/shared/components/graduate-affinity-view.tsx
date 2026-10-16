@@ -17,6 +17,7 @@ import { recalculateAffinity, getAffinityVector } from '../services/affinity-ser
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
 import { ArrowLeft, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // Formatea dinámicamente mes (3 letras) y año en español
 const formatCalculatedDate = (dateString?: string | null): string | null => {
@@ -239,13 +240,13 @@ export const GraduateAffinityView: React.FC = () => {
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <a
-            href="#"
+          <Link
+            href="/profile"
             className="text-[13px] font-semibold text-truffle-trouble hover:underline flex items-center space-x-1 mb-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Volver a mi perfil</span>
-          </a>
+          </Link>
           <h1 className="text-[22px] sm:text-[32px] font-bold text-abyssal-blue tracking-tight">
             Tu afinidad profesional
           </h1>

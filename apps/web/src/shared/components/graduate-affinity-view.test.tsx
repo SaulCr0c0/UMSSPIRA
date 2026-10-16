@@ -600,4 +600,11 @@ describe('GraduateAffinityView', () => {
     expect(await screen.findByRole('button', { name: /Simular Actualización/i })).toBeInTheDocument();
     expect(screen.getByText(/Simular Timeout/i)).toBeInTheDocument();
   });
+
+  it('el enlace "Volver a mi perfil" redirige a /profile', async () => {
+    render(<GraduateAffinityView />);
+
+    const link = await screen.findByRole('link', { name: /Volver a mi perfil/i });
+    expect(link).toHaveAttribute('href', '/profile');
+  });
 });
