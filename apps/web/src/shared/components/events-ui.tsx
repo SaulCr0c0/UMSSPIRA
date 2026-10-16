@@ -1,23 +1,17 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import {
   EVENT_STATUS,
   type EventItem,
   type EventStatus,
 } from '@umsspira/shared-types';
 import {
-  Bell,
   Check,
-  ChevronDown,
   Eye,
-  Menu,
-  MessageSquare,
   Plus,
-  Search,
 } from 'lucide-react';
 import {
   getAdminEvents,
@@ -37,99 +31,7 @@ import {
 type AdminSection = 'management' | 'create' | 'drafts';
 
 export function EventsHeader({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? '';
-  const eventsMenuRef = useRef<HTMLDivElement>(null);
-  const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
-  const eventMenuItems = [
-    { href: '/events', label: 'Gestión de eventos' },
-    { href: '/events/create', label: 'Crear evento' },
-    { href: '/events/drafts', label: 'Borradores' },
-  ];
-  const activeEventHref = pathname.startsWith('/events/create')
-    ? '/events/create'
-    : pathname.startsWith('/events/drafts')
-      ? '/events/drafts'
-      : '/events';
-
-  useEffect(() => {
-    setIsEventsMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!isEventsMenuOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (eventsMenuRef.current && !eventsMenuRef.current.contains(event.target as Node)) {
-        setIsEventsMenuOpen(false);
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsEventsMenuOpen(false);
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isEventsMenuOpen]);
-
-  return (
-    <div className="events-app">
-      <header className="events-desktop-header">
-        <Link href="/events" className="events-logo-link" aria-label="UMSSPIRA - Eventos">
-          <Image src="/assets/events/umsspira-logo-desktop.png" alt="UMSSPIRA" width={170} height={56} priority />
-        </Link>
-        <nav className="events-main-nav" aria-label="Navegación principal">
-          <span>Inicio</span><span>Comunidad</span><span>Directorio</span>
-          <span>Bolsa de trabajo</span><span>Mentorías</span>
-          <div className="events-nav-dropdown" ref={eventsMenuRef}>
-            <button
-              type="button"
-              className="events-nav-trigger is-active"
-              aria-expanded={isEventsMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => setIsEventsMenuOpen((isOpen) => !isOpen)}
-            >
-              Eventos <ChevronDown size={13} strokeWidth={2.3} />
-            </button>
-            {isEventsMenuOpen ? (
-              <div className="events-dropdown-menu" role="menu">
-                {eventMenuItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    role="menuitem"
-                    aria-current={activeEventHref === item.href ? 'page' : undefined}
-                    className={activeEventHref === item.href ? 'is-active' : undefined}
-                    onClick={() => setIsEventsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </nav>
-        <div className="events-header-actions" aria-label="Acciones de cuenta">
-          <Search size={22} /><MessageSquare size={22} />
-          <span className="events-notification-icon"><Bell size={22} /></span>
-          <span className="events-profile-separator" /><span className="events-avatar">AD</span>
-          <span className="events-profile-copy"><strong>Administración</strong><small>Sin sesión</small></span>
-          <ChevronDown size={15} />
-        </div>
-      </header>
-      <header className="events-mobile-header">
-        <Menu size={24} aria-hidden="true" />
-        <Link href="/events" aria-label="UMSSPIRA - Eventos">
-          <Image src="/assets/events/umsspira-logo-2.png" alt="UMSSPIRA" width={107} height={30} priority />
-        </Link>
-        <span className="events-mobile-avatar" aria-label="Administración">AD</span>
-      </header>
-      {children}
-    </div>
-  );
+  return <div className="events-app">{children}</div>;
 }
 export function EventAdminTabs({ active }: { active: AdminSection }) {
   const tabs: Array<{ key: AdminSection; label: string; href: string }> = [

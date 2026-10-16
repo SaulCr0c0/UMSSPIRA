@@ -2,9 +2,16 @@ import { activeSection, navigationFor, NAVBAR_ACCOUNT_LINKS, visibleLinks } from
 
 const destinations = (role: Parameters<typeof navigationFor>[0]) => navigationFor(role).flatMap(section => section.items.map(item => item.href)).filter(Boolean);
 
-it('permite al visitante explorar eventos sin ofrecer gestión administrativa', () => {
-  expect(destinations(null)).toContain('/events/catalog');
+it('no muestra el catálogo en el menú de eventos y reserva la gestión para administradores', () => {
+  expect(destinations(null)).not.toContain('/events/catalog');
   expect(destinations(null)).not.toContain('/events/create');
+  expect(destinations('titulado')).toContain('/portal/eventos');
+  expect(destinations('titulado')).not.toContain('/events');
+  expect(destinations('administrador')).toContain('/events');
+  expect(destinations('administrador')).toContain('/events/create');
+  expect(destinations('administrador')).toContain('/events/drafts');
+  expect(destinations('administrador')).not.toContain('/events/catalog');
+  expect(destinations('administrador')).not.toContain('/portal/eventos');
   expect(destinations(null)).not.toContain('/empresa/vacantes/publicar');
 });
 
@@ -21,7 +28,7 @@ it('incorpora reportes y solicitudes a la cuenta de administrador', () => {
 });
 
 it('activa el módulo por la ruta más específica, incluidos los registros dinámicos', () => {
-  expect(activeSection('/events/catalog/123')).toBe('events');
+  expect(activeSection('/events/drafts/draft-123')).toBe('events');
   expect(activeSection('/profile/certifications/cert-1/edit')).toBe('directory');
   expect(activeSection('/portal/empleos')).toBe('jobs');
 });
