@@ -346,4 +346,19 @@ describe('GraduateAffinityView', () => {
     });
     expect(screen.queryByText('Node.js')).not.toBeInTheDocument();
   });
+
+  it('muestra el estado vacío con "Completar perfil" y oculta el indicador de actualización cuando no hay datos', async () => {
+    // 1. Simulamos que el backend responde con un vector vacío
+    mockGetAffinityVector.mockResolvedValueOnce({ areas: [] });
+
+    render(<GraduateAffinityView />);
+
+    // 2. Esperamos a que la vista cargue y muestre el botón de completar perfil
+    expect(await screen.findByText(/Completar perfil/i)).toBeInTheDocument();
+    expect(screen.getByText(/Aún no podemos calcular tus áreas de mayor afinidad/i)).toBeInTheDocument();
+
+    // 3. Verificamos que los indicadores de un radar válido NO estén en pantalla
+    expect(screen.queryByText(/Última actualización/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Vector Calculado/i)).not.toBeInTheDocument();
+  });
 });
