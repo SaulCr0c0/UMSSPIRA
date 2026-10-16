@@ -1,12 +1,3 @@
-
- export default function Home() {
-   return (
-     <main className="home-page">
-       <h1 className="home-title">UMSSPIRA Frontend Operativo</h1>
-     </main>
-   );
- }
-
 import React from 'react';
 import { Navbar } from '@/shared/components/navbar';
 import Image from 'next/image';
