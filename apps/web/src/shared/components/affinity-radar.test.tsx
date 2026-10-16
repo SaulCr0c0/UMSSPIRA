@@ -153,12 +153,12 @@ describe('AffinityRadar variante mini', () => {
   it('muestra etiquetas cortas con porcentaje', () => {
     render(<AffinityRadar affinityData={mockData as any} variant="mini" />);
 
-    expect(screen.getByText('Desarrollo (86%)')).toBeInTheDocument();
-    expect(screen.getByText('Cloud (70%)')).toBeInTheDocument();
-    expect(screen.getByText('Datos & IA (90%)')).toBeInTheDocument();
-    expect(screen.getByText('QA & Testing (60%)')).toBeInTheDocument();
-    expect(screen.getByText('Ciberseg. (45%)')).toBeInTheDocument();
-    expect(screen.getByText('Gestión (80%)')).toBeInTheDocument();
+    expect(screen.getByText('Desarrollo de Software (86%)')).toBeInTheDocument();
+    expect(screen.getByText('Cloud/Devops (70%)')).toBeInTheDocument();
+    expect(screen.getByText('Ciencia de Datos/IA (90%)')).toBeInTheDocument();
+    expect(screen.getByText('QA (60%)')).toBeInTheDocument();
+    expect(screen.getByText('Ciberseguridad (45%)')).toBeInTheDocument();
+    expect(screen.getByText('Gestión TI (80%)')).toBeInTheDocument();
   });
 
   it('es de solo lectura: no responde a clics', () => {
@@ -168,7 +168,7 @@ describe('AffinityRadar variante mini', () => {
 
     expect(container.querySelector('.cursor-pointer')).toBeNull();
 
-    fireEvent.click(screen.getByText('Desarrollo (86%)'));
+    fireEvent.click(screen.getByText('Desarrollo de Software (86%)'));
     expect(screen.queryByText('ÁREA SELECCIONADA (CLICK)')).not.toBeInTheDocument();
   });
 
