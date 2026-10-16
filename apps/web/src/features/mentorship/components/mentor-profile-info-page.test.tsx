@@ -215,4 +215,28 @@ describe('MentorProfileInfoPage (HU-6.5)', () => {
 
     expect(await screen.findByText(/formato de imagen no es admitido/i)).toBeInTheDocument();
   });
+
+  it('agrupa Eliminar y Editar información en el pie de lectura con su clase responsive', async () => {
+    mockGet.mockResolvedValue({ exists: true, profile: sampleProfile });
+    render(<MentorProfileInfoPage />);
+
+    const editBtn = await screen.findByRole('button', { name: /Editar información/i });
+    const footer = editBtn.closest<HTMLElement>('.mentor-info-footer');
+
+    expect(footer).toHaveClass('mentor-info-footer-read');
+    expect(within(footer as HTMLElement).getByRole('button', { name: /Eliminar información/i })).toBeInTheDocument();
+  });
+
+  it('agrupa Guardar y Cancelar en el pie del formulario con su clase responsive', async () => {
+    mockGet.mockResolvedValue({ exists: true, profile: sampleProfile });
+    render(<MentorProfileInfoPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Editar información/i }));
+
+    const saveBtn = screen.getByRole('button', { name: /Guardar información/i });
+    const footer = saveBtn.closest<HTMLElement>('.mentor-info-footer');
+
+    expect(footer).toHaveClass('mentor-info-footer-edit');
+    expect(within(footer as HTMLElement).getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+  });
 });
