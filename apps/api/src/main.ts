@@ -1,4 +1,5 @@
 import './load-env';
+import express from 'express';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, type ArgumentMetadata } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -9,7 +10,9 @@ import { CreateEventDto } from './modules/events/dto/create-event.dto';
 import { UpdateDraftEventDto } from './modules/events/dto/update-draft-event.dto';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use(express.json({ limit: '8mb' }));
+  app.use(express.urlencoded({ limit: '8mb', extended: true }));
 
   // Uno o varios origenes separados por coma:
   //   WEB_ORIGIN=https://app.vercel.app,https://preview.vercel.app

@@ -1,4 +1,5 @@
 import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
@@ -53,6 +54,10 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
       clearAccessToken();
     }
 
+    if (response.status >= 500) {
+      throw new MentorProfileInfoError(SERVER_ERROR_MESSAGE, response.status);
+    }
+
     let serverMessage = '';
     try {
       const body = await response.text();
@@ -77,7 +82,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
     };
 
     throw new MentorProfileInfoError(
-      serverMessage || messages[response.status] || `Error del servidor (HTTP ${response.status}).`,
+      serverMessage || messages[response.status] || 'No se pudo procesar la solicitud.',
       response.status,
     );
   }

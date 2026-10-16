@@ -21,8 +21,18 @@ export function useAuth() {
       authStore.setState({ status: "loading", error: null });
       try {
         const { role, accessToken } = await login(credentials);
+        try {
+          await saveSession(accessToken, role, remember);
+        } catch {
+          authStore.setState({
+            status: "error",
+            role: null,
+            accessToken: null,
+            error: "No se pudo iniciar la sesión de forma segura. Intenta nuevamente.",
+          });
+          return;
+        }
         authStore.setState({ status: "authenticated", role, accessToken });
-        saveSession(accessToken, role, remember);
         setAccessToken(accessToken);
         router.push(getRedirectPath(role));
       } catch {

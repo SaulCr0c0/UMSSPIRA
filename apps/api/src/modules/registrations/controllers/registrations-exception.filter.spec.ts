@@ -1,4 +1,4 @@
-import { ConflictException, GoneException } from '@nestjs/common';
+import { ConflictException, GoneException, HttpException, Logger } from '@nestjs/common';
 import { RegistrationsExceptionFilter } from './registrations-exception.filter';
 
 function runFilter(exception: unknown) {
@@ -12,6 +12,8 @@ function runFilter(exception: unknown) {
 }
 
 describe('RegistrationsExceptionFilter', () => {
+  afterEach(() => jest.restoreAllMocks());
+
   it('conserva el campo y los errores del conflicto de duplicado (CA-01.4)', () => {
     const body = {
       statusCode: 409,
@@ -33,5 +35,17 @@ describe('RegistrationsExceptionFilter', () => {
 
     expect(status).toHaveBeenCalledWith(410);
     expect(json).toHaveBeenCalledWith(body);
+  });
+
+  it('oculta detalles internos de errores 5xx', () => {
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const { json, status } = runFilter(new HttpException('detalle de base de datos', 500));
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      statusCode: 500,
+      message: 'Ocurrió un error interno. Intenta nuevamente más tarde.',
+      error: 'Error interno del servidor',
+    });
   });
 });

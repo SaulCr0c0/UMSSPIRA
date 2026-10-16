@@ -17,7 +17,8 @@ describe("useAuth", () => {
     mockPush.mockClear();
     authStore.reset();
     // Emula el endpoint real POST /api/auth/login (USE_MOCK = false).
-    global.fetch = jest.fn(async (_url: unknown, options?: { body?: unknown }) => {
+    global.fetch = jest.fn(async (url: unknown, options?: { body?: unknown }) => {
+      if (url === "/api/auth/session") return { ok: true };
       const body = JSON.parse(String((options?.body ?? "{}") as string));
       if (body.email === "admin@umss.edu.bo" && body.password === "admin1234") {
         return { ok: true, json: async () => ({ data: { accessToken: "token-admin", role: "administrador" } }) };

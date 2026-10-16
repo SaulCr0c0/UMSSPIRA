@@ -73,7 +73,9 @@ export async function uploadDocument({ sessionToken, tipoDocumento, file }: Uplo
     ok: false,
     status: response.status,
     code: body?.code,
-    message: message ?? 'No se pudo enviar el documento. Intenta nuevamente.',
+    message: response.status >= 500
+      ? SERVER_ERROR_MESSAGE
+      : message ?? 'No se pudo enviar el documento. Intenta nuevamente.',
     errors: Array.isArray(body?.errors) ? body.errors : [],
   };
 }
@@ -139,7 +141,10 @@ export async function submitRegistration({
     ok: false,
     status: response.status,
     code: body?.code,
-    message: message ?? 'No se pudo registrar la solicitud. Intenta nuevamente.',
+    message: response.status >= 500
+      ? SERVER_ERROR_MESSAGE
+      : message ?? 'No se pudo registrar la solicitud. Intenta nuevamente.',
     errors: Array.isArray(body?.errors) ? body.errors : [],
   };
 }
+import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';

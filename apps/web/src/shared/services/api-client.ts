@@ -1,3 +1,5 @@
+import { SERVER_ERROR_MESSAGE } from './api-error-message';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -36,6 +38,9 @@ async function apiRequest<TResponse>(
   }
 
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error(SERVER_ERROR_MESSAGE);
+    }
     const message = getErrorMessage(responseData);
 
     throw new Error(
@@ -82,7 +87,10 @@ async function request<TResponse>(path: string, init?: RequestInit): Promise<TRe
   });
 
   if (!response.ok) {
-    throw new ApiException(response.status, `Error ${response.status} al consultar ${path}`);
+    throw new ApiException(
+      response.status,
+      response.status >= 500 ? SERVER_ERROR_MESSAGE : `Error ${response.status} al consultar ${path}`,
+    );
   }
 
   return (await response.json()) as TResponse;
@@ -165,6 +173,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     if (res.status === 401) throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
+    if (res.status >= 500) throw new ApiError(res.status, SERVER_ERROR_MESSAGE);
     throw new ApiError(res.status, errorMessage(body, 'Error inesperado'));
   }
   return body as T;
