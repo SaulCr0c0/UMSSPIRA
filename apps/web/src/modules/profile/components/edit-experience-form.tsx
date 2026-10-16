@@ -77,7 +77,7 @@ function EditExperienceFields({ experience }: { experience: ExperienceRecord }) 
       sectionSubtitle="Tu experiencia profesional más relevante"
       isSaved={isSaved}
       onSubmit={handleSubmit}
-      onCancel={() => router.push('/profile/records')}
+      onCancel={() => router.push('/profile/records?section=experience')}
     >
       <div className="grid gap-4 md:grid-cols-2">
         <FormField id="company" label="Empresa">

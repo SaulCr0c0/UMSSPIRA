@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Check, Plus } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,7 +32,17 @@ export function ProfileRecordsManager({ initialRecords = PROFILE_RECORDS_MOCK }:
   const store = useOptionalProfileStore();
   const [localRecords, setLocalRecords] = useState<ProfileRecords>(initialRecords);
   const records = store?.records ?? localRecords;
-  const [activeSection, setActiveSection] = useState<RecordSection>('education');
+  const searchParams = useSearchParams();
+  const sectionFromUrl = searchParams?.get('section');
+
+  const initialSection: RecordSection =
+  sectionFromUrl === 'education' ||
+  sectionFromUrl === 'certification' ||
+  sectionFromUrl === 'experience'
+    ? sectionFromUrl
+    : 'education';
+
+  const [activeSection, setActiveSection] = useState<RecordSection>(initialSection);
   const [recordToDelete, setRecordToDelete] = useState<ProfileRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<DeleteRecordErrorCode | null>(null);
