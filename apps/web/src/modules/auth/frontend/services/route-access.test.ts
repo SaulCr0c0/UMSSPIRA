@@ -16,14 +16,14 @@ describe("decideAccess", () => {
   it("el titulado no entra al panel administrativo (CA-05.5)", () => {
     expect(decideAccess("/applications", "token", "titulado")).toEqual({
       allowed: false,
-      redirectTo: "/me",
+      redirectTo: "/portal",
     });
   });
 
   it("una sesión sin rol tampoco entra al panel", () => {
     expect(decideAccess("/applications", "token", undefined)).toEqual({
       allowed: false,
-      redirectTo: "/me",
+      redirectTo: "/portal",
     });
   });
 

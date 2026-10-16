@@ -5,7 +5,6 @@ import Link from "next/link";
 
 const adminLinks = [
   { href: "/applications", label: "Solicitudes" },
-  { href: "/me", label: "Mi perfil" },
   { href: "/profile", label: "Mi perfil profesional" },
 ];
 

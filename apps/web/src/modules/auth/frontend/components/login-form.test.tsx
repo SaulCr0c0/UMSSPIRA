@@ -71,11 +71,11 @@ describe("LoginForm", () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/applications"));
   });
 
-  it("redirige al titulado a su área personal (CA-05.3)", async () => {
+  it("redirige al titulado al portal (CA-05.3)", async () => {
     render(<LoginForm />);
 
     fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/me"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/portal"));
   });
 });

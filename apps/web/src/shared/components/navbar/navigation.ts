@@ -46,7 +46,6 @@ export const NAVBAR_SECTIONS: NavbarSection[] = [
 ];
 
 export const NAVBAR_ACCOUNT_LINKS: NavbarLink[] = [
-  { id: 'personal', label: 'Mi área personal', href: '/me', roles: members },
   { id: 'my-profile', label: 'Mi perfil profesional', href: '/profile', roles: members },
   { id: 'my-company', label: 'Mi empresa', href: '/companies', roles: employers },
   { id: 'applications', label: 'Solicitudes de registro', href: '/applications', roles: admins },

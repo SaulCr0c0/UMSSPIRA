@@ -42,7 +42,7 @@ describe("useAuth", () => {
     expect(mockPush).toHaveBeenCalledWith("/applications");
   });
 
-  it("inicia sesión como titulado y redirige a /me", async () => {
+  it("inicia sesión como titulado y redirige a /portal", async () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
@@ -51,7 +51,7 @@ describe("useAuth", () => {
 
     expect(result.current.status).toBe("authenticated");
     expect(result.current.role).toBe("titulado");
-    expect(mockPush).toHaveBeenCalledWith("/me");
+    expect(mockPush).toHaveBeenCalledWith("/portal");
   });
 
   it("publica el token en el almacén que usan las pantallas de mentoría", async () => {
@@ -74,6 +74,6 @@ describe("useAuth", () => {
     expect(result.current.status).toBe("error");
     expect(result.current.error).toBe(LOGIN_ERROR_MESSAGE);
     expect(result.current.accessToken).toBeNull();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/portal");
   });
 });

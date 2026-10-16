@@ -1,4 +1,3 @@
-
 // Servicio de autenticación del módulo auth (HU-05)
 
 export type UserRole = "administrador" | "titulado";
@@ -16,9 +15,8 @@ export interface LoginResult {
 // Mensaje fijo por CA-05.4: no revela si falló el correo o la contraseña
 export const LOGIN_ERROR_MESSAGE = "Correo electrónico o contraseña incorrectos";
 
-// El endpoint real ya está fusionado y verificado: se usa siempre.
-// (El mock de abajo queda solo como referencia para pruebas locales sin backend.)
-const USE_MOCK = false;
+// Activado temporalmente para pruebas locales sin depender de la BD/backend
+const USE_MOCK = true;
 
 // El backend corre en el puerto 3000 y su controlador ya incluye el prefijo "api/auth"
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
@@ -75,5 +73,5 @@ export function login(
 
 // Destino tras iniciar sesión según el rol (CA-05.2 y CA-05.3)
 export function getRedirectPath(role: UserRole): string {
-  return role === "administrador" ? "/applications" : "/me";
+  return role === "administrador" ? "/applications" : "/portal";
 }

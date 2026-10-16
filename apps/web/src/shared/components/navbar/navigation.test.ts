@@ -25,3 +25,10 @@ it('activa el módulo por la ruta más específica, incluidos los registros din�
   expect(activeSection('/profile/certifications/cert-1/edit')).toBe('directory');
   expect(activeSection('/portal/empleos')).toBe('jobs');
 });
+
+it('ya no ofrece /me en la navegación; el titulado accede a su perfil por /profile', () => {
+  const account = visibleLinks(NAVBAR_ACCOUNT_LINKS, 'titulado').map(item => item.href);
+  expect(account).not.toContain('/me');
+  expect(account).toContain('/profile');
+  expect(destinations('titulado')).not.toContain('/me');
+});

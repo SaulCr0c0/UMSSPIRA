@@ -3,7 +3,8 @@ export const ROLE_COOKIE = "umsspira_role";
 
 export const LOGIN_PATH = "/login";
 export const ADMIN_HOME = "/applications";
-export const USER_HOME = "/me";
+// Inicio del titulado: /login → /portal → «Mi perfil» → /profile. /me se conserva solo por compatibilidad.
+export const USER_HOME = "/portal";
 
 export type AccessDecision = { allowed: true } | { allowed: false; redirectTo: string };
 
