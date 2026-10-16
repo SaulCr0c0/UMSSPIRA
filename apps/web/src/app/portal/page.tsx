@@ -40,6 +40,14 @@ export default function Home() {
     );
   }, [query]);
 
+  const filteredEvents = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return events;
+    return events.filter((ev) =>
+      normalize(`${ev.title} ${ev.place} ${ev.time} ${ev.month}`).includes(q)
+    );
+  }, [query]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
       {/* Banner principal */}
@@ -117,7 +125,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {events.map((ev) => (
+          {filteredEvents.map((ev) => (
             <article
               key={ev.title}
               className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
