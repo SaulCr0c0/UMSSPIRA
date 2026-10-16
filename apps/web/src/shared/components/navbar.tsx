@@ -65,7 +65,7 @@ export const Navbar: React.FC = () => {
     setIsDrawerOpen(false);
     setIsProfileDropdownOpen(false);
     setIsNotificationsOpen(false);
-    router.push('/login');
+    router.push('/portal/institucional');
     router.refresh();
   };
 

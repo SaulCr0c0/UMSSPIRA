@@ -11,10 +11,10 @@ import eventImg2 from '@/shared/assets/images/networking.jpg';
 import eventImg3 from '@/shared/assets/images/beneficios.jpg';
 
 const quickLinks = [
-  { href: '/portal/eventos', title: 'Eventos', text: 'Participa en los próximos eventos y actividades.', Icon: Calendar, iconStyle: 'bg-amber-50 text-amber-600' },
-  { href: '/portal/empleos', title: 'Bolsa de trabajo', text: 'Encuentra nuevas oportunidades laborales.', Icon: Briefcase, iconStyle: 'bg-blue-50 text-blue-600' },
-  { href: '/portal/beneficios', title: 'Beneficios', text: 'Accede a descuentos y convenios exclusivos.', Icon: Star, iconStyle: 'bg-amber-50 text-amber-600' },
-  { href: '/portal/comunidad', title: 'Comunidad', text: 'Conecta con otros egresados.', Icon: Users, iconStyle: 'bg-slate-100 text-slate-700' },
+  { href: '/portal/eventos', title: 'Eventos', text: 'Participa en los próximos eventos y actividades.', Icon: Calendar, iconStyle: 'bg-[#0F172A] text-amber-400' },
+  { href: '/portal/empleos', title: 'Bolsa de trabajo', text: 'Encuentra nuevas oportunidades laborales.', Icon: Briefcase, iconStyle: 'bg-[#0F172A] text-amber-400' },
+  { href: '/portal/beneficios', title: 'Beneficios', text: 'Accede a descuentos y convenios exclusivos.', Icon: Star, iconStyle: 'bg-[#0F172A] text-amber-400' },
+  { href: '/portal/comunidad', title: 'Comunidad', text: 'Conecta con otros egresados.', Icon: Users, iconStyle: 'bg-[#0F172A] text-amber-400' },
 ];
 
 const events = [
@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
       {/* Banner principal */}
-      <section className="relative w-full rounded-2xl overflow-hidden bg-[#111827] text-white p-6 sm:p-8 md:p-12 shadow-lg">
+      <section className="relative w-full rounded-2xl overflow-hidden bg-[#0F172A] text-white p-6 sm:p-8 md:p-12 shadow-lg">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <Image
             src={umssBg}
@@ -95,7 +95,7 @@ export default function Home() {
             <Link
               key={href}
               href={href}
-              className="h-full min-h-[44px] bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
+              className="h-full min-h-[44px] bg-[#F5F2EA] p-5 rounded-2xl border border-[#C9C1B1] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
             >
               <div className="flex items-start justify-between">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyle}`}>
@@ -132,7 +132,7 @@ export default function Home() {
               return (
                 <article
                   key={ev.title}
-                  className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                  className="bg-[#F5F2EA] rounded-2xl border border-[#C9C1B1] overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
                   <div className="h-32 bg-slate-200 relative">
                     <Image

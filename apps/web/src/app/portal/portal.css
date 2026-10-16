@@ -1,9 +1,9 @@
 
 .portal-view {
-  --umss-navy: #1E3A5F;
-  --umss-orange: #E85D3A;
-  --umss-cream: #F5F0E8;
-  --umss-dark: #1A1A2E;
+  --umss-navy: #0F172A;
+  --umss-orange: #FFB162;
+  --umss-cream: #F5F2EA;
+  --umss-dark: #0F172A;
 }
 
 .portal-view *, .portal-view *::before, .portal-view *::after { box-sizing: border-box; }

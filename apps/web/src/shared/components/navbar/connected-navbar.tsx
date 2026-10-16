@@ -70,7 +70,7 @@ export function ConnectedNavbar() {
     clearToken();
     authStore.reset();
     setSession(null);
-    router.push('/login');
+    router.push('/portal/institucional');
     router.refresh();
   };
 
