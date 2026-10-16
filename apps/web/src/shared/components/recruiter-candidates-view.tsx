@@ -121,7 +121,7 @@ export const RecruiterCandidatesView: React.FC = () => {
       </section>
 
       <section id="evidence-section">
-        {selectedCandidate && <EvidenceBreakdown candidateName={selectedCandidate.name} />}
+        {selectedCandidate && <EvidenceBreakdown candidateName={selectedCandidate.name} candidateData={selectedCandidate} />}
       </section>
     </div>
   );

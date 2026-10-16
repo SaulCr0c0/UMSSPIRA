@@ -5,9 +5,10 @@ import { Award, FileText, CheckCircle2, ShieldCheck, ExternalLink, Calendar, Cod
 
 export interface CandidateEvidenceProps {
   candidateName: string;
+  candidateData?: any; // Recibe los datos reales o el mock específico del candidato
 }
 
-export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateName }) => {
+export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateName, candidateData }) => {
   const [activeAreaTab, setActiveAreaTab] = useState('desarrollo');
 
   const tabs = [
@@ -132,11 +133,12 @@ export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateN
     ]
   };
 
-  const currentEvidenceList = evidenceData[activeAreaTab] || evidenceData['desarrollo'];
+  // Prioriza los datos reales del candidato seleccionado, si no existen usa el estático
+  const currentEvidenceList = candidateData?.evidence?.[activeAreaTab] || candidateData?.areas || evidenceData[activeAreaTab] || evidenceData['desarrollo'];
   const activeTabObj = tabs.find((t) => t.id === activeAreaTab) || tabs[0];
 
   return (
-    <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+    <div id="evidence-section" className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
       {/* Header Banner */}
       <div className="border-b border-slate-100 pb-4">
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-abyssal-blue text-white text-[10px] font-bold uppercase tracking-wider mb-2">
