@@ -24,6 +24,8 @@ const events = [
 ];
 
 export default function Home() {
+  const [query, setQuery] = useState('');
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
       {/* Banner principal */}
