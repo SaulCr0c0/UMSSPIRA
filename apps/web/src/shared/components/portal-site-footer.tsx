@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Facebook, Instagram, Linkedin, Twitter, Mail, Phone, MapPin, ArrowUp } from 'lucide-react'
 import Logo from './logo'
 
@@ -8,21 +9,17 @@ const PLATFORM_LINKS = [
   { href: '/companies', label: 'Empresas' },
   { href: '/job-postings', label: 'Ofertas' },
   { href: '/events', label: 'Eventos' },
-  { href: '/benefits', label: 'Beneficios' },
+  { href: '/portal/beneficios', label: 'Beneficios' },
 ]
 
 const ACCOUNT_LINKS = [
   { href: '/login', label: 'Iniciar sesion' },
   { href: '/register', label: 'Registrarse' },
   { href: '/profile', label: 'Mi perfil' },
-  { href: '/settings', label: 'Configuracion' },
 ]
 
-const LEGAL_LINKS = [
-  { href: '/terminos', label: 'Terminos' },
-  { href: '/privacidad', label: 'Privacidad' },
-  { href: '/cookies', label: 'Cookies' },
-]
+// Se retiran Terminos, Privacidad y Cookies hasta que existan sus pantallas
+const LEGAL_LINKS: { href: string; label: string }[] = []
 
 const SOCIALS = [
   { href: 'https://facebook.com', label: 'Facebook', icon: Facebook },
@@ -32,6 +29,11 @@ const SOCIALS = [
 ]
 
 export function PortalSiteFooter() {
+  const pathname = usePathname() ?? ''
+
+  // La vista institucional (sin sesión) trae su propio pie: aquí no se monta otro
+  if (pathname.replace(/\/$/, '') === '/portal/institucional') return null
+
   const year = new Date().getFullYear()
 
   const scrollToTop = () => {
@@ -41,7 +43,7 @@ export function PortalSiteFooter() {
   }
 
   return (
-    <footer className="mt-16 border-t border-white/10 bg-umss-navy text-white">
+    <footer className="mt-16 border-t border-slate-800 bg-[#0F172A] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
@@ -110,7 +112,7 @@ export function PortalSiteFooter() {
             </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-umss-orange" />
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <a href="mailto:contacto@umsspira.umss.edu.bo" className="transition-colors hover:text-umss-orange">
                   contacto@umsspira.umss.edu.bo
                 </a>
@@ -122,7 +124,7 @@ export function PortalSiteFooter() {
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-umss-orange" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <span>
                   Av. Ballivian s/n, Campus UMSS
                   <br />

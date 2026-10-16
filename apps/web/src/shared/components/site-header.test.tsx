@@ -4,7 +4,14 @@ import { PortalSiteHeader } from "./portal-site-header";
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
-  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("PortalSiteHeader", () => {
@@ -28,13 +35,11 @@ describe("PortalSiteHeader", () => {
   });
 
   it.each(["/portal/institucional", "/portal/institucional/"])(
-    "muestra una sola navbar oficial para visitantes en %s",
+    "no renderiza encabezado en %s para evitar la doble cabecera",
     (pathname) => {
       jest.mocked(usePathname).mockReturnValue(pathname);
-      render(<PortalSiteHeader />);
-      expect(screen.getAllByRole("banner")).toHaveLength(1);
-      expect(screen.getByRole("link", { name: /umsspira/i })).toHaveAttribute("href", "/portal/institucional");
-      expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute("href", "/login");
+      const { container } = render(<PortalSiteHeader />);
+      expect(container).toBeEmptyDOMElement();
     },
   );
 });
