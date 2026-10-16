@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { EVENT_STATUS, type EventItem } from '@umsspira/shared-types';
 
-import EventDetailPage from './page';
+import EventDetailPage from '@/features/events/event-detail-page';
 import { ApiClientError } from '@/shared/services/api-client';
 import { getPublishedEvent } from '@/shared/services/events-service';
 import { formatEventDateTime } from '@/shared/utils/event-date-time';
@@ -39,6 +39,18 @@ describe('detalle público de eventos', () => {
       .toHaveAttribute('href', '/events/catalog');
     expect(getPublishedEvent).not.toHaveBeenCalled();
     expect(screen.queryByText(/Mock|Supabase|Tarea 11/i)).not.toBeInTheDocument();
+  });
+
+  it('permite volver al catálogo del portal cuando se abre desde el portal', () => {
+    render(
+      <EventDetailPage
+        params={{ id: 'no-es-un-uuid' }}
+        catalogHref="/portal/eventos"
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Regresar al catálogo' }))
+      .toHaveAttribute('href', '/portal/eventos');
   });
 
   it('muestra un estado no disponible para un UUID inexistente', async () => {

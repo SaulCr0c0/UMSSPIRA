@@ -4,9 +4,13 @@ import { formatEventCardSchedule } from '@/shared/utils/event-date-time';
 
 export interface EventCardProps {
   event: EventItem;
+  detailBasePath?: string;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({
+  event,
+  detailBasePath = '/events/catalog',
+}: EventCardProps) {
   const eventSchedule = formatEventCardSchedule(
     event.startDate,
     event.endDate,
@@ -74,7 +78,7 @@ export function EventCard({ event }: EventCardProps) {
 
         <div className="hu2-event-card-actions">
           <Link
-            href={`/events/catalog/${event.id}`}
+            href={`${detailBasePath}/${event.id}`}
             className="hu2-detail-link"
           >
             Ver detalle

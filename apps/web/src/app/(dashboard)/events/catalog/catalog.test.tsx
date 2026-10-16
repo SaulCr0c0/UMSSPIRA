@@ -3,6 +3,7 @@ import { EVENT_STATUS, type EventItem } from '@umsspira/shared-types';
 import EventsCatalogPage from './page';
 import { getEventCatalog } from '@/shared/services/events-service';
 import { getEventMonthKey } from '@/shared/utils/event-date-time';
+import PortalEventsCatalogPage from '@/features/events/events-catalog-page';
 
 jest.mock('@/shared/services/events-service', () => ({
   getEventCatalog: jest.fn(),
@@ -115,6 +116,15 @@ describe('catálogo de eventos', () => {
     expect(screen.getByText(
       'El catálogo estará disponible cuando existan eventos publicados.',
     )).toBeInTheDocument();
+  });
+
+  it('permite mantener los enlaces de detalle dentro del portal', async () => {
+    render(<PortalEventsCatalogPage detailBasePath="/portal/eventos" />);
+
+    await screen.findAllByText('Feria de empleo');
+
+    expect(screen.getAllByRole('link', { name: 'Ver detalle' })[0])
+      .toHaveAttribute('href', '/portal/eventos/event-october');
   });
 
   it('distingue una búsqueda sin coincidencias de un catálogo vacío', async () => {

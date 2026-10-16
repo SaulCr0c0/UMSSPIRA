@@ -1387,10 +1387,9 @@
 }
 
 .hu2-event-card-body {
-  position: relative;
   display: flex;
   min-width: 0;
-  min-height: 166px;
+  min-height: 190px;
   flex: 1 1 auto;
   flex-direction: column;
   padding: 14px 20px 11px;
@@ -1425,10 +1424,15 @@
 }
 
 .hu2-event-meta p { margin: 0 0 2px; overflow-wrap: anywhere; }
-.hu2-event-meta p:last-child { margin-bottom: 0; padding-right: 178px; }
+.hu2-event-meta p:last-child { margin-bottom: 0; }
 .hu2-event-schedule { font-weight: 500; letter-spacing: .02em; text-transform: uppercase; }
 
-.hu2-event-card-actions { position: absolute; right: 20px; bottom: 10px; }
+.hu2-event-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 10px;
+}
 .hu2-detail-link {
   display: inline-flex;
   width: 169px;
@@ -1595,8 +1599,6 @@
   .hu2-event-cover { height: 165px; padding-right: 34px; }
   .hu2-event-cover.has-image { padding: 18px 24px; }
   .hu2-event-card-body { min-height: 204px; padding: 14px; }
-  .hu2-event-card-actions { right: 14px; bottom: 14px; }
-  .hu2-event-meta p:last-child { padding-right: 150px; }
   .hu2-detail-link { width: 138px; height: 44px; }
   .hu2-empty-state { min-height: 238px; padding: 82px 24px 30px; }
   .hu2-catalog-state h2 { font-size: 22px; line-height: 30px; }
@@ -1634,7 +1636,6 @@
   .hu2-control-input { padding-right: 12px; padding-left: 12px; font-size: 12px; }
   .hu2-sort-select { padding-right: 30px; }
   .hu2-sort-icon { right: 10px; }
-  .hu2-event-meta p:last-child { padding-right: 150px; }
 }
 
 @media (max-width: 359px) {
@@ -1643,6 +1644,4 @@
   .hu2-catalog-filters { grid-template-columns: 1fr; }
   .hu2-search-control,
   .hu2-search-button { grid-column: 1; }
-  .hu2-event-meta p:last-child { padding-right: 0; }
-  .hu2-event-card-actions { position: static; display: flex; justify-content: flex-end; margin-top: 12px; }
 }
