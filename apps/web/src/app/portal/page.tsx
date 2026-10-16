@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Calendar, Briefcase, Star, Users, ChevronRight, Bookmark } from 'lucide-react';
@@ -23,15 +23,31 @@ const events = [
   { img: eventImg3, title: 'Feria de Beneficios', day: '08', month: 'NOV', place: 'Campus UMSS', time: '9:30 a.m. - 4:00 p.m.' },
 ];
 
+const normalize = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 export default function Home() {
   const [query, setQuery] = useState('');
   const [saved, setSaved] = useState<Set<string>>(new Set());
 
-  const term = query.trim().toLowerCase();
-  const matches = (...parts: string[]) => !term || parts.join(' ').toLowerCase().includes(term);
+  const filteredQuickLinks = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return quickLinks;
+    return quickLinks.filter(({ title, text }) =>
+      normalize(`${title} ${text}`).includes(q)
+    );
+  }, [query]);
 
-  const shownLinks = quickLinks.filter((l) => matches(l.title, l.text));
-  const shownEvents = events.filter((e) => matches(e.title, e.place));
+  const filteredEvents = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return events;
+    return events.filter((ev) =>
+      normalize(`${ev.title} ${ev.place} ${ev.time} ${ev.day} ${ev.month}`).includes(q)
+    );
+  }, [query]);
 
   const toggleSaved = (title: string) =>
     setSaved((prev) => {
@@ -40,6 +56,8 @@ export default function Home() {
       else next.add(title);
       return next;
     });
+
+  const term = query.trim();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
@@ -82,16 +100,16 @@ export default function Home() {
         </div>
       </section>
 
-      {term && shownLinks.length === 0 && shownEvents.length === 0 && (
+      {term && filteredQuickLinks.length === 0 && filteredEvents.length === 0 && (
         <p role="status" className="text-center text-sm text-slate-500">
-          No se encontraron resultados para &quot;{query.trim()}&quot;.
+          No se encontraron resultados para &ldquo;{term}&rdquo;.
         </p>
       )}
 
       {/* Accesos rápidos */}
-      {shownLinks.length > 0 && (
+      {filteredQuickLinks.length > 0 && (
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-          {shownLinks.map(({ href, title, text, Icon, iconStyle }) => (
+          {filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
             <Link
               key={href}
               href={href}
@@ -113,7 +131,7 @@ export default function Home() {
       )}
 
       {/* Próximos eventos */}
-      {shownEvents.length > 0 && (
+      {filteredEvents.length > 0 && (
         <section className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-serif font-bold text-slate-900">Próximos eventos</h2>
@@ -127,7 +145,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {shownEvents.map((ev) => {
+            {filteredEvents.map((ev) => {
               const isSaved = saved.has(ev.title);
               return (
                 <article

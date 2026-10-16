@@ -212,7 +212,18 @@ export const Navbar: React.FC = () => {
                         <User className="w-4 h-4 text-slate-500" />
                         <span>Mi perfil</span>
                       </div>
-                      <span className="text-slate-400">›</span>
+                      
+
+                    <span className="text-slate-400">›</span>
+                    </Link>
+
+                    <Link
+                      href="/login"
+                      onClick={() => setIsProfileDropdownOpen(false)}
+                      className="flex min-h-[44px] items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      <span>Salir de cuenta</span>
                     </Link>
                     <button
                       type="button"
