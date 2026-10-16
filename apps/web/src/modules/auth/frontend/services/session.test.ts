@@ -1,34 +1,33 @@
 /// <reference types="jest" />
-import { clearSession, getSessionToken, saveSession } from "./session";
+import { clearSession, saveSession } from "./session";
 
-describe("sesión en cookies", () => {
-  afterEach(() => {
-    clearSession();
+describe("sesión segura", () => {
+  const originalFetch = global.fetch;
+  const fetchMock = jest.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset().mockResolvedValue({ ok: true });
+    global.fetch = fetchMock;
   });
 
-  it("guarda el token y el rol", () => {
-    saveSession("token-de-prueba", "administrador", false);
-
-    expect(document.cookie).toContain("umsspira_token=token-de-prueba");
-    expect(document.cookie).toContain("umsspira_role=administrador");
+  afterEach(async () => {
+    await clearSession();
+    global.fetch = originalFetch;
   });
 
-  it("borra la sesión al cerrarla", () => {
-    saveSession("token-de-prueba", "titulado", true);
+  it("envía el token y rol al servidor para guardarlos como cookies HttpOnly", async () => {
+    await saveSession("token-de-prueba", "administrador", false);
 
-    clearSession();
-
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ token: "token-de-prueba", role: "administrador", remember: false }),
+    }));
     expect(document.cookie).not.toContain("umsspira_token");
     expect(document.cookie).not.toContain("umsspira_role");
   });
 
-  it("recupera el token de la cookie tras recargar la página", () => {
-    saveSession("token-de-prueba", "administrador", false);
-
-    expect(getSessionToken()).toBe("token-de-prueba");
-  });
-
-  it("devuelve null sin sesión guardada", () => {
-    expect(getSessionToken()).toBeNull();
+  it("solicita al servidor borrar las cookies HttpOnly al cerrar sesión", async () => {
+    await clearSession();
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/session", { method: "DELETE" });
   });
 });

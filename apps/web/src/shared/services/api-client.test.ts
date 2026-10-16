@@ -73,4 +73,29 @@ describe('compatibilidad del cliente HTTP entre eventos y afinidad', () => {
     });
     await expect(apiClient('/api/events')).rejects.toThrow('Falta el título Falta la fecha');
   });
+
+  it('muestra un mensaje genérico ante respuestas 5xx del backend', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => '{"message":"detalle interno"}',
+    });
+
+    await expect(apiClient('/api/events')).rejects.toThrow(
+      'Ocurrió un error interno. Intenta nuevamente más tarde.',
+    );
+  });
+
+  it('no expone mensajes 5xx desde el cliente de afinidad', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ message: 'detalle interno' }),
+    });
+
+    await expect(apiClient.get('/api/affinity/vector')).rejects.toMatchObject({
+      status: 503,
+      message: 'Ocurrió un error interno. Intenta nuevamente más tarde.',
+    });
+  });
 });

@@ -81,6 +81,9 @@ export async function requestGraduateCsv(
   const response = await fetch(url, { method: 'GET' });
 
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error(DEFAULT_ERROR_MESSAGE);
+    }
     throw new Error(await getErrorMessage(response));
   }
 

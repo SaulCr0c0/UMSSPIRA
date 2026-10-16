@@ -128,7 +128,6 @@ export async function recalculateAffinity(): Promise<AffinityVectorResponse> {
     if (!response.ok) {
       throw new Error(`Error ${response.status} al recalcular afinidad`);
     }
-
     return (await response.json()) as AffinityVectorResponse;
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {

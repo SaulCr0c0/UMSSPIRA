@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { clearAccessToken } from '@/shared/services/auth-session';
-import { clearSession, saveSession } from '@/modules/auth/frontend/services/session';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 import { MentorAvailabilityPage } from './mentor-availability-page';
 
 jest.mock('next/navigation', () => ({ useRouter: () => ({ replace: jest.fn(), push: jest.fn() }) }));
@@ -11,19 +10,17 @@ const fetchMock = jest.fn();
 
 beforeEach(() => {
   clearAccessToken();
-  clearSession();
   fetchMock.mockReset();
   global.fetch = fetchMock;
 });
 
 afterEach(() => {
   clearAccessToken();
-  clearSession();
   global.fetch = originalFetch;
 });
 
-it('carga al entrar directamente con la sesión del login y sin copia en sessionStorage', async () => {
-  saveSession('login-token', 'titulado', true);
+it('carga al entrar directamente con el token recuperado en sessionStorage', async () => {
+  setAccessToken('login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ availabilityStatus: 'AVAILABLE', fecha_actualizacion: null }) });
   render(<MentorAvailabilityPage />);
   expect(await screen.findByText('Mentor disponible')).toBeInTheDocument();
@@ -41,7 +38,7 @@ it('sin sesión solicita login sin enviar peticiones', async () => {
 });
 
 it('ante un 401 solicita login sin reintentar el token rechazado', async () => {
-  saveSession('rejected-token', 'titulado', false);
+  setAccessToken('rejected-token');
   fetchMock.mockResolvedValue({ ok: false, status: 401 });
   render(<MentorAvailabilityPage />);
   await screen.findByRole('link', { name: 'Iniciar sesión' });
@@ -51,7 +48,7 @@ it('ante un 401 solicita login sin reintentar el token rechazado', async () => {
 });
 
 it('un HTTP 500 muestra un error de carga y permite reintentar', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValueOnce({ ok: false, status: 500 })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ availabilityStatus: 'AVAILABLE', fecha_actualizacion: null }) });
   render(<MentorAvailabilityPage />);
@@ -70,7 +67,7 @@ it.each([
   ['PAUSED', 'Mentor en pausa', 'Pausar disponibilidad'],
   ['UNAVAILABLE', 'Mentor no disponible', 'No disponible'],
 ])('refleja %s en la cabecera y en una sola tarjeta', async (status, label, title) => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ availabilityStatus: status, fecha_actualizacion: null }) });
   render(<MentorAvailabilityPage />);
   await screen.findByText(label);
@@ -81,7 +78,7 @@ it.each([
 });
 
 it('distingue disponibilidad sin configurar de No disponible', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ availabilityStatus: null, fecha_actualizacion: null }) });
   render(<MentorAvailabilityPage />);
   await screen.findByText('Disponibilidad sin configurar');
@@ -90,7 +87,7 @@ it('distingue disponibilidad sin configurar de No disponible', async () => {
 });
 
 it('conserva el estado guardado al editar y sincroniza cabecera y tarjeta al guardar y volver a cargar', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   let persisted = 'AVAILABLE';
   fetchMock.mockImplementation(async (_url: string, options: RequestInit) => {
     if (options.method === 'PATCH') persisted = JSON.parse(String(options.body)).availabilityStatus;
@@ -121,7 +118,7 @@ it.each([
   ['PAUSED', 'AVAILABLE', 'Pausar disponibilidad', 'Sí, pausar disponibilidad'],
   ['UNAVAILABLE', 'AVAILABLE', 'No disponible', 'Sí, marcar como no disponible'],
 ] as const)('habilita Guardar al cambiar a %s', async (_target, initial, title, confirmation) => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ availabilityStatus: initial, fecha_actualizacion: null }) });
   render(<MentorAvailabilityPage />);
   await screen.findByRole('group', { name: 'Selecciona tu disponibilidad' });
@@ -135,7 +132,7 @@ it.each([
 });
 
 it('bloquea solicitudes duplicadas mientras guarda y confirma el éxito', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   let finish!: (response: unknown) => void;
   fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ availabilityStatus: 'PAUSED', fecha_actualizacion: null }) })
     .mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
@@ -154,7 +151,7 @@ it('bloquea solicitudes duplicadas mientras guarda y confirma el éxito', async 
 });
 
 it('conserva la selección al fallar el guardado y permite reintentar', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ availabilityStatus: 'PAUSED', fecha_actualizacion: null }) })
     .mockResolvedValueOnce({ ok: false, status: 500 })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ availabilityStatus: 'AVAILABLE', fecha_actualizacion: null }) });
@@ -172,7 +169,7 @@ it('conserva la selección al fallar el guardado y permite reintentar', async ()
 });
 
 it('bloquea la edición y nuevos guardados si el backend rechaza la sesión al guardar', async () => {
-  saveSession('login-token', 'titulado', false);
+  setAccessToken('login-token');
   fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ availabilityStatus: 'PAUSED', fecha_actualizacion: null }) })
     .mockResolvedValueOnce({ ok: false, status: 401 });
   render(<MentorAvailabilityPage />);

@@ -3,6 +3,7 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  Logger,
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { DOCUMENT_FILE_FIELD, DOCUMENT_MESSAGES } from '../contracts/document.constants';
@@ -21,6 +22,8 @@ interface JsonResponse {
  */
 @Catch(HttpException)
 export class DocumentsExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(DocumentsExceptionFilter.name);
+
   catch(exception: HttpException, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<JsonResponse>();
 
@@ -35,6 +38,15 @@ export class DocumentsExceptionFilter implements ExceptionFilter {
 
     const body = exception.getResponse();
     const status = exception.getStatus();
+    if (status >= 500) {
+      this.logger.error(exception.message, exception.stack);
+      response.status(status).json({
+        statusCode: status,
+        message: 'Ocurrió un error interno. Intenta nuevamente más tarde.',
+        error: 'Error interno del servidor',
+      });
+      return;
+    }
     if (typeof body === 'object' && body !== null) {
       response.status(status).json(body);
       return;

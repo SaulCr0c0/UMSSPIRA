@@ -1,5 +1,4 @@
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/shared/services/auth-session';
-import { clearSession, saveSession } from '@/modules/auth/frontend/services/session';
 import { getMentorAvailability, updateMentorAvailability } from './mentor-availability-api';
 
 const originalFetch = global.fetch;
@@ -7,14 +6,12 @@ const fetchMock = jest.fn();
 const state = { availabilityStatus: 'AVAILABLE', fecha_actualizacion: '2026-10-07' };
 
 beforeEach(() => {
-  clearSession();
   fetchMock.mockReset();
   global.fetch = fetchMock;
   setAccessToken('mentor-token');
 });
 
 afterEach(() => {
-  clearSession();
   clearAccessToken();
   global.fetch = originalFetch;
 });
@@ -28,9 +25,8 @@ it('consulta la disponibilidad con el token de la sesión', async () => {
   }));
 });
 
-it('recupera la sesión del login en una pestaña sin token en sessionStorage', async () => {
-  clearAccessToken();
-  saveSession('login-token', 'titulado', true);
+it('recupera la sesión de API almacenada en sessionStorage tras recargar', async () => {
+  setAccessToken('login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => state });
   expect(await getMentorAvailability()).toEqual(state);
   expect(fetchMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
@@ -39,7 +35,7 @@ it('recupera la sesión del login en una pestaña sin token en sessionStorage', 
 });
 
 it('prioriza la sesión actual del login frente a una copia anterior', async () => {
-  saveSession('current-login-token', 'titulado', false);
+  setAccessToken('current-login-token');
   fetchMock.mockResolvedValue({ ok: true, json: async () => state });
   await getMentorAvailability();
   expect(fetchMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({

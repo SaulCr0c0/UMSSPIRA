@@ -8,7 +8,6 @@ import {
   getRedirectPath,
   login,
   LOGIN_ERROR_MESSAGE,
-  saveSession,
   type LoginCredentials,
 } from "../services";
 
@@ -20,9 +19,8 @@ export function useAuth() {
     async (credentials: LoginCredentials, remember = false) => {
       authStore.setState({ status: "loading", error: null });
       try {
-        const { role, accessToken } = await login(credentials);
+        const { role, accessToken } = await login(credentials, remember);
         authStore.setState({ status: "authenticated", role, accessToken });
-        saveSession(accessToken, role, remember);
         setAccessToken(accessToken);
         router.push(getRedirectPath(role));
       } catch {
