@@ -1,9 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
-// Importamos la imagen usando la ruta correcta desde shared/assets
-import logoUmss from '@/shared/assets/images/umsspiralogo.png';
+// Mismo logo blanco y amarillo que usa la barra oscura del portal
+import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
 
 export default function PublicNavbar() {
   const [activeTab, setActiveTab] = useState<string | null>('Inicio');
@@ -23,28 +24,28 @@ export default function PublicNavbar() {
   ];
 
   return (
-    <header className="w-full bg-white border-b border-slate-100 shadow-sm font-sans relative z-50">
+    <header className="w-full bg-[#0F172A] text-white border-b border-slate-800 shadow-md font-sans relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        
+
         {/* Logo Institucional y Facultad */}
         <div className="flex items-center space-x-3">
-          <div className="relative block w-44 h-16 cursor-pointer">
-            <Image 
-              src={logoUmss} 
-              alt="Logo UMSSPIRA" 
-              fill 
+          <div className="relative block w-44 h-16">
+            <Image
+              src={logoUmss}
+              alt="Logo UMSSPIRA"
+              fill
               className="object-contain object-left"
               priority
             />
           </div>
-          <div className="hidden lg:block border-l border-slate-200 pl-3 text-[11px] text-slate-600 font-medium leading-tight">
-            <span className="block font-bold text-slate-900">UMSS - FCYT</span>
+          <div className="hidden lg:block border-l border-slate-700 pl-3 text-[11px] text-slate-300 font-medium leading-tight">
+            <span className="block font-bold text-white">UMSS - FCYT</span>
             <span>INGENIERÍA INFORMÁTICA</span>
             <span className="block">INGENIERÍA DE SISTEMAS</span>
           </div>
         </div>
 
-        {/* Menú de Navegación con efectos sobre fondo blanco */}
+        {/* Menú de navegación sobre fondo azul */}
         <nav className="hidden md:flex items-center space-x-2 text-base font-medium">
           {navItems.map((item) => {
             const isActive = activeTab === item.name;
@@ -53,9 +54,9 @@ export default function PublicNavbar() {
                 key={item.name}
                 onClick={(e) => handleItemClick(item.name, e)}
                 className={`flex items-center px-3.5 py-2 rounded-xl transition-all relative cursor-pointer ${
-                  isActive 
-                    ? 'bg-slate-100 text-slate-900 font-semibold shadow-sm' 
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  isActive
+                    ? 'bg-[#1E293B] text-white font-semibold shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 <span>{item.name}</span>
@@ -67,20 +68,20 @@ export default function PublicNavbar() {
           })}
         </nav>
 
-        {/* Botones de Autenticación (Demostrativos sin redirección por ahora) */}
+        {/* Botones de autenticación */}
         <div className="flex items-center space-x-3 pr-2">
-          <button 
-            onClick={(e) => e.preventDefault()}
-            className="px-4 py-2 text-sm font-semibold text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+          <Link
+            href="/login"
+            className="px-4 py-2 text-sm font-semibold text-white border border-slate-600 rounded-xl hover:bg-slate-800 transition-colors shadow-sm"
           >
             Iniciar sesión
-          </button>
-          <button 
-            onClick={(e) => e.preventDefault()}
-            className="px-4 py-2 text-sm font-semibold text-slate-900 bg-[#FFB162] hover:bg-[#f39c4a] rounded-xl transition-colors shadow-sm cursor-pointer"
+          </Link>
+          <Link
+            href="/register"
+            className="px-4 py-2 text-sm font-semibold text-slate-900 bg-[#FFB162] hover:bg-[#f39c4a] rounded-xl transition-colors shadow-sm"
           >
             Registro
-          </button>
+          </Link>
         </div>
 
       </div>
