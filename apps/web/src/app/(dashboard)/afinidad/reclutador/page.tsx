@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AffinitySiteHeader } from '@/shared/components/affinity-site-header';
 import { RecruiterCandidatesView } from '@/shared/components/recruiter-candidates-view';
-import { AffinitySiteFooter } from '@/shared/components/affinity-site-footer';
 
 /**
  * Página de Afinidad Profesional - Modo Buscador / Reclutador (Épica 4).
@@ -11,15 +9,8 @@ import { AffinitySiteFooter } from '@/shared/components/affinity-site-footer';
  */
 export default function AffinityRecruiterPage() {
   return (
-    <div className="min-h-screen bg-palladian text-abyssal-blue font-sans flex flex-col justify-between">
-      <div>
-        <AffinitySiteHeader />
-
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-          <RecruiterCandidatesView />
-        </main>
-      </div>
-      <AffinitySiteFooter />
-    </div>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <RecruiterCandidatesView />
+    </main>
   );
 }
