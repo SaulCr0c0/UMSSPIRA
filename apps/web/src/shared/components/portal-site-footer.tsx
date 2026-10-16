@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Facebook, Instagram, Linkedin, Twitter, Mail, Phone, MapPin, ArrowUp } from 'lucide-react'
 import Logo from './logo'
 
@@ -8,21 +9,17 @@ const PLATFORM_LINKS = [
   { href: '/companies', label: 'Empresas' },
   { href: '/job-postings', label: 'Ofertas' },
   { href: '/events', label: 'Eventos' },
-  { href: '/benefits', label: 'Beneficios' },
+  { href: '/portal/beneficios', label: 'Beneficios' },
 ]
 
 const ACCOUNT_LINKS = [
   { href: '/login', label: 'Iniciar sesion' },
   { href: '/register', label: 'Registrarse' },
   { href: '/profile', label: 'Mi perfil' },
-  { href: '/settings', label: 'Configuracion' },
 ]
 
-const LEGAL_LINKS = [
-  { href: '/terminos', label: 'Terminos' },
-  { href: '/privacidad', label: 'Privacidad' },
-  { href: '/cookies', label: 'Cookies' },
-]
+// Se retiran Terminos, Privacidad y Cookies hasta que existan sus pantallas
+const LEGAL_LINKS: { href: string; label: string }[] = []
 
 const SOCIALS = [
   { href: 'https://facebook.com', label: 'Facebook', icon: Facebook },
@@ -32,6 +29,11 @@ const SOCIALS = [
 ]
 
 export function PortalSiteFooter() {
+  const pathname = usePathname() ?? ''
+
+  // La vista institucional (sin sesión) trae su propio pie: aquí no se monta otro
+  if (pathname.replace(/\/$/, '') === '/portal/institucional') return null
+
   const year = new Date().getFullYear()
 
   const scrollToTop = () => {

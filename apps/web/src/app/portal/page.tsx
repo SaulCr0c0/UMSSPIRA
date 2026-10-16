@@ -31,6 +31,7 @@ const normalize = (text: string) =>
 
 export default function Home() {
   const [query, setQuery] = useState('');
+  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   const filteredQuickLinks = useMemo(() => {
     const q = normalize(query.trim());
@@ -47,6 +48,16 @@ export default function Home() {
       normalize(`${ev.title} ${ev.place} ${ev.time} ${ev.day} ${ev.month}`).includes(q)
     );
   }, [query]);
+
+  const toggleSaved = (title: string) =>
+    setSaved((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      return next;
+    });
+
+  const term = query.trim();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 w-full space-y-8 font-sans text-slate-900">
@@ -72,27 +83,33 @@ export default function Home() {
           <p className="text-slate-300 text-sm md:text-base">Tu comunidad, siempre conectada.</p>
 
           <div className="pt-2">
-            <div className="relative max-w-xl">
+            <form role="search" onSubmit={(e) => e.preventDefault()} className="relative max-w-xl">
               <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                 <Search className="w-4 h-4" />
               </span>
               <input
                 type="search"
-                aria-label="Buscar eventos, beneficios y empleos"
-                placeholder="Busque eventos, beneficios, empleos..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Buscar eventos, beneficios y empleos"
+                placeholder="Busque eventos, beneficios, empleos..."
                 className="w-full min-h-[44px] pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm placeholder:text-slate-400"
               />
-            </div>
+            </form>
           </div>
         </div>
       </section>
 
+      {term && filteredQuickLinks.length === 0 && filteredEvents.length === 0 && (
+        <p role="status" className="text-center text-sm text-slate-500">
+          No se encontraron resultados para &ldquo;{term}&rdquo;.
+        </p>
+      )}
+
       {/* Accesos rápidos */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        {filteredQuickLinks.length > 0 ? (
-          filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
+      {filteredQuickLinks.length > 0 && (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          {filteredQuickLinks.map(({ href, title, text, Icon, iconStyle }) => (
             <Link
               key={href}
               href={href}
@@ -105,78 +122,75 @@ export default function Home() {
                 <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
               <div>
-                <h3 className="font-bold text-#F5F0E8 text-base">{title}</h3>
+                <h3 className="font-bold text-slate-900 text-base">{title}</h3>
                 <p className="text-xs text-slate-500 mt-1">{text}</p>
               </div>
             </Link>
-          ))
-        ) : (
-          <p className="col-span-full text-center text-sm text-slate-500 py-4">
-            No se encontraron accesos rápidos para &ldquo;{query}&rdquo;.
-          </p>
-        )}
-      </section>
+          ))}
+        </section>
+      )}
 
       {/* Próximos eventos */}
-      <section className="space-y-4 pt-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-serif font-bold text-slate-900">Próximos eventos</h2>
-          <Link
-            href="/portal/eventos"
-            className="min-h-[44px] px-2 text-xs font-semibold text-amber-600 hover:underline flex items-center space-x-1"
-          >
-            <span>Ver todos</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
+      {filteredEvents.length > 0 && (
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-serif font-bold text-slate-900">Próximos eventos</h2>
+            <Link
+              href="/portal/eventos"
+              className="min-h-[44px] px-2 text-xs font-semibold text-amber-600 hover:underline flex items-center space-x-1"
+            >
+              <span>Ver todos</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
 
-        {filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredEvents.map((ev) => (
-              <article
-                key={ev.title}
-                className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-              >
-                <div className="h-32 bg-slate-200 relative">
-                  <Image
-                    src={ev.img}
-                    alt={ev.title}
-                    fill
-                    sizes="(min-width: 768px) 33vw, 100vw"
-                    className="object-cover"
-                  />
-                  <button
-                    type="button"
-                    aria-label={`Guardar ${ev.title}`}
-                    className="absolute top-1 right-1 z-10 w-11 h-11 flex items-center justify-center"
-                  >
-                    <span className="bg-white/90 p-1.5 rounded-full text-slate-700 shadow">
-                      <Bookmark className="w-4 h-4" />
-                    </span>
-                  </button>
-                </div>
-                <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                  <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
-                    <span className="block text-base font-bold leading-none">{ev.day}</span>
-                    <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
+            {filteredEvents.map((ev) => {
+              const isSaved = saved.has(ev.title);
+              return (
+                <article
+                  key={ev.title}
+                  className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                >
+                  <div className="h-32 bg-slate-200 relative">
+                    <Image
+                      src={ev.img}
+                      alt={ev.title}
+                      fill
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSaved(ev.title)}
+                      aria-pressed={isSaved}
+                      aria-label={isSaved ? `Quitar ${ev.title} de guardados` : `Guardar ${ev.title}`}
+                      className="absolute top-1 right-1 z-10 w-11 h-11 flex items-center justify-center"
+                    >
+                      <span className="bg-white/90 p-1.5 rounded-full text-slate-700 shadow">
+                        <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-amber-500 text-amber-600' : ''}`} />
+                      </span>
+                    </button>
                   </div>
-                  <div className="pt-3">
-                    <h3 className="font-bold text-#F5F0E8  text-sm">{ev.title}</h3>
-                    <div className="space-y-1 mt-2 text-xs text-slate-500">
-                      <p className="flex items-center space-x-1.5"><span>📍</span><span>{ev.place}</span></p>
-                      <p className="flex items-center space-x-1.5"><span>⏰</span><span>{ev.time}</span></p>
+                  <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
+                    <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
+                      <span className="block text-base font-bold leading-none">{ev.day}</span>
+                      <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
+                    </div>
+                    <div className="pt-3">
+                      <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
+                      <div className="space-y-1 mt-2 text-xs text-slate-500">
+                        <p className="flex items-center space-x-1.5"><span>📍</span><span>{ev.place}</span></p>
+                        <p className="flex items-center space-x-1.5"><span>⏰</span><span>{ev.time}</span></p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
-        ) : (
-          <p className="text-center text-sm text-slate-500 py-8">
-            No se encontraron eventos para &ldquo;{query}&rdquo;.
-          </p>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }
