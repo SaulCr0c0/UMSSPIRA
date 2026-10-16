@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Award, FileText, CheckCircle2, ShieldCheck, ExternalLink, Calendar, Code, Database, Cloud, Lock, ShieldAlert, Target, Mail } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ExternalLink, Calendar, Code, Database, Cloud, Lock, ShieldAlert, Target } from 'lucide-react';
 
 export interface CandidateEvidenceProps {
   candidateName: string;
@@ -234,24 +234,6 @@ export const EvidenceBreakdown: React.FC<CandidateEvidenceProps> = ({ candidateN
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Bottom Action Footer Bar */}
-      <div className="p-4 rounded-xl bg-slate-100/90 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-        <span className="text-[11px] text-slate-600 font-mono max-w-xl flex items-start space-x-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>Datos protegidos bajo el Reglamento de Protección de Datos y Privacidad Alumni FCyT (Resolución Facultativa 412/2023).</span>
-        </span>
-
-        <div className="flex items-center space-x-3 shrink-0">
-          <button className="px-4 py-2 bg-white border border-slate-300 text-slate-800 text-xs font-bold rounded-xl shadow-xs hover:bg-slate-50 transition-colors">
-            Agendar Entrevista Técnica
-          </button>
-          <button className="px-5 py-2 bg-burning-flame hover:bg-burning-flame/90 text-abyssal-blue text-xs font-bold rounded-xl shadow-sm transition-all flex items-center space-x-1.5">
-            <Mail className="w-3.5 h-3.5" />
-            <span>Enviar Propuesta Laboral</span>
-          </button>
-        </div>
       </div>
     </div>
   );
