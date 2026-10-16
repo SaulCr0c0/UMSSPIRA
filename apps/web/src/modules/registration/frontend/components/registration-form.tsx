@@ -177,7 +177,7 @@ export function RegistrationForm() {
             Contacto
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Correo electrónico" required type="email" autoComplete="email" maxLength={100} error={errors.correo?.message} aria-invalid={!!errors.correo} {...register('correo')} />
+            <Input label="Correo electrónico" required type="email" autoComplete="email" maxLength={30} error={errors.correo?.message} aria-invalid={!!errors.correo} {...register('correo')} />
             <div className="flex flex-col gap-1.5">
               <label htmlFor="telefono" className="text-[13px] font-semibold text-abyssal-blue">
                 Teléfono / WhatsApp<span className="text-truffle-trouble"> *</span>
