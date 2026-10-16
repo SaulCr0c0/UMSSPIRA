@@ -156,8 +156,8 @@ export function RegistrationForm() {
             Datos de identidad
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Nombres" required autoComplete="given-name" error={errors.nombres?.message} aria-invalid={!!errors.nombres} {...register('nombres')} />
-            <Input label="Apellidos" required autoComplete="family-name" error={errors.apellidos?.message} aria-invalid={!!errors.apellidos} {...register('apellidos')} />
+            <Input label="Nombres" required maxLength={45} autoComplete="given-name" error={errors.nombres?.message} aria-invalid={!!errors.nombres} {...register('nombres')} />
+            <Input label="Apellidos" required maxLength={45} autoComplete="family-name" error={errors.apellidos?.message} aria-invalid={!!errors.apellidos} {...register('apellidos')} />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Input label="Número de C.I." required inputMode="numeric" maxLength={10} error={errors.ci?.message} aria-invalid={!!errors.ci} {...register('ci')} />
