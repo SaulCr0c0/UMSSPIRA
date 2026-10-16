@@ -20,6 +20,13 @@ describe("sesión en cookies", () => {
 
     expect(document.cookie).not.toContain("umsspira_token");
     expect(document.cookie).not.toContain("umsspira_role");
+    expect(window.localStorage.getItem("token")).toBeNull();
+  });
+
+  it("replica el token en localStorage para la Epic 4", () => {
+    saveSession("token-de-prueba", "empresa", false);
+
+    expect(window.localStorage.getItem("token")).toBe("token-de-prueba");
   });
 
   it("recupera el token de la cookie tras recargar la página", () => {

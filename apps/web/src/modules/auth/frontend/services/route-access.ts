@@ -4,11 +4,14 @@ export const ROLE_COOKIE = "umsspira_role";
 export const LOGIN_PATH = "/login";
 export const ADMIN_HOME = "/applications";
 export const USER_HOME = "/me";
+export const COMPANY_HOME = "/companies";
 
 export type AccessDecision = { allowed: true } | { allowed: false; redirectTo: string };
 
 export function homeFor(role: string | undefined): string {
-  return role === "administrador" ? ADMIN_HOME : USER_HOME;
+  if (role === "administrador") return ADMIN_HOME;
+  if (role === "empresa") return COMPANY_HOME;
+  return USER_HOME;
 }
 
 export function decideAccess(
