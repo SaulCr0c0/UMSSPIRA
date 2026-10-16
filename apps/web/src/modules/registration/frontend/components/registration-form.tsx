@@ -214,7 +214,7 @@ export function RegistrationForm() {
         </fieldset>
 
         <div className="flex flex-col-reverse gap-3 border-t border-oatmeal/60 pt-6 sm:flex-row sm:justify-end">
-          <Button type="button" variant="secondary" onClick={() => router.push('/')}>
+          <Button type="button" variant="secondary" onClick={() => router.push('/login')}>
             Cancelar
           </Button>
           <Button 
