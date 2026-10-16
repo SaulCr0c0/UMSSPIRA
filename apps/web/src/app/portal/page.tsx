@@ -58,6 +58,8 @@ export default function Home() {
                 type="search"
                 aria-label="Buscar eventos, beneficios y empleos"
                 placeholder="Busque eventos, beneficios, empleos..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="w-full min-h-[44px] pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm placeholder:text-slate-400"
               />
             </div>
