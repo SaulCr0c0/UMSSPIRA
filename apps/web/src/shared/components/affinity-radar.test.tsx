@@ -155,7 +155,7 @@ describe('AffinityRadar variante mini', () => {
 
     expect(screen.getByText('Desarrollo de Software (86%)')).toBeInTheDocument();
     expect(screen.getByText('Cloud/Devops (70%)')).toBeInTheDocument();
-    expect(screen.getByText('CienciaDatos/IA (90%)')).toBeInTheDocument();
+    expect(screen.getByText('Ciencia de Datos/IA (90%)')).toBeInTheDocument();
     expect(screen.getByText('QA (60%)')).toBeInTheDocument();
     expect(screen.getByText('Ciberseguridad (45%)')).toBeInTheDocument();
     expect(screen.getByText('Gestión TI (80%)')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('AffinityRadar variante mini', () => {
 
     expect(container.querySelector('.cursor-pointer')).toBeNull();
 
-    fireEvent.click(screen.getByText('Desarrollo (86%)'));
+    fireEvent.click(screen.getByText('Desarrollo de Software (86%)'));
     expect(screen.queryByText('ÁREA SELECCIONADA (CLICK)')).not.toBeInTheDocument();
   });
 

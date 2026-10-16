@@ -28,7 +28,7 @@ const AREA_LABELS: Record<AreaId, string> = {
 const AREA_SHORT_LABELS: Record<AreaId, string> = {
   'software-development': 'Desarrollo de Software',
   'cloud-devops': 'Cloud/Devops',
-  'data-ai': 'Cienci de Datos/IA',
+  'data-ai': 'Ciencia de Datos/IA',
   'quality-assurance': 'QA',
   'cybersecurity-networks': 'Ciberseguridad',
   'it-management': 'Gestión TI',
