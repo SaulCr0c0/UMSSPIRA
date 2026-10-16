@@ -43,7 +43,7 @@ export function PortalSiteFooter() {
   }
 
   return (
-    <footer className="mt-16 border-t border-white/10 bg-umss-navy text-white">
+    <footer className="mt-16 border-t border-white/10 bg-abyssal text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
@@ -67,7 +67,7 @@ export function PortalSiteFooter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-umss-orange hover:text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-burning-flame hover:text-abyssal hover:text-white"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -153,7 +153,7 @@ export function PortalSiteFooter() {
               type="button"
               onClick={scrollToTop}
               aria-label="Volver arriba"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-umss-orange hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70 transition-colors hover:bg-burning-flame hover:text-abyssal hover:text-white"
             >
               <ArrowUp className="h-4 w-4" />
             </button>
