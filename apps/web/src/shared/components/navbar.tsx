@@ -2,11 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award, Menu, X, LogOut } from 'lucide-react';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
+import { authStore } from '@/modules/auth/frontend/store';
+import { clearSession } from '@/modules/auth/frontend/services/session';
+import { clearAccessToken } from '@/shared/services/auth-session';
+import { clearToken } from '@/shared/services/api-client';
 
 const navItems = [
   { href: '/portal', label: 'Inicio', Icon: Home, exact: true },
@@ -34,6 +38,7 @@ export const Navbar: React.FC = () => {
     rightSectionGap: "space-x-2 lg:space-x-4",
   };
 
+  const router = useRouter();
   const pathname = usePathname() ?? '';
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -42,16 +47,37 @@ export const Navbar: React.FC = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Panel de notificaciones
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
   // Menú lateral (móvil y tablet)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Cerrar el menú del avatar al hacer clic fuera
+  // Cierre de sesión común: borra cookies, tokens y estado, y luego abre el login
+  const handleLogout = () => {
+    clearSession();
+    clearAccessToken();
+    clearToken();
+    authStore.reset();
+    setIsDrawerOpen(false);
+    setIsProfileDropdownOpen(false);
+    setIsNotificationsOpen(false);
+    router.push('/login');
+    router.refresh();
+  };
+
+  // Cerrar el menú del avatar y el panel de notificaciones al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsProfileDropdownOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(target)) {
+        setIsNotificationsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -132,14 +158,25 @@ export const Navbar: React.FC = () => {
           <div className={`flex items-center ${config.rightSectionGap} lg:pr-2`}>
 
             {/* Notificaciones */}
-            <button
-              type="button"
-              aria-label="Notificaciones"
-              className={`w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white transform ${config.notificationPosition}`}
-            >
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <div className="relative" ref={notificationsRef}>
+              <button
+                type="button"
+                aria-label="Notificaciones"
+                aria-expanded={isNotificationsOpen}
+                onClick={() => setIsNotificationsOpen((open) => !open)}
+                className={`w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white transform ${config.notificationPosition}`}
+              >
+                <Bell className="w-6 h-6" />
+              </button>
+              {isNotificationsOpen && (
+                <div
+                  role="status"
+                  className="absolute right-0 mt-3 w-64 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-600 shadow-2xl z-50"
+                >
+                  No tienes notificaciones nuevas.
+                </div>
+              )}
+            </div>
 
             {/* Avatar con dropdown (solo escritorio) */}
             <div className={`relative hidden lg:block transform ${config.profilePosition}`} ref={dropdownRef}>
@@ -177,6 +214,14 @@ export const Navbar: React.FC = () => {
                       </div>
                       <span className="text-slate-400">›</span>
                     </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center space-x-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
+                    >
+                      <LogOut className="w-4 h-4 text-slate-500" />
+                      <span>Cerrar sesión</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -264,13 +309,14 @@ export const Navbar: React.FC = () => {
         </nav>
 
         <div className="border-t border-slate-800 p-2">
-          <Link
-            href="/login"
-            className="flex min-h-[44px] items-center space-x-3 rounded-xl px-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex min-h-[44px] w-full items-center space-x-3 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white"
           >
             <LogOut className="w-4 h-4" />
             <span>Cerrar sesión</span>
-          </Link>
+          </button>
         </div>
       </aside>
     </>
