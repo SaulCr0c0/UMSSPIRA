@@ -13,6 +13,7 @@ interface ConfirmModalProps {
   children?: ReactNode;
   cancelLabel?: string;
   confirmLabel: string;
+  confirmIcon?: ComponentType<{ className?: string }>;
   confirming?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -31,6 +32,7 @@ export function ConfirmModal({
   children,
   cancelLabel = 'Cancelar',
   confirmLabel,
+  confirmIcon: ConfirmIcon,
   confirming = false,
   onCancel,
   onConfirm,
@@ -139,6 +141,7 @@ export function ConfirmModal({
             disabled={confirming}
             className="mentor-button confirm-modal-confirm"
           >
+            {ConfirmIcon && <ConfirmIcon className="icon confirm-modal-confirm-icon" aria-hidden="true" />}
             {confirmLabel}
           </button>
         </div>
