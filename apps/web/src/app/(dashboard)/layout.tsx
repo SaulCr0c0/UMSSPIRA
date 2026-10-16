@@ -5,8 +5,8 @@ import { LogoutButton } from "../../modules/auth/frontend/components/logout-butt
 import { TituladoHeader } from "../../modules/auth/frontend/components/titulado-header";
 import { ROLE_COOKIE } from "../../modules/auth/frontend/services/route-access";
 
-// AQUÍ IMPORTAMOS EL NAVBAR AZUL DE LA EPIC 8
-import { Navbar } from "@/shared/components/navbar";
+// AQUÍ IMPORTAMOS EL NUEVO NAVBAR CONECTADO DE DEVOPS
+import { ConnectedNavbar } from "@/shared/components/navbar/index";
 
 export default function DashboardLayout({
   children,
@@ -20,8 +20,8 @@ export default function DashboardLayout({
       {role === "titulado" ? (
         <TituladoHeader />
       ) : role === "empresa" ? (
-        /* SI EL ROL ES EMPRESA, MOSTRAMOS EL NAVBAR AZUL */
-        <Navbar role={role} />
+        /* SI EL ROL ES EMPRESA, USAMOS EL NUEVO COMPONENTE SIN PROPS */
+        <ConnectedNavbar />
       ) : (
         <AdminNavbar logoutSlot={role ? <LogoutButton /> : undefined} />
       )}

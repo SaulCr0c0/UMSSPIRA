@@ -11,7 +11,7 @@ export default function PortalCorporativoLayout({ children }: { children: React.
         2. Usamos tu componente clonado. 
         Este Navbar ya sabe que "Inicio" y el Logo apuntan a /portal-corporativo 
       */}
-      <NavbarCorporativo role="empresa" />
+      <NavbarCorporativo />
       
       <main className="flex-1 w-full">
         {children}
