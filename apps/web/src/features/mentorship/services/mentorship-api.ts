@@ -1,5 +1,5 @@
 import type { MentorState } from '@umsspira/shared-types';
-import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
+import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const MISSING_PROFILE = Symbol('missing-profile');
@@ -20,7 +20,7 @@ async function request(path: string, options: RequestInit, allowMissingProfile =
     headers: { Accept: 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    if (response.status === 401 && getAccessToken() === token) clearAccessToken();
+    if (response.status === 401) handleSessionExpired();
     if (allowMissingProfile && response.status === 404) {
       const error: unknown = await response.json();
       if (error && typeof error === 'object' && 'message' in error

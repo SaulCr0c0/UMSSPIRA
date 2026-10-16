@@ -76,6 +76,8 @@ export function MentorAreasPage() {
       setSavedIds([]);
       setSelectedIds([]);
       setCatalogFromDatabase(false);
+      setParticipation(null);
+      setInterests(undefined);
       setForbidden(reason instanceof MentorAreasError && reason.status === 403);
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo de áreas.');
     } finally {
@@ -145,6 +147,14 @@ export function MentorAreasPage() {
       setInterests(state.intereses);
       setDialog(null);
     } catch (reason) {
+      if (reason instanceof MentorAreasError && reason.status === 401) {
+        setAreas([]);
+        setSavedIds([]);
+        setSelectedIds([]);
+        setParticipation(null);
+        setInterests(undefined);
+        setCatalogFromDatabase(false);
+      }
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las áreas.');
       if (reason instanceof MentorAreasError && reason.status === 403) setForbidden(true);
     } finally {

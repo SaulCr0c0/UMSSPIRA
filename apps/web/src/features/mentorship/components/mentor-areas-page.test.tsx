@@ -173,3 +173,20 @@ it('redirige al inicio si la API rechaza el rol con 403', async () => {
     await act(async () => { jest.advanceTimersByTime(2000); }); expect(replace).toHaveBeenCalledWith('/');
   } finally { jest.useRealTimers(); }
 });
+
+it('con la pestaña abierta, si la sesión expira (401 al guardar), limpia los datos del mentor de la vista', async () => {
+  render(<MentorAreasPage />);
+  const devops = await screen.findByRole('checkbox', { name: 'DevOps' });
+  fireEvent.click(devops);
+
+  updateAreas.mockRejectedValueOnce(
+    new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401),
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Inicia sesión para configurar tus áreas técnicas.');
+  expect(screen.queryByRole('list', { name: 'Catálogo de áreas técnicas' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+});

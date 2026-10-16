@@ -1,4 +1,4 @@
-import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
+import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
 import { getSessionToken } from '@/modules/auth/frontend/services/session';
 
 export const mentorAvailabilityStatuses = ['AVAILABLE', 'PAUSED', 'UNAVAILABLE'] as const;
@@ -63,7 +63,7 @@ async function requestAvailability(options: RequestInit, action: 'consultar' | '
   }
 
   if (!response.ok) {
-    if (response.status === 401 && getAccessToken() === token) clearAccessToken();
+    if (response.status === 401) handleSessionExpired();
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tu disponibilidad.',
       403: 'Acceso denegado. Se requiere un perfil de mentor activo.',
