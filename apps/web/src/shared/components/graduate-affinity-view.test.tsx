@@ -553,4 +553,51 @@ describe('GraduateAffinityView', () => {
     expect(screen.queryByText(/Última actualización/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vector Calculado/i)).not.toBeInTheDocument();
   });
+
+  it('muestra la fecha real del cálculo en la píldora de última actualización', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'grad-1',
+      calculatedAt: '2026-05-15T10:00:00.000Z',
+      areas: [
+        { area: 'software-development', affinity: 90 },
+        { area: 'cloud-devops', affinity: 70 },
+        { area: 'data-ai', affinity: 60 },
+        { area: 'quality-assurance', affinity: 50 },
+        { area: 'cybersecurity-networks', affinity: 40 },
+        { area: 'it-management', affinity: 30 },
+      ],
+    });
+
+    render(<GraduateAffinityView />);
+
+    expect(await screen.findByText(/Última actualización:/i)).toBeInTheDocument();
+    expect(screen.getByText('May 2026')).toBeInTheDocument();
+  });
+
+  it('muestra "No disponible" y no inventa una fecha cuando el servicio no devuelve calculatedAt', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce({
+      graduateId: 'grad-1',
+      calculatedAt: undefined as any,
+      areas: [
+        { area: 'software-development', affinity: 90 },
+        { area: 'cloud-devops', affinity: 70 },
+        { area: 'data-ai', affinity: 60 },
+        { area: 'quality-assurance', affinity: 50 },
+        { area: 'cybersecurity-networks', affinity: 40 },
+        { area: 'it-management', affinity: 30 },
+      ],
+    });
+
+    render(<GraduateAffinityView />);
+
+    expect(await screen.findByText(/Última actualización:/i)).toBeInTheDocument();
+    expect(screen.getByText('No disponible')).toBeInTheDocument();
+  });
+
+  it('renderiza los botones de Simular Actualización y Simular Timeout alineados', async () => {
+    render(<GraduateAffinityView />);
+
+    expect(await screen.findByRole('button', { name: /Simular Actualización/i })).toBeInTheDocument();
+    expect(screen.getByText(/Simular Timeout/i)).toBeInTheDocument();
+  });
 });

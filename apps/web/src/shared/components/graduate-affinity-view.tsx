@@ -15,8 +15,22 @@ import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
-import { ArrowLeft, CheckCircle2, Tag } from 'lucide-react';
+import { ArrowLeft, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+// Formatea dinámicamente mes (3 letras) y año en español
+const formatCalculatedDate = (dateString?: string | null): string | null => {
+  if (!dateString) return null;
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return null;
+
+  // Nombres canónicos de 3 letras para coincidir con el diseño (Ene, Feb, ..., Sep, Oct, Nov, Dic)
+  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const mes = meses[d.getMonth()];
+  const anio = d.getFullYear();
+
+  return `${mes} ${anio}`;
+};
 
 // Ruta de Épica 2 almacenada en una constante a nivel de módulo
 const RUTA_EPICA_2_CERTIFICACIONES = '/epica-2/certificaciones/nueva?returnTo=/afinidad';
@@ -76,6 +90,7 @@ export const GraduateAffinityView: React.FC = () => {
   
   const [changedAreaIds, setChangedAreaIds] = useState<string[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  const [lastCalculatedDate, setLastCalculatedDate] = useState<string | null>(null);
 
   const [candidateAreas, setCandidateAreas] = useState<CandidateArea[]>([
     { area: 'software-development', affinity: 95 },
@@ -106,6 +121,7 @@ export const GraduateAffinityView: React.FC = () => {
         setCandidateAreas(processed);
         setLoadedKeywords(extractKeywords(processed));
         setHasValidRadar(true);
+        setLastCalculatedDate(formatCalculatedDate(result.calculatedAt));
         setHasRadarError(false);
       } catch {
         setHasRadarError(true);
@@ -129,6 +145,7 @@ export const GraduateAffinityView: React.FC = () => {
     try {
       const previousAreas = [...candidateAreas];
       const result = await recalculateAffinity();
+      setLastCalculatedDate(formatCalculatedDate(result.calculatedAt));
       const processed = processVectorAreas(result.areas as any, mockAreas);
 
       const modifiedIds: string[] = [];
@@ -250,10 +267,15 @@ export const GraduateAffinityView: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-palladian pb-4 mb-4">
                   <h3 className="font-bold text-abyssal-blue text-xl">Gráfico de afinidad</h3>
                   {hasValidRadar && !isEmptyVector && (
-                    <span className="text-xs font-mono font-semibold text-truffle-trouble bg-palladian px-2.5 py-1 rounded-md border border-oatmeal flex items-center space-x-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-truffle-trouble" />
-                      <span>Vector Calculado</span>
-                    </span>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-oatmeal bg-white/90 text-xs text-slate-700 shadow-sm font-medium">
+                      <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>
+                        Última actualización: <strong className="text-slate-900">{lastCalculatedDate ?? 'No disponible'}</strong>
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 ml-1" />
+                    </div>
                   )}
                 </div>
 
@@ -352,9 +374,9 @@ export const GraduateAffinityView: React.FC = () => {
                     type="button"
                     onClick={() => setIsModalOpen(true)}
                     aria-label="Simular actualización del radar"
-                    className="h-11 px-4 rounded-lg border border-oatmeal bg-white text-blue-fantastic text-sm font-semibold hover:bg-palladian transition-colors"
+                    className="h-11 px-4 rounded-lg border border-oatmeal bg-white text-blue-fantastic text-sm font-semibold hover:bg-palladian transition-colors flex items-center justify-center"
                   >
-                    Simular actualización del radar
+                    Simular Actualización
                   </button>
 
                   <RecalculateButton
@@ -362,6 +384,19 @@ export const GraduateAffinityView: React.FC = () => {
                     isLoading={isLoading}
                     onRecalculate={handleRecalculate}
                   />
+
+                  <button
+                    type="button"
+                    onClick={triggerTimeoutSimulation}
+                    className="min-h-[44px] px-3.5 py-1.5 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer select-none"
+                  >
+                    <span className="text-xs font-bold text-red-600 leading-tight">
+                      Simular Timeout
+                    </span>
+                    <span className="text-[11px] font-medium text-red-500 leading-tight mt-0.5">
+                      (7s) [Demo Sprint 1]
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -375,14 +410,6 @@ export const GraduateAffinityView: React.FC = () => {
                 />
               )}
             </div>
-            
-            <button
-              type="button"
-              onClick={triggerTimeoutSimulation}
-              className="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              Simular Timeout (7s) [Demo Sprint 1]
-            </button>
           </div>
         )
       ) : (
