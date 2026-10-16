@@ -95,7 +95,7 @@ export default function Home() {
             <Link
               key={href}
               href={href}
-              className="h-full min-h-[44px] bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
+              className="h-full min-h-[44px] bg-[#F5F2EA] p-5 rounded-2xl border border-[#C9C1B1] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
             >
               <div className="flex items-start justify-between">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyle}`}>
@@ -132,7 +132,7 @@ export default function Home() {
               return (
                 <article
                   key={ev.title}
-                  className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                  className="bg-[#F5F2EA] rounded-2xl border border-[#C9C1B1] overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
                   <div className="h-32 bg-slate-200 relative">
                     <Image
@@ -155,9 +155,9 @@ export default function Home() {
                     </button>
                   </div>
                   <div className="p-4 relative flex-1 flex flex-col justify-between space-y-4">
-                    <div className="absolute -top-6 left-4 bg-[#A34739] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
+                    <div className="absolute -top-6 left-4 bg-[#0F172A] text-white px-3 py-1.5 rounded-xl shadow text-center z-10">
                       <span className="block text-base font-bold leading-none">{ev.day}</span>
-                      <span className="block text-[10px] uppercase font-semibold tracking-wider">{ev.month}</span>
+                      <span className="block text-[10px] uppercase font-semibold tracking-wider text-amber-400">{ev.month}</span>
                     </div>
                     <div className="pt-3">
                       <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
