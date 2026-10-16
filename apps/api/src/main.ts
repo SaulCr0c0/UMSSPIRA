@@ -1,6 +1,6 @@
 import './load-env';
-import express from 'express';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, type ArgumentMetadata } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AppExceptionFilter } from './shared/filters/app-exception.filter';
@@ -10,9 +10,10 @@ import { CreateEventDto } from './modules/events/dto/create-event.dto';
 import { UpdateDraftEventDto } from './modules/events/dto/update-draft-event.dto';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: false });
-  app.use(express.json({ limit: '8mb' }));
-  app.use(express.urlencoded({ limit: '8mb', extended: true }));
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // La foto de perfil viaja en base64 (hasta 5 MB de imagen, unos 6.7 MB de texto).
+  app.useBodyParser('json', { limit: '8mb' });
+  app.useBodyParser('urlencoded', { limit: '8mb', extended: true });
 
   // Uno o varios origenes separados por coma:
   //   WEB_ORIGIN=https://app.vercel.app,https://preview.vercel.app
