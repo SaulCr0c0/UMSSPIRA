@@ -27,16 +27,20 @@ export function useAuth() {
         router.push(getRedirectPath(role));
       } catch {
         // CA-05.4: siempre el mismo mensaje, sin decir qué dato falló
-        authStore.setState({
-          status: "error",
-          role: null,
-          accessToken: null,
-          error: LOGIN_ERROR_MESSAGE,
-        });
+        authStatusError();
       }
     },
     [router],
   );
 
   return { ...state, isLoading: state.status === "loading", signIn };
+}
+
+function authStatusError() {
+  authStore.setState({
+    status: "error",
+    role: null,
+    accessToken: null,
+    error: LOGIN_ERROR_MESSAGE,
+  });
 }

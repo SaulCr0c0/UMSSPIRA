@@ -15,8 +15,8 @@ export interface LoginResult {
 // Mensaje fijo por CA-05.4: no revela si falló el correo o la contraseña
 export const LOGIN_ERROR_MESSAGE = "Correo electrónico o contraseña incorrectos";
 
-// Activado temporalmente para pruebas locales sin depender de la BD/backend
-const USE_MOCK = true;
+// Desactivado para usar el backend real integrado en dev
+const USE_MOCK = false;
 
 // El backend corre en el puerto 3000 y su controlador ya incluye el prefijo "api/auth"
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
