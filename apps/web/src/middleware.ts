@@ -7,7 +7,14 @@ import {
 
 const VALID_ROLES = new Set(["administrador", "empresa", "titulado"]);
 
-const API_URL = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL;
+// Las pantallas privadas nunca deben guardarse en la caché del navegador (CA-05.1 y CA-05.6)
+const NO_STORE = "no-store, no-cache, must-revalidate, max-age=0";
+
+// Variable exclusiva del servidor cuando exista; la pública conserva compatibilidad.
+const API_URL =
+  process.env.API_INTERNAL_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:3000";
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;
@@ -32,9 +39,13 @@ export async function middleware(request: NextRequest) {
       return redirect(LOGIN_PATH);
     }
 
+    // Solo el rol verificado por el backend participa en la autorización.
     const decision = decideAccess(pathname, token, role);
-    return decision.allowed ? NextResponse.next() : redirect(decision.redirectTo);
+    const res = decision.allowed ? NextResponse.next() : redirect(decision.redirectTo);
+    res.headers.set("Cache-Control", NO_STORE);
+    return res;
   } catch {
+    // API caída o respuesta inválida: nunca se concede acceso por defecto.
     return redirect(LOGIN_PATH);
   }
 }

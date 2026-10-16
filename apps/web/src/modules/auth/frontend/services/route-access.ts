@@ -40,6 +40,12 @@ export function decideAccess(
   token: string | undefined,
   role: string | undefined,
 ): AccessDecision {
+  // Sesión recordada: quien ya tiene sesión no vuelve a ver el formulario de acceso,
+  // lo lleva a su pantalla según el rol
+  if (pathname === LOGIN_PATH) {
+    return token ? { allowed: false, redirectTo: homeFor(role) } : { allowed: true };
+  }
+
   // CA-05.1: sin sesión no se ve ninguna pantalla protegida
   if (!token) {
     return { allowed: false, redirectTo: LOGIN_PATH };
