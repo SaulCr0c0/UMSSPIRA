@@ -11,7 +11,13 @@ const fetchMock = jest.fn();
 beforeEach(() => {
   clearAccessToken();
   fetchMock.mockReset();
-  global.fetch = fetchMock;
+  global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : 'url' in input ? input.url : input.toString();
+    if (url.includes('/api/auth/session')) {
+      return Promise.resolve({ ok: true, json: async () => ({ ok: true }) } as Response);
+    }
+    return fetchMock(input, init);
+  });
 });
 
 afterEach(() => {

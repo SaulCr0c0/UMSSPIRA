@@ -9,6 +9,7 @@ import { SecondaryButton, PrimaryButton } from './mentor-button';
 import { getMentorProfile } from '../services/mentorship-api';
 import type { MentorState } from '@umsspira/shared-types';
 import { getMentorAreas, updateMentorAreas, MentorAreasError, type MentorArea, type MentorAreasState } from '../services/mentor-areas-api';
+import { isUnauthorizedStatus } from '../services/mentor-error';
 
 const MAX_AREAS = 5;
 
@@ -48,6 +49,7 @@ export function MentorAreasPage() {
   const [catalogFromDatabase, setCatalogFromDatabase] = useState(false);
   const [limitError, setLimitError] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const [interests, setInterests] = useState<MentorAreasState['intereses']>();
   const [dialog, setDialog] = useState<'discard' | 'dependencies' | 'minimum' | null>(null);
   const [participation, setParticipation] = useState<MentorState | null>(null);
@@ -71,12 +73,16 @@ export function MentorAreasPage() {
       setCatalogFromDatabase(true);
       setInterests(state.intereses);
       setForbidden(false);
+      setRequiresLogin(false);
     } catch (reason) {
       setAreas([]);
       setSavedIds([]);
       setSelectedIds([]);
       setCatalogFromDatabase(false);
+      setParticipation(null);
+      setInterests(undefined);
       setForbidden(reason instanceof MentorAreasError && reason.status === 403);
+      setRequiresLogin(isUnauthorizedStatus(reason));
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo de áreas.');
     } finally {
       setLoading(false);
@@ -143,8 +149,18 @@ export function MentorAreasPage() {
       setSelectedIds(state.selectedIds);
       setSaved(true);
       setInterests(state.intereses);
+      setRequiresLogin(false);
       setDialog(null);
     } catch (reason) {
+      if (isUnauthorizedStatus(reason)) {
+        setAreas([]);
+        setSavedIds([]);
+        setSelectedIds([]);
+        setParticipation(null);
+        setInterests(undefined);
+        setCatalogFromDatabase(false);
+        setRequiresLogin(true);
+      }
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las áreas.');
       if (reason instanceof MentorAreasError && reason.status === 403) setForbidden(true);
     } finally {
@@ -197,8 +213,8 @@ export function MentorAreasPage() {
         {loading && <p className="mentor-areas-message" role="status">Cargando catálogo…</p>}
         {error && dialog !== 'dependencies' && <div className="mentor-areas-error" role="alert">
           <p>{error}</p>
-          {error.startsWith('Inicia sesión') && <Link href="/login" className="mentor-button mentor-button-secondary">Iniciar sesión</Link>}
-          {!catalogFromDatabase && <SecondaryButton disabled={saving || loading} onClick={() => void loadAreas()}>Reintentar</SecondaryButton>}
+          {requiresLogin && <Link href="/login" className="mentor-button mentor-button-secondary">Iniciar sesión</Link>}
+          {!requiresLogin && !catalogFromDatabase && <SecondaryButton disabled={saving || loading} onClick={() => void loadAreas()}>Reintentar</SecondaryButton>}
         </div>}
         {!loading && catalogFromDatabase && areas.length === 0 && <p role="alert" className="mentor-areas-message">No hay áreas técnicas disponibles. Contacta al administrador</p>}
         {!loading && catalogFromDatabase && areas.length > 0 && selectedIds.length === 0 && <div className="areas-minimum-notice"><p role="alert">Debes seleccionar al menos un área técnica</p><button type="button" onClick={() => setDialog('minimum')}>Ver requisito de selección</button></div>}

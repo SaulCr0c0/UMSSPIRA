@@ -1,4 +1,4 @@
-import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
+import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
 import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 import { updateMentorAreas } from './mentor-areas-api';
 import { normalizeInterests, type InterestArea, type InterestConfiguration } from '../model/mentor-interests';
@@ -25,7 +25,7 @@ async function request(path: string, options: RequestInit): Promise<unknown> {
     headers: { Accept: 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    if (response.status === 401 && getAccessToken() === token) clearAccessToken();
+    if (response.status === 401 && getAccessToken() === token) handleSessionExpired();
     let message = '';
     try {
       const body = await response.json();

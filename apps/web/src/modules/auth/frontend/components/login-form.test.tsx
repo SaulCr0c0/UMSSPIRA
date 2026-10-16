@@ -5,9 +5,11 @@ import { authStore } from "../store";
 import { LoginForm } from "./login-form";
 
 const mockPush = jest.fn();
+let mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => mockSearchParams,
 }));
 
 // Las etiquetas llevan un asterisco de campo obligatorio, por eso se busca por el inicio del texto.
@@ -21,6 +23,7 @@ function fillAndSubmit(email: string, password: string) {
 describe("LoginForm", () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockSearchParams = new URLSearchParams();
     authStore.reset();
     // Emula el endpoint real POST /api/auth/login (USE_MOCK = false).
     global.fetch = jest.fn(async (_url: unknown, options?: { body?: unknown }) => {
@@ -77,5 +80,24 @@ describe("LoginForm", () => {
     fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/me"));
+  });
+
+  it("muestra aviso de sesión vencida cuando la URL incluye expired=1", () => {
+    mockSearchParams = new URLSearchParams("expired=1");
+    render(<LoginForm />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Tu sesión venció, inicia sesión de nuevo");
+  });
+
+  it("un fallo de credenciales en el login muestra el error de credenciales y no el de sesión vencida", async () => {
+    mockSearchParams = new URLSearchParams("expired=1");
+    render(<LoginForm />);
+
+    expect(screen.getByText("Tu sesión venció, inicia sesión de nuevo")).toBeTruthy();
+
+    fillAndSubmit("error@umss.edu.bo", "clave-invalida");
+
+    expect(await screen.findByText("Correo electrónico o contraseña incorrectos")).toBeTruthy();
+    expect(screen.queryByText("Tu sesión venció, inicia sesión de nuevo")).toBeNull();
   });
 });

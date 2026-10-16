@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { LoginForm } from "../../../modules/auth/frontend/components/login-form";
 
 const PANEL_IMAGE = "/images/login-panel.jpg";
@@ -42,7 +42,12 @@ const ServerIcon = () => (
   </Svg>
 );
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const expired = searchParams?.expired === "1";
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       {/* Panel institucional */}
@@ -123,7 +128,9 @@ export default function LoginPage() {
               Ingresa a la plataforma institucional con tu cuenta universitaria
             </p>
             <div className="mt-8">
-              <LoginForm />
+              <Suspense fallback={null}>
+                <LoginForm expired={expired} />
+              </Suspense>
             </div>
           </div>
 

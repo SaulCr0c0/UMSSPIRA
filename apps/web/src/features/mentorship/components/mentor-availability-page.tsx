@@ -23,6 +23,7 @@ import {
   type MentorAvailabilityStatus,
   updateMentorAvailability,
 } from '../services/mentor-availability-api';
+import { isUnauthorizedStatus } from '../services/mentor-error';
 
 const options: {
   status: MentorAvailabilityStatus;
@@ -105,7 +106,7 @@ export function MentorAvailabilityPage() {
       if (signal?.aborted) return;
       const denied = reason instanceof MentorAvailabilityError && reason.status === 403;
       setForbidden(denied);
-      setRequiresLogin(reason instanceof MentorAvailabilityError && reason.status === 401);
+      setRequiresLogin(isUnauthorizedStatus(reason));
       setLoadFailed(true);
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar la disponibilidad.');
     } finally {
@@ -177,7 +178,7 @@ export function MentorAvailabilityPage() {
         ? reason.message
         : 'No se pudo actualizar la disponibilidad. Inténtalo de nuevo.');
       if (reason instanceof MentorAvailabilityError && reason.status === 403) setForbidden(true);
-      if (reason instanceof MentorAvailabilityError && reason.status === 401) {
+      if (isUnauthorizedStatus(reason)) {
         setRequiresLogin(true);
         setConfirmStatus(null);
         setConfirmDiscard(false);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MentorState } from '@umsspira/shared-types';
 import { getActivationEligibility } from '../model/activation-conditions';
 import { getMentorProfile, updateMentorParticipation } from '../services/mentorship-api';
+import { isUnauthorizedStatus } from '../services/mentor-error';
 
 function errorMessage(error: unknown) {
   return error instanceof Error && error.name !== 'TypeError'
@@ -16,6 +17,7 @@ export function useMentorParticipation() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const mounted = useRef(false);
   const mutation = useRef<AbortController | null>(null);
@@ -27,9 +29,20 @@ export function useMentorParticipation() {
     setLoading(true);
     setProfile(null);
     setError('');
+    setRequiresLogin(false);
     getMentorProfile(controller.signal)
-      .then(data => { if (!controller.signal.aborted) setProfile(data); })
-      .catch(reason => { if (!controller.signal.aborted) setError(errorMessage(reason)); })
+      .then(data => {
+        if (!controller.signal.aborted) {
+          setProfile(data);
+          setRequiresLogin(false);
+        }
+      })
+      .catch(reason => {
+        if (!controller.signal.aborted) {
+          setRequiresLogin(isUnauthorizedStatus(reason));
+          setError(errorMessage(reason));
+        }
+      })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => {
       mounted.current = false;
@@ -51,7 +64,10 @@ export function useMentorParticipation() {
       setProfile(updated);
       return true;
     } catch (reason) {
-      if (mounted.current && !controller.signal.aborted) setError(errorMessage(reason));
+      if (mounted.current && !controller.signal.aborted) {
+        if (isUnauthorizedStatus(reason)) setRequiresLogin(true);
+        setError(errorMessage(reason));
+      }
       return false;
     } finally {
       savingRef.current = false;
@@ -59,5 +75,5 @@ export function useMentorParticipation() {
     }
   }
 
-  return { profile, loading, saving, error, changeParticipation, retry: () => setReloadKey(key => key + 1) };
+  return { profile, loading, saving, error, requiresLogin, changeParticipation, retry: () => setReloadKey(key => key + 1) };
 }

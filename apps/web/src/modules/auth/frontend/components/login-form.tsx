@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "../hooks/use-auth";
 
@@ -70,8 +71,10 @@ function fieldState(hasError: boolean) {
   return hasError ? "border-truffle-trouble ring-2 ring-truffle-trouble" : "border-oatmeal";
 }
 
-export function LoginForm() {
+export function LoginForm({ expired }: { expired?: boolean } = {}) {
   const { signIn, isLoading, error } = useAuth();
+  const searchParams = useSearchParams();
+  const isSessionExpired = expired ?? (searchParams?.get("expired") === "1");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -151,11 +154,15 @@ export function LoginForm() {
 
       
 
-      {error && (
+      {error ? (
         <p role="alert" className="rounded-lg bg-truffle-trouble/10 px-3 py-2 text-sm text-truffle-trouble">
           {error}
         </p>
-      )}
+      ) : isSessionExpired ? (
+        <p role="alert" className="rounded-lg bg-truffle-trouble/10 px-3 py-2 text-sm text-truffle-trouble">
+          Tu sesión venció, inicia sesión de nuevo
+        </p>
+      ) : null}
 
       <button
         type="submit"

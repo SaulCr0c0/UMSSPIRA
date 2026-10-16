@@ -46,6 +46,14 @@ it('muestra error sin un perfil falso y permite reintentar la carga', async () =
   await waitFor(() => expect(screen.getByRole('button', { name: 'Activar como mentor' })).toBeEnabled());
 });
 
+it('ante un 401 solicita iniciar sesión y no ofrece Reintentar', async () => {
+  getProfile.mockRejectedValueOnce(Object.assign(new Error('Inicia sesión para consultar tu participación como mentor.'), { status: 401 }));
+  render(<MentorProfile />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Inicia sesión para consultar tu participación como mentor.');
+  expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+});
+
 it('mantiene la estructura y bloquea la activación durante la carga', () => {
   getProfile.mockReturnValue(new Promise(() => {}));
   render(<MentorProfile />);

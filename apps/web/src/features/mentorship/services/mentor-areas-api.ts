@@ -1,4 +1,4 @@
-import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
+import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
 import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
@@ -22,7 +22,7 @@ export class MentorAreasError extends Error {
 
 async function request(path: string, options: RequestInit = {}): Promise<unknown> {
   const token = getAccessToken();
-  if (!token) throw new Error('Inicia sesión para configurar tus áreas técnicas.');
+  if (!token) throw new MentorAreasError('Inicia sesión para configurar tus áreas técnicas.', 401);
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -36,7 +36,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
   });
 
   if (!response.ok) {
-    if (response.status === 401 && getAccessToken() === token) clearAccessToken();
+    if (response.status === 401 && getAccessToken() === token) handleSessionExpired();
     const messages: Record<number, string> = {
       401: 'Inicia sesión para configurar tus áreas técnicas.',
       403: 'No tienes permisos para acceder a esta sección',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { CirclePauseIcon } from 'lucide-react';
 import { ConfirmModal } from '@/shared/components/confirm-modal';
 import { useMentorParticipation } from '../hooks/use-mentor-participation';
@@ -10,14 +11,15 @@ import { SecondaryButton } from './mentor-button';
 import { MentorSavedAreas } from './mentor-saved-areas';
 
 export function MentorProfile() {
-  const { profile, loading, saving, error, changeParticipation, retry } = useMentorParticipation();
+  const { profile, loading, saving, error, requiresLogin, changeParticipation, retry } = useMentorParticipation();
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   return <>
     {loading && <p role="status">Cargando participación…</p>}
     {error && !confirmDeactivate && <div role="alert" className="mentor-api-error">
       <p>{error}</p>
-      {!profile && !loading && <SecondaryButton onClick={retry}>Reintentar</SecondaryButton>}
+      {requiresLogin && <Link href="/login" className="mentor-button mentor-button-secondary">Iniciar sesión</Link>}
+      {!requiresLogin && !profile && !loading && <SecondaryButton onClick={retry}>Reintentar</SecondaryButton>}
     </div>}
     {profile?.isActive ? (
       <ActivePanel requirements={profile.requirements} onDeactivate={() => setConfirmDeactivate(true)} />

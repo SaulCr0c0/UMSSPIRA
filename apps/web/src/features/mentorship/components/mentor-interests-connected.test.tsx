@@ -2,10 +2,14 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MentorInterestsConnected } from './mentor-interests-connected';
 import { getMentorProfile } from '../services/mentorship-api';
-import { getMentorInterests, saveMentorInterests } from '../services/mentor-interests-api';
+import { getMentorInterests, saveMentorInterests, MentorInterestsError } from '../services/mentor-interests-api';
 
 jest.mock('../services/mentorship-api');
-jest.mock('../services/mentor-interests-api');
+jest.mock('../services/mentor-interests-api', () => ({
+  ...jest.requireActual('../services/mentor-interests-api'),
+  getMentorInterests: jest.fn(),
+  saveMentorInterests: jest.fn(),
+}));
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 const getProfile = jest.mocked(getMentorProfile);
 const getInterests = jest.mocked(getMentorInterests);
@@ -42,6 +46,14 @@ it('muestra un fallo de carga y permite reintentar sin inventar un catálogo', a
   expect(screen.queryByRole('button', { name: 'REST real' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
   await screen.findByRole('button', { name: 'REST real' });
+});
+
+it('ante un 401 solicita iniciar sesión y no ofrece Reintentar', async () => {
+  getInterests.mockRejectedValueOnce(new MentorInterestsError('Inicia sesión para configurar tus intereses.', 401));
+  render(<MentorInterestsConnected />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Inicia sesión para configurar tus intereses.');
+  expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
 });
 
 it('bloquea la edición si el mentor no está activo', async () => {

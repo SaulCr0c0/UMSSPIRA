@@ -1,4 +1,4 @@
-import { getAccessToken, clearAccessToken } from '@/shared/services/auth-session';
+import { getAccessToken, handleSessionExpired } from '@/shared/services/auth-session';
 import { SERVER_ERROR_MESSAGE } from '@/shared/services/api-error-message';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
@@ -51,7 +51,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
 
   if (!response.ok) {
     if (response.status === 401 && getAccessToken() === token) {
-      clearAccessToken();
+      handleSessionExpired();
     }
 
     if (response.status >= 500) {
