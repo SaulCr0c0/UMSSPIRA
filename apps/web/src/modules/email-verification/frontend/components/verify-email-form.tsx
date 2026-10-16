@@ -123,7 +123,7 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
               <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
               Token institucional
             </span>
-            <p className="mt-1 text-xs text-abyssal-blue/70">Protocolo de validación segura v2.4</p>
+            <p className="mt-1 text-xs text-abyssal-blue/70">Protocolo de validación segura</p>
           </div>
         </div>
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-oatmeal text-abyssal-blue/70">
@@ -135,7 +135,7 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
         Verifica tu correo electrónico
       </h1>
       <p className="mt-2 text-sm text-abyssal-blue/75">
-        Hemos enviado un código de seguridad institucional de 6 dígitos a{' '}
+        Hemos enviado un código de seguridad de 6 dígitos a{' '}
         <strong className="font-mono font-bold text-abyssal-blue">{maskedEmail}</strong>{' '}
         para validar tu registro oficial en el padrón universitario.
       </p>
@@ -205,9 +205,8 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             type="submit"
-            variant="primary"
             disabled={!isCodeComplete || isSubmitting || isExpired || maxAttemptsReached || isVerified}
-            className="inline-flex flex-1 items-center justify-center gap-2 text-sm font-bold shadow-sm"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-burning-flame px-4 py-3.5 text-sm font-bold text-abyssal-blue shadow-sm transition hover:brightness-95 disabled:opacity-60"
           >
             {isSubmitting ? (
               'Validando código...'
@@ -245,7 +244,7 @@ export const VerifyEmailForm: React.FC<VerifyEmailFormProps> = ({
         {/* Pie de seguridad */}
         <p className="flex items-center justify-center gap-2 border-t border-oatmeal/60 pt-4 text-center text-[11px] text-abyssal-blue/60">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
-          Protegido por el Sistema Institucional UMSSpira bajo el Protocolo Criptográfico de Certificación Universitaria.
+          Protegido por el Sistema Institucional UMSSPIRA.
         </p>
       </form>
     </div>
