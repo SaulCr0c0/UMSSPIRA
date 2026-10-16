@@ -105,7 +105,7 @@ export default function Home() {
                 <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
               <div>
-                <h3 className="font-bold text-[#0F172A] text-base">{title}</h3>
+                <h3 className="font-bold text-[#1E40AF] text-base">{title}</h3>
                 <p className="text-xs text-slate-500 mt-1">{text}</p>
               </div>
             </Link>
