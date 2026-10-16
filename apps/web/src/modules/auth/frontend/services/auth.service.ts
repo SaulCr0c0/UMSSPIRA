@@ -74,9 +74,11 @@ export function login(
   return USE_MOCK ? loginMock(credentials) : loginRequest(credentials);
 }
 
-// Destino tras iniciar sesión según el rol (CA-05.2 y CA-05.3)
+// Destino tras iniciar sesión según el rol. El titulado entra al portal
+// (decisión de coordinación; CA-05.3 queda pendiente de actualización por el PO).
 export function getRedirectPath(role: UserRole): string {
   if (role === "administrador") return "/applications";
   if (role === "empresa") return "/companies";
+  if (role === "titulado") return "/portal";
   return "/me";
 }

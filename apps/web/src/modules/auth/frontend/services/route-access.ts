@@ -5,12 +5,14 @@ export const LOGIN_PATH = "/login";
 export const ADMIN_HOME = "/applications";
 export const USER_HOME = "/me";
 export const COMPANY_HOME = "/companies";
+export const PORTAL_HOME = "/portal";
 
 export type AccessDecision = { allowed: true } | { allowed: false; redirectTo: string };
 
 export function homeFor(role: string | undefined): string {
   if (role === "administrador") return ADMIN_HOME;
   if (role === "empresa") return COMPANY_HOME;
+  if (role === "titulado") return PORTAL_HOME;
   return USER_HOME;
 }
 

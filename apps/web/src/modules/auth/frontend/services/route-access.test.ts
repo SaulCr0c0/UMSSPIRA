@@ -38,7 +38,7 @@ describe("decideAccess", () => {
   it("cada rol vuelve a su pantalla al visitar el login con sesión activa", () => {
     expect(homeFor("administrador")).toBe("/applications");
     expect(homeFor("empresa")).toBe("/companies");
-    expect(homeFor("titulado")).toBe("/me");
+    expect(homeFor("titulado")).toBe("/portal");
     expect(homeFor(undefined)).toBe("/me");
   });
 });

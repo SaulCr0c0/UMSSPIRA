@@ -85,12 +85,12 @@ describe("LoginForm", () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/applications"));
   });
 
-  it("redirige al titulado a su área personal (CA-05.3)", async () => {
+  it("redirige al titulado al portal (decisión de coordinación; CA-05.3 pendiente del PO)", async () => {
     render(<LoginForm />);
 
     fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/me"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/portal"));
   });
 
   it("muestra la casilla de recordar sesión desmarcada por defecto (BUG4)", () => {
