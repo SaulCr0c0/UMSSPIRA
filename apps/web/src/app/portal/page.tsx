@@ -44,7 +44,7 @@ export default function Home() {
     const q = normalize(query.trim());
     if (!q) return events;
     return events.filter((ev) =>
-      normalize(`${ev.title} ${ev.place} ${ev.time} ${ev.month}`).includes(q)
+      normalize(`${ev.title} ${ev.place} ${ev.time} ${ev.day} ${ev.month}`).includes(q)
     );
   }, [query]);
 
