@@ -45,8 +45,8 @@ export function PortalSiteFooter() {
   return (
     <footer className="mt-16 border-t border-slate-800 bg-[#0F172A] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-10">
+          <div className="col-span-2 md:col-span-4 lg:col-span-4">
             <div className="[&_span]:!text-white">
               <Logo />
             </div>
@@ -76,7 +76,7 @@ export function PortalSiteFooter() {
             </div>
           </div>
 
-          <nav aria-label="Plataforma" className="lg:col-span-2">
+          <nav aria-label="Plataforma" className="col-span-1 md:col-span-1 lg:col-span-2">
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
               Plataforma
             </h4>
@@ -91,7 +91,7 @@ export function PortalSiteFooter() {
             </ul>
           </nav>
 
-          <nav aria-label="Cuenta" className="lg:col-span-2">
+          <nav aria-label="Cuenta" className="col-span-1 md:col-span-1 lg:col-span-2">
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
               Cuenta
             </h4>
@@ -106,14 +106,14 @@ export function PortalSiteFooter() {
             </ul>
           </nav>
 
-          <div className="lg:col-span-4">
+          <div className="col-span-2 md:col-span-2 lg:col-span-4">
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
               Contacto
             </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li className="flex items-start gap-3">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                <a href="mailto:contacto@umsspira.umss.edu.bo" className="transition-colors hover:text-umss-orange">
+                <a href="mailto:contacto@umsspira.umss.edu.bo" className="break-all transition-colors hover:text-umss-orange">
                   contacto@umsspira.umss.edu.bo
                 </a>
               </li>
@@ -125,7 +125,7 @@ export function PortalSiteFooter() {
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                <span>
+                <span className="min-w-0">
                   Av. Ballivian s/n, Campus UMSS
                   <br />
                   Cochabamba, Bolivia
