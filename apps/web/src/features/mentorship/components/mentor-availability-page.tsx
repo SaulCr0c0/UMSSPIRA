@@ -84,8 +84,11 @@ export function MentorAvailabilityPage() {
   const [banner, setBanner] = useState('');
   const [toast, setToast] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const busy = useRef(false);
   const dirty = selectedStatus !== savedStatus;
+  const ready = !loading && !loadFailed && !forbidden && !requiresLogin;
+  const canSave = ready && !saving && selectedStatus !== null && dirty;
 
   const loadAvailability = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -96,11 +99,13 @@ export function MentorAvailabilityPage() {
       setSavedStatus(state.availabilityStatus);
       setSelectedStatus(state.availabilityStatus);
       setForbidden(false);
+      setRequiresLogin(false);
       setLoadFailed(false);
     } catch (reason) {
       if (signal?.aborted) return;
       const denied = reason instanceof MentorAvailabilityError && reason.status === 403;
       setForbidden(denied);
+      setRequiresLogin(reason instanceof MentorAvailabilityError && reason.status === 401);
       setLoadFailed(true);
       setError(reason instanceof Error ? reason.message : 'No se pudo cargar la disponibilidad.');
     } finally {
@@ -137,7 +142,7 @@ export function MentorAvailabilityPage() {
   }, [dirty]);
 
   function choose(status: MentorAvailabilityStatus) {
-    if (busy.current || saving || loadFailed) return;
+    if (busy.current || saving || !ready) return;
     setError('');
     setBanner('');
     setToast('');
@@ -150,7 +155,7 @@ export function MentorAvailabilityPage() {
   }
 
   async function save() {
-    if (busy.current || !selectedStatus || !dirty || loading || forbidden) return;
+    if (busy.current || !canSave || !selectedStatus) return;
     busy.current = true;
     const startedAt = Date.now();
     setSaving(true);
@@ -172,6 +177,11 @@ export function MentorAvailabilityPage() {
         ? reason.message
         : 'No se pudo actualizar la disponibilidad. Inténtalo de nuevo.');
       if (reason instanceof MentorAvailabilityError && reason.status === 403) setForbidden(true);
+      if (reason instanceof MentorAvailabilityError && reason.status === 401) {
+        setRequiresLogin(true);
+        setConfirmStatus(null);
+        setConfirmDiscard(false);
+      }
     } finally {
       const remaining = 1000 - (Date.now() - startedAt);
       if (remaining > 0) await wait(remaining);
@@ -189,6 +199,13 @@ export function MentorAvailabilityPage() {
     setSavedFeedback(false);
   }
 
+  if (requiresLogin) {
+    return <div className="mentor-availability-error" role="alert">
+      <p>Inicia sesión para configurar tu disponibilidad.</p>
+      <Link href="/login">Iniciar sesión</Link>
+    </div>;
+  }
+
   if (forbidden) {
     return <div className="mentor-availability-denied" role="alert">
       <InfoIcon aria-hidden="true" />
@@ -200,8 +217,8 @@ export function MentorAvailabilityPage() {
     <section className="mentor-availability-card" aria-labelledby="mentor-availability-heading">
       <div className="mentor-availability-intro">
         <div className="mentor-availability-statuses" aria-live="polite">
-          <span className={`mentor-availability-chip${savedStatus ? ` is-${savedStatus.toLowerCase()}` : ''}`}>
-            {loadFailed ? 'Estado no disponible' : loading ? 'Cargando disponibilidad…' : savedStatus ? statusLabels[savedStatus] : 'Disponibilidad sin configurar'}
+          <span className={`mentor-availability-chip${!loading && !loadFailed && savedStatus ? ` is-${savedStatus.toLowerCase()}` : ''}`}>
+            {loading ? 'Cargando disponibilidad…' : loadFailed ? 'No se pudo cargar la disponibilidad' : savedStatus ? statusLabels[savedStatus] : 'Disponibilidad sin configurar'}
           </span>
           <span className="mentor-availability-chip mentor-availability-chip-approved">
             <CheckCircle2Icon aria-hidden="true" /> Titulado aprobado
@@ -227,17 +244,17 @@ export function MentorAvailabilityPage() {
 
       <div className="mentor-availability-section-heading">
         <h2 id="mentor-availability-heading">Estado de disponibilidad</h2>
-        <span><i aria-hidden="true" />{loadFailed ? 'Estado no disponible' : selectedStatus ? dirty ? 'Cambio pendiente de guardar' : 'Estado guardado' : 'Selecciona una opción'}</span>
+        <span><i aria-hidden="true" />{loading ? 'Cargando disponibilidad…' : loadFailed ? 'Consulta pendiente de reintento' : selectedStatus ? dirty ? 'Cambio pendiente de guardar' : 'Estado guardado' : 'Selecciona una opción'}</span>
       </div>
 
-      {loading ? <p className="mentor-availability-loading" role="status"><LoaderCircleIcon aria-hidden="true" /> Cargando disponibilidad…</p> : (
+      {loading ? <p className="mentor-availability-loading" role="status"><LoaderCircleIcon aria-hidden="true" /> Cargando disponibilidad…</p> : !loadFailed && (
         <div className="mentor-availability-options" role="group" aria-label="Selecciona tu disponibilidad">
           {options.map(({ status, title, description, visibility, icon: Icon }) => {
             const selected = selectedStatus === status;
             return <article key={status} className={`mentor-availability-option${selected ? ` is-selected is-${status.toLowerCase()}` : ''}`}>
               <div className="mentor-availability-option-top">
                 <span className="mentor-availability-option-icon"><Icon aria-hidden="true" /></span>
-                <button type="button" className={selected ? 'mentor-availability-selected' : 'mentor-availability-choose'} onClick={() => choose(status)} disabled={saving || loadFailed} aria-pressed={selected}>
+                <button type="button" className={selected ? 'mentor-availability-selected' : 'mentor-availability-choose'} onClick={() => choose(status)} disabled={saving || !ready} aria-pressed={selected}>
                   {selected ? <><CheckCircle2Icon aria-hidden="true" /> Seleccionado</> : 'Elegir'}
                 </button>
               </div>
@@ -269,7 +286,7 @@ export function MentorAvailabilityPage() {
         }}><ArrowLeftIcon aria-hidden="true" /> Volver a Mi perfil de mentor</Link>
         <div className="mentor-availability-action-buttons">
           {dirty && <SecondaryButton onClick={discard} disabled={saving}>Descartar cambios</SecondaryButton>}
-          <PrimaryButton onClick={() => void save()} disabled={!dirty || !selectedStatus || loading || loadFailed || saving} loading={saving} loadingLabel="Guardando…" iconRight={savedFeedback ? CheckCircle2Icon : ArrowRightIcon} className={`mentor-availability-save${savedFeedback ? ' is-saved' : ''}`}>
+          <PrimaryButton onClick={() => void save()} disabled={!canSave} loading={saving} loadingLabel="Guardando…" iconRight={savedFeedback ? CheckCircle2Icon : ArrowRightIcon} className={`mentor-availability-save${savedFeedback ? ' is-saved' : ''}`}>
             {savedFeedback ? '¡Guardado!' : 'Guardar disponibilidad'}
           </PrimaryButton>
         </div>
