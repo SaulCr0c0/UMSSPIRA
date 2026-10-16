@@ -53,7 +53,7 @@ describe('MentorProfileInfoPage (HU-6.5)', () => {
     expect(screen.getByText(sampleProfile.experiencia)).toBeInTheDocument();
     expect(screen.getByText(sampleProfile.informacion_relevante)).toBeInTheDocument();
     expect(screen.getByText('Mentor activo')).toBeInTheDocument();
-    expect(screen.getByText(sampleProfile.fecha_actualizacion)).toBeInTheDocument();
+    expect(screen.getByText('7 de octubre, 2026')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: /Editar información/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Eliminar información/i })).toBeInTheDocument();

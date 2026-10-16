@@ -10,6 +10,7 @@ import {
   BriefcaseIcon,
   CompassIcon,
   GlobeIcon,
+  CalendarDaysIcon,
   PlusIcon,
   PencilIcon,
   Trash2Icon,
@@ -335,8 +336,9 @@ export function MentorProfileInfoPage() {
               <span>Mentor activo</span>
             </div>
             <div className="mentor-info-updated">
+              <CalendarDaysIcon className="mentor-info-updated-icon" aria-hidden="true" />
               <span>Última actualización:</span>
-              <strong>{savedData?.fecha_actualizacion || '—'}</strong>
+              <strong>{formatDateSpanish(savedData?.fecha_actualizacion)}</strong>
             </div>
           </header>
 
@@ -685,6 +687,7 @@ export function MentorProfileInfoPage() {
 
         {/* Modal de confirmación para eliminar información */}
         <ConfirmModal
+          className="mentor-info-delete-modal"
           open={showDeleteModal}
           eyebrow="Información del perfil"
           title="¿Eliminar información del perfil?"
@@ -699,6 +702,7 @@ export function MentorProfileInfoPage() {
           icon={Trash2Icon}
           cancelLabel="Cancelar"
           confirmLabel="Eliminar"
+          confirmIcon={Trash2Icon}
           confirming={deleting}
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={() => void handleConfirmDelete()}
