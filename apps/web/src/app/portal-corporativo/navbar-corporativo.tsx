@@ -148,9 +148,9 @@ export const NavbarCorporativo: React.FC<NavbarProps> = ({ role }) => {
 
             {/* Avatar con dropdown (solo escritorio) */}
             <div className={`relative hidden lg:block transform ${config.profilePosition}`} ref={dropdownRef}>
-              {role === 'empresa' ? (
-                <CompanyDropdown />
-              ) : (
+              {true ? (
+             <CompanyDropdown />
+                ) : (
                 <>
               <div
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
