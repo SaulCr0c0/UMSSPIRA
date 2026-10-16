@@ -23,6 +23,12 @@ const events = [
   { img: eventImg3, title: 'Feria de Beneficios', day: '08', month: 'NOV', place: 'Campus UMSS', time: '9:30 a.m. - 4:00 p.m.' },
 ];
 
+const normalize = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 export default function Home() {
   const [query, setQuery] = useState('');
 
