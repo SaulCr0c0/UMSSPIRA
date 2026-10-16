@@ -15,12 +15,14 @@ describe("sesión en cookies", () => {
 
   it("borra la sesión al cerrarla", () => {
     saveSession("token-de-prueba", "titulado", true);
+    window.sessionStorage.setItem("umsspira.access-token", "token-de-prueba");
 
     clearSession();
 
     expect(document.cookie).not.toContain("umsspira_token");
     expect(document.cookie).not.toContain("umsspira_role");
     expect(window.localStorage.getItem("token")).toBeNull();
+    expect(window.sessionStorage.getItem("umsspira.access-token")).toBeNull();
   });
 
   it("replica el token en localStorage para la Epic 4", () => {

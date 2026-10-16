@@ -27,6 +27,11 @@ export function clearSession(): void {
   document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0`;
   document.cookie = `${ROLE_COOKIE}=; path=/; max-age=0`;
   writeLegacyToken(null);
+  try {
+    window.sessionStorage.removeItem("umsspira.access-token");
+  } catch {
+    /* sin acceso a storage */
+  }
 }
 
 // El estado en memoria se pierde al recargar la página; la cookie sobrevive
