@@ -18,6 +18,14 @@ describe('FormularioCertificaciones', () => {
     }
   });
 
+  it('marca con asterisco los 4 campos obligatorios', () => {
+    const { container } = render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
+
+    for (const id of ['nombreCertificacion', 'entidadEmisora', 'anioEmision', 'gradoCertificacion']) {
+      expect(container.querySelector(`label[for="${id}"]`)?.className).toContain("after:content-['*']");
+    }
+  });
+
   it('solo ofrece subir una foto JPG como respaldo', () => {
     render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
 

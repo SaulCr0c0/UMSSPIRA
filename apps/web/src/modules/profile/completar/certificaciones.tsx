@@ -26,6 +26,8 @@ const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', 
 
 const subtituloClase = 'text-xs font-bold uppercase tracking-wide text-[#2C3B4D]';
 const labelClase = 'block text-xs font-semibold text-[#2C3B4D]';
+// Campo obligatorio: asterisco igual al de Experiencia laboral (no forma parte del texto de la etiqueta)
+const labelObligatorioClase = `${labelClase} after:ml-1 after:text-[#A35139] after:content-['*']`;
 const inputClase =
   'mt-1.5 h-11 w-full rounded-md border border-[#C9C1B1] bg-white px-3 text-sm text-[#2C3B4D] placeholder:text-[#2C3B4D]/40 focus:border-[#FFB162] focus:outline-none';
 const botonRespaldoClase =
@@ -96,7 +98,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
 
       <form onSubmit={agregar} className="mt-4 space-y-4">
         <div>
-          <label htmlFor="nombreCertificacion" className={labelClase}>Nombre de certificación</label>
+          <label htmlFor="nombreCertificacion" className={labelObligatorioClase}>Nombre de certificación</label>
           <input
             id="nombreCertificacion"
             type="text"
@@ -109,7 +111,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
         </div>
 
         <div>
-          <label htmlFor="entidadEmisora" className={labelClase}>Entidad emisora</label>
+          <label htmlFor="entidadEmisora" className={labelObligatorioClase}>Entidad emisora</label>
           <input
             id="entidadEmisora"
             type="text"
@@ -123,7 +125,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="anioEmision" className={labelClase}>Año</label>
+            <label htmlFor="anioEmision" className={labelObligatorioClase}>Año</label>
             <input
               id="anioEmision"
               type="text"
@@ -141,7 +143,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
           </div>
 
           <div>
-            <label htmlFor="gradoCertificacion" className={labelClase}>Grado</label>
+            <label htmlFor="gradoCertificacion" className={labelObligatorioClase}>Grado</label>
             <select
               id="gradoCertificacion"
               required
