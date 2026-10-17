@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  ArrowRight, Building2, Users, GraduationCap, Award, MessageSquare,
+  ArrowRight, Building2, Users, GraduationCap, Award, MessageSquare, Clock,
   Briefcase, Calendar, ChevronRight, ChevronDown, MapPin, Lock, Target, Eye,
   BookOpen, Cpu, Code2, Database, Network, Globe, Quote, ShieldCheck,
   UserCheck, Search, Mic, Trophy, Lightbulb, Rocket, Terminal, Sparkles, Heart,
