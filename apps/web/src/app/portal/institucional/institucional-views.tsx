@@ -268,8 +268,8 @@ function HomeView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { Icon: MessageSquare, t: 'Foro de discusión', d: 'Comparte experiencias, resuelve dudas técnicas y conversa con otros titulados por temas.', href: T('comunidad'), l: 'Explorar el foro' },
-            { Icon: Briefcase, t: 'Bolsa de trabajo', d: 'Encuentra ofertas publicadas por empresas y otros titulados, filtradas por área y modalidad.', href: '/login', l: 'Ver vacantes' },
-            { Icon: Users, t: 'Mentoría', d: 'Conecta con titulados dispuestos a guiarte, o sé mentor de una nueva generación.', href: T('comunidad'), l: 'Buscar mentor' },
+            { Icon: Briefcase, t: 'Bolsa de trabajo', d: 'Encuentra ofertas publicadas por empresas y otros titulados, filtradas por área y modalidad.', href: T('empleos'), l: 'Ver vacantes' },
+            { Icon: Users, t: 'Mentoría', d: 'Conecta con titulados dispuestos a guiarte, o sé mentor de una nueva generación.', href: T('mentorias'), l: 'Buscar mentor' },
             { Icon: Calendar, t: 'Eventos', d: 'Talleres, hackatones y encuentros presenciales o virtuales para toda la comunidad ISI.', href: T('eventos'), l: 'Ver calendario' },
           ].map(({ Icon, t, d, href, l }) => (
             <div key={t} className="bg-[#F5F2EA] p-8 rounded-2xl border border-[#C9C1B1] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-6">
@@ -1015,6 +1015,215 @@ function NosotrosView() {
   );
 }
 
+/* ---------- BOLSA DE TRABAJO ---------- */
+
+function EmpleosView() {
+  return (
+    <>
+      <TabHero
+        eyebrow="BOLSA DE TRABAJO"
+        title="Oportunidades laborales para titulados de tu facultad"
+        text="Empresas y titulados de Sistemas e Informática de la UMSS publican vacantes para que el talento de la red encuentre su siguiente paso."
+      />
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <TabImage src="/images/institucional/empleos.jpg" alt="Bolsa de trabajo de titulados UMSS" Icon={Briefcase} className="w-full h-72 rounded-2xl shadow-md order-last lg:order-first" />
+        <div className="space-y-5">
+          <p className="text-xs uppercase tracking-widest text-amber-600 font-bold">PARA QUÉ SIRVE</p>
+          <h2 className="text-3xl font-serif font-bold text-slate-900">Un empleo puede empezar con una recomendación</h2>
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+            Encuentra ofertas publicadas por empresas y por otros titulados, filtradas por área, modalidad y ciudad. Postula con tu perfil profesional y llega directo a quien está buscando talento de la UMSS.
+          </p>
+        </div>
+      </section>
+
+      <section className="pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <h3 className="text-2xl font-serif font-bold text-slate-900 mb-6">Podrás buscar por</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            { Icon: Cpu, t: 'Área profesional' },
+            { Icon: Clock, t: 'Modalidad' },
+            { Icon: Building2, t: 'Empresa' },
+            { Icon: MapPin, t: 'Ciudad o país' },
+          ].map(({ Icon, t }) => (
+            <div key={t} className="bg-[#F5F2EA] p-6 rounded-2xl border border-[#C9C1B1] shadow-sm text-center space-y-3">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center"><Icon className="w-6 h-6" /></div>
+              <p className="text-sm font-bold text-slate-900">{t}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <h3 className="text-2xl font-serif font-bold text-slate-900 mb-1">Así se ve una oferta</h3>
+        <p className="text-xs text-slate-500 mb-6">Ofertas de ejemplo, no corresponden a vacantes reales.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { t: 'Desarrollador Backend', e: 'Empresa de ejemplo', m: 'Remoto · Tiempo completo' },
+            { t: 'Analista de Datos', e: 'Empresa de ejemplo', m: 'Híbrido · Cochabamba' },
+            { t: 'Soporte y Redes', e: 'Empresa de ejemplo', m: 'Presencial · Medio tiempo' },
+          ].map((x) => (
+            <div key={x.t} className="bg-[#F5F2EA] p-6 rounded-2xl border border-[#C9C1B1] shadow-sm flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-[#0F172A] text-amber-400 flex items-center justify-center shrink-0"><Briefcase className="w-6 h-6" /></div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">{x.t}</p>
+                <p className="text-xs text-slate-500">{x.e}</p>
+                <p className="text-xs text-slate-500">{x.m}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <SplitBlock bg="bg-[#E7E1D4]" img="/images/institucional/empleos-proceso.jpg" alt="Cómo postular" Icon={Search}>
+        <SectionHead eyebrow="CÓMO FUNCIONA" title="Postula en 3 pasos" />
+        <Steps
+          cols="md:grid-cols-1"
+          items={[
+            { t: 'Explora las ofertas', d: 'Filtra por área, modalidad, empresa o ciudad.' },
+            { t: 'Completa tu perfil', d: 'Un perfil al día aumenta tus posibilidades de ser contactado.' },
+            { t: 'Postula', d: 'Envía tu postulación desde la plataforma y sigue su estado.' },
+          ]}
+        />
+      </SplitBlock>
+
+      <Block>
+        <SectionHead
+          eyebrow="PARA EMPRESAS Y TITULADOS"
+          title="También puedes publicar"
+          text="La bolsa de trabajo funciona en las dos direcciones."
+        />
+        <IconCards
+          items={[
+            { Icon: Building2, t: 'Empresas', d: 'Publica una vacante y llega a titulados verificados de Sistemas e Informática.' },
+            { Icon: UserCheck, t: 'Titulados', d: 'Comparte una oportunidad con tu red cuando conozcas una vacante.' },
+            { Icon: ShieldCheck, t: 'Cuentas verificadas', d: 'Solo miembros con sesión iniciada publican y postulan.' },
+          ]}
+        />
+      </Block>
+
+      <SplitBlock bg="bg-[#E7E1D4]" img="/images/institucional/empleos-faq.jpg" alt="Preguntas sobre la bolsa de trabajo" Icon={Briefcase} reverse>
+        <SectionHead eyebrow="PREGUNTAS FRECUENTES" title="Sobre la bolsa de trabajo" />
+        <Faq
+          items={[
+            { q: '¿Necesito una cuenta para ver las ofertas?', a: 'Para postular y publicar necesitas iniciar sesión.' },
+            { q: '¿Tiene algún costo postular?', a: 'No. Postular es gratuito para los titulados de la red.' },
+            { q: '¿Puedo publicar una vacante?', a: 'Sí. Las empresas y los titulados pueden publicar vacantes con su cuenta.' },
+          ]}
+        />
+      </SplitBlock>
+
+      <LoginCta
+        title="Bolsa de trabajo para miembros"
+        text="Inicia sesión para ver todas las vacantes, postular o publicar una oferta."
+      />
+    </>
+  );
+}
+
+/* ---------- MENTORÍAS ---------- */
+
+function MentoriasView() {
+  return (
+    <>
+      <TabHero
+        eyebrow="MENTORÍAS"
+        title="Aprende de quienes ya recorrieron el camino"
+        text="La red de mentorías conecta a titulados de Sistemas e Informática de la UMSS con quienes quieren orientación para su carrera."
+      />
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <TabImage src="/images/institucional/mentorias.jpg" alt="Red de mentorías UMSS" Icon={Users} className="w-full h-72 rounded-2xl shadow-md order-last lg:order-first" />
+        <div className="space-y-5">
+          <p className="text-xs uppercase tracking-widest text-amber-600 font-bold">PARA QUÉ SIRVE</p>
+          <h2 className="text-3xl font-serif font-bold text-slate-900">Una guía a tiempo puede acortar tu camino</h2>
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+            Encuentra un mentor por área técnica o interés, o ofrece tu experiencia a quienes recién empiezan. Cada mentoría fortalece a toda la red.
+          </p>
+        </div>
+      </section>
+
+      <section className="pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <h3 className="text-2xl font-serif font-bold text-slate-900 mb-6">Podrás buscar mentores por</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            { Icon: Cpu, t: 'Área técnica' },
+            { Icon: Lightbulb, t: 'Intereses de mentoría' },
+            { Icon: Clock, t: 'Disponibilidad' },
+            { Icon: GraduationCap, t: 'Experiencia' },
+          ].map(({ Icon, t }) => (
+            <div key={t} className="bg-[#F5F2EA] p-6 rounded-2xl border border-[#C9C1B1] shadow-sm text-center space-y-3">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center"><Icon className="w-6 h-6" /></div>
+              <p className="text-sm font-bold text-slate-900">{t}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <h3 className="text-2xl font-serif font-bold text-slate-900 mb-1">Así se ve un perfil de mentor</h3>
+        <p className="text-xs text-slate-500 mb-6">Perfiles de ejemplo, no corresponden a personas reales.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { i: 'AB', r: 'Backend Developer', p: 'Mentoría en arquitectura y APIs' },
+            { i: 'CD', r: 'Analista de Datos', p: 'Mentoría en análisis y entrevistas técnicas' },
+            { i: 'EF', r: 'Arquitecta de Software', p: 'Mentoría en liderazgo técnico' },
+          ].map((x) => (
+            <div key={x.i} className="bg-[#F5F2EA] p-6 rounded-2xl border border-[#C9C1B1] shadow-sm flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-[#0F172A] text-amber-400 flex items-center justify-center font-bold shrink-0">{x.i}</div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">{x.r}</p>
+                <p className="text-xs text-slate-500">{x.p}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <SplitBlock bg="bg-[#E7E1D4]" img="/images/institucional/mentorias-proceso.jpg" alt="Cómo funciona la mentoría" Icon={Users} reverse>
+        <SectionHead eyebrow="CÓMO FUNCIONA" title="Encuentra a tu mentor en 3 pasos" />
+        <Steps
+          cols="md:grid-cols-1"
+          items={[
+            { t: 'Crea tu perfil', d: 'Cuéntanos qué te gustaría aprender o enseñar.' },
+            { t: 'Busca y solicita', d: 'Elige un mentor por área o interés y envía tu solicitud.' },
+            { t: 'Avancen juntos', d: 'Acuerden objetivos y encuentros para tu crecimiento profesional.' },
+          ]}
+        />
+      </SplitBlock>
+
+      <Block>
+        <SectionHead
+          eyebrow="QUIERO SER MENTOR"
+          title="Todo titulado tiene algo que compartir"
+          text="No importa el año de tu promoción: tú decides en qué ayudar y cuándo."
+        />
+        <IconCards
+          items={[
+            { Icon: Target, t: 'Define tus áreas', d: 'Elige las áreas técnicas en las que puedes orientar.' },
+            { Icon: Clock, t: 'Fija tu disponibilidad', d: 'Indica cuándo puedes atender a quienes te soliciten.' },
+            { Icon: Heart, t: 'Devuelve lo recibido', d: 'Guía a las nuevas generaciones y fortalece la comunidad.' },
+          ]}
+        />
+      </Block>
+
+      <SplitBlock bg="bg-[#E7E1D4]" img="/images/institucional/mentorias-faq.jpg" alt="Preguntas sobre las mentorías" Icon={MessageSquare}>
+        <SectionHead eyebrow="PREGUNTAS FRECUENTES" title="Sobre las mentorías" />
+        <Faq
+          items={[
+            { q: '¿Necesito una cuenta para pedir una mentoría?', a: 'Sí. Para solicitar o ofrecer una mentoría necesitas iniciar sesión.' },
+            { q: '¿Tiene algún costo?', a: 'No. La mentoría entre miembros de la red es gratuita.' },
+            { q: '¿Puedo ser mentor si me gradué hace poco?', a: 'Sí. Todo titulado tiene experiencia que compartir, sin importar su promoción.' },
+          ]}
+        />
+      </SplitBlock>
+
+      <LoginCta
+        title="Mentorías para miembros"
+        text="Inicia sesión para buscar un mentor, enviar una solicitud o ofrecer tu experiencia."
+      />
+    </>
+  );
+}
+
 /* ---------- Selector de vista ---------- */
 
 export default function InstitucionalViews() {
@@ -1026,6 +1235,8 @@ export default function InstitucionalViews() {
     case 'carreras': view = <CarrerasView />; break;
     case 'eventos': view = <EventosView />; break;
     case 'nosotros': view = <NosotrosView />; break;
+    case 'empleos': view = <EmpleosView />; break;
+    case 'mentorias': view = <MentoriasView />; break;
     default: view = <HomeView />;
   }
   return <div className="bg-[#EEE9DF]">{view}</div>;

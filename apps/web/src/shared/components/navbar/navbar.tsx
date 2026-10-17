@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Bell, ChevronDown, LogOut, Menu, MessageSquare, Search, X } from 'lucide-react';
 import { activeSection, navigationFor, NAVBAR_ACCOUNT_LINKS, NAVBAR_ROLE_LABEL, visibleLinks } from './navigation';
@@ -17,12 +17,17 @@ const unchangedHref = (href: string) => href;
 /** Diseño extraído de EventsHeader. No depende de los módulos ni de sus estilos. */
 export function Navbar({ session, onLogout, currentPath, resolveHref = unchangedHref, onLogin, onSearch, notifications = [], messages = [], accountExtra }: NavbarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const path = currentPath ?? pathname;
+  const [pagePath, inlineQuery] = path.split('?');
+  const query = inlineQuery ?? searchParams?.toString() ?? '';
   const role = session?.role ?? null;
   const sections = navigationFor(role);
   const accountLinks = visibleLinks(NAVBAR_ACCOUNT_LINKS, role);
   const home = session ? '/portal' : '/portal/institucional';
-  const active = path === home ? null : activeSection(path);
+  // En la raíz del inicio (sin pestaña) no hay sección activa; con ?tab=... la sección de esa pestaña queda activa.
+  const active = pagePath === home && !query ? null : activeSection(pagePath, query);
+  const homeActive = pagePath === home && !active;
   const [opened, setOpened] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
   const [search, setSearch] = useState(false);
@@ -31,8 +36,9 @@ export function Navbar({ session, onLogout, currentPath, resolveHref = unchanged
   const instance = useId();
   const panelId = (name: string) => `${instance}-navbar-${name}`;
 
+  const sectionOpen = sections.some(section => section.id === opened);
   const close = () => { setOpened(null); setMobile(false); };
-  useEffect(() => { setOpened(null); setMobile(false); setSearch(false); }, [path, role]);
+  useEffect(() => { setOpened(null); setMobile(false); setSearch(false); }, [pagePath, query, role]);
   useEffect(() => {
     const outside = (event: PointerEvent | FocusEvent) => {
       if (root.current && !root.current.contains(event.target as Node)) {
@@ -83,9 +89,9 @@ export function Navbar({ session, onLogout, currentPath, resolveHref = unchanged
         <Image src="/assets/events/umsspira-logo-desktop.png" alt="UMSSPIRA" width={170} height={56} priority />
       </Link>
       <nav className={styles.desktopNavigation} aria-label="Navegación principal">
-        <Link href={resolveHref(home)} className={`${styles.topLink} ${path === home ? styles.active : ''}`} aria-current={path === home ? 'page' : undefined} onClick={close} prefetch={false}>Inicio</Link>
+        <Link href={resolveHref(home)} className={`${styles.topLink} ${homeActive && !sectionOpen ? styles.active : ''}`} aria-current={homeActive ? 'page' : undefined} onClick={close} prefetch={false}>Inicio</Link>
         {sections.map(section => <div key={section.id} className={styles.dropdown}>
-          <button type="button" className={`${styles.trigger} ${active === section.id ? styles.active : ''}`} aria-expanded={opened === section.id} aria-controls={panelId(section.id)} onClick={event => toggle(section.id, event.currentTarget)} onKeyDown={event => { if (event.key === 'ArrowDown') { event.preventDefault(); openWithKeyboard(section.id, event.currentTarget); } }}>{section.label}<ChevronDown size={13} strokeWidth={2.3} className={opened === section.id ? styles.rotated : undefined} /></button>
+          <button type="button" className={`${styles.trigger} ${active === section.id || opened === section.id ? styles.active : ''}`} aria-expanded={opened === section.id} aria-controls={panelId(section.id)} onClick={event => toggle(section.id, event.currentTarget)} onKeyDown={event => { if (event.key === 'ArrowDown') { event.preventDefault(); openWithKeyboard(section.id, event.currentTarget); } }}>{section.label}<ChevronDown size={13} strokeWidth={2.3} className={opened === section.id ? styles.rotated : undefined} /></button>
           {opened === section.id && <div className={styles.dropdownPanel} id={panelId(section.id)} onKeyDown={moveFocus}><NavbarLinks items={section.items} currentPath={path} resolveHref={resolveHref} onNavigate={close} /></div>}
         </div>)}
       </nav>
