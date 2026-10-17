@@ -44,7 +44,7 @@ export const NAVBAR_SECTIONS: NavbarSection[] = [
   ] },
   { id: 'events', label: 'Eventos', items: [
     { id: 'inst-events', label: 'Eventos institucionales', href: '/portal/institucional?tab=eventos' },
-    { id: 'catalog', label: 'Catálogo de eventos', href: '/events/catalog', roles: graduates },
+    { id: 'catalog', label: 'Catálogo de eventos', href: '/portal/eventos', roles: graduates },
     { id: 'manage-events', label: 'Gestión de eventos', href: '/events', roles: admins },
     { id: 'create-event', label: 'Crear evento', href: '/events/create', roles: admins },
     { id: 'draft-events', label: 'Borradores', href: '/events/drafts', roles: admins },
