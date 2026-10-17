@@ -1,3 +1,5 @@
+'use client';
+
 import { render, screen } from "@testing-library/react";
 import { PortalSiteHeader } from "./portal-site-header";
 
@@ -36,11 +38,11 @@ describe("PortalSiteHeader", () => {
   });
 
   it.each(["/portal/institucional", "/portal/institucional/"])(
-    "no renderiza encabezado en %s para evitar la doble cabecera",
+    "renderiza un único encabezado oficial en %s",
     (pathname) => {
       mockUsePathname.mockReturnValue(pathname);
-      const { container } = render(<PortalSiteHeader />);
-      expect(container).toBeEmptyDOMElement();
+      render(<PortalSiteHeader />);
+      expect(screen.getByRole("navigation", { name: "Navegación principal" })).toBeInTheDocument();
     },
   );
 });

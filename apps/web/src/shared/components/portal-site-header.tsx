@@ -1,11 +1,19 @@
-"use client";
-import { usePathname } from "next/navigation";
-import { Navbar } from "@/shared/components/navbar";
 
-// Encabezado único del portal. La vista institucional monta su propia barra pública
-// (PublicNavbar), así que aquí no se monta otra para evitar la doble cabecera.
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { Navbar as LegacyNavbar } from '@/shared/components/navbar';
+import { ConnectedNavbar } from '@/shared/components/navbar/index';
+
+// Encabezado único del portal: selecciona el Navbar según la ruta.
 export function PortalSiteHeader() {
-  const pathname = usePathname() ?? "";
-  if (pathname.replace(/\/$/, "") === "/portal/institucional") return null;
-  return <Navbar />;
+  const pathname = usePathname() ?? '';
+
+  const normalizedPath = pathname.replace(/\/+$/, '');
+
+  return normalizedPath === '/portal/institucional' ? (
+    <ConnectedNavbar />
+  ) : (
+    <LegacyNavbar />
+  );
 }
