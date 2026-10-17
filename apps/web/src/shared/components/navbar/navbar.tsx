@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useId, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { Bell, ChevronDown, LogOut, Menu, MessageSquare, Search, X } from 'lucide-react';
 import { activeSection, navigationFor, NAVBAR_ACCOUNT_LINKS, NAVBAR_ROLE_LABEL, visibleLinks } from './navigation';
 import { NavbarLinks } from './navbar-links';
@@ -14,8 +14,8 @@ import styles from './navbar.module.css';
 
 const unchangedHref = (href: string) => href;
 
-/** Diseño extraído de EventsHeader. No depende de los módulos ni de sus estilos. */
-export function Navbar({ session, onLogout, currentPath, resolveHref = unchangedHref, onLogin, onSearch, notifications = [], messages = [], accountExtra }: NavbarProps) {
+/** Contenido real de la barra. Usa useSearchParams, por eso debe ir dentro de <Suspense>. */
+function NavbarContent({ session, onLogout, currentPath, resolveHref = unchangedHref, onLogin, onSearch, notifications = [], messages = [], accountExtra }: NavbarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const path = currentPath ?? pathname ?? '';
@@ -114,4 +114,22 @@ export function Navbar({ session, onLogout, currentPath, resolveHref = unchanged
     {mobile && <nav className={styles.mobileNavigation} id={panelId('mobile')} aria-label="Navegación móvil"><Link href={resolveHref(home)} className={styles.mobileHome} onClick={close} prefetch={false}>Inicio</Link>{sections.map(section => <div key={section.id}><button type="button" className={styles.mobileSection} aria-expanded={opened === `mobile-${section.id}`} aria-controls={panelId(`mobile-${section.id}`)} onClick={() => setOpened(value => value === `mobile-${section.id}` ? null : `mobile-${section.id}`)}>{section.label}<ChevronDown size={15} /></button>{opened === `mobile-${section.id}` && <div className={styles.mobileLinks} id={panelId(`mobile-${section.id}`)}><NavbarLinks items={section.items} currentPath={path} resolveHref={resolveHref} onNavigate={close} /></div>}</div>)}{session ? <div className={styles.mobileAccount}><strong>Mi cuenta</strong><NavbarLinks items={accountLinks} currentPath={path} resolveHref={resolveHref} onNavigate={close} /><button type="button" className={styles.logout} onClick={logout}><LogOut size={16} />Cerrar sesión</button></div> : <div className={styles.mobileAuth}><Link href={resolveHref('/register')} onClick={close} className={styles.register} prefetch={false}>Crear mi cuenta</Link></div>}</nav>}
     <NavbarSearch open={search} onClose={() => setSearch(false)} links={[{ id: 'home', label: 'Inicio', href: home }, ...sections.flatMap(section => section.items), ...accountLinks]} resolveHref={resolveHref} />
   </header>;
+}
+
+/** Mientras se resuelve la URL en el cliente, reserva el espacio de la barra. */
+function NavbarFallback({ session }: Pick<NavbarProps, 'session'>) {
+  return (
+    <header className={`${styles.root} ${session ? styles.member : styles.public}`}>
+      <div className={styles.bar} />
+    </header>
+  );
+}
+
+/** Diseño extraído de EventsHeader. No depende de los módulos ni de sus estilos. */
+export function Navbar(props: NavbarProps) {
+  return (
+    <Suspense fallback={<NavbarFallback session={props.session} />}>
+      <NavbarContent {...props} />
+    </Suspense>
+  );
 }

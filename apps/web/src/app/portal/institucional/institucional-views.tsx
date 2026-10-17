@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -1226,7 +1226,7 @@ function MentoriasView() {
 
 /* ---------- Selector de vista ---------- */
 
-export default function InstitucionalViews() {
+function InstitucionalContent() {
   const tab = useSearchParams().get('tab');
   let view: React.ReactNode;
   switch (tab) {
@@ -1240,4 +1240,12 @@ export default function InstitucionalViews() {
     default: view = <HomeView />;
   }
   return <div className="bg-[#EEE9DF]">{view}</div>;
+}
+
+export default function InstitucionalViews() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#EEE9DF]" />}>
+      <InstitucionalContent />
+    </Suspense>
+  );
 }
