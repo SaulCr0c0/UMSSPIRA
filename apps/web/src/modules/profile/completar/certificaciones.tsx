@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Award, Camera, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
@@ -18,6 +18,8 @@ export type Certificacion = {
 type FormularioCertificacionesProps = {
   certificaciones: Certificacion[];
   onAgregar: (certificacion: Certificacion) => void;
+  // Avisa cuántos errores hay a la vista, para el contador del encabezado de la sección (HU-02, AC 6)
+  onErroresChange?: (errores: number) => void;
 };
 
 const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', grado: '', respaldo: null };
@@ -29,12 +31,13 @@ const inputClase =
 const botonRespaldoClase =
   'inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C9C1B1] bg-white px-3 text-xs font-semibold text-[#2C3B4D] hover:bg-[#FAF8F4]';
 
-export function FormularioCertificaciones({ certificaciones, onAgregar }: FormularioCertificacionesProps) {
+export function FormularioCertificaciones({ certificaciones, onAgregar, onErroresChange }: FormularioCertificacionesProps) {
   const [datos, setDatos] = useState<Certificacion>(VACIO);
   const fotoRef = useRef<HTMLInputElement>(null);
   const documentoRef = useRef<HTMLInputElement>(null);
   // Archivo rechazado (no es JPG o supera 5 MB): no se adjunta y se explica junto al campo
   const [errorRespaldo, setErrorRespaldo] = useState<string>();
+  useEffect(() => onErroresChange?.(errorRespaldo ? 1 : 0), [errorRespaldo, onErroresChange]);
 
   function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision' | 'grado', valor: string) {
     setDatos({ ...datos, [campo]: valor });
