@@ -18,7 +18,7 @@ const unchangedHref = (href: string) => href;
 export function Navbar({ session, onLogout, currentPath, resolveHref = unchangedHref, onLogin, onSearch, notifications = [], messages = [], accountExtra }: NavbarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const path = currentPath ?? pathname;
+  const path = currentPath ?? pathname ?? '';
   const [pagePath, inlineQuery] = path.split('?');
   const query = inlineQuery ?? searchParams?.toString() ?? '';
   const role = session?.role ?? null;

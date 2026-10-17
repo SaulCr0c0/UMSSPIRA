@@ -6,6 +6,7 @@ const mockUsePathname = jest.fn((): string | null => null);
 jest.mock("next/navigation", () => ({
   usePathname: () => mockUsePathname(),
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("PortalSiteHeader", () => {
