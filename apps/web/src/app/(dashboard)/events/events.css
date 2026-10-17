@@ -569,8 +569,8 @@
 .event-preview-cover.has-image { height: 140px; }
 .event-preview-cover::before { position: absolute; right: 36px; top: 18px; width: 54px; height: 54px; border-radius: 50%; background: #ffb162; content: ""; }
 .event-preview-cover::after { position: absolute; right: 0; bottom: 14px; left: 0; height: 8px; background: #ffb162; content: ""; }
-.event-preview-cover > span { position: absolute; z-index: 2; top: 36px; left: 24px; max-width: 190px; font-size: 14px; line-height: 18px; font-weight: 700; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
-.event-preview-card h3 { margin: 14px 0 14px; font-size: 18px; line-height: 23px; }
+.event-preview-cover > span { position: absolute; z-index: 2; top: 36px; left: 24px; display: block; max-width: 190px; overflow-wrap: anywhere; font-size: 14px; line-height: 18px; font-weight: 700; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
+.event-preview-card h3 { margin: 14px 0 14px; overflow-wrap: anywhere; font-size: 18px; line-height: 23px; }
 .event-preview-detail { margin: 0 0 6px; color: #2c3b4d; font-size: 12px; line-height: 18px; }
 .event-preview-description { min-height: 45px; margin: 12px 0 10px; border-top: 1px solid #c9c1b1; padding-top: 8px; color: #2c3b4d; font-size: 11px; line-height: 18px; overflow-wrap: anywhere; }
 .event-preview-organizer { margin: 0 0 12px; color: #2c3b4d; font-size: 12px; font-weight: 500; }
