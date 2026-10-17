@@ -572,6 +572,7 @@
 .event-preview-cover > span { position: absolute; z-index: 2; top: 36px; left: 24px; display: block; max-width: 190px; overflow-wrap: anywhere; font-size: 14px; line-height: 18px; font-weight: 700; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
 .event-preview-card h3 { margin: 14px 0 14px; overflow-wrap: anywhere; font-size: 18px; line-height: 23px; }
 .event-preview-detail { margin: 0 0 6px; color: #2c3b4d; font-size: 12px; line-height: 18px; }
+.event-preview-location { overflow-wrap: anywhere; }
 .event-preview-description { min-height: 45px; margin: 12px 0 10px; border-top: 1px solid #c9c1b1; padding-top: 8px; color: #2c3b4d; font-size: 11px; line-height: 18px; overflow-wrap: anywhere; }
 .event-preview-organizer { margin: 0 0 12px; color: #2c3b4d; font-size: 12px; font-weight: 500; }
 .event-preview-status { display: inline-flex; height: 28px; align-items: center; border: 1px solid #c9c1b1; border-radius: 14px; background: #eee9df; padding: 0 13px; color: #2c3b4d; font-size: 10px; font-weight: 600; }

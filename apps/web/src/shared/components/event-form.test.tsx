@@ -89,6 +89,17 @@ function clickDesktopDraftButton() {
 }
 
 describe('EventForm HU1', () => {
+  it('ajusta cadenas largas de ubicación en la vista previa', () => {
+    const location = 'llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll';
+    render(<EventForm onSubmit={jest.fn()} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Ej. Auditorio Central UMSS'), {
+      target: { value: location },
+    });
+
+    expect(screen.getByText(`Ubicación · ${location}`)).toHaveClass('event-preview-location');
+  });
+
   it('no muestra errores antes de que el usuario interactúe', () => {
     render(<EventForm onSubmit={jest.fn()} />);
 

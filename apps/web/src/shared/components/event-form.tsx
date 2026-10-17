@@ -378,7 +378,7 @@ function EventPreview({ form, dateLabel, hasErrors, imagePreviewUrl }: { form: E
       </div>
       <h3>{form.title || 'Título del evento'}</h3>
       <p className="event-preview-detail">{dateLabel}</p>
-      <p className="event-preview-detail">Ubicación · {form.location || '—'}</p>
+      <p className="event-preview-detail event-preview-location">Ubicación · {form.location || '—'}</p>
       <p className="event-preview-detail">Cupo máximo · {form.maxCapacity || '—'}{form.maxCapacity ? ` ${form.maxCapacity === '1' ? 'persona' : 'personas'}` : ''}</p>
       <p className="event-preview-description">{form.description || 'La descripción del evento aparecerá en este espacio.'}</p>
       <p className="event-preview-organizer">Organiza · UMSSPIRA</p>
