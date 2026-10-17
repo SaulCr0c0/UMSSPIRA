@@ -13,12 +13,16 @@ interface CompanyHeaderProps {
 /** HU-02: sin datos por defecto de otra empresa (CA6/CA9); imagenes rotas degradan en forma controlada (CA7). */
 export function CompanyHeader({
   companyName,
-  companySlogan = "Innovando el futuro hoy",
+  companySlogan,
   logoUrl,
-  bannerImageUrl = "https://images.griddo.ecija.com/sean-pollock-phyq704ffda-unsplash-scaled",
+  bannerImageUrl,
 }: CompanyHeaderProps) {
   const [logoFailed, setLogoFailed] = useState(false);
   const [bannerFailed, setBannerFailed] = useState(false);
+
+  // Forzamos los valores por defecto aquí para evadir el error de los valores "null" del backend
+  const finalSlogan = companySlogan || "Innovando el futuro hoy";
+  const finalBannerUrl = bannerImageUrl || "https://images.griddo.ecija.com/sean-pollock-phyq704ffda-unsplash-scaled";
 
   return (
     <div className="w-full mb-6">
@@ -42,19 +46,19 @@ export function CompanyHeader({
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               {companyName}
             </h1>
-            {companySlogan ? (
+            {finalSlogan ? (
               <p className="text-xs sm:text-sm text-[#EEE9DF] mt-1 font-normal leading-relaxed">
-                {companySlogan}
+                {finalSlogan}
               </p>
             ) : null}
           </div>
         </div>
 
         <div className="absolute sm:relative inset-0 sm:inset-auto sm:w-1/2 h-full z-0 opacity-40 sm:opacity-100">
-          {bannerImageUrl && !bannerFailed ? (
+          {finalBannerUrl && !bannerFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={bannerImageUrl}
+              src={finalBannerUrl}
               alt="Imagen de fondo de la empresa"
               className="h-full w-full object-cover"
               onError={() => setBannerFailed(true)}

@@ -23,15 +23,15 @@ export default function MostrarPerfilPage() {
       setCompany(datosParseados);
     } else {
       setCompany({
-        nombre: 'Empresa Demo S.A.',
+        nombre: 'TechSolutions S.A.',
         eslogan: 'Innovando el futuro hoy',
         nit: '123456789',
-        descripcion: 'Empresa líder en tecnología y desarrollo de software.',
-        telefono: '77777777',
-        correo: 'empresa@gmail.com',
-        sitioWeb: 'www.demo.com',
-        direccion: 'Av. Principal 123, Cochabamba',
-        tamano: '1-10 empleados',
+        descripcion: 'Somos una empresa de tecnología enfocada en desarrollar soluciones de software.',
+        telefono: '+591 71234567',
+        correo: 'contacto@techsolutions.gmail.com',
+        sitioWeb: 'https://www.techsolutions.com',
+        direccion: 'Av. San Martin y Costanera, Piso 12, Cochabamba',
+        tamano: '50-200 empleados',
         logoUrl: '',
         bannerUrl: ''
       });
