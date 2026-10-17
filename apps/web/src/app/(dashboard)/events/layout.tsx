@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import { EventsHeader } from '@/shared/components/events-ui';
 import { AuthenticatedUserSessionProvider } from '@/modules/auth/frontend/components/authenticated-user-context';
@@ -10,3 +11,4 @@ export default function EventsLayout({ children }: { children: ReactNode }) {
     </AuthenticatedUserSessionProvider>
   );
 }
+
