@@ -2,13 +2,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Home, Calendar, Briefcase, Star, Users, User, Bell, ChevronDown, Award, Menu, X, LogOut } from 'lucide-react';
 
 // Importamos la imagen usando la ruta correcta desde shared/assets
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
-import { authStore } from '@/modules/auth/frontend/store';
+import { authStore } from '@/modules/auth/frontend/store/auth.store';
 import { clearSession } from '@/modules/auth/frontend/services/session';
+import { hardRedirect } from '@/modules/auth/frontend/services/navigation';
 import { clearAccessToken } from '@/shared/services/auth-session';
 import { clearToken } from '@/shared/services/api-client';
 
@@ -38,7 +39,6 @@ export const Navbar: React.FC = () => {
     rightSectionGap: "space-x-2 lg:space-x-4",
   };
 
-  const router = useRouter();
   const pathname = usePathname() ?? '';
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -65,8 +65,7 @@ export const Navbar: React.FC = () => {
     setIsDrawerOpen(false);
     setIsProfileDropdownOpen(false);
     setIsNotificationsOpen(false);
-    router.push('/login');
-    router.refresh();
+    hardRedirect('/login');
   };
 
   // Cerrar el menú del avatar y el panel de notificaciones al hacer clic fuera
@@ -212,18 +211,18 @@ export const Navbar: React.FC = () => {
                         <User className="w-4 h-4 text-slate-500" />
                         <span>Mi perfil</span>
                       </div>
-                      
-
-                    <span className="text-slate-400">›</span>
+                      <span className="text-slate-400">›</span>
                     </Link>
-
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex w-full items-center space-x-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
+                      className="flex w-full items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700"
                     >
-                      <LogOut className="w-4 h-4 text-slate-500" />
-                      <span>Cerrar sesión</span>
+                      <div className="flex items-center space-x-2.5">
+                        <LogOut className="w-4 h-4 text-slate-500" />
+                        <span>Cerrar sesión</span>
+                      </div>
+                      <span className="text-slate-400">›</span>
                     </button>
                   </div>
                 </div>
