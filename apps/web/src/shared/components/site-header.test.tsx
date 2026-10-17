@@ -1,3 +1,5 @@
+'use client';
+
 import { render, screen } from "@testing-library/react";
 import { PortalSiteHeader } from "./portal-site-header";
 
@@ -6,6 +8,7 @@ const mockUsePathname = jest.fn((): string | null => null);
 jest.mock("next/navigation", () => ({
   usePathname: () => mockUsePathname(),
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("PortalSiteHeader", () => {
