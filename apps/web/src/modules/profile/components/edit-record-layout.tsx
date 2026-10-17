@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Camera, Check, FileText } from 'lucide-react';
+import { Camera, Check } from 'lucide-react';
 import Link from 'next/link';
 
 import { MensajeError } from '@/modules/profile/validation/mensaje-error';
@@ -107,7 +107,7 @@ type BackupFieldProps = {
   onDocumentChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-// Respaldo documental con estado, enlace al archivo y botones para subir foto o documento
+// Respaldo documental con estado, enlace al archivo y botón para subir la foto (solo JPG)
 export function BackupField({ documentName, documentUrl, isVerified, onDocumentChange }: BackupFieldProps) {
   // Mismas reglas que en Completar perfil: el atributo accept se puede saltar eligiendo "Todos los archivos"
   const [backupError, setBackupError] = useState<string>();
@@ -152,11 +152,6 @@ export function BackupField({ documentName, documentUrl, isVerified, onDocumentC
         <label className="flex cursor-pointer items-center gap-2 rounded-md border border-oatmeal bg-white px-4 py-2.5 text-[13px] font-semibold text-blue-fantastic transition hover:bg-palladian">
           <Camera className="h-4 w-4" aria-hidden="true" />
           Subir foto
-          <input type="file" accept="image/jpeg" className="hidden" onChange={handleChange} />
-        </label>
-        <label className="flex cursor-pointer items-center gap-2 rounded-md bg-abyssal-blue px-4 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">
-          <FileText className="h-4 w-4" aria-hidden="true" />
-          Subir documento
           <input type="file" accept="image/jpeg" className="hidden" onChange={handleChange} />
         </label>
         {/* Decisión del equipo: solo JPG (BUG-HU2-007) */}

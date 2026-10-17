@@ -34,7 +34,6 @@ const botonRespaldoClase =
 export function FormularioCertificaciones({ certificaciones, onAgregar, onErroresChange }: FormularioCertificacionesProps) {
   const [datos, setDatos] = useState<Certificacion>(VACIO);
   const fotoRef = useRef<HTMLInputElement>(null);
-  const documentoRef = useRef<HTMLInputElement>(null);
   // Archivo rechazado (no es JPG o supera 5 MB): no se adjunta y se explica junto al campo
   const [errorRespaldo, setErrorRespaldo] = useState<string>();
   useEffect(() => onErroresChange?.(errorRespaldo ? 1 : 0), [errorRespaldo, onErroresChange]);
@@ -174,17 +173,13 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
             ) : (
               <>
                 <CloudUpload className="h-6 w-6 text-[#A35139]" />
-                <p className="text-sm text-[#2C3B4D]">Adjunta una foto o un documento de tu certificación</p>
+                <p className="text-sm text-[#2C3B4D]">Adjunta una foto en JPG de tu certificación</p>
               </>
             )}
             <div className="flex flex-wrap justify-center gap-2">
               <button type="button" onClick={() => fotoRef.current?.click()} className={botonRespaldoClase}>
                 <Camera className="h-4 w-4" />
                 Subir foto
-              </button>
-              <button type="button" onClick={() => documentoRef.current?.click()} className={botonRespaldoClase}>
-                <FileText className="h-4 w-4" />
-                Subir documento
               </button>
             </div>
             {/* Decisión del equipo: el backend y el almacenamiento solo aceptan JPG (BUG-HU2-007) */}
@@ -197,14 +192,6 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, onErrore
             type="file"
             accept="image/jpeg"
             aria-label="Subir foto"
-            className="hidden"
-            onChange={elegirRespaldo}
-          />
-          <input
-            ref={documentoRef}
-            type="file"
-            accept="image/jpeg"
-            aria-label="Subir documento"
             className="hidden"
             onChange={elegirRespaldo}
           />

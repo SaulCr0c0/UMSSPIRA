@@ -55,7 +55,7 @@ describe('EditCertificationForm', () => {
 
   it('rechaza un respaldo que no es JPG o supera 5 MB y no lo adjunta (BUG-HU2-004 en edición)', () => {
     renderForm();
-    const input = screen.getByLabelText('Subir documento');
+    const input = screen.getByLabelText('Subir foto');
     const png = new File(['x'], 'certificado.png', { type: 'image/png' });
     const grande = new File(['x'], 'grande.jpg', { type: 'image/jpeg' });
     Object.defineProperty(grande, 'size', { value: 6 * 1024 * 1024 });
