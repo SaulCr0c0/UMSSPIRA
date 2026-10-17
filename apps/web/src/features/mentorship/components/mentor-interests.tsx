@@ -99,7 +99,7 @@ export function MentorInterests({ catalog, initialConfiguration, onSave, areasHr
       const AreaIcon = name.includes('backend') ? ServerIcon : name.includes('frontend') ? MonitorIcon : DatabaseIcon;
       return <section key={area.id} aria-labelledby={`area-${area.id}`} className={`interest-area${enabled ? '' : ' interest-area-locked'}`}>
         <div className="interest-area-header"><span className="interest-area-icon"><AreaIcon size={20} aria-hidden="true" /></span><div><div className="interest-area-heading"><h3 id={`area-${area.id}`}>{area.name}</h3><span>{enabled ? 'Área activa' : <><LockKeyholeIcon size={14} aria-hidden="true" /> Bloqueada</>}</span></div>
-        <p>{area.description}</p></div></div>
+        {area.description && <p>{area.description}</p>}</div></div>
         {enabled && area.topics.length === 0 && <p>Esta área todavía no tiene tópicos disponibles en el catálogo.</p>}
         {enabled ? <>
           <h4>En tu perfil · {selected.length} {selected.length === 1 ? 'tópico' : 'tópicos'}</h4>

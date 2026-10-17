@@ -41,7 +41,7 @@ function response(body: unknown, status = 200) {
 
 it('mapea el catálogo y la selección real y envía el Bearer token', async () => {
   const state = await getMentorInterests();
-  expect(state.catalog[0]).toEqual({ id: area.id, name: 'Backend', description: '', topics: [{ id: 'rest', name: 'REST' }, { id: 'node', name: 'Node.js' }] });
+  expect(state.catalog[0]).toEqual({ id: area.id, name: 'Backend', description: 'Servicios, APIs y lógica de servidor', topics: [{ id: 'rest', name: 'REST' }, { id: 'node', name: 'Node.js' }] });
   expect(state.configuration).toEqual({ areaIds: [area.id], topicIds: ['rest'] });
   expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/interests/mine'), expect.objectContaining({ cache: 'no-store', credentials: 'omit', headers: { Accept: 'application/json', Authorization: 'Bearer access-token' } }));
   // El texto de prueba simula el campo opcional del catálogo, sin completar datos en producción.

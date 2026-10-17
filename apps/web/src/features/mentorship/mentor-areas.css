@@ -74,7 +74,7 @@
 
 .mentor-area-description {
   color: var(--ink-70);
-  font-size: .6875rem;
+  font-size: .75rem;
   line-height: 1.25;
 }
 
@@ -84,7 +84,7 @@
   align-items: center;
   gap: .25rem;
   color: var(--ink-70);
-  font-size: .625rem;
+  font-size: .75rem;
   font-weight: 600;
 }
 
@@ -144,7 +144,7 @@
 .mentor-areas-page-banner p {
   margin-top: .375rem;
   color: var(--ink-70);
-  font-size: .6875rem;
+  font-size: .75rem;
   line-height: 1.4;
 }
 
@@ -221,6 +221,7 @@
 }
 
 .mentor-areas-page .page-eyebrow {
+  font-size: .75rem;
   background: #ffedd5;
   color: #9a3412;
 }
@@ -253,7 +254,7 @@
 
 .areas-participation-bar small {
   color: var(--ink-70);
-  font-size: .625rem;
+  font-size: .75rem;
 }
 
 .areas-participation-bar strong {
@@ -269,7 +270,7 @@
   background: #fff0e5;
   color: #9a3412;
   padding: .35rem .6rem;
-  font-size: .625rem;
+  font-size: .75rem;
 }
 
 .areas-banner-icon {
@@ -356,7 +357,7 @@
 }
 
 .areas-setup-progress > div:first-child > span {
-  font-size: .625rem;
+  font-size: .75rem;
   padding: .25rem .6rem;
   background: #fff0e5;
   color: #bc5b28;
@@ -413,7 +414,7 @@
   border-radius: 50%;
   background: #eceff1;
   flex-shrink: 0;
-  font-size: .7rem;
+  font-size: .75rem;
 }
 
 [aria-current="step"] > .areas-step-number {
@@ -424,7 +425,7 @@
 .areas-setup-progress small,
 .areas-setup-progress strong {
   display: block;
-  font-size: .625rem;
+  font-size: .75rem;
 }
 
 .areas-setup-progress strong {
@@ -450,7 +451,7 @@
 }
 
 .areas-footer-note {
-  font-size: .625rem;
+  font-size: .75rem;
   color: var(--ink-70);
   margin-top: .65rem;
   text-align: right;
@@ -560,7 +561,7 @@
 
   .mentor-areas-page .mentor-area-option-state {
     padding: .35rem .45rem;
-    font-size: .625rem;
+    font-size: .75rem;
   }
 
   .areas-change-list li {
