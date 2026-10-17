@@ -7,13 +7,11 @@ type SeccionAcordeonProps = {
   titulo: string;
   descripcion: string;
   cantidad: number;
-  // Errores sin corregir en el formulario de la sección (HU-02, AC 6)
-  errores?: number;
   children?: React.ReactNode;
 };
 
 // Cabecera de sección según la v3 del Figma: número o check, título en mayúsculas y estado
-export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, errores = 0, children }: SeccionAcordeonProps) {
+export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, children }: SeccionAcordeonProps) {
   const [abierta, setAbierta] = useState(false);
   const completa = cantidad > 0;
 
@@ -58,11 +56,6 @@ export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, errores
             <span className={`text-[13px] ${completa ? 'font-medium text-[#0F5132]' : 'text-blue-fantastic/60'}`}>
               {completa ? `(Completado · ${cantidad} ${cantidad === 1 ? 'registro' : 'registros'})` : '(Sin iniciar)'}
             </span>
-            {errores > 0 && (
-              <span className="rounded-full bg-truffle-trouble px-2 py-0.5 text-[11px] font-bold text-white">
-                {errores} {errores === 1 ? 'error' : 'errores'}
-              </span>
-            )}
           </span>
         </span>
 
@@ -73,10 +66,7 @@ export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, errores
         )}
       </button>
 
-      {/* Se oculta en vez de desmontarse para que los errores (y su contador) sigan al cerrar la sección */}
-      <div hidden={!abierta} className="border-t border-oatmeal/70 px-4 py-4 md:px-6 md:py-5">
-        {children}
-      </div>
+      {abierta && <div className="border-t border-oatmeal/70 px-4 py-4 md:px-6 md:py-5">{children}</div>}
     </section>
   );
 }

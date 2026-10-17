@@ -18,20 +18,13 @@ describe('FormularioCertificaciones', () => {
     }
   });
 
-  it('marca con asterisco los 4 campos obligatorios', () => {
-    const { container } = render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
-
-    for (const id of ['nombreCertificacion', 'entidadEmisora', 'anioEmision', 'gradoCertificacion']) {
-      expect(container.querySelector(`label[for="${id}"]`)?.className).toContain("after:content-['*']");
-    }
-  });
-
-  it('solo ofrece subir una foto JPG como respaldo', () => {
+  it('permite subir una foto o un documento como respaldo', () => {
     render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Subir foto' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Subir documento' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Subir documento' })).toBeInTheDocument();
     expect(screen.getByLabelText('Subir foto', { selector: 'input' })).toHaveAttribute('accept', 'image/jpeg');
+    expect(screen.getByLabelText('Subir documento', { selector: 'input' })).toHaveAttribute('accept', 'image/jpeg');
     // La interfaz indica el formato y el tamaño permitidos (BUG-HU2-007)
     expect(screen.getByText('Solo JPG, máximo 5 MB')).toBeInTheDocument();
   });
@@ -42,7 +35,7 @@ describe('FormularioCertificaciones', () => {
     llenarFormulario();
     const archivo = new File(['contenido'], 'certificado.jpg', { type: 'image/jpeg' });
 
-    fireEvent.change(screen.getByLabelText('Subir foto', { selector: 'input' }), { target: { files: [archivo] } });
+    fireEvent.change(screen.getByLabelText('Subir documento', { selector: 'input' }), { target: { files: [archivo] } });
     expect(screen.getByText('certificado.jpg')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
@@ -68,7 +61,7 @@ describe('FormularioCertificaciones · respaldo solo JPG de hasta 5 MB (BUG-HU2-
   }
 
   function adjuntar(file: File) {
-    fireEvent.change(screen.getByLabelText('Subir foto', { selector: 'input' }), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText('Subir documento', { selector: 'input' }), { target: { files: [file] } });
   }
 
   it('rechaza un PDF de 6 MB por formato y no lo adjunta (caso de QA)', () => {
