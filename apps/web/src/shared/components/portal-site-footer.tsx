@@ -45,8 +45,8 @@ export function PortalSiteFooter() {
   return (
     <footer className="mt-16 border-t border-slate-800 bg-[#0F172A] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-10">
-          <div className="col-span-2 md:col-span-4 lg:col-span-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 text-center md:grid-cols-4 md:text-left lg:grid-cols-12 lg:gap-x-10">
+          <div className="col-span-2 flex flex-col items-center md:col-span-4 md:items-start lg:col-span-4">
             <div className="[&_span]:!text-white">
               <Logo />
             </div>
@@ -111,19 +111,19 @@ export function PortalSiteFooter() {
               Contacto
             </h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <a href="mailto:contacto@umsspira.umss.edu.bo" className="break-all transition-colors hover:text-umss-orange">
                   contacto@umsspira.umss.edu.bo
                 </a>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-umss-orange" />
                 <a href="tel:+5914000000" className="transition-colors hover:text-umss-orange">
                   +591 4 000 0000
                 </a>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <span className="min-w-0">
                   Av. Ballivian s/n, Campus UMSS
