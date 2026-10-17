@@ -4,9 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  ArrowRight, Building2, Users, GraduationCap, Award, MessageSquare,
+  ArrowRight, Building2, Users, GraduationCap, Award, MessageSquare, Clock,
   Briefcase, Calendar, ChevronRight, ChevronDown, MapPin, Lock, Target, Eye,
-  BookOpen, Cpu, Code2, Database, Network, Globe, Clock, Quote, ShieldCheck,
+  BookOpen, Cpu, Code2, Database, Network, Globe, Quote, ShieldCheck,
   UserCheck, Search, Mic, Trophy, Lightbulb, Rocket, Terminal, Sparkles, Heart,
 } from 'lucide-react';
 
@@ -436,14 +436,6 @@ function HomeView() {
   );
 }
 
-/* ---------- Datos de ejemplo de eventos (reemplázalos por los reales) ---------- */
-
-const EVENTS = [
-  { day: '28', month: 'AGO', title: 'Taller: Desarrollo Web Moderno', place: 'Facultad de Ciencias y Tecnología', mode: 'Presencial', desc: 'Una jornada práctica para construir una aplicación web de principio a fin con herramientas actuales.' },
-  { day: '30', month: 'AGO', title: 'Encuentro de Titulados ISI', place: 'UMSS — Cochabamba', mode: 'Presencial', desc: 'Reencuentro entre promociones para compartir experiencias y crear nuevos contactos profesionales.' },
-  { day: '05', month: 'SEP', title: 'Hackatón ISI UMSS', place: 'Campus Universitario', mode: 'Presencial', desc: 'Equipos de estudiantes y titulados resuelven retos reales en un intenso fin de semana de código.' },
-];
-
 /* ---------- COMUNIDAD ---------- */
 
 function ComunidadView() {
@@ -825,33 +817,17 @@ function EventosView() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-10">
         <TabImage src="/images/institucional/eventos.jpg" alt="Eventos de la comunidad UMSS" Icon={Calendar} className="w-full h-60 rounded-2xl shadow-md" />
 
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <div className="flex flex-col items-start gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
           <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-slate-700 leading-relaxed">
-            Puedes ver todos los eventos libremente. <strong>Para inscribirte necesitas iniciar sesión.</strong>
+          <p className="flex-1 text-sm text-slate-700 leading-relaxed">
+            Consulta el catálogo actualizado de eventos publicados por la administración. Para inscribirte necesitas iniciar sesión.
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {EVENTS.map((e) => (
-            <article key={e.title} className="bg-[#F5F2EA] p-6 rounded-2xl border border-[#C9C1B1] shadow-sm flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#0F172A] text-white flex flex-col items-center justify-center font-bold shrink-0">
-                  <span className="text-lg leading-none">{e.day}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-amber-400">{e.month}</span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 leading-snug">{e.title}</h3>
-              </div>
-              <p className="text-sm text-slate-600 leading-relaxed flex-1">{e.desc}</p>
-              <div className="space-y-1 text-xs text-slate-500">
-                <p className="flex items-center gap-2"><MapPin className="w-4 h-4 text-amber-600" /> {e.place}</p>
-                <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-600" /> {e.mode}</p>
-              </div>
-              <Link href="/login" className="w-full text-center px-4 py-2.5 bg-[#FFB162] hover:bg-[#f39c4a] text-slate-900 font-bold rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
-                <Lock className="w-4 h-4" /> Inscribirme
-              </Link>
-            </article>
-          ))}
+          <Link
+            href="/portal/eventos"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#FFB162] px-5 py-3 text-sm font-bold text-slate-900 shadow-sm transition-colors hover:bg-[#f39c4a]"
+          >
+            Ver eventos publicados <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 

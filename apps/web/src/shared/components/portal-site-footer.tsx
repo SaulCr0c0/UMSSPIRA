@@ -8,7 +8,7 @@ import Logo from './logo'
 const PLATFORM_LINKS = [
   { href: '/companies', label: 'Empresas' },
   { href: '/job-postings', label: 'Ofertas' },
-  { href: '/events', label: 'Eventos' },
+  { href: '/portal/eventos', label: 'Eventos' },
   { href: '/portal/beneficios', label: 'Beneficios' },
 ]
 
