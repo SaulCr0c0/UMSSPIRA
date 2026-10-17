@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authStore } from "../store";
-import { clearAccessToken } from "@/shared/services/auth-session";
 import { clearSession } from "../services";
+import { hardRedirect } from "../services/navigation";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -20,7 +20,8 @@ export function LogoutButton() {
 
     clearAccessToken();
     authStore.reset();
-    router.push("/login");
+    // Con "Atrás" ya no se puede volver a ver la pantalla privada (CA-05.6)
+    hardRedirect("/login");
   }
 
   return (

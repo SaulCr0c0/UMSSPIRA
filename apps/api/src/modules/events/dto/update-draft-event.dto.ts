@@ -4,13 +4,23 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Matches,
   Min,
 } from 'class-validator';
 
 import type {
   UpdateDraftEventDto as UpdateDraftEventContract,
 } from '@umsspira/shared-types';
+import { MAX_EVENT_CAPACITY } from './create-event.dto';
+import {
+  EVENT_DATE_RANGE_MESSAGE,
+  EVENT_DATE_TIME_YEAR_PATTERN,
+  EVENT_LOCATION_MAX_LENGTH,
+  EVENT_TITLE_HAS_LETTER_PATTERN,
+  EVENT_TITLE_MAX_LENGTH,
+} from '../event-constraints';
 
 export class UpdateDraftEventDto implements UpdateDraftEventContract {
   @IsNotEmpty({
@@ -19,8 +29,11 @@ export class UpdateDraftEventDto implements UpdateDraftEventContract {
   @IsString({
     message: 'El título debe ser texto',
   })
-  @MaxLength(45, {
+  @MaxLength(EVENT_TITLE_MAX_LENGTH, {
     message: 'El título no puede superar los 45 caracteres',
+  })
+  @Matches(EVENT_TITLE_HAS_LETTER_PATTERN, {
+    message: 'El título debe contener al menos una letra',
   })
   title: string;
 
@@ -36,6 +49,9 @@ export class UpdateDraftEventDto implements UpdateDraftEventContract {
       message: 'La fecha de inicio debe ser una fecha válida',
     },
   )
+  @Matches(EVENT_DATE_TIME_YEAR_PATTERN, {
+    message: EVENT_DATE_RANGE_MESSAGE,
+  })
   startDate: string;
 
   @IsISO8601(
@@ -44,13 +60,19 @@ export class UpdateDraftEventDto implements UpdateDraftEventContract {
       message: 'La fecha de finalización debe ser una fecha válida',
     },
   )
+  @Matches(EVENT_DATE_TIME_YEAR_PATTERN, {
+    message: EVENT_DATE_RANGE_MESSAGE,
+  })
   endDate: string;
 
   @IsInt({
-    message: 'El cupo máximo debe ser un número entero',
+    message: 'El cupo máximo debe ser un número entero entre 1 y 10000',
   })
   @Min(1, {
-    message: 'El cupo máximo debe ser mayor a 0',
+    message: 'El cupo máximo debe ser un número entero entre 1 y 10000',
+  })
+  @Max(MAX_EVENT_CAPACITY, {
+    message: 'El cupo máximo debe ser un número entero entre 1 y 10000',
   })
   maxCapacity: number;
 
@@ -58,8 +80,13 @@ export class UpdateDraftEventDto implements UpdateDraftEventContract {
   @IsString({
     message: 'La ubicación debe ser texto',
   })
-  @MaxLength(100, {
+  @MaxLength(EVENT_LOCATION_MAX_LENGTH, {
     message: 'La ubicación no puede superar los 100 caracteres',
   })
   location?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  imageUrl?: string;
 }

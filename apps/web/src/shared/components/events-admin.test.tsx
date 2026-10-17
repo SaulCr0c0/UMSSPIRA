@@ -11,14 +11,22 @@ import {
   type EventItem,
 } from '@umsspira/shared-types';
 
+import AdminEventDetailPage from '@/app/(dashboard)/events/[id]/page';
+import { AuthenticatedUserProvider } from '@/modules/auth/frontend/components/authenticated-user-context';
 import { EventDraftEditor } from '@/shared/components/event-draft-editor';
 import {
   EventDraftsContent,
   EventManagementContent,
 } from '@/shared/components/events-ui';
+import {
+  formatEventDateTime,
+  formatEventSchedule,
+  getEventMonthKey,
+} from '@/shared/utils/event-date-time';
 
 const mockPush = jest.fn();
 const mockGetAdminEvents = jest.fn();
+const mockGetAdminEvent = jest.fn();
 const mockGetAdminDraft = jest.fn();
 const mockUpdateDraftEvent = jest.fn();
 const mockPublishDraftEvent = jest.fn();
@@ -31,6 +39,7 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/shared/services/events-service', () => ({
   getAdminEvents: (...args: unknown[]) => mockGetAdminEvents(...args),
+  getAdminEvent: (...args: unknown[]) => mockGetAdminEvent(...args),
   getAdminDraft: (...args: unknown[]) => mockGetAdminDraft(...args),
   updateDraftEvent: (...args: unknown[]) => mockUpdateDraftEvent(...args),
   publishDraftEvent: (...args: unknown[]) => mockPublishDraftEvent(...args),
@@ -62,6 +71,14 @@ const draftEvent: EventItem = {
   createdAt: '2026-09-25T12:00:00Z',
 };
 
+const cancelledEvent: EventItem = {
+  ...draftEvent,
+  id: 'cancelled-1',
+  title: 'Encuentro cancelado',
+  status: EVENT_STATUS.CANCELADO,
+  startDate: '2026-11-03T14:00:00',
+};
+
 describe('Gestión administrativa de eventos HU1', () => {
   beforeEach(() => {
     mockPush.mockReset();
@@ -69,6 +86,7 @@ describe('Gestión administrativa de eventos HU1', () => {
     mockGetAdminDraft.mockReset();
     mockUpdateDraftEvent.mockReset();
     mockPublishDraftEvent.mockReset();
+    mockGetAdminEvent.mockReset();
   });
 
   it('deriva las métricas y renderiza únicamente los eventos recibidos', async () => {
@@ -89,6 +107,68 @@ describe('Gestión administrativa de eventos HU1', () => {
     expect(mockGetAdminEvents).toHaveBeenCalledWith('user-1');
   });
 
+  it('muestra el nombre del creador y la fecha de creación sin exponer su UUID', async () => {
+    mockGetAdminEvents.mockResolvedValueOnce([
+      { ...publishedEvent, creatorName: 'Dirección de Sistemas' },
+    ]);
+
+    render(<EventManagementContent userId="user-1" />);
+
+    expect(
+      await screen.findByText((_, element) =>
+        element?.tagName === 'SMALL' &&
+        element.textContent?.includes('Creado por Dirección de Sistemas'),
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText((_, element) =>
+      element?.tagName === 'SMALL' && element.textContent?.includes('Creado el'),
+    )).toBeInTheDocument();
+    expect(screen.queryByText(/78869fe3-/)).not.toBeInTheDocument();
+  });
+
+  it('abre la vista de detalle al pulsar Ver en un evento publicado', async () => {
+    mockGetAdminEvents.mockResolvedValueOnce([publishedEvent]);
+
+    render(<EventManagementContent userId="user-1" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /ver/i }));
+
+    expect(mockPush).toHaveBeenCalledWith('/events/published-1');
+  });
+
+  it('no muestra un affordance de menú sin acciones autorizadas', async () => {
+    mockGetAdminEvents.mockResolvedValueOnce([publishedEvent]);
+
+    render(<EventManagementContent userId="user-1" />);
+
+    const viewButton = await screen.findByRole('button', { name: /ver/i });
+    expect(viewButton.parentElement?.querySelectorAll('svg')).toHaveLength(1);
+  });
+
+  it('filtra los eventos por estado y mes elegidos', async () => {
+    mockGetAdminEvents.mockResolvedValueOnce([
+      publishedEvent,
+      draftEvent,
+      cancelledEvent,
+    ]);
+
+    render(<EventManagementContent userId="user-1" />);
+    await screen.findByText('Encuentro cancelado');
+
+    fireEvent.change(screen.getByLabelText('Estado'), {
+      target: { value: EVENT_STATUS.BORRADOR },
+    });
+    fireEvent.change(screen.getByLabelText('Fecha'), {
+      target: { value: '2026-10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(screen.getByText('Taller Real de Ciberseguridad')).toBeInTheDocument();
+    expect(screen.queryByText('Feria de Empleo Real')).not.toBeInTheDocument();
+    expect(screen.queryByText('Encuentro cancelado')).not.toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 3 eventos')).toBeInTheDocument();
+  });
+
   it('muestra el bloqueo de identidad y no consulta datos', async () => {
     render(<EventManagementContent />);
 
@@ -105,6 +185,59 @@ describe('Gestión administrativa de eventos HU1', () => {
 
     expect(await screen.findByText('No hay eventos registrados.')).toBeInTheDocument();
     expect(screen.queryByText('Feria de Empleo Real')).not.toBeInTheDocument();
+  });
+
+  it('distingue filtros sin coincidencias de un listado realmente vacío', async () => {
+    mockGetAdminEvents.mockResolvedValueOnce([publishedEvent]);
+
+    render(<EventManagementContent userId="user-1" />);
+    await screen.findByText('Feria de Empleo Real');
+    fireEvent.change(screen.getByLabelText('Buscar'), {
+      target: { value: 'sin coincidencias' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(
+      screen.getByText('No se encontraron eventos que coincidan con los filtros.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No hay eventos registrados.')).not.toBeInTheDocument();
+  });
+
+  it('filtra por el mes local que se muestra al administrador', async () => {
+    const localMonthBoundaryEvent = {
+      ...publishedEvent,
+      startDate: new Date('2026-10-31T23:59:00').toISOString(),
+      endDate: new Date('2026-11-01T00:01:00').toISOString(),
+    };
+    const visibleMonth = getEventMonthKey(localMonthBoundaryEvent.startDate);
+    mockGetAdminEvents.mockResolvedValueOnce([localMonthBoundaryEvent]);
+
+    render(<EventManagementContent userId="user-1" />);
+    await screen.findByText('Feria de Empleo Real');
+    fireEvent.change(screen.getByLabelText('Fecha'), {
+      target: { value: visibleMonth },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(screen.getByText('Feria de Empleo Real')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 1 eventos')).toBeInTheDocument();
+  });
+
+  it('muestra inicio y fin en Gestión para un evento de varios días', async () => {
+    const multidayEvent = {
+      ...publishedEvent,
+      startDate: new Date('2026-10-31T23:59:00').toISOString(),
+      endDate: new Date('2026-11-01T00:01:00').toISOString(),
+    };
+    mockGetAdminEvents.mockResolvedValueOnce([multidayEvent]);
+
+    render(<EventManagementContent userId="user-1" />);
+
+    expect(
+      await screen.findByText(
+        formatEventSchedule(multidayEvent.startDate, multidayEvent.endDate),
+      ),
+    ).toBeInTheDocument();
   });
 
   it('muestra únicamente borradores y enlaza Continuar edición al mismo id', async () => {
@@ -146,7 +279,33 @@ describe('Gestión administrativa de eventos HU1', () => {
 
     expect(await screen.findByText('¡Evento publicado correctamente!')).toBeInTheDocument();
     expect(mockPublishDraftEvent).toHaveBeenCalledWith('draft-1', 'user-1');
+    expect(mockPublishDraftEvent).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('link', { name: 'Ver evento' })).toHaveAttribute(
+      'href',
+      '/events/draft-1',
+    );
     expect(screen.getByText('0 borradores')).toBeInTheDocument();
+  });
+
+  it('muestra el rango multiday completo en Borradores y su confirmación', async () => {
+    const multidayDraft = {
+      ...draftEvent,
+      startDate: new Date('2026-10-31T23:59:00').toISOString(),
+      endDate: new Date('2026-11-01T00:01:00').toISOString(),
+    };
+    const expectedSchedule = formatEventSchedule(
+      multidayDraft.startDate,
+      multidayDraft.endDate,
+    );
+    mockGetAdminEvents.mockResolvedValueOnce([multidayDraft]);
+
+    render(<EventDraftsContent userId="user-1" />);
+
+    expect(await screen.findByText(expectedSchedule)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+    expect(
+      within(screen.getByRole('dialog')).getByText(expectedSchedule),
+    ).toBeInTheDocument();
   });
 
   it('muestra el error real de la consulta administrativa', async () => {
@@ -157,6 +316,30 @@ describe('Gestión administrativa de eventos HU1', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Consulta administrativa fallida.',
     );
+  });
+});
+
+describe('Detalle administrativo de evento HU1', () => {
+  it('muestra fecha y hora de inicio y fin de un evento multiday', async () => {
+    const multidayEvent = {
+      ...publishedEvent,
+      startDate: new Date('2026-10-31T23:59:00').toISOString(),
+      endDate: new Date('2026-11-01T00:01:00').toISOString(),
+    };
+    mockGetAdminEvent.mockResolvedValueOnce(multidayEvent);
+
+    render(
+      <AuthenticatedUserProvider userId="admin-1" role="administrador">
+        <AdminEventDetailPage />
+      </AuthenticatedUserProvider>,
+    );
+
+    expect(
+      await screen.findByText(formatEventDateTime(multidayEvent.startDate)),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(formatEventDateTime(multidayEvent.endDate)),
+    ).toBeInTheDocument();
   });
 });
 
@@ -198,6 +381,21 @@ describe('Edición de borrador HU1', () => {
       'user-1',
     );
     expect(mockUpdateDraftEvent.mock.calls[0][1]).not.toHaveProperty('status');
+  });
+
+  it('valida inmediatamente al editar y no actualiza un borrador inválido', async () => {
+    mockGetAdminDraft.mockResolvedValueOnce(draftEvent);
+
+    render(<EventDraftEditor eventId="draft-1" userId="user-1" />);
+
+    const titleInput = await screen.findByDisplayValue('Taller Real de Ciberseguridad');
+    fireEvent.change(titleInput, { target: { value: '' } });
+
+    expect(screen.getByText('Este campo es obligatorio.')).toBeInTheDocument();
+    expect(screen.getByText('1 campo por revisar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Guardar borrador' })[0]);
+    expect(mockUpdateDraftEvent).not.toHaveBeenCalled();
   });
 
   it('muestra el error de carga y no presenta un formulario vacío', async () => {

@@ -6,11 +6,24 @@ import { LoginForm } from "./login-form";
 
 const mockPush = jest.fn();
 let mockSearchParams = new URLSearchParams();
+const mockSaveSession = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams,
 }));
+
+// Solo registra con qué valor se guarda la sesión; la lógica real se sigue ejecutando
+jest.mock("../services/session", () => {
+  const actual = jest.requireActual<typeof import("../services/session")>("../services/session");
+  return {
+    ...actual,
+    saveSession: (token: string, role: string, remember: boolean) => {
+      mockSaveSession(token, role, remember);
+      actual.saveSession(token, role, remember);
+    },
+  };
+});
 
 // Las etiquetas llevan un asterisco de campo obligatorio, por eso se busca por el inicio del texto.
 // "^contraseña" no coincide con el botón "Mostrar contraseña".
@@ -24,6 +37,7 @@ describe("LoginForm", () => {
   beforeEach(() => {
     mockPush.mockClear();
     mockSearchParams = new URLSearchParams();
+    mockSaveSession.mockClear();
     authStore.reset();
     // Emula el endpoint real POST /api/auth/login (USE_MOCK = false).
     global.fetch = jest.fn(async (_url: unknown, options?: { body?: unknown }) => {
@@ -74,12 +88,50 @@ describe("LoginForm", () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/applications"));
   });
 
-  it("redirige al titulado a su área personal (CA-05.3)", async () => {
+  it("redirige al titulado al portal (decisión de coordinación; CA-05.3 pendiente del PO)", async () => {
     render(<LoginForm />);
 
     fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/me"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/portal"));
+  });
+
+  it("muestra la casilla de recordar sesión desmarcada por defecto (BUG4)", () => {
+    render(<LoginForm />);
+
+    const checkbox = screen.getByLabelText(/recordar mi sesión en este equipo/i) as HTMLInputElement;
+
+    expect(checkbox.type).toBe("checkbox");
+    expect(checkbox.checked).toBe(false);
+  });
+
+  it("permite marcar y desmarcar la casilla (BUG4)", () => {
+    render(<LoginForm />);
+    const checkbox = screen.getByLabelText(/recordar mi sesión en este equipo/i) as HTMLInputElement;
+
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(true);
+
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(false);
+  });
+
+  it("guarda la sesión como persistente solo si se marca la casilla (BUG1)", async () => {
+    const { unmount } = render(<LoginForm />);
+    fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
+    await waitFor(() =>
+      expect(mockSaveSession).toHaveBeenCalledWith("token-titulado", "titulado", false),
+    );
+    unmount();
+
+    mockSaveSession.mockClear();
+    authStore.reset();
+    render(<LoginForm />);
+    fireEvent.click(screen.getByLabelText(/recordar mi sesión en este equipo/i));
+    fillAndSubmit("titulado@umss.edu.bo", "titulado1234");
+    await waitFor(() =>
+      expect(mockSaveSession).toHaveBeenCalledWith("token-titulado", "titulado", true),
+    );
   });
 
   it("muestra aviso de sesión vencida cuando la URL incluye expired=1", () => {
