@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
 
-import PublicNavbar from '@/shared/components/publicnavbar';
 import InstitucionalViews from './institucional-views';
 
 const T = (tab: string) => `/portal/institucional?tab=${tab}`;
@@ -10,10 +9,7 @@ export default function PublicLandingPage() {
   return (
     <div className="bg-[#FDFBF7] text-slate-900 font-sans antialiased selection:bg-amber-500 selection:text-white">
 
-      {/* Barra superior: cada botón abre su pestaña */}
-      <Suspense fallback={<div className="h-20 bg-[#0F172A]" />}>
-        <PublicNavbar />
-      </Suspense>
+      {/* La barra de navegación oficial la monta el layout del portal (PortalSiteHeader) */}
 
       {/* Contenido según la pestaña elegida */}
       <Suspense fallback={<div className="min-h-[60vh]" />}>
