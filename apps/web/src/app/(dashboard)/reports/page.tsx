@@ -312,6 +312,7 @@ export default function ReportsPage() {
             <div className="flex items-center self-end sm:self-auto">
               <GraduatesReportExport
                 status={pdfExportStatus}
+                totalRecords={filteredGraduates.length}
                 onBackToListStart={() => setCurrentPage(1)}
                 renderTrigger={({ exportPdf, isGenerating }) => (
                   <div className="w-48">

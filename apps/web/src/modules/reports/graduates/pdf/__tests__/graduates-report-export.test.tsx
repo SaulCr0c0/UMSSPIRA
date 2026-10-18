@@ -140,3 +140,32 @@ describe('GraduatesReportExport', () => {
     expect(await screen.findByRole('dialog')).toHaveTextContent(pdf.fileName);
   });
 });
+
+describe('GraduatesReportExport con la lista filtrada en cero', () => {
+  beforeEach(() => fetchMock.mockReset());
+
+  it('avisa que no hay titulados observados sin pedir el PDF a la API', async () => {
+    render(<GraduatesReportExport status="observed" totalRecords={0} />);
+
+    openMenuAndExport();
+
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent('No hay titulados observados para exportar');
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /exportar/i })).not.toBeDisabled();
+  });
+
+  it('al cerrar el aviso se puede volver a exportar cuando la lista tiene titulados', async () => {
+    fetchMock.mockResolvedValue(pdf);
+    const { rerender } = render(<GraduatesReportExport status="verified" totalRecords={0} />);
+
+    openMenuAndExport();
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent('No hay titulados verificados para exportar');
+    fireEvent.click(screen.getByRole('button', { name: /entendido/i }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+
+    rerender(<GraduatesReportExport status="verified" totalRecords={72} />);
+    openMenuAndExport();
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('verified', undefined, expect.any(AbortSignal)));
+  });
+});
