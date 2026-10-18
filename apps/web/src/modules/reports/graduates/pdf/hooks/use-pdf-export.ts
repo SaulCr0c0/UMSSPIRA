@@ -45,6 +45,16 @@ export function usePdfExport() {
     }
   }, []);
 
+  // La lista filtrada no tiene titulados: se avisa sin pedir el PDF a la API
+  const showEmpty = useCallback((status: GraduateStatus) => {
+    pendingRef.current?.abort();
+    pendingRef.current = null;
+    setReport(null);
+    setIsPreviewLoaded(false);
+    setAlertMessage(REPORT_MESSAGES.emptyReport(status));
+    setState('empty');
+  }, []);
+
   // Cancela el pedido en curso sin mostrar alerta: cambió el filtro de la lista o se dejó la pantalla
   const cancelExport = useCallback(() => {
     if (!pendingRef.current) return;
@@ -83,6 +93,7 @@ export function usePdfExport() {
     isGenerating,
     alertMessage,
     startExport,
+    showEmpty,
     cancelExport,
     markPreviewLoaded,
     closeAlert,

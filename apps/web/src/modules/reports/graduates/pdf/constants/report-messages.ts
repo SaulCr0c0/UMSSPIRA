@@ -26,6 +26,8 @@ export const REPORT_MESSAGES = {
   understood: 'Entendido',
   alertTitle: 'Aviso de exportación',
   generationError: 'No se pudo generar el reporte PDF. Intente nuevamente.',
+  // Mismo texto que responde la API cuando el estado no tiene titulados
+  emptyReport: (status: GraduateStatus) => `No hay titulados ${STATUS_LABEL[status]} para exportar`,
   previewLoading: 'Cargando vista previa…',
   previewUnavailable: 'No se pudo mostrar la vista previa. Puede descargar o imprimir el reporte.',
 };

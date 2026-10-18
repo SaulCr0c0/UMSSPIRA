@@ -27,6 +27,9 @@ export interface GraduatesReportExportProps {
   // Temporal hasta que exista el login: carrera del administrador (Sistemas o Informática).
   // Con login, la API la toma del token y esta propiedad deja de usarse.
   careerId?: string;
+  // Cantidad de titulados que muestra la lista con los filtros activos (estado y búsqueda).
+  // Si es 0, se avisa «No hay titulados … para exportar» sin pedir el PDF.
+  totalRecords?: number;
   // Al cerrar la vista previa la lista vuelve a su inicio (página 1); lo resuelve la pantalla
   onBackToListStart?: () => void;
   // Reemplaza el botón Exportar propio por otro (por ejemplo, el menú de exportación de la HU5,
@@ -39,6 +42,7 @@ export interface GraduatesReportExportProps {
 export function GraduatesReportExport({
   status,
   careerId,
+  totalRecords,
   onBackToListStart,
   renderTrigger,
 }: GraduatesReportExportProps) {
@@ -48,6 +52,7 @@ export function GraduatesReportExport({
     isGenerating,
     alertMessage,
     startExport,
+    showEmpty,
     cancelExport,
     markPreviewLoaded,
     closeAlert,
@@ -60,9 +65,13 @@ export function GraduatesReportExport({
   const handleExportPdf = useCallback(
     (selectedStatus: GraduateStatus) => {
       if (isGenerating) return;
+      if (totalRecords === 0) {
+        showEmpty(selectedStatus);
+        return;
+      }
       startExport(selectedStatus, careerId);
     },
-    [isGenerating, startExport, careerId],
+    [isGenerating, totalRecords, showEmpty, startExport, careerId],
   );
 
   const handleClosePreview = useCallback(() => {
