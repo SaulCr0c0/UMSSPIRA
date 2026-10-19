@@ -1,3 +1,5 @@
+import { authenticatedFetch, clearAccessToken, getAccessToken, SessionError } from './auth-session';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -120,19 +122,11 @@ export class ApiError extends Error {
 }
 
 export function getToken(): string | null {
-  try {
-    return typeof window === 'undefined' ? null : localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+  return getAccessToken();
 }
 
 export function clearToken(): void {
-  try {
-    localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* sin acceso a storage */
-  }
+  clearAccessToken();
 }
 
 /** true si hay token y no expiro (solo UX; la seguridad real la aplica la API con 401). */
@@ -149,7 +143,8 @@ export function hasValidSession(): boolean {
 
 /** Convierte el cuerpo de error de Nest (string | string[]) en un texto legible. */
 function errorMessage(body: unknown, fallback: string): string {
-  const msg = (body as { message?: string | string[] } | null)?.message;
+  const payload = body as { message?: string | string[]; error?: { message?: string } } | null;
+  const msg = payload?.error?.message ?? payload?.message;
   return Array.isArray(msg) ? msg.join(', ') : msg || fallback;
 }
 
@@ -159,7 +154,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const token = stored && (!DEMO_MODE || hasValidSession()) ? stored : null;
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await authenticatedFetch(`${API_URL}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
@@ -167,7 +162,8 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
         ...init.headers,
       },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof SessionError) throw new ApiError(error.status, error.message);
     throw new ApiError(0, 'No fue posible conectar con el servidor');
   }
   const body = await res.json().catch(() => null);

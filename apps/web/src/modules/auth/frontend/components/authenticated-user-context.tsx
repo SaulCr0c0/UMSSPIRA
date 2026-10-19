@@ -4,13 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { UserRole } from '../services/auth.service';
-import { getSessionToken } from '../services/session';
-import { getAccessToken } from '@/shared/services/auth-session';
-import { getToken } from '@/shared/services/api-client';
+import { authenticatedFetch, SessionError } from '@/shared/services/auth-session';
 
 const AuthenticatedUserContext = createContext<string | null>(null);
 const AuthenticatedUserRoleContext = createContext<UserRole | null>(null);
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 type SessionState =
   | { status: 'loading' }
@@ -60,19 +57,8 @@ export function AuthenticatedUserSessionProvider({
 
     let isActive = true;
     const controller = new AbortController();
-    const token = getSessionToken() ?? getAccessToken() ?? getToken();
-
-    if (!token) {
-      setSession({ status: 'unauthenticated' });
-      return () => {
-        isActive = false;
-        controller.abort();
-      };
-    }
-
     setSession({ status: 'loading' });
-    void fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+    void authenticatedFetch('/api/v1/auth/me', {
       cache: 'no-store',
       signal: controller.signal,
     })
@@ -106,9 +92,10 @@ export function AuthenticatedUserSessionProvider({
           role: 'administrador',
         });
       })
-      .catch(() => {
+      .catch((error) => {
         if (isActive && !controller.signal.aborted) {
-          setSession({ status: 'error' });
+          setSession(error instanceof SessionError && error.status === 401
+            ? { status: 'unauthenticated' } : { status: 'error' });
         }
       });
 

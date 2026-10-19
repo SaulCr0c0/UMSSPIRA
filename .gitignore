@@ -1,5 +1,7 @@
 node_modules/
 apps/api/.local/
+apps/api-antigua/.local/
+apps/api/src/generated/
 dist/
 .next/
 .next-dev/
@@ -14,6 +16,9 @@ AGENTS.md
 .tmp-chrome-*/
 .vercel
 .env*
+!apps/api/.env.example
+!apps/api-antigua/.env.example
+!apps/api-antigua/.env.localstack.example
 .context/
 .vscode/
 supabase/.temp/
