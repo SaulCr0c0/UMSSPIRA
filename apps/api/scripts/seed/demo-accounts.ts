@@ -6,6 +6,8 @@ export interface DemoAccount {
   password: string;
   name: string;
   role: UserRole;
+  profileId: string;
+  careerId?: string;
 }
 
 export const DEMO_CAREER_ID = '10000000-0000-4000-8000-000000000001';
@@ -20,6 +22,8 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     password: 'titulado1234',
     name: 'Titulado de demostración',
     role: 'titulado',
+    profileId: DEMO_GRADUATE_ID,
+    careerId: DEMO_CAREER_ID,
   },
   {
     id: '20000000-0000-4000-8000-000000000002',
@@ -27,6 +31,8 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     password: 'admin1234',
     name: 'Administrador de demostración',
     role: 'administrador',
+    profileId: DEMO_ADMIN_ASSIGNMENT_ID,
+    careerId: DEMO_CAREER_ID,
   },
   {
     id: '20000000-0000-4000-8000-000000000003',
@@ -34,5 +40,6 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     password: 'empresa1234',
     name: 'Empresa de demostración',
     role: 'empresa',
+    profileId: DEMO_COMPANY_ID,
   },
 ];

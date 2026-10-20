@@ -19,6 +19,7 @@ export class PrismaEventsRepository implements EventsRepository {
     const rows = await this.prisma.evento.findMany({
       where: {
         estado: 'PUBLICADO',
+        archivado: false,
         fecha_fin: { gt: new Date() },
         cupo_maximo: { gte: 1, lte: 10000 },
       },
@@ -30,7 +31,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   async published(id: string) {
     const row = await this.prisma.evento.findFirst({
-      where: { id, estado: 'PUBLICADO', cupo_maximo: { gte: 1, lte: 10000 } },
+      where: { id, estado: 'PUBLICADO', archivado: false, cupo_maximo: { gte: 1, lte: 10000 } },
       include: eventInclude,
     });
     if (!row) {
@@ -85,7 +86,7 @@ export class PrismaEventsRepository implements EventsRepository {
         assertDraft(toEvent(current));
         await this.checkCover(tx, ownerId, input.coverId, id);
         const row = await tx.evento.update({
-          where: { id, id_usuario: ownerId, estado: 'BORRADOR' },
+          where: { id, id_usuario: ownerId, estado: 'BORRADOR', archivado: false },
           data: this.eventData(input),
           include: eventInclude,
         });
@@ -120,7 +121,7 @@ export class PrismaEventsRepository implements EventsRepository {
         }
         return toEvent(
           await tx.evento.update({
-            where: { id, id_usuario: ownerId, estado: 'BORRADOR' },
+            where: { id, id_usuario: ownerId, estado: 'BORRADOR', archivado: false },
             data: { estado: 'PUBLICADO' },
             include: eventInclude,
           }),
@@ -176,7 +177,7 @@ export class PrismaEventsRepository implements EventsRepository {
       where: {
         id,
         OR: [
-          { evento: { is: { estado: 'PUBLICADO' } } },
+          { evento: { is: { estado: 'PUBLICADO', archivado: false } } },
           ...(actor?.permissions.includes('eventos:manage') ? [{ id_usuario: actor.id }] : []),
         ],
       },
@@ -211,7 +212,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   private async lockOwned(tx: Prisma.TransactionClient, ownerId: string, id: string) {
     await tx.$queryRaw`SELECT id FROM evento WHERE id = ${id}::uuid FOR UPDATE`;
-    const row = await tx.evento.findFirst({ where: { id, id_usuario: ownerId } });
+    const row = await tx.evento.findFirst({ where: { id, id_usuario: ownerId, archivado: false } });
     if (!row) {
       return this.missingEvent();
     }
