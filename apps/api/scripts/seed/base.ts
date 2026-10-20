@@ -1,13 +1,14 @@
 import type { Prisma, PrismaClient } from '../../src/generated/prisma/client';
 import type { PasswordHasher } from '../../src/modules/auth/application/ports/password-hasher.port';
 import { Argon2PasswordHasher } from '../../src/modules/auth/infrastructure/security/argon2-password.hasher';
-import { seedAccessCatalog } from './access-catalog';
-import { DEMO_ACCOUNTS, DEMO_CAREER_ID, type DemoAccount } from './demo-accounts';
-
-// Los UUID compartidos se conservan para que las épicas referencien los mismos registros.
-export const carreras: Array<Prisma.CarreraCreateManyInput & { id: string }> = [
-  { id: DEMO_CAREER_ID, nombre: 'Carrera de demostración' },
-];
+import { seedCatalogs } from './catalogs';
+import {
+  DEMO_ACCOUNTS,
+  DEMO_CAREER_ID,
+  DEMO_COMPANY_ID,
+  DEMO_GRADUATE_ID,
+  type DemoAccount,
+} from './demo-accounts';
 
 function profileFor(account: DemoAccount): Partial<Prisma.UsuarioCreateInput> {
   if (account.role === 'titulado') {
@@ -16,6 +17,17 @@ function profileFor(account: DemoAccount): Partial<Prisma.UsuarioCreateInput> {
         create: {
           id: account.profileId,
           nombre: account.name,
+          ...(account.profileId === DEMO_GRADUATE_ID
+            ? {
+                apellido: 'UMSSPIRA',
+                ci: '9000001',
+                cod_sis: '202000001',
+                anio_ingreso: 2020,
+                anio_egreso: 2025,
+                grado: 'Licenciatura',
+                expedido_en: 'CB' as const,
+              }
+            : {}),
           carrera: { connect: { id: account.careerId ?? DEMO_CAREER_ID } },
         },
       },
@@ -28,6 +40,12 @@ function profileFor(account: DemoAccount): Partial<Prisma.UsuarioCreateInput> {
           id: account.profileId,
           razon_social: account.name,
           correo: account.email,
+          ...(account.profileId === DEMO_COMPANY_ID ? { nit: '900000001' } : {}),
+          descripcion: 'Empresa ficticia para probar el portal de empleadores.',
+          descripcion_larga: 'Ejemplo de empresa de desarrollo de software y análisis de datos.',
+          eslogan: 'Aprender construyendo',
+          tamano_empresa: '11-50',
+          fecha_registro: new Date(),
         },
       },
     };
@@ -47,7 +65,7 @@ export async function seedBase(
   prisma: PrismaClient,
   passwords: Pick<PasswordHasher, 'hash'> = new Argon2PasswordHasher(),
 ): Promise<void> {
-  await seedAccessCatalog(prisma);
+  await seedCatalogs(prisma);
 
   const roleCodes = [...new Set(DEMO_ACCOUNTS.map((account) => account.role))];
   const roles = await prisma.rolAcceso.findMany({
@@ -57,8 +75,6 @@ export async function seedBase(
   if (roles.length !== roleCodes.length) {
     throw new Error('Hay roles de demostración deshabilitados');
   }
-
-  await prisma.carrera.createMany({ data: carreras, skipDuplicates: true });
 
   for (const account of DEMO_ACCOUNTS) {
     const existing = await prisma.usuario.findUnique({

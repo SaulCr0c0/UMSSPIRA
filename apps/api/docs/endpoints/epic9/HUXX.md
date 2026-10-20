@@ -182,6 +182,6 @@ El UUID representa una solicitud documental, no un usuario ni un titulado. El li
 - Sin resultados, el listado devuelve 200 vacío; vista previa y archivos devuelven 404 REPORT_EMPTY.
 - Una página usa una instantánea consistente para filas y total. La vista previa y una descarga posterior son peticiones independientes y pueden reflejar cambios nuevos.
 - El máximo de exportación es 10000 registros. El archivo se genera en memoria y no queda guardado como un reporte histórico.
-- La seed crea cuentas y catálogo de demostración; no fabrica solicitudes aprobadas para mostrar indicadores.
+- La seed de demostración incluye cuatro solicitudes ficticias con distintos estados y un mentor activo para probar indicadores, listados y exportaciones.
 - Se estandarizaron las rutas antiguas metrics/indicators/dashboard en metrics. No se agregan rutas duplicadas con segmentos de rol.
 - El frontend conserva sus URLs y adaptadores anteriores; su integración con estas rutas y el sobre data queda pendiente.

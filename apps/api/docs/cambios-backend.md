@@ -239,7 +239,7 @@ Las cuentas de demostración son:
 | admin@umss.edu.bo    | admin1234    | administrador |
 | empresa@umss.edu.bo  | empresa1234  | empresa       |
 
-Repetir la seed conserva las cuentas y los datos existentes. La seed normal `db:seed` prepara el catálogo de acceso sin crear cuentas de demostración. La producción simulada utiliza `APP_ENV=production` y no recibe esa población de datos falsos.
+Repetir la seed conserva las cuentas y los datos existentes. La seed normal `db:seed` prepara catálogos básicos y permisos sin crear cuentas de demostración. La producción simulada utiliza `APP_ENV=production` y no recibe esa población de datos falsos.
 
 ## Archivos, correo y Redis
 

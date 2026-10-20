@@ -11,6 +11,7 @@ Esta dirección de dependencias permite probar una regla sin arrancar HTTP ni di
 `src/shared` contiene contratos y mecanismos que realmente comparten varios módulos. Un estado o una regla específica de mentorías pertenece a mentorías, aunque otros equipos la consuman mediante un contrato público.
 
 - [Fronteras entre módulos](src/modules/README.md)
+- [Datos de demostración por épica](scripts/seed/README.md)
 - [Contexto y seguridad compartidos](src/shared/README.md)
 - [Autenticación y sesiones](src/modules/auth/README.md)
 - [Identidad y permisos](src/modules/user/README.md)

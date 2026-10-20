@@ -17,9 +17,9 @@ AGENTS.md
 .tmp-chrome-*/
 .vercel
 .env*
+!.env.example
 !apps/api/.env.example
 !apps/api-antigua/.env.example
 !apps/api-antigua/.env.localstack.example
 .context/
 .vscode/
-supabase/.temp/

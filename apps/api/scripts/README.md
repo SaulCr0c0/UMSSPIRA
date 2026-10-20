@@ -11,7 +11,7 @@ Los scripts usan Prisma y la conexión configurada en `apps/api/.env`; Supabase 
 3. Generar el cliente con `pnpm --filter api prisma:generate`.
 4. Para datos falsos, definir `APP_ENV=epic`, `dev` o `test` y ejecutar `pnpm --filter api db:seed:demo`. Este único comando incluye el catálogo y todas las épicas.
 
-Cada equipo añade sus datos en `seed/epic-N.ts`. Las carreras y cuentas se preparan en `seed/base.ts`; las cuentas se declaran en `seed/demo-accounts.ts`. En [seed/README.md](seed/README.md) están el ejemplo y el orden de las relaciones. Si solo se necesita el catálogo, ejecutar `pnpm --filter api db:seed`.
+Cada equipo añade sus datos en `seed/epic-N.ts`. Los catálogos compartidos se declaran en `seed/catalogs.ts` y las cuentas en `seed/demo-accounts.ts`. En [seed/README.md](seed/README.md) están la cobertura, el ejemplo y el orden de las relaciones. Si solo se necesitan catálogos sin datos de demostración, ejecutar `pnpm --filter api db:seed`.
 
 El seed de catálogo crea roles, permisos y asignaciones que falten. Mantiene el estado habilitado/deshabilitado, pero vuelve a añadir las asignaciones iniciales ausentes; es preparación explícita, no sincronización automática de políticas.
 
@@ -23,7 +23,7 @@ El seed de demostración incluye el catálogo y crea estas cuentas:
 | admin@umss.edu.bo    | admin1234                  | administrador |
 | empresa@umss.edu.bo  | empresa1234                | empresa       |
 
-Las cuentas se guardan con Argon2id y estado ACTIVO. Se crean relaciones mínimas de titulado, empresa y administrador de una carrera ficticia para que `me.scopes` muestre identificadores utilizables. Se conservan las cinco áreas de demostración en la épica 6. Los demás arreglos quedan vacíos para que los equipos añadan sus datos.
+Las cuentas se guardan con Argon2id y estado ACTIVO, con perfiles de titulado, empresa y administrador de carrera para que `me.scopes` muestre identificadores utilizables. La demostración incluye datos relacionados de registro documental, perfil profesional, NLP, empresas, vacantes, mentorías, eventos y reportes. Los equipos pueden ampliar esos arreglos sin cambiar el comando de carga.
 
 Los UUID del juego de demostración son constantes válidas para reproducir las mismas referencias en cada base. En las operaciones normales, los nuevos identificadores se generan con `randomUUID()` o con los defaults UUID de PostgreSQL.
 

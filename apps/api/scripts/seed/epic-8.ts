@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from '../../src/generated/prisma/client';
 
-// PWA y dispositivos: añadir datos con UUID fijos y referencias a registros ya cargados.
+// Las suscripciones push y sus claves las genera el navegador al dar consentimiento.
+// La PWA usa las cuentas, permisos y catálogos comunes; no necesita dispositivos ficticios.
 export const dispositivos: Array<Prisma.DispositivoCreateManyInput & { id: string }> = [];
 
 export async function seedEpic8(prisma: PrismaClient): Promise<void> {
