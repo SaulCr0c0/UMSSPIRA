@@ -118,7 +118,7 @@ La infraestructura vive repartida así:
 
 ### API en Render
 
-`render.yaml` describe el servicio `umsspira-api`: raíz del monorepo, rama `dev`, compilación exclusiva del backend y health check en `/health`. Los comandos y variables están en [la guía de despliegue](apps/api/docs/despliegue-render.md).
+`render.yaml` describe el servicio `umsspira-api`: raíz del monorepo, rama `dev`, compilación exclusiva del backend y health check en `/health`.
 
 Configurar `DATABASE_URL`, `DIRECT_URL`, `AUTH_JWT_SECRET` y `CORS_ORIGINS`. Para enviar correos reales también se necesitan `SMTP_URL` y `MAIL_FROM`. Dejar `PORT` a cargo de Render.
 

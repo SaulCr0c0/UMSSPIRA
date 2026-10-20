@@ -1,4 +1,4 @@
-# Servicio independiente del backend. Guía: apps/api/docs/despliegue-render.md.
+# Servicio independiente del backend.
 # sync: false solicita el valor en Render; las credenciales no se guardan aquí.
 
 services:

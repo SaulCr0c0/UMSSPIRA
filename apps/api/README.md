@@ -12,7 +12,6 @@ Esta dirección de dependencias permite probar una regla sin arrancar HTTP ni di
 
 - [Fronteras entre módulos](src/modules/README.md)
 - [Datos de demostración por épica](scripts/seed/README.md)
-- [Desplegar la API en Render y conectarla a Vercel](docs/despliegue-render.md)
 - [Contexto y seguridad compartidos](src/shared/README.md)
 - [Autenticación y sesiones](src/modules/auth/README.md)
 - [Identidad y permisos](src/modules/user/README.md)
