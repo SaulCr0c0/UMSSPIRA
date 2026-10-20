@@ -8,6 +8,10 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { JobPostingsModule } from './modules/job-postings/job-postings.module';
 import { RegistrationsModule } from './modules/registrations/registrations.module';
+import { ProfileModule } from './modules/profile/profile.module';
+import { EventsModule } from './modules/events/events.module';
+import { MentorshipModule } from './modules/mentorship/mentorship.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -21,6 +25,10 @@ import { RegistrationsModule } from './modules/registrations/registrations.modul
     CompaniesModule,
     JobPostingsModule,
     RegistrationsModule,
+    ProfileModule,
+    EventsModule,
+    MentorshipModule,
+    ReportsModule,
   ],
   controllers: [HealthController],
 })

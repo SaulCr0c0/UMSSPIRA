@@ -17,6 +17,8 @@ Esta dirección de dependencias permite probar una regla sin arrancar HTTP ni di
 - [Esquema y migraciones](prisma/README.md)
 - [Contratos HTTP de autenticación](docs/endpoints/epic01-grupoXX-huXXX.md)
 - [Registro y backoffice documental, épica 1](docs/endpoints/epic01-grupo01-hu1.1.md)
+- [Perfil profesional, épica 2](docs/endpoints/epic02-grupo02-hu1.2.md)
+- [Eventos universitarios, épica 7](docs/endpoints/epic07-grupo07-hu1.7.md)
 - [Archivos históricos y dependencias del frontend](docs/archivos-del-backend-anterior.md)
 - [Perfil corporativo, épica 4](docs/endpoints/epic04-grupo04-hu1.4.md)
 - [Publicación de vacantes, épica 5](docs/endpoints/epic05-grupo05-hu1.5.md)

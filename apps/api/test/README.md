@@ -17,3 +17,9 @@ JWT, Argon2id, schemas Zod, controladores, guards, presenters y filtro de errore
 registrations.e2e.spec.ts comprueba las rutas Nest con sus guards, origen permitido, límites, schemas Zod y filtro de errores. Sustituye los puertos de persistencia e identidad para no tocar bases ni cuentas reales. Las pruebas del worker sustituyen SMTP y comprueban entrega, reserva entre procesos y conservación del mensaje ante fallos. Las pruebas de seguridad verifican separación de hashes y detección de alteraciones del cifrado.
 
 La verificación manual de integración de la épica 1 recorrió PostgreSQL con registros ficticios temporales: OTP, respaldo privado, duplicados, alcance por carrera, revisiones concurrentes, dictámenes, activación y login. Sus datos se eliminaron al finalizar. El recorrido reproducible en Bruno está en docs/endpoints/epic01-grupo01-hu1.1.md; Mailpit permite leer los códigos de desarrollo sin exponerlos en las respuestas HTTP.
+
+## Perfil y eventos
+
+profile-events.e2e.spec.ts recorre los contratos HTTP de ambas épicas con los guards y schemas reales. Sustituye los puertos de persistencia para comprobar identidad derivada de la sesión, permisos, validación por sección, formatos de archivo, exportación JSON y rutas públicas/privadas sin tocar la base del equipo.
+
+La comprobación de integración con PostgreSQL utilizó datos temporales para verificar duplicados académicos concurrentes, edición y borrado, respaldo privado y cascada, resumen/exportación, portadas privadas y publicadas, publicación concurrente y acceso ajeno denegado. Los datos creados para esa comprobación se eliminaron al finalizar.

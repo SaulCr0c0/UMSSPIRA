@@ -5,6 +5,7 @@ import { Argon2PasswordHasher } from '../../src/modules/auth/infrastructure/secu
 import { createDatabaseClient } from '../database-client';
 import { seedAccessCatalog } from './access-catalog';
 import { assertDemoEnvironment } from './demo-environment';
+import { seedDemoMentorAreas } from './demo-mentor-areas';
 import {
   DEMO_ACCOUNTS,
   DEMO_ADMIN_ASSIGNMENT_ID,
@@ -65,6 +66,7 @@ async function seedDemo(): Promise<void> {
 
     await prisma.$transaction(
       async (tx) => {
+        await seedDemoMentorAreas(tx);
         const roleCodes = accounts.map((account) => account.role);
         const roles = await tx.rolAcceso.findMany({
           where: { codigo: { in: roleCodes }, habilitado: true },

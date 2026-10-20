@@ -1,0 +1,44 @@
+import { Module } from '@nestjs/common';
+import { PrismaModule } from '../../shared/infrastructure/database/prisma.module';
+import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
+import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
+import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
+import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
+import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
+import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
+import { UpdateMentorInformationController } from './http/controllers/update-mentor-information.controller';
+import { ClearMentorInformationController } from './http/controllers/clear-mentor-information.controller';
+import { SetMentorParticipationController } from './http/controllers/set-mentor-participation.controller';
+import { DeactivateMentorController } from './http/controllers/deactivate-mentor.controller';
+import { GetMentorAreasController } from './http/controllers/get-mentor-areas.controller';
+import { SetMentorAreasController } from './http/controllers/set-mentor-areas.controller';
+import { GetMentorInterestCatalogController } from './http/controllers/get-mentor-interest-catalog.controller';
+import { GetMyMentorInterestsController } from './http/controllers/get-my-mentor-interests.controller';
+import { AddMentorInterestsController } from './http/controllers/add-mentor-interests.controller';
+import { RemoveMentorInterestController } from './http/controllers/remove-mentor-interest.controller';
+import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
+import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
+@Module({
+  imports: [PrismaModule],
+  controllers: [
+    ListMentorProfilesController,
+    GetMentorEligibilityController,
+    GetMyMentorProfileController,
+    GetMentorInformationController,
+    UpdateMentorInformationController,
+    ClearMentorInformationController,
+    SetMentorParticipationController,
+    DeactivateMentorController,
+    GetMentorAreasController,
+    SetMentorAreasController,
+    GetMentorInterestCatalogController,
+    GetMyMentorInterestsController,
+    AddMentorInterestsController,
+    RemoveMentorInterestController,
+    GetMentorAvailabilityController,
+    SetMentorAvailabilityController,
+  ],
+  providers: mentorshipProviders,
+  exports: [MENTOR_AVAILABILITY_REPOSITORY],
+})
+export class MentorshipModule {}

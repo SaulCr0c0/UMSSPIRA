@@ -43,6 +43,6 @@ import { ChangePasswordController } from './http/controllers/change-password.con
     { provide: APP_GUARD, useClass: AuthenticationGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
-  exports: [AuthenticateUseCase, PASSWORD_HASHER, RATE_LIMITER],
+  exports: [AuthenticateUseCase, PASSWORD_HASHER, RATE_LIMITER, AUTHENTICATOR],
 })
 export class AuthModule {}

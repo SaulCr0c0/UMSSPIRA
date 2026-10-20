@@ -1,0 +1,30 @@
+meta {
+  name: Listar solicitudes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/applications?page=1&pageSize=15
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 1
+  pageSize: 15
+  ~career:
+  ~status: PENDING
+  ~search:
+  ~age: over48
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Requiere administrador. Los filtros desmarcados son opcionales; career filtra por texto del nombre de carrera. Copia el UUID de una solicitud a applicationId.
+
+  Permiso: solicitudes:read.
+}

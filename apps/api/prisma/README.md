@@ -11,3 +11,5 @@ Las claves diferibles del SQL inicial se preservan en la migración porque Prism
 Las tablas de credenciales, sesiones, permisos y usuarios tienen RLS habilitado sin políticas públicas. El backend se conecta con un rol PostgreSQL autorizado para esas tablas. Un rol restringido adicional necesitará los privilegios y políticas correspondientes; no se configura acceso directo de clientes a esos registros.
 
 Cada equipo comparte el mismo esquema y cambia únicamente sus conexiones. Las bases independientes aíslan los datos durante desarrollo; los cambios de estructura se integran mediante migraciones compatibles. Un seed inserta datos, pero no reemplaza una migración. Los scripts de seed viven en `scripts/seed` para separar modelos y datos.
+
+Las migraciones de registro documental, perfil y eventos agregan almacenamiento privado de archivos en PostgreSQL. archivo_registro, archivo_perfil y portada_evento tienen límites SQL de tamaño y lecturas a través de la API. Los respaldos de certificación se eliminan en cascada con sus metadatos; una portada vinculada está protegida por FK para que no pueda borrarse mientras un evento la utiliza.

@@ -32,12 +32,13 @@ enum DepartamentoExpedicion {
 }
 
 model Usuario {
-  revisiones      Dictamen[]     @relation("dictamen_revisor")
-  nombre          String?        @db.VarChar
-  rol             String?        @db.VarChar
-  usuario_id      String         @id @db.Uuid
-  correo          String?        @unique @db.VarChar(254)
-  estado          EstadoUsuario  @default(PENDIENTE)
+  portadas_evento PortadaEvento[]
+  revisiones      Dictamen[]      @relation("dictamen_revisor")
+  nombre          String?         @db.VarChar
+  rol             String?         @db.VarChar
+  usuario_id      String          @id @db.Uuid
+  correo          String?         @unique @db.VarChar(254)
+  estado          EstadoUsuario   @default(PENDIENTE)
   cuenta_acceso   CuentaAcceso?
   sesiones_acceso SesionAcceso[]
 
@@ -332,6 +333,7 @@ model PerfilEmpresa {
 }
 
 model Titulado {
+  mentor         Mentor?
   id_descripcion String?  @db.Uuid
   apellido       String?  @db.VarChar
   cod_sis        Decimal? @db.Decimal
@@ -412,11 +414,12 @@ model Certificacion {
 }
 
 model CertificacionRespaldo {
+  archivo          ArchivoPerfil?
   tipo             TipoRespaldo
-  archivo_key      String       @db.VarChar
-  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fecha_subida     DateTime?    @default(now()) @db.Timestamp(6)
-  id_certificacion String       @db.Uuid
+  archivo_key      String         @db.VarChar
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fecha_subida     DateTime?      @default(now()) @db.Timestamp(6)
+  id_certificacion String         @db.Uuid
 
   certificacion Certificacion @relation("certificacion_respaldo_id_certificacion_certificacion", fields: [id_certificacion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "certificacion_respaldo_id_certificacion_fkey")
 
@@ -438,12 +441,17 @@ model PerfilArea {
 }
 
 model Mentor {
-  experiencia         String?   @db.Text
-  esta_activo         Boolean?
-  anios_exp           Int?      @db.Integer
-  fecha_creacion      DateTime? @db.Date
-  fecha_actualizacion DateTime? @db.Date
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_titulado           String    @unique @db.Uuid
+  titulado              Titulado  @relation(fields: [id_titulado], references: [id], onDelete: Restrict)
+  descripcion           String?   @db.VarChar(500)
+  informacion_relevante String?   @db.VarChar(500)
+  foto_perfil           String?   @db.Text
+  experiencia           String?   @db.Text
+  esta_activo           Boolean?
+  anios_exp             Int?      @db.Integer
+  fecha_creacion        DateTime? @db.Date
+  fecha_actualizacion   DateTime? @db.Date
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   mentor_area_registros               MentorArea[]              @relation("mentor_area_id_mentor_mentor")
   disponibilidad_mentor_registros     DisponibilidadMentor[]    @relation("disponibilidad_mentor_id_mentor_mentor")
@@ -622,22 +630,50 @@ model Postulacion {
 }
 
 model Evento {
-  id_usuario     String?   @db.Uuid
-  titulo         String?   @db.VarChar
-  descripcion    String?   @db.Text
-  fecha_inicio   DateTime? @db.Timestamptz(6)
-  fecha_fin      DateTime? @db.Timestamptz(6)
-  cupo_maximo    Int?      @db.Integer
-  ubicacion      String?   @db.VarChar
-  estado         String?   @db.VarChar
-  imagen_url     String?   @db.Text
-  fecha_creacion DateTime? @db.Timestamptz(6)
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_portada     String?        @unique @db.Uuid
+  portada        PortadaEvento? @relation(fields: [id_portada], references: [id], onDelete: Restrict)
+  id_usuario     String?        @db.Uuid
+  titulo         String?        @db.VarChar
+  descripcion    String?        @db.Text
+  fecha_inicio   DateTime?      @db.Timestamptz(6)
+  fecha_fin      DateTime?      @db.Timestamptz(6)
+  cupo_maximo    Int?           @db.Integer
+  ubicacion      String?        @db.VarChar
+  estado         String?        @db.VarChar
+  imagen_url     String?        @db.Text
+  fecha_creacion DateTime?      @db.Timestamptz(6)
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   usuario                      Usuario?            @relation("evento_id_usuario_usuario", fields: [id_usuario], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "evento_id_usuario_fkey")
   inscripcion_evento_registros InscripcionEvento[] @relation("inscripcion_evento_id_evento_evento")
 
   @@map("evento")
+}
+
+model ArchivoPerfil {
+  id_respaldo String                @id @db.Uuid
+  nombre      String                @db.VarChar(255)
+  mime        String                @db.VarChar(50)
+  contenido   Bytes                 @db.ByteA
+  size_bytes  Int
+  respaldo    CertificacionRespaldo @relation(fields: [id_respaldo], references: [id], onDelete: Cascade)
+
+  @@map("archivo_perfil")
+}
+
+model PortadaEvento {
+  id         String   @id @default(uuid()) @db.Uuid
+  id_usuario String   @db.Uuid
+  nombre     String   @db.VarChar(255)
+  mime       String   @db.VarChar(50)
+  contenido  Bytes    @db.ByteA
+  size_bytes Int
+  creada_en  DateTime @default(now()) @db.Timestamptz(6)
+  usuario    Usuario  @relation(fields: [id_usuario], references: [usuario_id], onDelete: Restrict)
+  evento     Evento?
+
+  @@index([id_usuario])
+  @@map("portada_evento")
 }
 
 model InscripcionEvento {

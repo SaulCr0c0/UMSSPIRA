@@ -1,5 +1,6 @@
 node_modules/
 apps/api/.local/
+apps/api/dist/
 apps/api-antigua/.local/
 apps/api/src/generated/
 dist/
