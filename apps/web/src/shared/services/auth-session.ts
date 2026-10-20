@@ -53,25 +53,39 @@ export async function refreshSession(): Promise<string> {
     return token;
   };
   // Serializar entre pestañas evita consumir simultáneamente el mismo refresh token.
-  const run = () => typeof navigator !== 'undefined' && navigator.locks
-    ? navigator.locks.request('umsspira:refresh', renew) : renew();
+  const run = async (): Promise<string> => typeof navigator !== 'undefined' && navigator.locks
+    ? await navigator.locks.request('umsspira:refresh', async () => await renew()) : await renew();
   refreshInFlight = run().finally(() => { refreshInFlight = null; });
   return refreshInFlight;
 }
 
 export async function ensureAccessToken(): Promise<string> {
+  if (!accessToken && !csrfToken()) throw new SessionError(401, 'Inicia sesión para continuar');
   return accessToken && tokenIsFresh(accessToken) ? accessToken : refreshSession();
 }
 
 export async function authenticatedFetch(url: string, init: RequestInit = {}): Promise<Response> {
   const token = getAccessToken() ?? await ensureAccessToken();
-  const send = (value: string) => fetch(url, {
-    ...init,
-    headers: { ...Object.fromEntries(new Headers(init.headers).entries()), Authorization: `Bearer ${value}` },
-  });
+  const send = (value: string) => {
+    const headers = Object.fromEntries(new Headers(init.headers).entries());
+    delete headers.authorization;
+    return fetch(url, {
+      ...init,
+      headers: { ...headers, Authorization: `Bearer ${value}` },
+    });
+  };
   const response = await send(token);
   if (response.status !== 401) return response;
-  return send(await refreshSession());
+  const current = getAccessToken();
+  if (current && current !== token) return send(current);
+  if (!csrfToken()) {
+    if (getAccessToken() === token) clearAccessToken();
+    throw new SessionError(401, 'Inicia sesión para continuar');
+  }
+  const renewed = await refreshSession();
+  const retry = await send(renewed);
+  if (retry.status === 401 && getAccessToken() === renewed) clearAccessToken();
+  return retry;
 }
 
 export async function revokeCurrentSession(): Promise<void> {

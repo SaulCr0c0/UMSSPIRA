@@ -1,8 +1,21 @@
 import type { UserRole } from '@umsspira/shared-types';
+import { apiFetch } from '@/shared/services/api-client';
 export type { UserRole };
 
 export interface LoginCredentials { email: string; password: string; remember?: boolean; }
 export interface LoginResult { accessToken: string; role: UserRole; }
+export interface CurrentUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: UserRole;
+  permissions: string[];
+  scopes: { companyIds: string[]; graduateId: string | null; careerIds: string[] };
+}
+
+export function getCurrentUser(): Promise<CurrentUser> {
+  return apiFetch<CurrentUser>('/api/v1/auth/me');
+}
 export const LOGIN_ERROR_MESSAGE = 'Correo electrónico o contraseña incorrectos';
 
 export async function login(credentials: LoginCredentials): Promise<LoginResult> {

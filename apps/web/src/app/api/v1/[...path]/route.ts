@@ -1,7 +1,10 @@
 import type { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-const MODULES = new Set(['auth', 'user']);
+const MODULES = new Set([
+  'auth', 'user', 'companies', 'job-postings', 'registrations', 'applications',
+  'email-verification', 'documents', 'perfil', 'events', 'mentorship', 'reports',
+]);
 
 async function proxy(request: NextRequest, context: { params: { path: string[] } }): Promise<Response> {
   const segments = context.params.path;
@@ -21,11 +24,13 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
     const upstream = await fetch(`${base.replace(/\/$/, '')}/api/v1/${segments.map(encodeURIComponent).join('/')}${request.nextUrl.search}`, {
       method: request.method, headers, cache: 'no-store', redirect: 'manual',
       signal: AbortSignal.timeout(15000),
-      ...(!['GET', 'HEAD'].includes(request.method) ? { body: await request.text() } : {}),
+      ...(!['GET', 'HEAD'].includes(request.method) ? { body: await request.arrayBuffer() } : {}),
     });
     const outgoing = new Headers({ 'Cache-Control': 'no-store' });
     const contentType = upstream.headers.get('content-type');
     if (contentType) outgoing.set('Content-Type', contentType);
+    const disposition = upstream.headers.get('content-disposition');
+    if (disposition) outgoing.set('Content-Disposition', disposition);
     for (const cookie of upstream.headers.getSetCookie()) outgoing.append('Set-Cookie', cookie);
     const retry = upstream.headers.get('retry-after');
     if (retry) outgoing.set('Retry-After', retry);
@@ -38,3 +43,5 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
 export const GET = proxy;
 export const POST = proxy;
 export const DELETE = proxy;
+export const PUT = proxy;
+export const PATCH = proxy;

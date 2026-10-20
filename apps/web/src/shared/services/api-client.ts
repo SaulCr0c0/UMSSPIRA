@@ -1,11 +1,10 @@
 import { authenticatedFetch, clearAccessToken, getAccessToken, SessionError } from './auth-session';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { apiUrl, readApiError } from './api-contract';
 
 interface ApiClientOptions
   extends Omit<RequestInit, 'body'> {
   body?: unknown;
+  authenticated?: boolean;
 }
 
 export class ApiClientError extends Error {
@@ -19,7 +18,7 @@ async function apiRequest<TResponse>(
   path: string,
   options: ApiClientOptions = {},
 ): Promise<TResponse> {
-  const { body, headers: providedHeaders, ...requestOptions } =
+  const { body, headers: providedHeaders, authenticated = false, ...requestOptions } =
     options;
   const headers = new Headers(providedHeaders);
 
@@ -27,7 +26,7 @@ async function apiRequest<TResponse>(
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await (authenticated ? authenticatedFetch : fetch)(apiUrl(path), {
     ...requestOptions,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -58,6 +57,9 @@ async function apiRequest<TResponse>(
 }
 
 function getErrorMessage(responseData: unknown): string | null {
+  if (responseData && typeof responseData === 'object' && 'error' in responseData) {
+    return readApiError(responseData, 'No se pudo procesar la solicitud').message;
+  }
   if (
     typeof responseData !== 'object' ||
     responseData === null ||
@@ -86,7 +88,7 @@ export class ApiException extends Error {
 }
 
 async function request<TResponse>(path: string, init?: RequestInit): Promise<TResponse> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   });
@@ -108,7 +110,6 @@ export const apiClient = Object.assign(apiRequest, {
     }),
 });
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 export const TOKEN_KEY = 'token';
 
 /** Deploy de demo: no exige sesion. Se fija al compilar (NEXT_PUBLIC_*). */
@@ -154,7 +155,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const token = stored && (!DEMO_MODE || hasValidSession()) ? stored : null;
   let res: Response;
   try {
-    res = await authenticatedFetch(`${API_URL}${path}`, {
+    res = await authenticatedFetch(apiUrl(path), {
       ...init,
       headers: {
         'Content-Type': 'application/json',
@@ -171,5 +172,5 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     if (res.status === 401) throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
     throw new ApiError(res.status, errorMessage(body, 'Error inesperado'));
   }
-  return body as T;
+  return body?.data as T;
 }
