@@ -10,19 +10,19 @@ pnpm --filter api db:seed:demo
 
 ## Dónde añadir los datos
 
-| Archivo            | Datos                                                       |
-| ------------------ | ----------------------------------------------------------- |
-| `base.ts`          | Carreras compartidas y creación de cuentas con sus perfiles |
-| `demo-accounts.ts` | Cuentas de acceso de demostración y sus UUID                |
-| `epic-1.ts`        | Tipos de archivo, detalles, documentos y solicitudes        |
-| `epic-2.ts`        | Formación, experiencia, certificaciones y respaldos         |
-| `epic-3.ts`        | Perfiles por área, diccionario NLP y resultados de radar    |
-| `epic-4.ts`        | Empresas, modalidades y requerimientos                      |
-| `epic-5.ts`        | Vacantes                                                    |
-| `epic-6.ts`        | Áreas profesionales, mentores y especialidades              |
-| `epic-7.ts`        | Eventos e inscripciones                                     |
-| `epic-8.ts`        | Dispositivos de demostración, si se necesitan               |
-| `epic-9.ts`        | Tipos de reporte, reportes y encuestas                      |
+| Archivo            | Datos                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `base.ts`          | Carreras compartidas y creación de cuentas con sus perfiles                                 |
+| `demo-accounts.ts` | Cuentas de acceso de demostración y sus UUID                                                |
+| `epic-1.ts`        | Tipos de archivo, detalles, documentos, solicitudes, administradores de sistema y auditoría |
+| `epic-2.ts`        | Formación, experiencia, certificaciones, respaldos y validaciones                           |
+| `epic-3.ts`        | Perfiles por área, diccionario NLP y resultados de radar                                    |
+| `epic-4.ts`        | Empresas, modalidades y requerimientos                                                      |
+| `epic-5.ts`        | Vacantes                                                                                    |
+| `epic-6.ts`        | Áreas profesionales, mentores y especialidades                                              |
+| `epic-7.ts`        | Eventos e inscripciones                                                                     |
+| `epic-8.ts`        | Dispositivos de demostración, si se necesitan                                               |
+| `epic-9.ts`        | Tipos de reporte, reportes y encuestas                                                      |
 
 Los arreglos vacíos son el espacio para los datos de cada equipo. Se conservan las tres cuentas y las cinco áreas que ya existían; no se inventan datos del resto de módulos.
 
@@ -55,5 +55,7 @@ Primero se crean carreras, roles, permisos, cuentas y perfiles. Después se ejec
 Dentro de cada archivo se crean primero las tablas referenciadas y después sus dependientes. Si se incorpora otra tabla, añadir su arreglo tipado y su inserción al archivo de la épica, respetando ese orden. No crear de nuevo una cuenta o un área compartida desde otra épica: usar su UUID.
 
 La carga no es una única transacción: si una etapa falla, las anteriores pueden haber quedado guardadas. El comando indica la etapa y puede repetirse después de corregir el problema. Los equipos deben coordinar los cambios en datos compartidos antes de integrarlos en dev; tener bases separadas no resuelve los conflictos entre archivos al unir las ramas.
+
+Las validaciones de certificaciones se cargan en `epic-2.ts`, después de sus certificaciones. Su `id_administrador_sistema` debe existir en `administradoresSistema` de `epic-1.ts`; no es el UUID del usuario ni el de administrador de carrera. `estado_validacion` usa `sin_respaldo`, `validado` u `observado`; el historial de validación usa `con_respaldo` u `observado`, según el documento del equipo. Añadir un respaldo no equivale a una aprobación automática.
 
 `db:seed` sigue siendo la carga de roles y permisos sin datos de demostración. `db:seed:demo` ya la incluye.

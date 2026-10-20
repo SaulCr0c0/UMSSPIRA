@@ -42,6 +42,7 @@ model Usuario {
   cuenta_acceso         CuentaAcceso?
   sesiones_acceso       SesionAcceso[]
   administrador_sistema AdministradorSistema?
+  auditoria_registros   Auditoria[]
 
   administrador_de_carrera_registros  AdministradorDeCarrera[]   @relation("administrador_de_carrera_id_usuario_usuario")
   empresa_registros                   Empresa[]                  @relation("empresa_id_usuario_usuario")
@@ -218,10 +219,11 @@ model AdministradorSistema {
   id_carrera String?  @db.Uuid
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  carrera                      Carrera?            @relation("administrador_sistema_id_carrera_carrera", fields: [id_carrera], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "administrador_sistema_id_carrera_fkey")
-  dictamen_registros           Dictamen[]          @relation("dictamen_id_administrador_sistema_administrador_sistema")
-  usuario                      Usuario?            @relation(fields: [id_usuario], references: [usuario_id], onDelete: NoAction)
-  auditoria_dictamen_registros AuditoriaDictamen[]
+  carrera                            Carrera?                  @relation("administrador_sistema_id_carrera_carrera", fields: [id_carrera], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "administrador_sistema_id_carrera_fkey")
+  dictamen_registros                 Dictamen[]                @relation("dictamen_id_administrador_sistema_administrador_sistema")
+  usuario                            Usuario?                  @relation(fields: [id_usuario], references: [usuario_id], onDelete: NoAction)
+  auditoria_dictamen_registros       AuditoriaDictamen[]
+  validacion_certificacion_registros ValidacionCertificacion[]
 
   @@map("administrador_sistema")
 }
@@ -417,22 +419,36 @@ model CurriculumVitae {
 }
 
 model FormacionAcademica {
-  institucion    String    @db.VarChar
-  titulo         String    @db.VarChar
+  institucion    String    @db.VarChar(150)
+  titulo         String    @db.VarChar(150)
   anio_egreso    Int       @db.SmallInt
   fecha_creacion DateTime? @default(now()) @db.Timestamp(6)
-  grado          String?   @db.VarChar
+  grado          String?   @db.VarChar(50)
   id_titulado    String    @db.Uuid
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  titulado Titulado @relation("formacion_academica_id_titulado_titulado", fields: [id_titulado], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "formacion_academica_id_titulado_fkey")
+  titulado           Titulado            @relation("formacion_academica_id_titulado_titulado", fields: [id_titulado], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "formacion_academica_id_titulado_fkey")
+  respaldo_registros FormacionRespaldo[]
 
   @@map("formacion_academica")
 }
 
+model FormacionRespaldo {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_formacion String    @db.Uuid
+  tipo         String    @db.VarChar(20)
+  archivo_key  String    @db.VarChar(255)
+  fecha_subida DateTime? @default(now()) @db.Timestamp(6)
+
+  formacion FormacionAcademica @relation(fields: [id_formacion], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([id_formacion])
+  @@map("formacion_respaldo")
+}
+
 model ExperienciaLaboral {
-  empresa        String    @db.VarChar
-  cargo          String    @db.VarChar
+  empresa        String    @db.VarChar(150)
+  cargo          String    @db.VarChar(100)
   fecha_inicio   DateTime  @db.Date
   fecha_fin      DateTime? @db.Date
   fecha_creacion DateTime? @default(now()) @db.Timestamp(6)
@@ -445,16 +461,18 @@ model ExperienciaLaboral {
 }
 
 model Certificacion {
-  nombre          String    @db.VarChar
-  id_titulado     String    @db.Uuid
-  entidad_emisora String    @db.VarChar
-  grado           String    @db.VarChar
-  anio_emision    Int?      @db.SmallInt
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fecha_creacion  DateTime? @default(now()) @db.Timestamp(6)
+  nombre            String    @db.VarChar(150)
+  id_titulado       String    @db.Uuid
+  entidad_emisora   String    @db.VarChar(150)
+  grado             String    @db.VarChar(50)
+  anio_emision      Int?      @db.SmallInt
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fecha_creacion    DateTime? @default(now()) @db.Timestamp(6)
+  estado_validacion String    @default("sin_respaldo") @db.VarChar(20)
 
-  titulado                         Titulado                @relation("certificacion_id_titulado_titulado", fields: [id_titulado], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "certificacion_id_titulado_fkey")
-  certificacion_respaldo_registros CertificacionRespaldo[] @relation("certificacion_respaldo_id_certificacion_certificacion")
+  titulado                         Titulado                  @relation("certificacion_id_titulado_titulado", fields: [id_titulado], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "certificacion_id_titulado_fkey")
+  certificacion_respaldo_registros CertificacionRespaldo[]   @relation("certificacion_respaldo_id_certificacion_certificacion")
+  validacion_registros             ValidacionCertificacion[]
 
   @@map("certificacion")
 }
@@ -462,7 +480,7 @@ model Certificacion {
 model CertificacionRespaldo {
   archivo          ArchivoPerfil?
   tipo             TipoRespaldo
-  archivo_key      String         @db.VarChar
+  archivo_key      String         @db.VarChar(255)
   id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fecha_subida     DateTime?      @default(now()) @db.Timestamp(6)
   id_certificacion String         @db.Uuid
@@ -470,6 +488,38 @@ model CertificacionRespaldo {
   certificacion Certificacion @relation("certificacion_respaldo_id_certificacion_certificacion", fields: [id_certificacion], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "certificacion_respaldo_id_certificacion_fkey")
 
   @@map("certificacion_respaldo")
+}
+
+model ValidacionCertificacion {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_certificacion         String   @db.Uuid
+  id_administrador_sistema String   @db.Uuid
+  estado                   String   @db.VarChar(20)
+  justificacion            String?  @db.Text
+  fecha_creacion           DateTime @default(now()) @db.Timestamp(6)
+
+  certificacion         Certificacion        @relation(fields: [id_certificacion], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  administrador_sistema AdministradorSistema @relation(fields: [id_administrador_sistema], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([id_certificacion, fecha_creacion])
+  @@index([id_administrador_sistema])
+  @@map("validacion_certificacion")
+}
+
+model Auditoria {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @map("Id") @db.Uuid
+  id_usuario     String?  @map("Id_usuario") @db.Uuid
+  nombre         String   @map("Nombre") @db.VarChar(100)
+  funcion        String   @map("Funcion") @db.VarChar(100)
+  tabla_afectada String   @map("Tabla_afectada") @db.VarChar(63)
+  id_registro    String?  @map("Id_registro") @db.Uuid
+  fecha_hora     DateTime @default(now()) @map("Fecha_hora") @db.Timestamp(6)
+
+  usuario Usuario? @relation(fields: [id_usuario], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([id_usuario, fecha_hora])
+  @@index([tabla_afectada, id_registro])
+  @@map("auditoria")
 }
 
 model PerfilArea {

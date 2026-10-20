@@ -5,6 +5,10 @@ export const tiposArchivo: Array<Prisma.TipoArchivoCreateManyInput & { id: strin
 export const detalles: Array<Prisma.DetalleSolicitudCreateManyInput & { id: string }> = [];
 export const documentos: Array<Prisma.DocumentoRespaldoCreateManyInput & { id: string }> = [];
 export const solicitudes: Array<Prisma.SolicitudCreateManyInput & { id: string }> = [];
+export const administradoresSistema: Array<
+  Prisma.AdministradorSistemaCreateManyInput & { id: string }
+> = [];
+export const auditorias: Array<Prisma.AuditoriaCreateManyInput & { id: string }> = [];
 
 export async function seedEpic1(prisma: PrismaClient): Promise<void> {
   if (tiposArchivo.length > 0) {
@@ -18,5 +22,14 @@ export async function seedEpic1(prisma: PrismaClient): Promise<void> {
   }
   if (solicitudes.length > 0) {
     await prisma.solicitud.createMany({ data: solicitudes, skipDuplicates: true });
+  }
+  if (administradoresSistema.length > 0) {
+    await prisma.administradorSistema.createMany({
+      data: administradoresSistema,
+      skipDuplicates: true,
+    });
+  }
+  if (auditorias.length > 0) {
+    await prisma.auditoria.createMany({ data: auditorias, skipDuplicates: true });
   }
 }
