@@ -33,21 +33,27 @@ services:
     startCommand: pnpm --filter api start
 
     # Devuelve 200 cuando la API puede leer la BD. Render lo usa de health check.
-    healthCheckPath: /mentorship/status
+    healthCheckPath: /health
 
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_RATE_LIMIT_STORE
+        value: memory
 
       # --- Secretos: Render los pide en el dashboard ---
       # Ver apps/api/.env.example para el contenido.
-      - key: SUPABASE_URL
+      - key: DATABASE_URL
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
+      - key: DIRECT_URL
+        sync: false
+      - key: AUTH_JWT_SECRET
         sync: false
 
       # URL publica del frontend en Vercel. Se aceptan varias separadas por
       # coma (la API las usa como lista de origenes permitidos por CORS):
-      #   WEB_ORIGIN=https://umsspira.vercel.app,https://umsspira-git-dev.vercel.app
-      - key: WEB_ORIGIN
+      #   CORS_ORIGINS=https://umsspira.vercel.app,https://umsspira-git-dev.vercel.app
+      - key: CORS_ORIGINS
         sync: false

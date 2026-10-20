@@ -1,0 +1,27 @@
+meta {
+  name: Activar cuenta aprobada
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/registrations/activate
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "applicationId": "{{applicationId}}",
+    "code": "{{activationCode}}",
+    "password": "{{newPassword}}"
+  }
+}
+
+docs {
+  Después de la aprobación, completa activationCode con el código del correo y newPassword con una contraseña de 15 a 128 caracteres. Luego utiliza Login con el correo registrado.
+}
