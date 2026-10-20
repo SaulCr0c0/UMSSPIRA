@@ -3,7 +3,7 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { seedBase } from '../scripts/seed/base';
 import { DEMO_ACCOUNTS } from '../scripts/seed/demo-accounts';
 
-jest.mock('../scripts/seed/access-catalog', () => ({ seedAccessCatalog: jest.fn() }));
+jest.mock('../scripts/seed/catalogs', () => ({ seedCatalogs: jest.fn() }));
 
 describe('Destino del seed de demostración', () => {
   it.each(['production', undefined])('rechaza APP_ENV=%s', (APP_ENV) => {

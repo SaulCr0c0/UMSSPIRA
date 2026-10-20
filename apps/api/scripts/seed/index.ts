@@ -1,17 +1,19 @@
 import { createDatabaseClient } from '../database-client';
-import { seedAccessCatalog } from './access-catalog';
+import { seedCatalogs } from './catalogs';
 
 async function seed(): Promise<void> {
   const prisma = createDatabaseClient();
   try {
-    await seedAccessCatalog(prisma);
-    console.info('Catálogo de acceso preparado; no se crearon cuentas de demostración.');
+    await seedCatalogs(prisma);
+    console.info(
+      'Catálogos básicos preparados; no se crearon cuentas ni trámites de demostración.',
+    );
   } finally {
     await prisma.$disconnect();
   }
 }
 
 void seed().catch(() => {
-  console.error('No se pudo preparar el catálogo de acceso');
+  console.error('No se pudieron preparar los catálogos básicos');
   process.exitCode = 1;
 });
