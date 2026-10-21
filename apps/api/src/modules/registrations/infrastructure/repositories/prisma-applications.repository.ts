@@ -1,3 +1,4 @@
+import { applicationTotalPages } from '../../domain/policies/application-pagination.policy';
 import { Injectable } from '@nestjs/common';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import type { Prisma } from '../../../../generated/prisma/client';
@@ -130,6 +131,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
       total,
       page: query.page,
       pageSize: query.pageSize,
+      totalPages: applicationTotalPages(total, query.pageSize),
     };
   }
 
