@@ -1,4 +1,4 @@
-import { STOPWORDS } from './stopwords';
+import { STOPWORDS, STOPWORDS_COMPARTIDAS, STOPWORDS_EN, STOPWORDS_ES } from './stopwords';
 import { normalizePhrase, normalizeText, splitSegments } from './text-normalizer';
 
 const CASES: ReadonlyArray<readonly [string, readonly string[]]> = [
@@ -159,6 +159,65 @@ describe('STOPWORDS', () => {
     expect(STOPWORDS.has('js')).toBe(false);
     expect(STOPWORDS.has('ts')).toBe(false);
     expect(STOPWORDS.has('ml')).toBe(false);
+  });
+
+  it('no tiene duplicados internos en los arreglos por idioma', () => {
+    for (const words of [STOPWORDS_ES, STOPWORDS_EN, STOPWORDS_COMPARTIDAS]) {
+      expect(new Set(words).size).toBe(words.length);
+    }
+  });
+
+  it('mantiene los arreglos por idioma disjuntos entre sí', () => {
+    const es = new Set(STOPWORDS_ES);
+    const en = new Set(STOPWORDS_EN);
+    for (const word of STOPWORDS_EN) {
+      expect(es.has(word)).toBe(false);
+    }
+    for (const word of STOPWORDS_COMPARTIDAS) {
+      expect(es.has(word)).toBe(false);
+      expect(en.has(word)).toBe(false);
+    }
+  });
+
+  it('construye STOPWORDS con la suma de los tres arreglos', () => {
+    expect(STOPWORDS.size).toBe(
+      STOPWORDS_ES.length + STOPWORDS_EN.length + STOPWORDS_COMPARTIDAS.length,
+    );
+  });
+
+  it('incluye las nuevas stopwords y las compartidas', () => {
+    const expected = [
+      'has',
+      'he',
+      'me',
+      'no',
+      'ademas',
+      'aunque',
+      'dentro',
+      'fuera',
+      'mediante',
+      'mientras',
+      'sido',
+      'tenemos',
+      'tuve',
+      'fui',
+      'estuve',
+      'also',
+      'could',
+      'may',
+      'might',
+      'must',
+      'within',
+      'without',
+    ];
+    for (const word of expected) {
+      expect(STOPWORDS.has(word)).toBe(true);
+    }
+  });
+
+  it('no filtra las letras c ni r, usadas como lenguajes', () => {
+    expect(STOPWORDS.has('c')).toBe(false);
+    expect(STOPWORDS.has('r')).toBe(false);
   });
 });
 
