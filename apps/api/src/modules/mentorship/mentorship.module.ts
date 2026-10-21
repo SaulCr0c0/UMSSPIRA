@@ -1,27 +1,44 @@
 import { Module } from '@nestjs/common';
-import { MentorshipAvailabilityController } from './mentorship-availability.controller';
-import { MentorshipAvailabilityService } from './mentorship-availability.service';
-import { MentorshipInterestsController } from './mentorship-interests.controller';
-import { MentorshipInterestsService } from './mentorship-interests.service';
-import { MentorshipController } from './mentorship.controller';
-import { MentorshipService } from './mentorship.service';
-import { MentorAuthGuard } from './mentor-test-auth.guard';
-
+import { PrismaModule } from '../../shared/infrastructure/database/prisma.module';
+import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
+import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
+import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
+import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
+import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
+import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
+import { UpdateMentorInformationController } from './http/controllers/update-mentor-information.controller';
+import { ClearMentorInformationController } from './http/controllers/clear-mentor-information.controller';
+import { SetMentorParticipationController } from './http/controllers/set-mentor-participation.controller';
+import { DeactivateMentorController } from './http/controllers/deactivate-mentor.controller';
+import { GetMentorAreasController } from './http/controllers/get-mentor-areas.controller';
+import { SetMentorAreasController } from './http/controllers/set-mentor-areas.controller';
+import { GetMentorInterestCatalogController } from './http/controllers/get-mentor-interest-catalog.controller';
+import { GetMyMentorInterestsController } from './http/controllers/get-my-mentor-interests.controller';
+import { AddMentorInterestsController } from './http/controllers/add-mentor-interests.controller';
+import { RemoveMentorInterestController } from './http/controllers/remove-mentor-interest.controller';
+import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
+import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
 @Module({
+  imports: [PrismaModule],
   controllers: [
-    MentorshipController,
-    MentorshipInterestsController,
-    MentorshipAvailabilityController,
+    ListMentorProfilesController,
+    GetMentorEligibilityController,
+    GetMyMentorProfileController,
+    GetMentorInformationController,
+    UpdateMentorInformationController,
+    ClearMentorInformationController,
+    SetMentorParticipationController,
+    DeactivateMentorController,
+    GetMentorAreasController,
+    SetMentorAreasController,
+    GetMentorInterestCatalogController,
+    GetMyMentorInterestsController,
+    AddMentorInterestsController,
+    RemoveMentorInterestController,
+    GetMentorAvailabilityController,
+    SetMentorAvailabilityController,
   ],
-  providers: [
-    MentorshipService,
-    MentorshipInterestsService,
-    MentorshipAvailabilityService,
-    MentorAuthGuard,
-  ],
-  // MentorshipInterestsService se exporta para que el módulo de áreas use
-  // removeInterestsByArea (regla 7 de HU-03). MentorshipAvailabilityService se
-  // exporta para que el módulo de solicitudes use canReceiveRequests (regla 7 de HU-6.4).
-  exports: [MentorshipService, MentorshipInterestsService, MentorshipAvailabilityService],
+  providers: mentorshipProviders,
+  exports: [MENTOR_AVAILABILITY_REPOSITORY],
 })
 export class MentorshipModule {}

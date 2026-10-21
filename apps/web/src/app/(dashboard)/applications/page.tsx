@@ -11,7 +11,7 @@ import {
 import { EMPTY_FILTERS, RequestsFilters, type BoardFilters } from './_components/requests-filters';
 import { PAGE_SIZE, RequestsTable } from './_components/requests-table';
 
-const CAREERS_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/registrations/careers`;
+const CAREERS_URL = '/api/v1/registrations/careers';
 
 // Bandeja de solicitudes del backoffice (HU-04): lista, filtros, expediente y dictamen.
 export default function ApplicationsPage() {

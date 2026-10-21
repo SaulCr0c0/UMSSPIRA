@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
+import { setAccessToken, clearAccessToken } from '@/shared/services/auth-session';
 
 import {
   AuthenticatedUserSessionProvider,
@@ -19,12 +20,12 @@ describe('AuthenticatedUserSessionProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    document.cookie = 'umsspira_token=test-token; path=/';
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
-    document.cookie = 'umsspira_token=; path=/; max-age=0';
+    clearAccessToken();
   });
 
   it('obtiene el identificador autenticado para las rutas administrativas de eventos', async () => {
@@ -47,7 +48,7 @@ describe('AuthenticatedUserSessionProvider', () => {
     );
     expect(await screen.findByText('admin-user-id')).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/auth/me'),
+      '/api/v1/auth/me',
       expect.objectContaining({
         headers: { Authorization: 'Bearer test-token' },
       }),

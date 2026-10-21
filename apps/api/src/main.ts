@@ -1,48 +1,21 @@
-import './load-env';
+import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, type ArgumentMetadata } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AppExceptionFilter } from './shared/filters/app-exception.filter';
-import { UpdateCompanyDto } from './modules/companies/dto/update-company.dto';
-import { CreateJobPostingDto } from './modules/job-postings/dto/create-job-posting.dto';
-import { CreateEventDto } from './modules/events/dto/create-event.dto';
-import { UpdateDraftEventDto } from './modules/events/dto/update-draft-event.dto';
+import type { Environment } from './config/environment';
+import { configureHttp } from './shared/http/configuration/configure-http';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-
-  // Uno o varios origenes separados por coma:
-  //   WEB_ORIGIN=https://app.vercel.app,https://preview.vercel.app
-  const origenesPermitidos = (process.env.CORS_ORIGINS || process.env.WEB_ORIGIN || 'http://localhost:3001')
-    .split(',')
-    .map((origen) => origen.trim())
-    .filter(Boolean);
-
-  app.enableCors({
-    origin: origenesPermitidos,
-    credentials: true,
-  });
-
-  const validationPipe = new ValidationPipe({ whitelist: true, transform: true });
-  const eventsValidationPipe = new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  });
-  // Conserva la validación estricta de eventos, empresas y vacantes.
-  app.useGlobalPipes({
-    transform(value: unknown, metadata: ArgumentMetadata) {
-      const pipe = metadata.metatype === CreateEventDto || metadata.metatype === UpdateDraftEventDto || metadata.metatype === UpdateCompanyDto || metadata.metatype === CreateJobPostingDto
-        ? eventsValidationPipe : validationPipe;
-      return pipe.transform(value, metadata);
-    },
-  });
-  app.useGlobalFilters(new AppExceptionFilter());
-
-  // Las plataformas de despliegue asignan el puerto con PORT: hay que respetarlo.
-  const puerto = Number(process.env.PORT ?? 3000);
-  await app.listen(puerto, '0.0.0.0');
-
-  console.log(`API ejecutándose en http://localhost:${puerto}`);
+  configureHttp(app);
+  app.enableShutdownHooks();
+  const port = app.get(ConfigService<Environment, true>).get('PORT', { infer: true });
+  await app.listen(port, '0.0.0.0');
+  Logger.log(`API ejecutándose en el puerto ${port}`, 'Arranque');
 }
-bootstrap();
+
+void bootstrap().catch(() => {
+  Logger.error('No se pudo iniciar la API. Revisa la configuración del entorno.', 'Arranque');
+  process.exitCode = 1;
+});

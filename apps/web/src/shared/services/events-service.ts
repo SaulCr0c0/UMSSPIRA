@@ -5,9 +5,8 @@ import type {
 } from '@umsspira/shared-types';
 
 import { apiClient } from './api-client';
-import { getSessionToken } from '@/modules/auth/frontend/services/session';
-import { getAccessToken } from '@/shared/services/auth-session';
-import { getToken } from '@/shared/services/api-client';
+import { authenticatedFetch } from './auth-session';
+import { readApiError } from './api-contract';
 
 const MAX_EVENT_COVER_SIZE = 5 * 1024 * 1024;
 const EVENT_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -22,45 +21,39 @@ export async function uploadEventCover(file: File): Promise<string> {
 
   const body = new FormData();
   body.append('file', file);
-  const headers = getEventSessionHeaders();
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/events/admin/cover`,
-    { method: 'POST', headers, body },
+  const response = await authenticatedFetch(
+    '/api/v1/events/covers',
+    { method: 'POST', body },
   );
-  const result = await response.json().catch(() => null) as { imageUrl?: string; message?: string | string[] } | null;
-  if (!response.ok || !result?.imageUrl) {
-    const message = Array.isArray(result?.message) ? result.message.join(' ') : result?.message;
-    throw new Error(message || 'No se pudo guardar la portada.');
+  const result = await response.json().catch(() => null);
+  if (!response.ok || !result?.data?.imageUrl) {
+    throw new Error(readApiError(result, 'No se pudo guardar la portada.').message);
   }
-  return result.imageUrl;
+  return result.data.imageUrl;
 }
 
 export async function removeEventCover(imageUrl: string): Promise<void> {
-  const headers = getEventSessionHeaders();
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/events/admin/cover?imageUrl=${encodeURIComponent(imageUrl)}`,
-    { method: 'DELETE', headers },
+  if (!imageUrl.startsWith('/api/v1/events/covers/')) {
+    throw new Error('La portada no pertenece a esta API.');
+  }
+  const response = await authenticatedFetch(
+    imageUrl,
+    { method: 'DELETE' },
   );
   if (!response.ok) throw new Error('No se pudo limpiar la portada temporal.');
 }
 
-function getEventSessionHeaders(): HeadersInit {
-  const token = getSessionToken() ?? getAccessToken() ?? getToken();
-  if (!token) throw new Error('Debes iniciar sesión para gestionar eventos.');
-  return { Authorization: `Bearer ${token}` };
+export async function getEventCatalog(): Promise<EventItem[]> {
+  return (await apiClient<{ data: EventItem[] }>('/api/v1/events/catalog')).data;
 }
 
-export function getEventCatalog(): Promise<EventItem[]> {
-  return apiClient<EventItem[]>('/api/events/catalog');
+export async function getPublishedEvent(eventId: string): Promise<EventItem> {
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/${encodeURIComponent(eventId)}`,
+  )).data;
 }
 
-export function getPublishedEvent(eventId: string): Promise<EventItem> {
-  return apiClient<EventItem>(
-    `/api/events/${encodeURIComponent(eventId)}`,
-  );
-}
-
-export function createEvent(
+export async function createEvent(
   event: CreateEventDto,
   userId?: string,
 ): Promise<EventItem> {
@@ -70,14 +63,14 @@ export function createEvent(
     );
   }
 
-  return apiClient<EventItem>('/api/events', {
+  return (await apiClient<{ data: EventItem }>('/api/v1/events', {
     method: 'POST',
-    headers: getEventSessionHeaders(),
+    authenticated: true,
     body: event,
-  });
+  })).data;
 }
 
-export function getAdminEvents(
+export async function getAdminEvents(
   userId?: string,
 ): Promise<EventItem[]> {
   requireUserId(
@@ -85,12 +78,12 @@ export function getAdminEvents(
     'consultar los eventos',
   );
 
-  return apiClient<EventItem[]>('/api/events/admin', {
-    headers: getEventSessionHeaders(),
-  });
+  return (await apiClient<{ data: EventItem[] }>('/api/v1/events/owned', {
+    authenticated: true,
+  })).data;
 }
 
-export function getAdminDraft(
+export async function getAdminDraft(
   eventId: string,
   userId?: string,
 ): Promise<EventItem> {
@@ -99,24 +92,24 @@ export function getAdminDraft(
     'consultar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}`,
-    { headers: getEventSessionHeaders() },
-  );
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}`,
+    { authenticated: true },
+  )).data;
 }
 
-export function getAdminEvent(
+export async function getAdminEvent(
   eventId: string,
   userId?: string,
 ): Promise<EventItem> {
   requireUserId(userId, 'consultar el evento');
-  return apiClient<EventItem>(
-    `/api/events/admin/event/${encodeURIComponent(eventId)}`,
-    { headers: getEventSessionHeaders() },
-  );
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/owned/${encodeURIComponent(eventId)}`,
+    { authenticated: true },
+  )).data;
 }
 
-export function updateDraftEvent(
+export async function updateDraftEvent(
   eventId: string,
   event: UpdateDraftEventDto,
   userId?: string,
@@ -126,17 +119,17 @@ export function updateDraftEvent(
     'actualizar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}`,
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}`,
     {
       method: 'PATCH',
-      headers: getEventSessionHeaders(),
+      authenticated: true,
       body: event,
     },
-  );
+  )).data;
 }
 
-export function publishDraftEvent(
+export async function publishDraftEvent(
   eventId: string,
   userId?: string,
 ): Promise<EventItem> {
@@ -145,13 +138,13 @@ export function publishDraftEvent(
     'publicar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}/publish`,
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}/publish`,
     {
       method: 'PATCH',
-      headers: getEventSessionHeaders(),
+      authenticated: true,
     },
-  );
+  )).data;
 }
 
 function requireUserId(

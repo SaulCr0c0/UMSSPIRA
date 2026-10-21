@@ -1,0 +1,259 @@
+import { Injectable } from '@nestjs/common';
+import type { Prisma } from '../../../../generated/prisma/client';
+import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
+import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
+import type { StoredFile } from '../../../../shared/files/contracts/uploaded-file';
+import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
+import type { EventsRepository } from '../../application/ports/events-repository.port';
+import type { CreateEventInput, EventInput } from '../../application/contracts/event-inputs';
+import { assertDraft, validateEventDates } from '../../domain/policies/event.policy';
+import { toEvent } from '../translators/event.translator';
+
+const eventInclude = { usuario: { select: { nombre: true } } };
+
+@Injectable()
+export class PrismaEventsRepository implements EventsRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async catalog() {
+    const rows = await this.prisma.evento.findMany({
+      where: {
+        estado: 'PUBLICADO',
+        archivado: false,
+        fecha_fin: { gt: new Date() },
+        cupo_maximo: { gte: 1, lte: 10000 },
+      },
+      include: eventInclude,
+      orderBy: [{ fecha_inicio: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(toEvent);
+  }
+
+  async published(id: string) {
+    const row = await this.prisma.evento.findFirst({
+      where: { id, estado: 'PUBLICADO', archivado: false, cupo_maximo: { gte: 1, lte: 10000 } },
+      include: eventInclude,
+    });
+    if (!row) {
+      return this.missingEvent();
+    }
+    return toEvent(row);
+  }
+
+  async owned(ownerId: string) {
+    const rows = await this.prisma.evento.findMany({
+      where: { id_usuario: ownerId },
+      include: eventInclude,
+      orderBy: [{ fecha_creacion: 'desc' }, { id: 'asc' }],
+    });
+    return rows.map(toEvent);
+  }
+
+  async findOwned(ownerId: string, id: string) {
+    const row = await this.prisma.evento.findFirst({
+      where: { id, id_usuario: ownerId },
+      include: eventInclude,
+    });
+    if (!row) {
+      return this.missingEvent();
+    }
+    return toEvent(row);
+  }
+
+  async create(ownerId: string, input: CreateEventInput) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        await this.checkCover(tx, ownerId, input.coverId);
+        const row = await tx.evento.create({
+          data: {
+            id_usuario: ownerId,
+            ...this.eventData(input),
+            estado: input.status ?? 'BORRADOR',
+            fecha_creacion: new Date(),
+          },
+          include: eventInclude,
+        });
+        return toEvent(row);
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async updateDraft(ownerId: string, id: string, input: EventInput) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const current = await this.lockOwned(tx, ownerId, id);
+        assertDraft(toEvent(current));
+        await this.checkCover(tx, ownerId, input.coverId, id);
+        const row = await tx.evento.update({
+          where: { id, id_usuario: ownerId, estado: 'BORRADOR', archivado: false },
+          data: this.eventData(input),
+          include: eventInclude,
+        });
+        if (
+          input.coverId !== undefined &&
+          current.id_portada &&
+          current.id_portada !== input.coverId
+        ) {
+          await tx.portadaEvento.deleteMany({
+            where: { id: current.id_portada, id_usuario: ownerId, evento: { is: null } },
+          });
+        }
+        return toEvent(row);
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async publishDraft(ownerId: string, id: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.lockOwned(tx, ownerId, id);
+        const event = toEvent(row);
+        assertDraft(event);
+        validateEventDates(event.startDate, event.endDate);
+        if (event.maxCapacity < 1 || event.maxCapacity > 10000) {
+          throw new BusinessRuleError(
+            'invalid',
+            'INVALID_EVENT_CAPACITY',
+            'El cupo debe estar entre 1 y 10000',
+          );
+        }
+        return toEvent(
+          await tx.evento.update({
+            where: { id, id_usuario: ownerId, estado: 'BORRADOR', archivado: false },
+            data: { estado: 'PUBLICADO' },
+            include: eventInclude,
+          }),
+        );
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async saveCover(ownerId: string, file: StoredFile): Promise<void> {
+    await this.prisma.portadaEvento.create({
+      data: {
+        id: file.id,
+        id_usuario: ownerId,
+        nombre: file.name,
+        mime: file.mime,
+        contenido: new Uint8Array(file.bytes),
+        size_bytes: file.size,
+      },
+    });
+  }
+
+  async removeCover(ownerId: string, id: string): Promise<void> {
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
+        const row = await tx.portadaEvento.findFirst({
+          where: { id, id_usuario: ownerId },
+          select: { id: true, evento: { select: { id: true } } },
+        });
+        if (!row) {
+          throw new BusinessRuleError(
+            'missing',
+            'COVER_NOT_FOUND',
+            'No se encontró una portada propia',
+          );
+        }
+        if (row.evento) {
+          throw new BusinessRuleError(
+            'conflict',
+            'COVER_IN_USE',
+            'La portada está vinculada a un evento',
+          );
+        }
+        await tx.portadaEvento.delete({ where: { id, id_usuario: ownerId } });
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async readCover(id: string, actor?: ActorContext): Promise<StoredFile> {
+    const row = await this.prisma.portadaEvento.findFirst({
+      where: {
+        id,
+        OR: [
+          { evento: { is: { estado: 'PUBLICADO', archivado: false } } },
+          ...(actor?.permissions.includes('eventos:manage') ? [{ id_usuario: actor.id }] : []),
+        ],
+      },
+    });
+    if (!row) {
+      throw new BusinessRuleError(
+        'missing',
+        'COVER_NOT_FOUND',
+        'No se encontró una portada disponible',
+      );
+    }
+    return {
+      id: row.id,
+      name: row.nombre,
+      mime: row.mime,
+      bytes: row.contenido,
+      size: row.size_bytes,
+    };
+  }
+
+  private eventData(input: EventInput) {
+    return {
+      titulo: input.title,
+      descripcion: input.description ?? null,
+      fecha_inicio: new Date(input.startDate),
+      fecha_fin: new Date(input.endDate),
+      cupo_maximo: input.maxCapacity,
+      ubicacion: input.location ?? null,
+      ...(input.coverId !== undefined ? { id_portada: input.coverId } : {}),
+    };
+  }
+
+  private async lockOwned(tx: Prisma.TransactionClient, ownerId: string, id: string) {
+    await tx.$queryRaw`SELECT id FROM evento WHERE id = ${id}::uuid FOR UPDATE`;
+    const row = await tx.evento.findFirst({ where: { id, id_usuario: ownerId, archivado: false } });
+    if (!row) {
+      return this.missingEvent();
+    }
+    return row;
+  }
+
+  private async checkCover(
+    tx: Prisma.TransactionClient,
+    ownerId: string,
+    id?: string | null,
+    eventId?: string,
+  ): Promise<void> {
+    if (!id) {
+      return;
+    }
+    await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
+    const row = await tx.portadaEvento.findFirst({
+      where: { id, id_usuario: ownerId },
+      select: { evento: { select: { id: true } } },
+    });
+    if (!row) {
+      throw new BusinessRuleError(
+        'missing',
+        'COVER_NOT_FOUND',
+        'Utiliza una portada propia cargada en la API',
+      );
+    }
+    if (row.evento && row.evento.id !== eventId) {
+      throw new BusinessRuleError(
+        'conflict',
+        'COVER_IN_USE',
+        'La portada ya pertenece a otro evento',
+      );
+    }
+  }
+
+  private missingEvent(): never {
+    throw new BusinessRuleError(
+      'missing',
+      'EVENT_NOT_FOUND',
+      'No se encontró el evento solicitado',
+    );
+  }
+}

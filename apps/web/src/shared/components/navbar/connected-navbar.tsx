@@ -3,14 +3,12 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { authStore, useAuthStore } from '@/modules/auth/frontend/store';
-import { clearSession, getSessionToken } from '@/modules/auth/frontend/services/session';
-import { clearAccessToken, getAccessToken } from '@/shared/services/auth-session';
-import { clearToken, getToken } from '@/shared/services/api-client';
+import { clearSession } from '@/modules/auth/frontend/services/session';
+import { authenticatedFetch, revokeCurrentSession } from '@/shared/services/auth-session';
 import { Navbar } from './navbar';
 import { NAVBAR_ROLE_LABEL } from './navigation';
 import type { NavbarRole, NavbarSession } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const roles: NavbarRole[] = ['titulado', 'empresa', 'administrador'];
 
 function sessionFromUser(value: unknown): NavbarSession | null {
@@ -31,6 +29,7 @@ export function ConnectedNavbar() {
   const router = useRouter();
   const auth = useAuthStore();
   const [session, setSession] = useState<NavbarSession | null>(null);
+  const [logoutError, setLogoutError] = useState(false);
 
   useEffect(() => {
     let request: AbortController | undefined;
@@ -39,11 +38,8 @@ export function ConnectedNavbar() {
       request?.abort();
       const controller = new AbortController();
       request = controller;
-      const token = getSessionToken() ?? getAccessToken() ?? getToken();
-      if (!token) { setSession(null); return; }
       try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await authenticatedFetch('/api/v1/auth/me', {
           signal: controller.signal,
           cache: 'no-store',
         });
@@ -64,15 +60,17 @@ export function ConnectedNavbar() {
     };
   }, [pathname, auth.accessToken]);
 
-  const logout = () => {
-    clearSession();
-    clearAccessToken();
-    clearToken();
-    authStore.reset();
-    setSession(null);
-    router.push('/login');
-    router.refresh();
+  const logout = async () => {
+    setLogoutError(false);
+    try {
+      await revokeCurrentSession();
+      clearSession();
+      authStore.reset();
+      setSession(null);
+      router.push('/login');
+      router.refresh();
+    } catch { setLogoutError(true); }
   };
 
-  return <Navbar session={session} onLogout={logout} />;
+  return <><Navbar session={session} onLogout={logout} />{logoutError && <p role="alert">No se pudo cerrar la sesión. Inténtalo nuevamente.</p>}</>;
 }
