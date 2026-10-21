@@ -4,9 +4,16 @@ import type { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
+<<<<<<< HEAD
 import type {
   ActivationCheck,
   ApplicationsRepository,
+=======
+
+import type {
+  ApplicationsRepository,
+  ResolutionMailRecord,
+>>>>>>> ab029e5 (feat(api): enviar correo automatico obligatorio al emitir dictamen sin codigo tit)
 } from '../../application/ports/applications-repository.port';
 
 import type {
@@ -168,6 +175,8 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
     input: ReviewInput,
     activationHash: string | null,
     encryptedMail: string,
+    mail: ResolutionMailRecord,
+
   ) {
     return this.prisma.$transaction(
       async (tx) => {
@@ -221,6 +230,16 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
         }
         await tx.correoPendiente.create({
           data: { contenido: encryptedMail, expira_en: new Date(Date.now() + 86400000) },
+        });
+        await tx.correoTramite.create({
+          data: {
+            id_solicitud: id,
+            id_dictamen: review.id,
+            tipo: mail.type,
+            email_destino: mail.to,
+            asunto: mail.subject,
+            estado: 'pendiente',
+          },
         });
         return {
           id: review.id,
