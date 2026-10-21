@@ -35,6 +35,8 @@ interface ReportsListState {
 }
 
 function readReportsListState(): ReportsListState | null {
+  if (typeof window === 'undefined') return null;
+
   try {
     const storedState = window.localStorage.getItem(REPORTS_LIST_STATE_KEY);
     if (!storedState) return null;
@@ -66,16 +68,17 @@ function readReportsListState(): ReportsListState | null {
 
 /**
  * Normaliza y limpia cadenas de texto para búsquedas homogéneas.
+ * - Soporta valores indefinidos o nulos para evitar errores estrictos de TS.
  * - Bug 2: Elimina comas (`,`) para flexibilizar la búsqueda de nombres/apellidos.
  * - Bug 4: Normaliza espacios múltiples a un único espacio.
  */
-function normalizeText(value: string): string {
+function normalizeText(value?: string | null): string {
   if (!value) return '';
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/,/g, '')        // Bug 2: Remover comas
-    .replace(/\s+/g, ' ')     // Bug 4: Sanitizar múltiples espacios seguidos
+    .replace(/,/g, '')
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
 }
@@ -182,7 +185,9 @@ export default function ReportsPage() {
     setSelectedStatus('TODOS');
     setCurrentPage(1);
     try {
-      window.localStorage.removeItem(REPORTS_LIST_STATE_KEY);
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(REPORTS_LIST_STATE_KEY);
+      }
     } catch {
       // Ignorar errores de almacenamiento
     }
@@ -212,3 +217,142 @@ export default function ReportsPage() {
     const listState: ReportsListState = {
       searchTerm,
       selectedStatus,
+      currentPage,
+    };
+
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          REPORTS_LIST_STATE_KEY,
+          JSON.stringify(listState),
+        );
+      }
+    } catch {
+      // La vista sigue funcionando aunque el navegador no permita almacenamiento local.
+    }
+  }, [
+    currentPage,
+    filteredGraduates.length,
+    hasRestoredListState,
+    loadingGraduates,
+    searchTerm,
+    selectedStatus,
+  ]);
+
+  if (loadingIndicators || loadingGraduates) {
+    return (
+      <div className="p-6">
+        <p className="text-gray-500">Cargando módulo de reportes...</p>
+      </div>
+    );
+  }
+
+  return (
+    <main className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard de Indicadores
+        </h1>
+        <p className="text-sm text-gray-500">
+          Padrón y reportería institucional de titulados
+        </p>
+      </div>
+
+      {errorIndicators ? (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
+          {errorIndicators}
+        </div>
+      ) : (
+        indicators && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              title="Titulados registrados"
+              value={indicators.totalGraduates}
+            />
+            <KpiCard
+              title="Titulados verificados"
+              value={indicators.verifiedGraduates}
+            />
+            <KpiCard
+              title="Titulados observados"
+              value={indicators.observedGraduates}
+            />
+            <KpiCard title="Mentores activos" value={indicators.activeMentors} />
+          </div>
+        )
+      )}
+
+      {/* Controles de Búsqueda, Filtro (HU 2) y Botón Único de Exportación (HU 4 + HU 5) */}
+      <section className="flex flex-col gap-4 rounded-lg border border-[#C9C1B1] bg-[#EEE9DF] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <GraduatesSearch
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            onReset={handleResetFilters}
+          />
+          <GraduatesStatusFilter
+            selectedStatus={selectedStatus}
+            onStatusChange={handleStatusChange}
+          />
+
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            title="Limpiar filtros"
+            aria-label="Limpiar filtros"
+            className="flex h-[50px] w-[50px] items-center justify-center rounded-md border border-[#C9C1B1] bg-white text-gray-600 transition-colors hover:bg-gray-100"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex items-center self-end sm:self-auto">
+          {/* Componente HU 4 orquestando la UI unificada a través de renderTrigger */}
+          <GraduatesReportExport
+            status={pdfExportStatus}
+            onBackToListStart={() => setCurrentPage(1)}
+            renderTrigger={({ exportPdf }) => (
+              <div className="w-48">
+                <GraduateCsvExport
+                  totalRecords={filteredGraduates.length}
+                  filters={{
+                    status: selectedStatus,
+                    search: searchTerm,
+                  }}
+                  onPdfExport={() => exportPdf(pdfExportStatus)}
+                />
+              </div>
+            )}
+          />
+        </div>
+      </section>
+
+      {/* Tabla con Paginación o Estado Vacío (HU 1 + HU 3) */}
+      {filteredGraduates.length === 0 ? (
+        <EmptyState onRefresh={handleResetFilters} />
+      ) : (
+        <div className="space-y-2">
+          <GraduatesTable
+            graduates={paginatedGraduates}
+            onViewReason={setSelectedGraduate}
+            startIndex={(currentPage - 1) * ITEMS_PER_PAGE}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredGraduates.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
+      {/* Modal de Detalles de la Observación (HU 3) */}
+      {selectedGraduate && (
+        <ObservationModal
+          graduate={selectedGraduate}
+          onClose={() => setSelectedGraduate(null)}
+        />
+      )}
+    </main>
+  );
+}
