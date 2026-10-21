@@ -115,3 +115,9 @@ export const activateAccountSchema = z.strictObject({
   code: z.string().regex(/^\d{6}$/),
   password: z.string().min(15).max(128),
 });
+
+export const verifyActivationSchema = z.strictObject({
+  applicationId: z.uuid(),
+  code: z.string().regex(/^\d{6}$/),
+});
+export type VerifyActivationInput = z.infer<typeof verifyActivationSchema>;

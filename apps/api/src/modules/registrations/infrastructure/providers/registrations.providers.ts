@@ -31,7 +31,7 @@ import { GetApplicationUseCase } from '../../application/use-cases/get-applicati
 import { GetApplicationDocumentUseCase } from '../../application/use-cases/get-application-document.use-case';
 import { ReviewApplicationUseCase } from '../../application/use-cases/review-application.use-case';
 import { ActivateRegistrationUseCase } from '../../application/use-cases/activate-registration.use-case';
-
+import { VerifyActivationCodeUseCase } from '../../application/use-cases/verify-activation-code.use-case';
 export const registrationsProviders: Provider[] = [
   {
     provide: RenewActivationUseCase,
@@ -117,5 +117,12 @@ export const registrationsProviders: Provider[] = [
       security: RegistrationSecurity,
       passwords: PasswordHasher,
     ) => new ActivateRegistrationUseCase(repository, security, passwords),
+  },
+
+  {
+    provide: VerifyActivationCodeUseCase,
+    inject: [APPLICATIONS_REPOSITORY, REGISTRATION_SECURITY],
+    useFactory: (repository: ApplicationsRepository, security: RegistrationSecurity) =>
+      new VerifyActivationCodeUseCase(repository, security),
   },
 ];
