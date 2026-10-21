@@ -58,6 +58,7 @@ describe('Registro documental: fronteras HTTP y permisos', () => {
     list: jest.fn(),
     document: jest.fn(),
     review: jest.fn(),
+    verifyActivation: jest.fn(),
     activate: jest.fn(),
     renewActivation: jest.fn(),
   };
@@ -162,6 +163,50 @@ describe('Registro documental: fronteras HTTP y permisos', () => {
       security.hash('draft', token),
       security.hash('otp', token + ':123456'),
     );
+  });
+
+    it('entrega un pase de activación sin exponer el hash del código', async () => {
+    applications.verifyActivation.mockResolvedValue({
+      result: 'verified',
+      binding: 'hash-vigente-secreto',
+    });
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/registrations/activate/verify')
+      .send({ applicationId, code: '123456' })
+      .expect(200);
+    expect(response.body.data.activationToken).toEqual(expect.any(String));
+    expect(response.body.data.expiresInSeconds).toBe(600);
+    expect(JSON.stringify(response.body)).not.toContain('hash-vigente-secreto');
+    expect(applications.verifyActivation).toHaveBeenCalledWith(
+      applicationId,
+      security.hash('activation', applicationId + ':123456'),
+    );
+  });
+
+  it.each([
+    ['invalid', 400, 'INVALID_ACTIVATION'],
+    ['expired', 410, 'ACTIVATION_EXPIRED'],
+    ['locked', 429, 'ACTIVATION_ATTEMPTS_EXCEEDED'],
+  ])('traduce el resultado de activación %s sin emitir pase', async (result, status, code) => {
+    applications.verifyActivation.mockResolvedValue({ result });
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/registrations/activate/verify')
+      .send({ applicationId, code: '123456' })
+      .expect(status);
+    expect(response.body.error.code).toBe(code);
+    expect(response.body.data).toBeUndefined();
+  });
+
+  it('rechaza códigos mal formados y campos extra antes de consultar la solicitud', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/registrations/activate/verify')
+      .send({ applicationId, code: '12345' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/registrations/activate/verify')
+      .send({ applicationId, code: '123456', password: 'no-corresponde-al-paso-1' })
+      .expect(400);
+    expect(applications.verifyActivation).not.toHaveBeenCalled();
   });
 
   it('bloquea archivos disfrazados aunque declaren application/pdf', async () => {
