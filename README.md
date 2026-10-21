@@ -1,4 +1,4 @@
-# Proyecto Fexco (nombre provisional — ajustar)
+# Proyecto UMSSPIRA
 
 Monorepo con **pnpm workspaces**: API en NestJS, frontend en Next.js, tipos compartidos y base de datos en Supabase.
 
