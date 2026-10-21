@@ -50,6 +50,13 @@ export default function MentoriasPage() {
               Configurar mi perfil de mentor
               <ArrowRightIcon className="icon" aria-hidden="true" />
             </Link>
+            <Link
+              href="/mentorship/my-requests/received"
+              className="mentor-button mentor-button-secondary mentor-card-button mentorship-requests-link"
+            >
+              Solicitudes recibidas
+              <ArrowRightIcon className="icon" aria-hidden="true" />
+            </Link>
             <p aria-hidden="true" className="mentor-card-notice" />
           </div>
         </article>

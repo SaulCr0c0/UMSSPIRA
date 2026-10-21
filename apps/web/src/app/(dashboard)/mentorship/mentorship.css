@@ -150,6 +150,10 @@
   letter-spacing: .5px;
 }
 
+.mentorship-requests-link {
+  margin-top: .6rem;
+}
+
 @media (min-width: 640px) {
   .mentorship-shell {
     padding: 2.5rem 1.5rem;

@@ -37,6 +37,7 @@ export const NAVBAR_SECTIONS: NavbarSection[] = [
     { id: 'inst-mentorias', label: 'Sobre las mentorías', href: '/portal/institucional?tab=mentorias' },
     { id: 'mentorship', label: 'Red de mentorías', href: '/mentorship' },
     { id: 'mentor-profile', label: 'Mi perfil de mentor', href: '/mentorship/profile', roles: members },
+    { id: 'mentorship-requests', label: 'Solicitudes recibidas', href: '/mentorship/my-requests/received', roles: members },
     { id: 'mentor-information', label: 'Información de mi perfil', href: '/mentorship/profile/information', roles: members },
     { id: 'mentor-areas', label: 'Áreas técnicas', href: '/mentorship/profile/areas', roles: members },
     { id: 'mentor-interests', label: 'Intereses de mentoría', href: '/mentorship/profile/interests', roles: members },
