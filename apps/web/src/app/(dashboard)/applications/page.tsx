@@ -7,6 +7,8 @@ import { Button } from '@/shared/components/button';
 import { ApplicationDrawer } from '@/modules/applications/frontend/components/application-drawer';
 import {
   fetchApplicationsBoard,
+  fetchApplicationsMetrics,
+  type BoardMetrics,
   type BoardPage,
 } from '@/modules/applications/frontend/services/applications-board.service';
 import {
@@ -15,10 +17,12 @@ import {
   changePageSize,
   clampPage,
   parseApplicationsUrl,
+  resolveDateRange,
   toApplicationsParams,
   type ApplicationsUrlState,
 } from '@/modules/applications/frontend/services/application-query';
 import { EMPTY_FILTERS, RequestsFilters, type BoardFilters } from './_components/requests-filters';
+import { RequestsMetrics } from './_components/requests-metrics';
 import { RequestsTable } from './_components/requests-table';
 
 const CAREERS_URL = '/api/v1/registrations/careers';
@@ -39,12 +43,27 @@ function ApplicationsBoardView() {
 
   const [searchInput, setSearchInput] = useState(query.search);
   const [board, setBoard] = useState<BoardPage | null>(null);
+  const [metrics, setMetrics] = useState<BoardMetrics | null>(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  const [metricsError, setMetricsError] = useState<string | null>(null);
   const [careers, setCareers] = useState<{ id: string; nombre: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const requestId = useRef(0);
+
+  const loadMetrics = useCallback(async () => {
+    setIsLoadingMetrics(true);
+    setMetricsError(null);
+    const result = await fetchApplicationsMetrics();
+    if (result.ok) {
+      setMetrics(result.data);
+    } else {
+      setMetricsError(result.message);
+    }
+    setIsLoadingMetrics(false);
+  }, []);
 
   const updateQuery = useCallback((next: ApplicationsUrlState) => {
     queryRef.current = next;
@@ -62,6 +81,7 @@ function ApplicationsBoardView() {
       career: activeQuery.career || undefined,
       status: activeQuery.status || undefined,
       search: activeQuery.search || undefined,
+      ...resolveDateRange(activeQuery),
     });
     if (currentRequestId !== requestId.current) return;
 
@@ -98,6 +118,10 @@ function ApplicationsBoardView() {
   }, [query, loadBoard]);
 
   useEffect(() => {
+    void loadMetrics();
+  }, [loadMetrics]);
+
+  useEffect(() => {
     fetch(CAREERS_URL, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((body) => {
@@ -109,11 +133,21 @@ function ApplicationsBoardView() {
   function handleFiltersChange(next: BoardFilters) {
     setSearchInput(next.search);
     const currentQuery = queryRef.current;
-    if (next.career !== currentQuery.career || next.status !== currentQuery.status) {
+    const period = next.period;
+    if (
+      next.career !== currentQuery.career ||
+      next.status !== currentQuery.status ||
+      period !== currentQuery.period ||
+      next.fromDate !== currentQuery.fromDate ||
+      next.toDate !== currentQuery.toDate
+    ) {
       updateQuery(changeFilters(currentQuery, {
         search: next.search,
         career: next.career,
         status: next.status,
+        period,
+        fromDate: next.fromDate,
+        toDate: next.toDate,
       }));
     }
   }
@@ -157,6 +191,14 @@ function ApplicationsBoardView() {
         }}
       />
 
+      <RequestsMetrics metrics={metrics} isLoading={isLoadingMetrics} />
+
+      {metricsError && (
+        <div role="alert" className="rounded-lg border border-truffle-trouble/40 bg-truffle-trouble/10 p-3 text-sm font-medium text-truffle-trouble">
+          No se pudieron cargar los indicadores: {metricsError}
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="rounded-lg border border-truffle-trouble/40 bg-truffle-trouble/10 p-3 text-sm font-medium text-truffle-trouble">
           {error}
@@ -188,6 +230,7 @@ function ApplicationsBoardView() {
         onReviewed={() => {
           setSelectedId(null);
           void loadBoard(queryRef.current);
+          void loadMetrics();
         }}
       />
     </main>

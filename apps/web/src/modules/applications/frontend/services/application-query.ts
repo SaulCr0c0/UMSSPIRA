@@ -13,6 +13,9 @@ export interface ApplicationsUrlState {
   search: string;
   career: string;
   status: "" | BoardStatus;
+  period: 'all' | 'last15' | 'last30' | 'custom';
+  fromDate: string;
+  toDate: string;
 }
 
 export const EMPTY_URL_STATE: ApplicationsUrlState = {
@@ -21,6 +24,9 @@ export const EMPTY_URL_STATE: ApplicationsUrlState = {
   search: "",
   career: "",
   status: "",
+  period: "all",
+  fromDate: "",
+  toDate: "",
 };
 
 // Sirve tanto para URLSearchParams como para los parámetros de Next
@@ -35,6 +41,7 @@ function toPositiveInt(value: string | null, fallback: number): number {
 export function parseApplicationsUrl(params: ParamsReader): ApplicationsUrlState {
   const size = toPositiveInt(params.get("size"), DEFAULT_PAGE_SIZE);
   const status = params.get("status") ?? "";
+  const period = params.get("period");
 
   return {
     page: toPositiveInt(params.get("page"), 1),
@@ -42,7 +49,16 @@ export function parseApplicationsUrl(params: ParamsReader): ApplicationsUrlState
     search: (params.get("q") ?? "").trim(),
     career: params.get("career") ?? "",
     status: (STATUS_VALUES as readonly string[]).includes(status) ? (status as BoardStatus) : "",
+    period: period === 'last15' || period === 'last30' || period === 'custom' ? period : 'all',
+    fromDate: isDateOnly(params.get('fromDate')) ? params.get('fromDate')! : '',
+    toDate: isDateOnly(params.get('toDate')) ? params.get('toDate')! : '',
   };
+}
+
+function isDateOnly(value: string | null): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 // Escribe la dirección web; no incluye los valores por defecto para mantenerla corta
@@ -53,6 +69,9 @@ export function toApplicationsParams(state: ApplicationsUrlState): URLSearchPara
   if (state.search) params.set("q", state.search);
   if (state.career) params.set("career", state.career);
   if (state.status) params.set("status", state.status);
+  if (state.period !== 'all') params.set('period', state.period);
+  if (state.fromDate) params.set('fromDate', state.fromDate);
+  if (state.toDate) params.set('toDate', state.toDate);
   return params;
 }
 
@@ -64,9 +83,36 @@ export function changePageSize(state: ApplicationsUrlState, pageSize: number): A
 // CA-08.3: al cambiar búsqueda o filtros se vuelve a la primera página y los demás se conservan
 export function changeFilters(
   state: ApplicationsUrlState,
-  patch: Partial<Pick<ApplicationsUrlState, "search" | "career" | "status">>,
+  patch: Partial<Pick<ApplicationsUrlState, "search" | "career" | "status" | "period" | "fromDate" | "toDate">>,
 ): ApplicationsUrlState {
   return { ...state, ...patch, page: 1 };
+}
+
+export function resolveDateRange(
+  state: ApplicationsUrlState,
+  now: Date = new Date(),
+): { fromDate?: string; toDate?: string } {
+  if (state.period === 'custom') {
+    return {
+      ...(state.fromDate ? { fromDate: state.fromDate } : {}),
+      ...(state.toDate ? { toDate: state.toDate } : {}),
+    };
+  }
+  if (state.period !== 'last15' && state.period !== 'last30') return {};
+
+  const todayParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/La_Paz',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    todayParts.find((entry) => entry.type === type)?.value ?? '';
+  const today = `${part('year')}-${part('month')}-${part('day')}`;
+  const days = state.period === 'last15' ? 14 : 29;
+  const start = new Date(`${today}T00:00:00Z`);
+  start.setUTCDate(start.getUTCDate() - days);
+  return { fromDate: start.toISOString().slice(0, 10), toDate: today };
 }
 
 // CA-08.3: al cambiar de página se conservan filtros, búsqueda y tamaño

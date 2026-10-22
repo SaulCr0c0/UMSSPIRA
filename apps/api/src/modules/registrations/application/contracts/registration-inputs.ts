@@ -47,6 +47,8 @@ export interface ApplicationQuery {
   status?: 'PENDING' | 'APPROVED' | 'OBSERVED' | 'REJECTED';
   search?: string;
   age?: 'within48' | 'over48';
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface Notification {

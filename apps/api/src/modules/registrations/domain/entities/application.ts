@@ -28,6 +28,13 @@ export interface ApplicationPage {
   pageSize: number;
 }
 
+export interface ApplicationMetrics {
+  receivedToday: number;
+  pending: number;
+  urgent: number;
+  resolvedToday: number;
+}
+
 export interface ReviewResult {
   id: string;
   applicationId: string;

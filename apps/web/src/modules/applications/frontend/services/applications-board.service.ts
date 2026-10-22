@@ -36,6 +36,13 @@ export interface BoardPage {
   pageSize: number;
 }
 
+export interface BoardMetrics {
+  receivedToday: number;
+  pending: number;
+  urgent: number;
+  resolvedToday: number;
+}
+
 export interface BoardQuery {
   page: number;
   pageSize: number;
@@ -43,6 +50,8 @@ export interface BoardQuery {
   status?: '' | BoardStatus;
   search?: string;
   age?: '' | 'within48' | 'over48';
+  fromDate?: string;
+  toDate?: string;
 }
 
 export type BoardResult<T> =
@@ -93,7 +102,13 @@ export function fetchApplicationsBoard(query: BoardQuery): Promise<BoardResult<B
   if (query.status) params.set('status', query.status);
   if (query.search) params.set('search', query.search);
   if (query.age) params.set('age', query.age);
+  if (query.fromDate) params.set('fromDate', query.fromDate);
+  if (query.toDate) params.set('toDate', query.toDate);
   return boardFetch<BoardPage>(`${APPLICATIONS_URL}?${params.toString()}`);
+}
+
+export function fetchApplicationsMetrics(): Promise<BoardResult<BoardMetrics>> {
+  return boardFetch<BoardMetrics>(`${APPLICATIONS_URL}/metrics`);
 }
 
 // Expediente para el drawer (CA-04.3).

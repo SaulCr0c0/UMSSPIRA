@@ -84,11 +84,21 @@ export const submitRegistrationSchema = z
   });
 export const applicationQuerySchema = z.strictObject({
   page: z.coerce.number().int().positive().max(100000).default(1),
-  pageSize: z.coerce.number().int().min(1).max(15).default(15),
+  pageSize: z.coerce.number().int().min(1).max(50).default(15),
   career: z.string().trim().max(150).optional(),
   status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
   search: z.string().trim().max(100).optional(),
   age: z.enum(['within48', 'over48']).optional(),
+  fromDate: z.iso.date().optional(),
+  toDate: z.iso.date().optional(),
+}).superRefine((query, context) => {
+  if (query.fromDate && query.toDate && query.fromDate > query.toDate) {
+    context.addIssue({
+      code: 'custom',
+      path: ['fromDate'],
+      message: 'La fecha inicial debe ser anterior o igual a la fecha final',
+    });
+  }
 });
 export const reviewSchema = z
   .strictObject({

@@ -3,6 +3,7 @@ import type { ApplicationQuery, ReviewInput } from '../contracts/registration-in
 import type {
   ApplicationDetail,
   ApplicationPage,
+  ApplicationMetrics,
   ReviewResult,
 } from '../../domain/entities/application';
 import type { RegistrationFile } from '../../domain/entities/registration';
@@ -17,6 +18,7 @@ export interface ApplicationsRepository {
     encryptedMail: string,
   ): Promise<void>;
   list(actor: ActorContext, query: ApplicationQuery): Promise<ApplicationPage>;
+  metrics(actor: ActorContext): Promise<ApplicationMetrics>;
   find(actor: ActorContext, id: string): Promise<ApplicationDetail>;
   document(actor: ActorContext, id: string): Promise<RegistrationFile>;
   review(

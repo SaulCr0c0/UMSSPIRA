@@ -9,6 +9,7 @@ import type {
   ApplicationQuery,
   ReviewInput,
 } from '../../application/contracts/registration-inputs';
+import type { ApplicationMetrics } from '../../domain/entities/application';
 import { toApplication } from '../translators/application.translator';
 import { applicationInclude, toRegistrationFile } from '../translators/registration.translator';
 
@@ -17,6 +18,24 @@ export function scopedApplication(actor: ActorContext, id?: string): Prisma.Soli
     ...(id ? { id } : {}),
     detalle_solicitud: { is: { id_carrera: { in: actor.scopes.careerIds } } },
   };
+}
+
+function boliviaDayRange(now: Date): { start: Date; end: Date } {
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/La_Paz',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    dateParts.find((part) => part.type === type)?.value ?? '';
+  const day = `${value('year')}-${value('month')}-${value('day')}`;
+  const start = new Date(`${day}T00:00:00-04:00`);
+  return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+}
+
+function boliviaDateStart(date: string): Date {
+  return new Date(`${date}T00:00:00-04:00`);
 }
 
 @Injectable()
@@ -91,6 +110,16 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
         scopedApplication(actor),
         ...(query.status ? [{ estado: query.status }] : []),
         ...(detailFilters.length ? [{ detalle_solicitud: { is: { AND: detailFilters } } }] : []),
+        ...((query.fromDate || query.toDate)
+          ? [{
+              fecha_creacion: {
+                ...(query.fromDate ? { gte: boliviaDateStart(query.fromDate) } : {}),
+                ...(query.toDate
+                  ? { lt: new Date(boliviaDateStart(query.toDate).getTime() + 24 * 60 * 60 * 1000) }
+                  : {}),
+              },
+            }]
+          : []),
         ...(query.age === 'over48'
           ? [overdue]
           : query.age === 'within48'
@@ -131,6 +160,31 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
       page: query.page,
       pageSize: query.pageSize,
     };
+  }
+
+  async metrics(actor: ActorContext): Promise<ApplicationMetrics> {
+    const now = new Date();
+    const { start, end } = boliviaDayRange(now);
+    const scope = scopedApplication(actor);
+    const [receivedToday, pending, urgent, resolvedToday] = await this.prisma.$transaction([
+      this.prisma.solicitud.count({
+        where: { AND: [scope, { fecha_creacion: { gte: start, lt: end } }] },
+      }),
+      this.prisma.solicitud.count({ where: { AND: [scope, { estado: 'PENDING' }] } }),
+      this.prisma.solicitud.count({
+        where: {
+          AND: [
+            scope,
+            { estado: 'PENDING' },
+            { fecha_creacion: { lt: new Date(now.getTime() - 48 * 60 * 60 * 1000) } },
+          ],
+        },
+      }),
+      this.prisma.solicitud.count({
+        where: { AND: [scope, { fecha_resolucion: { gte: start, lt: end } }] },
+      }),
+    ]);
+    return { receivedToday, pending, urgent, resolvedToday };
   }
 
   async find(actor: ActorContext, id: string) {
@@ -205,6 +259,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
           where: { id },
           data: {
             estado: input.decision,
+            fecha_resolucion: now,
             activacion_hash: activationHash,
             activacion_expira_en: approved ? new Date(Date.now() + 86400000) : null,
           },

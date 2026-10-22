@@ -1,4 +1,9 @@
-import { fetchApplicationsBoard, fetchApplicationDetail, fetchDocumentUrl } from './applications-board.service';
+import {
+  fetchApplicationsBoard,
+  fetchApplicationsMetrics,
+  fetchApplicationDetail,
+  fetchDocumentUrl,
+} from './applications-board.service';
 import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 describe('applications-board.service', () => {
@@ -12,7 +17,15 @@ describe('applications-board.service', () => {
     const page = { items: [], total: 0, page: 1, pageSize: 15 };
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: page }) });
 
-    const result = await fetchApplicationsBoard({ page: 2, pageSize: 15, career: 'Sistemas', status: 'PENDING', search: '20180' });
+    const result = await fetchApplicationsBoard({
+      page: 2,
+      pageSize: 50,
+      career: 'Sistemas',
+      status: 'PENDING',
+      search: '20180',
+      fromDate: '2026-10-01',
+      toDate: '2026-10-21',
+    });
 
     expect(result).toEqual({ ok: true, data: page });
     const [url] = (global.fetch as jest.Mock).mock.calls[0];
@@ -21,6 +34,17 @@ describe('applications-board.service', () => {
     expect(url).toContain('career=Sistemas');
     expect(url).toContain('status=PENDING');
     expect(url).toContain('search=20180');
+    expect(url).toContain('pageSize=50');
+    expect(url).toContain('fromDate=2026-10-01');
+    expect(url).toContain('toDate=2026-10-21');
+  });
+
+  it('carga los indicadores administrativos desde el endpoint protegido', async () => {
+    const metrics = { receivedToday: 3, pending: 9, urgent: 2, resolvedToday: 1 };
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: metrics }) });
+
+    await expect(fetchApplicationsMetrics()).resolves.toEqual({ ok: true, data: metrics });
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe('/api/v1/applications/metrics');
   });
 
   it('marca needsLogin cuando falta la sesión de administrador', async () => {

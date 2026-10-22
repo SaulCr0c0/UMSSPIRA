@@ -27,6 +27,7 @@ import { VerifyRegistrationCodeUseCase } from '../../application/use-cases/verif
 import { UploadRegistrationDocumentUseCase } from '../../application/use-cases/upload-registration-document.use-case';
 import { SubmitRegistrationUseCase } from '../../application/use-cases/submit-registration.use-case';
 import { ListApplicationsUseCase } from '../../application/use-cases/list-applications.use-case';
+import { GetApplicationMetricsUseCase } from '../../application/use-cases/get-application-metrics.use-case';
 import { GetApplicationUseCase } from '../../application/use-cases/get-application.use-case';
 import { GetApplicationDocumentUseCase } from '../../application/use-cases/get-application-document.use-case';
 import { ReviewApplicationUseCase } from '../../application/use-cases/review-application.use-case';
@@ -91,6 +92,12 @@ export const registrationsProviders: Provider[] = [
     provide: ListApplicationsUseCase,
     inject: [APPLICATIONS_REPOSITORY],
     useFactory: (repository: ApplicationsRepository) => new ListApplicationsUseCase(repository),
+  },
+  {
+    provide: GetApplicationMetricsUseCase,
+    inject: [APPLICATIONS_REPOSITORY],
+    useFactory: (repository: ApplicationsRepository) =>
+      new GetApplicationMetricsUseCase(repository),
   },
   {
     provide: GetApplicationUseCase,

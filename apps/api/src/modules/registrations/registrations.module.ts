@@ -15,6 +15,7 @@ import { SubmitRegistrationController } from './http/controllers/submit-registra
 import { ActivateRegistrationController } from './http/controllers/activate-registration.controller';
 import { UploadRegistrationDocumentController } from './http/controllers/upload-registration-document.controller';
 import { ListApplicationsController } from './http/controllers/list-applications.controller';
+import { GetApplicationMetricsController } from './http/controllers/get-application-metrics.controller';
 import { GetApplicationController } from './http/controllers/get-application.controller';
 import { ReviewApplicationController } from './http/controllers/review-application.controller';
 import { GetApplicationDocumentLinkController } from './http/controllers/get-application-document-link.controller';
@@ -33,6 +34,7 @@ import { GetApplicationDocumentController } from './http/controllers/get-applica
     ActivateRegistrationController,
     UploadRegistrationDocumentController,
     ListApplicationsController,
+    GetApplicationMetricsController,
     GetApplicationController,
     ReviewApplicationController,
     GetApplicationDocumentLinkController,

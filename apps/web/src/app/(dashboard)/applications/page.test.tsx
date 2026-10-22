@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ApplicationsPage from './page';
-import { fetchApplicationsBoard } from '@/modules/applications/frontend/services/applications-board.service';
+import {
+  fetchApplicationsBoard,
+  fetchApplicationsMetrics,
+} from '@/modules/applications/frontend/services/applications-board.service';
 
 jest.mock('next/link', () => ({
   __esModule: true,
@@ -32,6 +35,7 @@ const mockRouter = {
 
 jest.mock('@/modules/applications/frontend/services/applications-board.service', () => ({
   fetchApplicationsBoard: jest.fn(),
+  fetchApplicationsMetrics: jest.fn(),
   fetchApplicationDetail: jest.fn(),
   fetchDocumentUrl: jest.fn(),
 }));
@@ -52,6 +56,11 @@ const boardPage = {
 describe('ApplicationsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.history.replaceState({}, '', '/applications');
+    (fetchApplicationsMetrics as jest.Mock).mockResolvedValue({
+      ok: true,
+      data: { receivedToday: 3, pending: 9, urgent: 2, resolvedToday: 1 },
+    });
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) });
   });
 
@@ -65,6 +74,22 @@ describe('ApplicationsPage', () => {
     expect(screen.getByText('Alerta >48h')).toBeInTheDocument();
   });
 
+  it('muestra los cuatro indicadores devueltos por el servicio', async () => {
+    mockedFetchBoard.mockResolvedValue({ ok: true, data: boardPage });
+    render(<ApplicationsPage />);
+
+    const indicators = await screen.findByRole('region', { name: 'Indicadores de solicitudes' });
+    expect(within(indicators).getByText('Recibidas hoy')).toBeInTheDocument();
+    expect(within(indicators).getByText('Pendientes')).toBeInTheDocument();
+    expect(within(indicators).getByText('Urgentes (más de 48 h)')).toBeInTheDocument();
+    expect(within(indicators).getByText('Resueltas hoy')).toBeInTheDocument();
+    expect(within(indicators).getByText('3')).toBeInTheDocument();
+    expect(within(indicators).getByText('9')).toBeInTheDocument();
+    expect(within(indicators).getByText('2')).toBeInTheDocument();
+    expect(within(indicators).getByText('1')).toBeInTheDocument();
+    expect(fetchApplicationsMetrics).toHaveBeenCalledTimes(1);
+  });
+
   it('filtra por texto y muestra el estado vacío con opción de limpiar (CA-04.2)', async () => {
     mockedFetchBoard.mockResolvedValue({ ok: true, data: { ...boardPage, items: [], total: 0 } });
     render(<ApplicationsPage />);
@@ -74,6 +99,22 @@ describe('ApplicationsPage', () => {
 
     await waitFor(() => expect(mockedFetchBoard).toHaveBeenCalledWith(expect.objectContaining({ search: 'sin-coincidencias', page: 1 })));
     expect(await screen.findByText('No hay solicitudes que coincidan con los filtros.')).toBeInTheDocument();
+  });
+
+  it('aplica un rango personalizado a la consulta del backend', async () => {
+    mockedFetchBoard.mockResolvedValue({ ok: true, data: boardPage });
+    render(<ApplicationsPage />);
+    await screen.findByText('Bandeja de Solicitudes');
+
+    fireEvent.change(screen.getByLabelText('Periodo de registro'), { target: { value: 'custom' } });
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-01' } });
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-10-21' } });
+
+    await waitFor(() => {
+      expect(mockedFetchBoard).toHaveBeenCalledWith(
+        expect.objectContaining({ fromDate: '2026-10-01', toDate: '2026-10-21', page: 1 }),
+      );
+    });
   });
 
   it('pide iniciar sesión cuando la API responde 401', async () => {

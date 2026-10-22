@@ -7,6 +7,7 @@ import {
   changePageSize,
   clampPage,
   parseApplicationsUrl,
+  resolveDateRange,
   toApplicationsParams,
   totalPagesFor,
 } from "./application-query";
@@ -21,7 +22,14 @@ describe("parseApplicationsUrl", () => {
       new URLSearchParams("page=3&size=25&q=ana&career=Sistemas&status=PENDING"),
     );
 
-    expect(state).toEqual({ page: 3, pageSize: 25, search: "ana", career: "Sistemas", status: "PENDING" });
+    expect(state).toEqual({
+      ...EMPTY_URL_STATE,
+      page: 3,
+      pageSize: 25,
+      search: "ana",
+      career: "Sistemas",
+      status: "PENDING",
+    });
   });
 
   it("ignora un tamaño que no está entre 10, 15, 25 y 50", () => {
@@ -34,6 +42,18 @@ describe("parseApplicationsUrl", () => {
 
     expect(state.page).toBe(1);
     expect(state.status).toBe("");
+  });
+
+  it("lee el periodo y descarta fechas inválidas", () => {
+    const state = parseApplicationsUrl(
+      new URLSearchParams("period=custom&fromDate=2026-10-01&toDate=2026-10-31"),
+    );
+
+    expect(state.period).toBe('custom');
+    expect(state.fromDate).toBe('2026-10-01');
+    expect(state.toDate).toBe('2026-10-31');
+    expect(parseApplicationsUrl(new URLSearchParams('period=semester1')).period).toBe('all');
+    expect(parseApplicationsUrl(new URLSearchParams('fromDate=2026-02-30')).fromDate).toBe('');
   });
 });
 
@@ -52,14 +72,31 @@ describe("toApplicationsParams", () => {
   });
 
   it("lo que se escribe se vuelve a leer igual", () => {
-    const state = { page: 4, pageSize: 10, search: "paz", career: "Ingeniería de Sistemas", status: "APPROVED" as const };
+    const state = {
+      ...EMPTY_URL_STATE,
+      page: 4,
+      pageSize: 10,
+      search: "paz",
+      career: "Ingeniería de Sistemas",
+      status: "APPROVED" as const,
+      period: 'custom' as const,
+      fromDate: '2026-01-02',
+      toDate: '2026-02-03',
+    };
 
     expect(parseApplicationsUrl(toApplicationsParams(state))).toEqual(state);
   });
 });
 
 describe("cambios de estado", () => {
-  const state = { page: 3, pageSize: 15, search: "ana", career: "Sistemas", status: "PENDING" as const };
+  const state = {
+    ...EMPTY_URL_STATE,
+    page: 3,
+    pageSize: 15,
+    search: "ana",
+    career: "Sistemas",
+    status: "PENDING" as const,
+  };
 
   it("al cambiar el tamaño vuelve a la página 1 y conserva los filtros (CA-08.2)", () => {
     expect(changePageSize(state, 25)).toEqual({ ...state, pageSize: 25, page: 1 });
@@ -69,8 +106,29 @@ describe("cambios de estado", () => {
     expect(changeFilters(state, { status: "APPROVED" })).toEqual({ ...state, status: "APPROVED", page: 1 });
   });
 
+  it('al cambiar el periodo conserva los demás filtros y reinicia la paginación', () => {
+    expect(
+      changeFilters(state, {
+        period: 'custom',
+        fromDate: '2026-10-01',
+        toDate: '2026-10-21',
+      }),
+    ).toEqual({
+      ...state,
+      page: 1,
+      period: 'custom',
+      fromDate: '2026-10-01',
+      toDate: '2026-10-21',
+    });
+  });
+
   it("al cambiar de página conserva filtros, búsqueda y tamaño (CA-08.3)", () => {
     expect(changePage(state, 4)).toEqual({ ...state, page: 4 });
+  });
+
+  it('resuelve los últimos 15 días según el calendario de Bolivia', () => {
+    expect(resolveDateRange({ ...EMPTY_URL_STATE, period: 'last15' }, new Date('2026-10-22T02:30:00.000Z')))
+      .toEqual({ fromDate: '2026-10-07', toDate: '2026-10-21' });
   });
 });
 
