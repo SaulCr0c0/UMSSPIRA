@@ -6,22 +6,19 @@ import { MessageSquare } from 'lucide-react';
 import styles from './navbar.module.css';
 
 interface MessagesButtonProps {
-  // Callback para avisar a la Navbar que cierre otros menús
-  onOpen?: () => void; 
-  // Para saber si la Navbar abrió otro menú y debemos cerrarnos
-  isOtherMenuOpen?: boolean; 
+  onOpen?: () => void;
+  isOtherMenuOpen?: boolean;
 }
 
 export function MessagesButton({ onOpen, isOtherMenuOpen }: MessagesButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Si la Navbar abre otro menú (ej. notificaciones), cerramos el nuestro
   useEffect(() => {
     if (isOtherMenuOpen) setIsOpen(false);
   }, [isOtherMenuOpen]);
 
-  // CA-05: Cerrar con la tecla Esc
+  // CA-05: Cerrar con Esc
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsOpen(false);
@@ -30,7 +27,7 @@ export function MessagesButton({ onOpen, isOtherMenuOpen }: MessagesButtonProps)
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // CA-05: Cerrar al hacer clic fuera
+  // CA-05: Cerrar clic fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | FocusEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -48,14 +45,12 @@ export function MessagesButton({ onOpen, isOtherMenuOpen }: MessagesButtonProps)
   }, [isOpen]);
 
   const handleToggle = () => {
-    if (!isOpen && onOpen) {
-      onOpen(); // Avisamos a la navbar que abra este
-    }
+    if (!isOpen && onOpen) onOpen();
     setIsOpen(!isOpen);
   };
 
   return (
-    <div className={styles.actionDropdown} ref={panelRef}>
+    <div className={`${styles.actionDropdown} ${styles.messageAction}`} ref={panelRef}>
       <button
         type="button"
         className={styles.iconButton}
@@ -67,17 +62,19 @@ export function MessagesButton({ onOpen, isOtherMenuOpen }: MessagesButtonProps)
       </button>
 
       {isOpen && (
-        <div className={styles.activityPopover} style={{ padding: '1rem', width: '280px' }}>
-          <h3 style={{ fontWeight: 'bold', marginBottom: '0.75rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
-            Mensajes
-          </h3>
-          <Link
-            href="/mensajes"
-            onClick={() => setIsOpen(false)}
-            style={{ display: 'block', textAlign: 'center', color: '#d97706', fontWeight: 600, fontSize: '0.875rem' }}
-          >
-            Ver todos los mensajes
-          </Link>
+        <div className={styles.activityPopover}>
+          <div className={styles.activityPanel}>
+            <h2>Mensajes</h2>
+            <div style={{ padding: '16px', textAlign: 'center' }}>
+              <Link 
+                href="/mensajes" 
+                onClick={() => setIsOpen(false)}
+                style={{ color: '#b06c30', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+              >
+                Ver todos los mensajes
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </div>
