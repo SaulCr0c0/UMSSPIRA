@@ -72,7 +72,7 @@ export default function ApplicationsPage() {
 
   function handleFiltersChange(next: BoardFilters) {
     setSearchInput(next.search);
-    setFilters({ ...next, search: '' });
+    setFilters((current) => ({ ...next, search: current.search }));
     setPage(1);
   }
 

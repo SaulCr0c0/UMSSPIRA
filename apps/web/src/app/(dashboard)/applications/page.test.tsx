@@ -54,6 +54,37 @@ describe('ApplicationsPage', () => {
     expect(await screen.findByText('No hay solicitudes que coincidan con los filtros.')).toBeInTheDocument();
   });
 
+  it('conserva la búsqueda aplicada al cambiar de carrera', async () => {
+    mockedFetchBoard.mockResolvedValue({ ok: true, data: boardPage });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ id: 'c-1', nombre: 'Ingeniería de Sistemas' }] }),
+    });
+    render(<ApplicationsPage />);
+    await screen.findByText('Bandeja de Solicitudes');
+
+    fireEvent.change(screen.getByLabelText('Buscar'), { target: { value: 'Alejandro' } });
+    await waitFor(() =>
+      expect(mockedFetchBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'Alejandro', page: 1 }),
+      ),
+    );
+
+    fireEvent.change(await screen.findByLabelText('Carrera'), {
+      target: { value: 'Ingeniería de Sistemas' },
+    });
+
+    await waitFor(() =>
+      expect(mockedFetchBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          search: 'Alejandro',
+          career: 'Ingeniería de Sistemas',
+          page: 1,
+        }),
+      ),
+    );
+  });
+
   it('pide iniciar sesión cuando la API responde 401', async () => {
     mockedFetchBoard.mockResolvedValue({ ok: false, status: 401, needsLogin: true, message: 'No autorizado' });
     render(<ApplicationsPage />);
