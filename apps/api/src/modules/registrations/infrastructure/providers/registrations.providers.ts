@@ -1,5 +1,6 @@
 import type { Provider } from '@nestjs/common';
 import { RenewActivationUseCase } from '../../application/use-cases/renew-activation.use-case';
+import { GetApplicationMetricsUseCase } from '../../application/use-cases/get-application-metrics.use-case';
 import {
   PASSWORD_HASHER,
   type PasswordHasher,
@@ -91,6 +92,12 @@ export const registrationsProviders: Provider[] = [
     provide: ListApplicationsUseCase,
     inject: [APPLICATIONS_REPOSITORY],
     useFactory: (repository: ApplicationsRepository) => new ListApplicationsUseCase(repository),
+  },
+    {
+    provide: GetApplicationMetricsUseCase,
+    inject: [APPLICATIONS_REPOSITORY],
+    useFactory: (repository: ApplicationsRepository) =>
+      new GetApplicationMetricsUseCase(repository),
   },
   {
     provide: GetApplicationUseCase,

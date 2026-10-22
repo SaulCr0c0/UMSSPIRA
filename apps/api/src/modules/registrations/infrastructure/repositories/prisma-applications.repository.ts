@@ -17,6 +17,13 @@ import type {
 } from '../../application/contracts/registration-inputs';
 import { toApplication } from '../translators/application.translator';
 import { applicationInclude, toRegistrationFile } from '../translators/registration.translator';
+import type { ApplicationMetrics } from '../../domain/entities/application';
+import {
+  BOLIVIA_TIME_ZONE,
+  resolveApplicationPeriod,
+  todayRange,
+  urgentCutoff,
+} from '../../domain/policies/application-period.policy';
 
 export function scopedApplication(actor: ActorContext, id?: string): Prisma.SolicitudWhereInput {
   return {
@@ -92,7 +99,14 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
       estado: 'PENDING',
       fecha_creacion: { lt: new Date(Date.now() - 48 * 3600000) },
     };
-    const where: Prisma.SolicitudWhereInput = {
+    const period = query.period
+      ? resolveApplicationPeriod(
+          { period: query.period, year: query.year, from: query.from, to: query.to },
+          new Date(),
+        )
+      : undefined;
+
+        const where: Prisma.SolicitudWhereInput = {
       AND: [
         scopedApplication(actor),
         ...(query.status ? [{ estado: query.status }] : []),
@@ -102,6 +116,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
           : query.age === 'within48'
             ? [{ NOT: overdue }]
             : []),
+        ...(period ? [{ fecha_creacion: period }] : []),
       ],
     };
     // Primero pendientes antiguos; luego expedientes dictaminados recientes.
@@ -137,6 +152,32 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
       page: query.page,
       pageSize: query.pageSize,
       totalPages: applicationTotalPages(total, query.pageSize),
+    };
+  }
+
+   async metrics(actor: ActorContext, now: Date): Promise<ApplicationMetrics> {
+    const scope = scopedApplication(actor);
+    const today = todayRange(now);
+    const [receivedToday, pending, urgent, resolved] = await this.prisma.$transaction([
+      this.prisma.solicitud.count({ where: { AND: [scope, { fecha_creacion: today }] } }),
+      this.prisma.solicitud.count({ where: { AND: [scope, { estado: 'PENDING' }] } }),
+      this.prisma.solicitud.count({
+        where: { AND: [scope, { estado: 'PENDING', fecha_creacion: { lt: urgentCutoff(now) } }] },
+      }),
+      // Una solicitud con varios dictámenes el mismo día se cuenta una sola vez.
+      this.prisma.dictamen.findMany({
+        where: { fecha_creacion: today, solicitud: { is: scope } },
+        distinct: ['id_solicitud'],
+        select: { id_solicitud: true },
+      }),
+    ]);
+    return {
+      receivedToday,
+      pending,
+      urgent,
+      resolvedToday: resolved.length,
+      generatedAt: now.toISOString(),
+      timeZone: BOLIVIA_TIME_ZONE,
     };
   }
 
