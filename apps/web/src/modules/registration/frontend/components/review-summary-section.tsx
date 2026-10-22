@@ -9,6 +9,7 @@ export interface ReviewSectionProps {
   actionLabel: string;
   actionIcon?: LucideIcon;
   onAction: () => void;
+  showAction?: boolean;
   children: ReactNode;
 }
 
@@ -19,6 +20,7 @@ export function ReviewSection({
   actionLabel,
   actionIcon: ActionIcon = Pencil,
   onAction,
+  showAction = true,
   children,
 }: ReviewSectionProps) {
   return (
@@ -28,14 +30,16 @@ export function ReviewSection({
           <Icon aria-hidden="true" className="h-5 w-5 text-blue-fantastic" />
           {title}
         </h2>
-        <button
-          type="button"
-          onClick={onAction}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-oatmeal bg-white px-3 py-2 text-xs font-semibold text-abyssal-blue transition hover:bg-palladian"
-        >
-          <ActionIcon aria-hidden="true" className="h-3.5 w-3.5" />
-          {actionLabel}
-        </button>
+        {showAction && (
+          <button
+            type="button"
+            onClick={onAction}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-oatmeal bg-white px-3 py-2 text-xs font-semibold text-abyssal-blue transition hover:bg-palladian"
+          >
+            <ActionIcon aria-hidden="true" className="h-3.5 w-3.5" />
+            {actionLabel}
+          </button>
+        )}
       </header>
       <div className="mt-4">{children}</div>
     </section>
