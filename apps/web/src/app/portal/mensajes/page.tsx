@@ -41,17 +41,17 @@ function MensajesContent() {
   const fetchData = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-
+      
       const resConv = await fetch(`${baseUrl}/api/v1/chat/conversations`, { credentials: 'include' });
       if (resConv.ok) setConversations(await resConv.json());
 
       const resUsers = await fetch(`${baseUrl}/api/v1/chat/conversations/users`, { credentials: 'include' });
       if (resUsers.ok) setAvailableUsers(await resUsers.json());
-
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+      
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setLoading(false); 
     }
   };
 
@@ -71,16 +71,16 @@ function MensajesContent() {
     const onConnect = () => {
       setStatus('connected');
       setShowConnectedBanner(true);
-      setTimeout(() => setShowConnectedBanner(false), 3000);
+      setTimeout(() => setShowConnectedBanner(false), 3000); // Ocultar banner verde a los 3s
     };
-
+    
     const onDisconnect = () => setStatus('reconnecting');
-
+    
     const onReconnectAttempting = (data: { attempt: number, delay: number }) => {
       setReconnectData(data);
       setStatus('reconnecting');
     };
-
+    
     const onReconnectFailed = () => setStatus('disconnected');
     const onUnauthorized = () => setStatus('unauthorized');
     const onConnectError = () => setStatus('reconnecting');
@@ -109,8 +109,8 @@ function MensajesContent() {
     if (activeChat) fetchMessages(activeChat);
   }, [activeChat]);
 
-  useEffect(() => {
-    if (conversationId) setActiveChat(conversationId);
+  useEffect(() => { 
+    if (conversationId) setActiveChat(conversationId); 
   }, [conversationId]);
 
   const handleSendFirstMessage = async () => {
@@ -118,7 +118,7 @@ function MensajesContent() {
     setSendingFirstMsg(true);
     setModalError(null);
     setModalSuccess(null);
-
+    
     try {
       const socket = getChatSocket();
       socket.emit('chat:request', { targetUserId: selectedUser.usuario_id, content: firstMessage });
@@ -148,12 +148,12 @@ function MensajesContent() {
   const handleSendMessage = async () => {
     if (!activeChat || !newMessageText.trim() || status !== 'connected') return;
     const msg = newMessageText;
-    setNewMessageText('');
-
+    setNewMessageText(''); 
+    
     const result = await sendChatMessage({ conversationId: activeChat, content: msg });
     if (result.success) {
       fetchMessages(activeChat);
-      setTimeout(fetchData, 500);
+      setTimeout(fetchData, 500); 
     }
   };
 
@@ -177,6 +177,8 @@ function MensajesContent() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
+      
+      {/* ================= MODALES DE LA HU-02 ================= */}
 
       {/* CA-04, CA-05: PANTALLA DE ERROR (3 INTENTOS AGOTADOS) */}
       {status === 'disconnected' && (
@@ -187,8 +189,8 @@ function MensajesContent() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">No pudimos reconectar</h2>
             <p className="text-gray-500 mb-6 text-sm">Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.</p>
-            <button
-              onClick={() => { retryConnection(); setStatus('connecting'); }}
+            <button 
+              onClick={() => { retryConnection(); setStatus('connecting'); }} 
               className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors"
             >
               Reintentar
@@ -206,8 +208,8 @@ function MensajesContent() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Tu sesión expiró</h2>
             <p className="text-gray-500 mb-6 text-sm">Para volver al chat, inicia sesión nuevamente.</p>
-            <button
-              onClick={() => router.push('/login')}
+            <button 
+              onClick={() => router.push('/login')} 
               className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors"
             >
               Iniciar sesión
@@ -278,7 +280,7 @@ function MensajesContent() {
                   className="flex-1 w-full bg-white border border-gray-200 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 mb-4 text-sm"
                   disabled={!!modalSuccess}
                 />
-
+                
                 {modalError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded-lg mb-4 border border-red-200 text-center">{modalError}</p>}
                 {modalSuccess && <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-center border border-green-200 flex items-center justify-center gap-2"><CheckCircle2 className="w-5 h-5" /> {modalSuccess}</div>}
 
@@ -305,7 +307,7 @@ function MensajesContent() {
               <Search className="w-5 h-5" />
             </button>
           </div>
-
+          
           <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
             {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
             {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
@@ -321,7 +323,7 @@ function MensajesContent() {
             No leídos {totalUnread > 0 && <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full">{totalUnread}</span>}
           </button>
         </div>
-
+        
         <div className="overflow-y-auto flex-1 bg-white">
           {loading ? <div className="flex justify-center p-6 text-gray-400"><Loader2 className="w-6 h-6 animate-spin" /></div> : (
             <>
@@ -343,7 +345,7 @@ function MensajesContent() {
               {activeTab === 'all' && contactUsers.length > 0 && (
                 <div className="px-4 py-2 text-xs font-bold text-gray-400 bg-gray-50 uppercase tracking-wider mt-2">Personas disponibles</div>
               )}
-
+              
               {activeTab === 'all' && contactUsers.filter(u => (u.nombre || '').toLowerCase().includes(searchQuery.toLowerCase())).map(user => (
                 <div key={user.usuario_id} onClick={() => openModalForUser(user)} className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-4">
@@ -390,7 +392,7 @@ function MensajesContent() {
                 Conectado
               </div>
             )}
-
+            
             <div className="flex-1 bg-[#FAFAF9] p-6 overflow-y-auto flex flex-col gap-3">
               {messages.length === 0 ? (
                 <div className="text-center mt-10 text-gray-400">No hay mensajes aún.</div>
@@ -416,16 +418,16 @@ function MensajesContent() {
                  </div>
               ) : (
                 <div className="relative">
-                  <input
-                    type="text"
+                  <input 
+                    type="text" 
                     value={newMessageText}
                     onChange={(e) => setNewMessageText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder={status === 'connected' ? "Escribe un mensaje..." : "Esperando conexión..."}
                     className="w-full bg-gray-100 rounded-xl pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 disabled:opacity-50"
-                    disabled={status !== 'connected'}
+                    disabled={status !== 'connected'} 
                   />
-                  <button
+                  <button 
                     onClick={handleSendMessage}
                     disabled={!newMessageText.trim() || status !== 'connected'}
                     className="absolute right-2 top-2 p-2 bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
