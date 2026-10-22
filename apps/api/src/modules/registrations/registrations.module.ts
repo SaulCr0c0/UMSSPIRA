@@ -13,6 +13,7 @@ import { IssueRegistrationCodeController } from './http/controllers/issue-regist
 import { VerifyRegistrationCodeController } from './http/controllers/verify-registration-code.controller';
 import { SubmitRegistrationController } from './http/controllers/submit-registration.controller';
 import { ActivateRegistrationController } from './http/controllers/activate-registration.controller';
+import { VerifyActivationCodeController } from './http/controllers/verify-activation-code.controller';
 import { UploadRegistrationDocumentController } from './http/controllers/upload-registration-document.controller';
 import { ListApplicationsController } from './http/controllers/list-applications.controller';
 import { GetApplicationController } from './http/controllers/get-application.controller';
@@ -31,6 +32,7 @@ import { GetApplicationDocumentController } from './http/controllers/get-applica
     VerifyRegistrationCodeController,
     SubmitRegistrationController,
     ActivateRegistrationController,
+    VerifyActivationCodeController,
     UploadRegistrationDocumentController,
     ListApplicationsController,
     GetApplicationController,

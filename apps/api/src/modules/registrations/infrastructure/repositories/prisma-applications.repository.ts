@@ -4,7 +4,11 @@ import type { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
-import type { ApplicationsRepository } from '../../application/ports/applications-repository.port';
+import type {
+  ActivationCheck,
+  ApplicationsRepository,
+} from '../../application/ports/applications-repository.port';
+
 import type {
   ApplicationQuery,
   ReviewInput,
@@ -229,6 +233,34 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
           reviewedAt: now.toISOString(),
           notificationStatus: 'QUEUED' as const,
         };
+      },
+      { timeout: 15000 },
+    );
+  }
+
+    async verifyActivation(id: string, codeHash: string): Promise<ActivationCheck> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT id FROM solicitud WHERE id = ${id}::uuid FOR UPDATE`;
+        const row = await tx.solicitud.findUnique({ where: { id } });
+        if (!row || row.estado !== 'APPROVED' || row.activada_en || !row.activacion_hash) {
+          return { result: 'invalid' };
+        }
+        if (!row.activacion_expira_en || row.activacion_expira_en.getTime() <= Date.now()) {
+          return { result: 'expired' };
+        }
+        if (row.activacion_intentos >= 5) {
+          return { result: 'locked' };
+        }
+        if (!timingSafeEqual(Buffer.from(row.activacion_hash), Buffer.from(codeHash))) {
+          // El contador se confirma al devolver el resultado, sin lanzar error ni revertir.
+          await tx.solicitud.update({
+            where: { id },
+            data: { activacion_intentos: { increment: 1 } },
+          });
+          return { result: 'invalid' };
+        }
+        return { result: 'verified', binding: row.activacion_hash };
       },
       { timeout: 15000 },
     );
