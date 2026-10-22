@@ -13,7 +13,6 @@ function MensajesContent() {
   const router = useRouter();
   const conversationId = searchParams.get('conversation');
 
-  // --- ESTADOS DE CONEXIÓN (HU-02) ---
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [reconnectData, setReconnectData] = useState({ attempt: 0, delay: 0 });
   const [countdown, setCountdown] = useState(0);
@@ -22,7 +21,6 @@ function MensajesContent() {
 
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- ESTADOS DE LA APP ---
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -54,7 +52,6 @@ function MensajesContent() {
     } catch (error) { console.error(error); }
   };
 
-  // --- LÓGICA DE CONEXIÓN (HU-02) ---
   useEffect(() => {
     fetchData();
     const socket = getChatSocket();
@@ -66,24 +63,15 @@ function MensajesContent() {
       setShowConnectedBanner(true);
       setTimeout(() => setShowConnectedBanner(false), 3000);
     };
-
-    const onDisconnect = () => {
-      setStatus('reconnecting');
-    };
-
-    const onUnauthorized = () => {
-      setStatus('unauthorized');
-    };
-
+    const onDisconnect = () => { setStatus('reconnecting'); };
+    const onUnauthorized = () => { setStatus('unauthorized'); };
     const onReconnectAttempt = (attempt: number) => {
       const delay = attempt === 1 ? 2000 : attempt === 2 ? 4000 : 8000;
       setReconnectData({ attempt, delay });
       setStatus('reconnecting');
       setIsRetrying(false);
-
       if (countdownRef.current) clearInterval(countdownRef.current);
       setCountdown(delay / 1000);
-
       countdownRef.current = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -94,7 +82,6 @@ function MensajesContent() {
         });
       }, 1000);
     };
-
     const onReconnectFailed = () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       setStatus('disconnected');
@@ -102,13 +89,11 @@ function MensajesContent() {
     };
 
     if (socket.connected) onConnect();
-
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('chat:unauthorized', onUnauthorized);
     socket.on('reconnect_attempt', onReconnectAttempt);
     socket.on('reconnect_failed', onReconnectFailed);
-
     if (!socket.connected) socket.connect();
 
     return () => {
@@ -131,27 +116,24 @@ function MensajesContent() {
     retryConnection();
   };
 
+  const filteredConversations = conversations.filter(c => activeTab === 'all' || c.isUnread);
+  const totalUnread = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
 
-      {/* CA-04, CA-05: MODAL DE ERROR Y REINTENTO */}
       {status === 'disconnected' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
               {isRetrying ? <Loader2 className="w-8 h-8 text-red-600 animate-spin" /> : <WifiOff className="w-8 h-8 text-red-600" />}
             </div>
-
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               {isRetrying ? 'Iniciando nuevo ciclo...' : 'No pudimos reconectar'}
             </h2>
-
             <p className="text-gray-500 mb-6 text-sm">
-              {isRetrying
-                ? 'Intentando conectar con el servidor nuevamente.'
-                : 'Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.'}
+              {isRetrying ? 'Intentando conectar con el servidor nuevamente.' : 'Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.'}
             </p>
-
             <button
               onClick={handleManualRetry}
               disabled={isRetrying}
@@ -164,7 +146,6 @@ function MensajesContent() {
         </div>
       )}
 
-      {/* CA-06: MODAL DE SESIÓN EXPIRADA */}
       {status === 'unauthorized' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
@@ -183,7 +164,47 @@ function MensajesContent() {
         </div>
       )}
 
-      <p>Status: {status}</p>
+      {/* PANEL IZQUIERDO */}
+      <div className="w-full md:w-1/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+        <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#0F172A]">Mensajes</h1>
+          <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
+            {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
+            {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
+            {status === 'reconnecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Reconectando...</span></>}
+            {status === 'disconnected' && <><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span><span className="text-red-700">Desconectado</span></>}
+            {status === 'unauthorized' && <><Lock className="w-3 h-3 text-red-600"/><span className="text-red-700">Sesión expirada</span></>}
+          </div>
+        </div>
+
+        <div className="flex px-5 gap-6 border-b border-gray-200 bg-[#FAFAF9]">
+          <button onClick={() => setActiveTab('all')} className={`pb-3 pt-2 text-sm font-bold ${activeTab === 'all' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-500'}`}>Todos</button>
+          <button onClick={() => setActiveTab('unread')} className={`pb-3 pt-2 text-sm font-bold flex items-center gap-2 ${activeTab === 'unread' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-500'}`}>
+            No leídos {totalUnread > 0 && <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full">{totalUnread}</span>}
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 bg-white">
+          {loading ? <div className="flex justify-center p-6 text-gray-400"><Loader2 className="w-6 h-6 animate-spin" /></div> : (
+            <>
+              {filteredConversations.map((conv) => (
+                <div key={conv.id} onClick={() => setActiveChat(conv.id)} className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${activeChat === conv.id ? 'bg-blue-50/50 border-l-4 border-l-[#0F172A]' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg uppercase shrink-0">{conv.otherUser?.name?.substring(0, 2) || 'U'}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <h2 className={`text-[15px] truncate ${conv.isUnread ? 'font-bold text-[#0F172A]' : 'font-semibold text-gray-800'}`}>{conv.otherUser?.name || 'Usuario'}</h2>
+                        {conv.unreadCount > 0 && <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{conv.unreadCount}</span>}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate capitalize">{conv.otherUser?.role || 'Rol'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
