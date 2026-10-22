@@ -1,17 +1,13 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Logger, Inject } from '@nestjs/common';
 import {
-  ConnectedSocket,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { AUTHENTICATOR, type Authenticator } from '../../shared/security/ports/authenticator.port';
 import { ACCESS_COOKIE } from '../../shared/http/auth/cookies/request-cookies';
-import { ChatService } from './chat.service';
 
 export interface SendMessagePayload {
   conversationId: string;
@@ -29,7 +25,6 @@ export interface SendMessageAck {
     origin: 'http://localhost:3001',
     credentials: true,
   },
-  namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -39,7 +34,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     @Inject(AUTHENTICATOR) private readonly auth: Authenticator,
-    private readonly chatService: ChatService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
@@ -99,35 +93,5 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket): void {
     this.logger.log(`Cliente desconectado: ${client.id}`);
-  }
-
-  @SubscribeMessage('chat:send')
-  async handleSendMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SendMessagePayload,
-  ): Promise<SendMessageAck> {
-    // El emisor sale SIEMPRE de la sesión validada, nunca del payload.
-    const userId = client.data.userId as string | undefined;
-    if (!userId) {
-      client.emit('chat:unauthorized');
-      return { success: false, error: 'No autenticado' };
-    }
-
-    try {
-      const message = await this.chatService.saveMessage({
-        conversationId: payload.conversationId,
-        senderId: userId,
-        content: payload.content,
-      });
-
-      client
-        .to(`conversation_${payload.conversationId}`)
-        .emit('chat:new_message', message);
-
-      return { success: true, messageId: message.id };
-    } catch (error) {
-      this.logger.error('Error al enviar mensaje', error);
-      return { success: false, error: 'No se pudo enviar el mensaje' };
-    }
   }
 }
