@@ -3,7 +3,9 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
+  Param,
   BadRequestException,
   UseGuards,
 } from '@nestjs/common';
@@ -38,5 +40,15 @@ export class ChatController {
   @Get('users')
   async getUsersToChat() {
     return this.chatService.getAvailableUsersToChat();
+  }
+
+  @Get(':id/messages')
+  async getMessages(@Param('id') id: string) {
+    return this.chatService.getMessages(id);
+  }
+
+  @Patch(':id/read')
+  async markAsRead(@Param('id') id: string) {
+    return this.chatService.markAsRead(id);
   }
 }
