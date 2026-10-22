@@ -1,24 +1,24 @@
 BEGIN;
+DO $$ 
 
-CREATE TABLE IF NOT EXISTS public.otp_activacion (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_solicitud UUID NOT NULL REFERENCES public.solicitud(id) ON DELETE CASCADE,
-    codigo_hash TEXT NOT NULL,
-    expira_en TIMESTAMPTZ NOT NULL,
-    intentos_fallidos SMALLINT NOT NULL DEFAULT 0
-        CHECK (intentos_fallidos BETWEEN 0 AND 5),
-    consumido BOOLEAN NOT NULL DEFAULT FALSE,
-    invalidado BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (expira_en > created_at),
-    CHECK (NOT (consumido AND invalidado))
-);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'otp_activacion_intentos_fallidos_check') THEN
+        ALTER TABLE public.otp_activacion ADD CONSTRAINT otp_activacion_intentos_fallidos_check CHECK (intentos_fallidos BETWEEN 0 AND 5);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'otp_activacion_expira_en_check') THEN
+        ALTER TABLE public.otp_activacion ADD CONSTRAINT otp_activacion_expira_en_check CHECK (expira_en > created_at);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'otp_activacion_estados_check') THEN
+        ALTER TABLE public.otp_activacion ADD CONSTRAINT otp_activacion_estados_check CHECK (NOT (consumido AND invalidado));
+    END IF;
+
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_otp_activo_solicitud
     ON public.otp_activacion(id_solicitud)
     WHERE NOT consumido AND NOT invalidado;
 
-CREATE INDEX IF NOT EXISTS ix_otp_solicitud_fecha
+CREATE INDEX IF NOT EXISTS idx_otp_solicitud_fecha
     ON public.otp_activacion(id_solicitud, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS public.control_reenvio_otp (
