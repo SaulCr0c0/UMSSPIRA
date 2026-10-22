@@ -1,6 +1,5 @@
-// apps/api/src/shared/http/configuration/configure-http.ts
 import { INestApplication } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express'; // 👈 Importamos los tipos
+import { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import { ErrorHandlerFilter } from '../filters/error-handler.filter';
 
@@ -13,7 +12,6 @@ export function configureHttp(app: INestApplication): void {
     }),
   );
 
-  // 👈 Aquí cambiamos los "any" por "Request", "Response", "NextFunction"
   app.use((_request: Request, response: Response, next: NextFunction) => {
     response.setHeader('Cache-Control', 'no-store');
     next();

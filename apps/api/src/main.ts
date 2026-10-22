@@ -1,4 +1,3 @@
-// apps/api/src/main.ts
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,9 +8,7 @@ import { configureHttp } from './shared/http/configuration/configure-http';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
-  // Configura CORS, Helmet, prefijos, filtros, etc.
   configureHttp(app);
-  
   app.enableShutdownHooks();
 
   const configService = app.get(ConfigService);
