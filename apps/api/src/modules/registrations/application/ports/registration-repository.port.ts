@@ -10,6 +10,7 @@ export const REGISTRATION_REPOSITORY = Symbol('REGISTRATION_REPOSITORY');
 export interface RegistrationRepository {
   listCareers(): Promise<{ id: string; nombre: string | null }[]>;
   createDraft(tokenHash: string, data: RegistrationData, expiresAt: Date): Promise<void>;
+  draftDocument(tokenHash: string): Promise<RegistrationFile>;
   findDraft(tokenHash: string): Promise<RegistrationDraft | null>;
   issueCode(tokenHash: string, hash: string, encryptedMail: string): Promise<string>;
   verifyCode(tokenHash: string, candidateHash: string): Promise<string>;
