@@ -53,6 +53,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const context = await this.auth.execute(token);
       const userId = context.actor?.id;
+      
       if (!userId) {
         this.reject(client, 'Token sin usuario');
         return;
