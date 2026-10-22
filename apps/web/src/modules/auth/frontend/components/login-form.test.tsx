@@ -131,3 +131,17 @@ describe("LoginForm", () => {
     );
   });
 });
+
+describe("HU-004: mensaje de acceso a reportes", () => {
+  afterEach(() => {
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("explica por qué se redirigió a un visitante a iniciar sesión", async () => {
+    window.history.pushState({}, "", "/login?reportes=requiere-sesion");
+    render(<LoginForm />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Debe iniciar sesión para acceder a este módulo",
+    );
+  });
+});
