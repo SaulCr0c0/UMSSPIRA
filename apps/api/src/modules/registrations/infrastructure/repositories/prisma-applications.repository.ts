@@ -4,16 +4,10 @@ import type { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
-<<<<<<< HEAD
 import type {
   ActivationCheck,
   ApplicationsRepository,
-=======
-
-import type {
-  ApplicationsRepository,
   ResolutionMailRecord,
->>>>>>> ab029e5 (feat(api): enviar correo automatico obligatorio al emitir dictamen sin codigo tit)
 } from '../../application/ports/applications-repository.port';
 
 import type {
