@@ -1,13 +1,19 @@
 // apps/web/src/app/portal/mensajes/page.tsx
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
+type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
+
 function MensajesContent() {
+  const [status, setStatus] = useState<ConnectionStatus>('connecting');
+  const [reconnectData, setReconnectData] = useState({ attempt: 0, delay: 0 });
+  const [showConnectedBanner, setShowConnectedBanner] = useState(false);
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
-      <p className="text-gray-500">Chat en construcción...</p>
+      <p className="text-gray-500">Estado: {status}</p>
     </div>
   );
 }
