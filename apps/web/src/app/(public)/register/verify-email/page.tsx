@@ -3,12 +3,16 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { VerifyEmailForm } from '@/modules/email-verification/frontend/components/verify-email-form';
+import { useRegistrationStore } from '@/modules/registration/frontend/store';
 import { ProgressSteps } from '@/shared/components/progress-steps';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
 
   const handleSuccess = () => {
+    // CA-07.2: el resumen muestra el correo como verificado solo despues de superar el OTP.
+    const { personalData, setVerifiedEmail } = useRegistrationStore.getState();
+    if (personalData?.correo) setVerifiedEmail(personalData.correo);
     // Redirige al paso 3: Carga de documento de respaldo (HU-03)
     router.push('/register/document');
   };

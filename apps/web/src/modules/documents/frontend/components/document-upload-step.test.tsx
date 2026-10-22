@@ -1,10 +1,14 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { DocumentUploadStep, REGISTER_PATH, VERIFY_EMAIL_PATH } from './document-upload-step';
+import { DocumentUploadStep, REGISTER_PATH, REVIEW_PATH, VERIFY_EMAIL_PATH } from './document-upload-step';
 import { useRegistrationStore } from '@/modules/registration/frontend/store';
-import { submitRegistration, uploadDocument } from '../services';
+import { uploadDocument } from '../services';
 
 const mockPush = jest.fn();
+
+jest.mock('@/modules/registration/frontend/components/review-document-preview', () => ({
+  ReviewDocumentPreview: () => <div>Documento guardado</div>,
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -13,11 +17,9 @@ jest.mock('next/navigation', () => ({
 jest.mock('../services', () => ({
   ...jest.requireActual('../services'),
   uploadDocument: jest.fn(),
-  submitRegistration: jest.fn(),
 }));
 
 const mockedUpload = uploadDocument as jest.Mock;
-const mockedSubmit = submitRegistration as jest.Mock;
 const INVALID_FILE = 'Formato o tamaño no permitido. Adjunta un documento en PDF, PNG o JPG de máximo 5 MB';
 const SESSION_TOKEN = '22222222-2222-4222-8222-222222222222';
 
@@ -62,7 +64,7 @@ async function completeForm(
 }
 
 function submit() {
-  fireEvent.click(screen.getByRole('button', { name: /Finalizar y enviar solicitud/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Finalizar solicitud/ }));
 }
 
 describe('DocumentUploadStep', () => {
@@ -88,14 +90,33 @@ describe('DocumentUploadStep', () => {
     expect(mockPush).toHaveBeenCalledWith(REGISTER_PATH);
   });
 
-  it('no envía sin tipo de documento, archivo ni declaración jurada (CA-03.5)', async () => {
+  it('habilita finalizar únicamente con tipo, archivo válido y declaración', async () => {
     await renderReadyStep();
+    const button = screen.getByRole('button', { name: /Finalizar solicitud/ });
+    expect(button).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('selecciona el tipo de documento');
+    fireEvent.change(screen.getByLabelText(/^Tipo de documento/), { target: { value: 'diploma_academico' } });
+    expect(button).toBeDisabled();
+    await chooseFile(buildFile('titulo.pdf', 'application/pdf'));
+    expect(button).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('acepta la declaración jurada');
+    fireEvent.click(screen.getByLabelText(/Declaro bajo juramento/));
+    expect(button).toBeEnabled();
+    fireEvent.click(screen.getByLabelText(/Declaro bajo juramento/));
+    expect(button).toBeDisabled();
+    expect(mockedUpload).not.toHaveBeenCalled();
+  });
 
-    submit();
-
-    expect(screen.getByText('Selecciona el tipo de documento')).toBeInTheDocument();
-    expect(screen.getByText('Adjunta tu documento de respaldo')).toBeInTheDocument();
-    expect(screen.getByText('Debes aceptar la declaración jurada para enviar tu solicitud.')).toBeInTheDocument();
+  it('permite cancelar incluso después de seleccionar un reemplazo sin modificar el documento guardado', async () => {
+    const original = { path: 'original-id', tipoDocumento: 'diploma_academico' as const,
+      mimeType: 'application/pdf', sizeBytes: 2048, originalName: 'original.pdf', previewUrl: null, previewKind: 'pdf' as const };
+    useRegistrationStore.getState().setDocument(original);
+    await renderReadyStep();
+    await chooseFile(buildFile('reemplazo.png', 'image/png'));
+    fireEvent.change(screen.getByLabelText(/^Tipo de documento/), { target: { value: 'certificado_egreso' } });
+    fireEvent.click(screen.getByRole('button', { name: /Cancelar y conservar/ }));
+    expect(mockPush).toHaveBeenCalledWith(REVIEW_PATH);
+    expect(useRegistrationStore.getState().document).toEqual(original);
     expect(mockedUpload).not.toHaveBeenCalled();
   });
 
@@ -148,19 +169,7 @@ describe('DocumentUploadStep', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
-  it('registra la solicitud y muestra la confirmación con los datos del envío (CA-03.2)', async () => {
-    useRegistrationStore.getState().setPersonalData({
-      nombres: 'Juan',
-      apellidos: 'Pérez Rojas',
-      ci: '1234567',
-      complementoCi: '',
-      expedidoEn: 'CB',
-      correo: 'juanperez@gmail.com',
-      telefono: '71234567',
-      carreraId: 'carrera-1',
-      anioEgreso: 2020,
-      codigoSis: '201900001',
-    });
+  it('guarda el documento cargado y dirige al resumen de la solicitud (CA-07.1)', async () => {
     const file = buildFile('titulo.pdf', 'application/pdf');
     mockedUpload.mockResolvedValue({
       ok: true,
@@ -172,76 +181,31 @@ describe('DocumentUploadStep', () => {
         originalName: 'titulo.pdf',
       },
     });
-    const submission = { idSolicitud: 'abcdef12-3456-4789-8123-456789abcdef', estado: 'Pendiente', mensaje: 'ok' };
-    mockedSubmit.mockResolvedValue({ ok: true, submission });
     await renderReadyStep();
     await completeForm(file);
 
     submit();
 
-    expect(await screen.findByText('¡Solicitud enviada con éxito!')).toBeInTheDocument();
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(REVIEW_PATH));
     expect(mockedUpload).toHaveBeenCalledWith({
       sessionToken: SESSION_TOKEN,
       tipoDocumento: 'titulo_provision_nacional',
       file,
     });
-    expect(mockedSubmit).toHaveBeenCalledWith({
-      sessionToken: SESSION_TOKEN,
-      tipoDocumento: 'titulo_provision_nacional',
-      rutaStorage: 'solicitudes/x/y.pdf',
-      sizeBytes: 2048,
-      mimeType: 'application/pdf',
-    });
-    expect(screen.getByText('Juan Pérez Rojas')).toBeInTheDocument();
-    expect(screen.getByText('ju****z@gmail.com')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio' }));
-    expect(mockPush).toHaveBeenCalledWith('/');
-    expect(useRegistrationStore.getState().sessionToken).toBeNull();
-  });
-
-  it('cierra el modal y ofrece volver al inicio sin perder el registro', async () => {
-    mockedUpload.mockResolvedValue({
-      ok: true,
-      document: {
+    expect(useRegistrationStore.getState().document).toEqual(
+      expect.objectContaining({
         path: 'solicitudes/x/y.pdf',
         tipoDocumento: 'titulo_provision_nacional',
-        mimeType: 'application/pdf',
-        sizeBytes: 2048,
         originalName: 'titulo.pdf',
-      },
-    });
-    mockedSubmit.mockResolvedValue({
-      ok: true,
-      submission: { idSolicitud: 'abcdef12-3456-4789-8123-456789abcdef', estado: 'Pendiente', mensaje: 'ok' },
-    });
-    await renderReadyStep();
-    await completeForm();
-
-    submit();
-    expect(await screen.findByText('¡Solicitud enviada con éxito!')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
-    expect(await screen.findByText('Tu solicitud fue registrada correctamente.')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio' }));
-    expect(mockPush).toHaveBeenCalledWith('/');
-    expect(useRegistrationStore.getState().sessionToken).toBeNull();
+        previewKind: 'pdf',
+      }),
+    );
+    expect(useRegistrationStore.getState().sessionToken).toBe(SESSION_TOKEN);
   });
 
-  it('avisa el vencimiento cuando la sesión expiró al enviar (CA-01.6)', async () => {
-    mockedUpload.mockResolvedValue({
-      ok: true,
-      document: {
-        path: 'solicitudes/x/y.pdf',
-        tipoDocumento: 'titulo_provision_nacional',
-        mimeType: 'application/pdf',
-        sizeBytes: 2048,
-        originalName: 'titulo.pdf',
-      },
-    });
+  it('avisa el vencimiento cuando la sesión expiró al cargar el documento (CA-01.6)', async () => {
     const expired = 'El tiempo para completar tu registro venció. Debes llenar el formulario desde el inicio.';
-    mockedSubmit.mockResolvedValue({ ok: false, status: 410, message: expired, errors: [] });
+    mockedUpload.mockResolvedValue({ ok: false, status: 410, message: expired, errors: [] });
     await renderReadyStep();
     await completeForm();
 
@@ -251,28 +215,6 @@ describe('DocumentUploadStep', () => {
     expect(useRegistrationStore.getState().sessionToken).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Volver al formulario' }));
     expect(mockPush).toHaveBeenCalledWith(REGISTER_PATH);
-  });
-
-  it('muestra el duplicado detectado al enviar sin perder lo elegido (CA-03.6)', async () => {
-    mockedUpload.mockResolvedValue({
-      ok: true,
-      document: {
-        path: 'solicitudes/x/y.pdf',
-        tipoDocumento: 'diploma_academico',
-        mimeType: 'application/pdf',
-        sizeBytes: 2048,
-        originalName: 'diploma.pdf',
-      },
-    });
-    const message = 'Este correo electrónico ya está registrado en otra solicitud';
-    mockedSubmit.mockResolvedValue({ ok: false, status: 409, message, errors: [{ field: 'correo', message }] });
-    await renderReadyStep();
-    await completeForm(buildFile('diploma.pdf', 'application/pdf'), 'diploma_academico');
-
-    submit();
-
-    expect(await screen.findByText(message)).toBeInTheDocument();
-    expect(screen.getByText('diploma.pdf')).toBeInTheDocument();
   });
 
   it('dirige a la verificación de correo si el servidor indica que no está verificado (CA-03.1)', async () => {

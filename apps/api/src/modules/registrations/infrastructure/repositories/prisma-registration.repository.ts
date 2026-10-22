@@ -6,7 +6,7 @@ import type { RegistrationRepository } from '../../application/ports/registratio
 import type { RegistrationData, RegistrationFile } from '../../domain/entities/registration';
 import type { SubmitRegistrationInput } from '../../application/contracts/registration-inputs';
 import { CODE_SECONDS, RESEND_SECONDS, assertVerifiedDraft } from '../../domain/policies/registration.policy';
-import { toRegistrationDraft } from '../translators/registration.translator';
+import { toRegistrationFile, toRegistrationDraft } from '../translators/registration.translator';
 import { assertNoDuplicate, lockDraft, lockDraftForSubmission } from './registration-transactions';
 import { assertSameSubmission } from '../../domain/policies/registration-submission.policy';
 
@@ -36,6 +36,17 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
       },
       { timeout: 15000 },
     );
+  }
+
+  async draftDocument(tokenHash: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { row } = await lockDraft(tx, tokenHash);
+      const file = await tx.archivoRegistro.findUnique({ where: { id_borrador: row.id } });
+      if (!file) {
+        throw new BusinessRuleError('invalid', 'DOCUMENT_MISSING', 'No hay documento cargado');
+      }
+      return toRegistrationFile(file);
+    });
   }
 
   async findDraft(tokenHash: string) {
