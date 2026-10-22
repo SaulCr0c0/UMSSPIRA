@@ -29,6 +29,12 @@ export const StartChatButton = ({ targetUserId, targetName, className }: Props) 
           ? 'Abriendo chat...'
           : `Enviar mensaje${targetName ? ` a ${targetName}` : ''}`}
       </button>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 p-2 rounded-md border border-red-200">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
