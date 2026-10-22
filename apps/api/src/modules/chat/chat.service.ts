@@ -1,5 +1,5 @@
 // apps/api/src/modules/chat/chat.service.ts
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
@@ -125,6 +125,35 @@ export class ChatService {
     return this.prisma.mensaje.findMany({
       where: { id_conversacion: conversationId },
       orderBy: { fecha_mensaje: 'asc' },
+    });
+  }
+
+  async assertParticipant(conversationId: string, userId: string): Promise<void> {
+    const participant = await this.prisma.participanteConversacion.findFirst({
+      where: { conversacion_id: conversationId, usuario_id: userId },
+      select: { id: true },
+    });
+    if (!participant) {
+      throw new ForbiddenException('No participas en esta conversación');
+    }
+  }
+
+  async saveMessage(payload: { conversationId: string; senderId: string; content: string }) {
+    const content = payload.content?.trim();
+    if (!content) {
+      throw new BadRequestException('El mensaje no puede estar vacío');
+    }
+    await this.assertParticipant(payload.conversationId, payload.senderId);
+
+    return this.prisma.mensaje.create({
+      data: {
+        id_conversacion: payload.conversationId,
+        emisor_id: payload.senderId,
+        contenido: content,
+        tipo_contenido: 'texto',
+        estado_envio: 'enviado',
+        fecha_mensaje: new Date(),
+      },
     });
   }
 
