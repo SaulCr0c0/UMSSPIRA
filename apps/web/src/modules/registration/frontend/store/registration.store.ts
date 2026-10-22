@@ -35,6 +35,7 @@ export interface ConfirmationInfo {
   nombreCompleto: string;
   ci: string;
   correoEnmascarado: string;
+  correo?: string;
   plazoHoras: number;
   tipoDocumento?: RegistrationDocumentType;
   nombreArchivo?: string;
