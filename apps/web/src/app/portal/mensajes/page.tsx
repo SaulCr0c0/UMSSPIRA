@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, WifiOff, Lock, Search, X } from 'lucide-react';
+import { Loader2, WifiOff, Lock, Search, X, Send, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { getChatSocket, disconnectChatSocket, retryConnection } from '@/shared/services/chat-socket';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
@@ -28,10 +28,13 @@ function MensajesContent() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // --- ESTADOS DEL MODAL NUEVO CHAT ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [firstMessage, setFirstMessage] = useState('');
+  const [sendingFirstMsg, setSendingFirstMsg] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [modalSuccess, setModalSuccess] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -117,8 +120,43 @@ function MensajesContent() {
     retryConnection();
   };
 
+  const handleSendFirstMessage = async () => {
+    if (!selectedUser || !firstMessage.trim()) return;
+    setSendingFirstMsg(true);
+    setModalError(null);
+    setModalSuccess(null);
+
+    try {
+      const socket = getChatSocket();
+      socket.emit('chat:request', { targetUserId: selectedUser.usuario_id, content: firstMessage });
+
+      socket.once('chat:request_sent', (data: { conversationId: string }) => {
+        setModalSuccess('¡Mensaje enviado correctamente!');
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setFirstMessage('');
+          setSelectedUser(null);
+          setModalSuccess(null);
+          fetchData();
+          router.push(`/portal/mensajes?conversation=${data.conversationId}`);
+        }, 1500);
+      });
+
+      socket.once('chat:request_error', (err: { error: string }) => {
+        setModalError(err.error || 'Error al enviar el mensaje');
+        setSendingFirstMsg(false);
+      });
+    } catch (err) {
+      setModalError('Error al conectar con el servidor');
+      setSendingFirstMsg(false);
+    }
+  };
+
   const openModalForUser = (user: any) => {
     setSelectedUser(user);
+    setFirstMessage('');
+    setModalError(null);
+    setModalSuccess(null);
     setIsModalOpen(true);
     setModalStep(2);
   };
@@ -164,17 +202,21 @@ function MensajesContent() {
         </div>
       )}
 
-      {/* MODAL NUEVO CHAT (Lupa) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-[#FAFAF9] rounded-2xl shadow-xl w-full max-w-[400px] flex flex-col overflow-hidden relative min-h-[500px]">
             <div className="flex items-center justify-between p-5 pb-2">
               <div className="flex items-center gap-3">
+                {modalStep === 2 && (
+                  <button onClick={() => {setModalStep(1); setModalError(null); setModalSuccess(null);}} className="p-1 hover:bg-gray-200 rounded-full">
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
                 <h2 className="text-2xl font-bold text-[#0F172A]">
                   {modalStep === 1 ? 'Nuevo chat' : `Mensaje a ${selectedUser?.nombre || 'Usuario'}`}
                 </h2>
               </div>
-              <button onClick={() => { setIsModalOpen(false); setModalStep(1); }} className="text-gray-500 hover:text-gray-800">
+              <button onClick={() => { setIsModalOpen(false); setModalStep(1); setModalError(null); setModalSuccess(null); setFirstMessage(''); }} className="text-gray-500 hover:text-gray-800">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -202,6 +244,39 @@ function MensajesContent() {
                 </div>
               </>
             )}
+
+            {modalStep === 2 && (
+              <div className="flex-1 flex flex-col p-5">
+                <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-xl border border-gray-100">
+                   <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg uppercase">
+                      {selectedUser?.nombre?.substring(0, 2) || selectedUser?.correo?.substring(0, 2)}
+                   </div>
+                   <div>
+                      <h3 className="font-bold text-[#0F172A]">{selectedUser?.nombre || selectedUser?.correo}</h3>
+                      <p className="text-sm text-gray-500 capitalize">{selectedUser?.rol}</p>
+                   </div>
+                </div>
+                <textarea
+                  value={firstMessage}
+                  onChange={(e) => setFirstMessage(e.target.value)}
+                  placeholder="Escribe tu primer mensaje..."
+                  className="flex-1 w-full bg-white border border-gray-200 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 mb-4 text-sm"
+                  disabled={!!modalSuccess}
+                />
+
+                {modalError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded-lg mb-4 border border-red-200 text-center">{modalError}</p>}
+                {modalSuccess && <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-center border border-green-200 flex items-center justify-center gap-2"><CheckCircle2 className="w-5 h-5" /> {modalSuccess}</div>}
+
+                <button
+                  onClick={handleSendFirstMessage}
+                  disabled={!firstMessage.trim() || sendingFirstMsg || !!modalSuccess}
+                  className="w-full py-3 bg-[#0F172A] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#1E293B] disabled:opacity-50 transition-colors"
+                >
+                  {sendingFirstMsg ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  {sendingFirstMsg ? 'Enviando...' : 'Enviar mensaje'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -211,7 +286,7 @@ function MensajesContent() {
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-[#0F172A]">Mensajes</h1>
-            <button onClick={() => { setIsModalOpen(true); setModalStep(1); }} className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Buscar personas">
+            <button onClick={() => { setIsModalOpen(true); setModalStep(1); setFirstMessage(''); setModalError(null); setModalSuccess(null); }} className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Buscar personas">
               <Search className="w-5 h-5" />
             </button>
           </div>
