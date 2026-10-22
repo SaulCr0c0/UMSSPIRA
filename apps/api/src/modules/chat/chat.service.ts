@@ -157,6 +157,34 @@ export class ChatService {
     });
   }
 
+  async simulateReply(conversationId: string, content: string) {
+    const conv = await this.prisma.conversacion.findUnique({
+      where: { id: conversationId },
+      include: { participante_conversacion_registros: true },
+    });
+    if (!conv || conv.participante_conversacion_registros.length < 2) {
+      return;
+    }
+
+    const otherUser = conv.participante_conversacion_registros.find(
+      (p) => p.usuario_id !== conv.creado_por,
+    );
+    if (!otherUser) {
+      return;
+    }
+
+    return this.prisma.mensaje.create({
+      data: {
+        id_conversacion: conversationId,
+        emisor_id: otherUser.usuario_id,
+        contenido: content,
+        tipo_contenido: 'texto',
+        estado_envio: 'enviado',
+        fecha_mensaje: new Date(),
+      },
+    });
+  }
+
   async markAsRead(conversationId: string) {
     return this.prisma.mensaje.updateMany({
       where: { id_conversacion: conversationId, estado_envio: { not: 'leido' } },
