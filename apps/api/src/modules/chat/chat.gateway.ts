@@ -44,7 +44,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Intento de conexión: ${client.id}`);
-    
+
+    // CA-02: avisamos al cliente que su sesión no es válida antes de cortar,
+    // para distinguirlo de un servidor caído (CA-05).
     const reject = (reason: string): void => {
       this.logger.warn(`Conexión rechazada: ${reason} (${client.id})`);
       client.emit('chat:unauthorized');
@@ -52,8 +54,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
 
     try {
+      // 1. Token enviado por auth (si el cliente lo manda)
       let token = client.handshake.auth?.token as string | undefined;
 
+      // 2. Si no hay, lo leemos de la cookie de sesión
       if (!token) {
         const raw = client.handshake.headers.cookie
           ?.split(';')
@@ -75,6 +79,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      // AuthenticatedContext: { actor: { id, ... }, sessionId }
       const context = await this.auth.execute(token);
       const userId = context.actor?.id;
 
@@ -85,7 +90,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.data.userId = userId;
       client.join(`user_${userId}`);
-      client.emit('chat:ready');
+      client.emit('chat:ready'); // el servidor confirma que la sesión es válida
       this.logger.log(`Cliente conectado: ${client.id} (Usuario: ${userId})`);
     } catch {
       reject('Token inválido');
@@ -101,6 +106,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: SendMessagePayload,
   ): Promise<SendMessageAck> {
+    // El emisor sale SIEMPRE de la sesión validada, nunca del payload.
     const userId = client.data.userId as string | undefined;
     if (!userId) {
       client.emit('chat:unauthorized');
