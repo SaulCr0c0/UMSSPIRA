@@ -120,4 +120,18 @@ export class ChatService {
       select: { usuario_id: true, nombre: true, rol: true, correo: true },
     });
   }
+
+  async getMessages(conversationId: string) {
+    return this.prisma.mensaje.findMany({
+      where: { id_conversacion: conversationId },
+      orderBy: { fecha_mensaje: 'asc' },
+    });
+  }
+
+  async markAsRead(conversationId: string) {
+    return this.prisma.mensaje.updateMany({
+      where: { id_conversacion: conversationId, estado_envio: { not: 'leido' } },
+      data: { estado_envio: 'leido' },
+    });
+  }
 }
