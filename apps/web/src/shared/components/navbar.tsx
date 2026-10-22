@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -18,6 +17,7 @@ import {
   Menu,
   X,
   LogOut,
+  MessageSquare, // 👈 Importado para el botón de mensajes
 } from 'lucide-react';
 
 import logoUmss from '@/shared/assets/images/logoumsspira.jpg';
@@ -63,6 +63,10 @@ export const Navbar: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
+  // 👈 NUEVO: Estado y referencia para el panel de mensajes (HU-09)
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -77,6 +81,7 @@ export const Navbar: React.FC = () => {
     setIsDrawerOpen(false);
     setIsProfileDropdownOpen(false);
     setIsNotificationsOpen(false);
+    setIsMessagesOpen(false); // 👈 Cerramos también el de mensajes
 
     hardRedirect('/login');
   };
@@ -95,6 +100,11 @@ export const Navbar: React.FC = () => {
         !notificationsRef.current.contains(target)
       ) {
         setIsNotificationsOpen(false);
+      }
+
+      // 👈 NUEVO: Cerrar mensajes si se hace clic fuera
+      if (messagesRef.current && !messagesRef.current.contains(target)) {
+        setIsMessagesOpen(false);
       }
     };
 
@@ -193,6 +203,37 @@ export const Navbar: React.FC = () => {
           <div
             className={`flex items-center ${config.rightSectionGap} lg:pr-2`}
           >
+            {/* 👈 NUEVO: Mensajes (HU-09) */}
+            <div className="relative" ref={messagesRef}>
+              <button
+                type="button"
+                aria-label="Mensajes"
+                aria-expanded={isMessagesOpen}
+                onClick={() => setIsMessagesOpen((open) => !open)}
+                className={`w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors relative text-slate-300 hover:text-white`}
+              >
+                <MessageSquare className="w-6 h-6" />
+              </button>
+
+              {isMessagesOpen && (
+                <div
+                  role="status"
+                  className="absolute right-0 mt-3 w-64 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-600 shadow-2xl z-50"
+                >
+                  <h3 className="font-bold text-slate-900 mb-2 border-b border-slate-100 pb-2">
+                    Mensajes
+                  </h3>
+                  <Link
+                    href="/mensajes"
+                    onClick={() => setIsMessagesOpen(false)}
+                    className="block w-full text-center text-sm text-amber-600 font-semibold hover:bg-amber-50 py-2 rounded-lg transition-colors"
+                  >
+                    Ver todos los mensajes
+                  </Link>
+                </div>
+              )}
+            </div>
+
             {/* Notificaciones */}
             <div className="relative" ref={notificationsRef}>
               <button
