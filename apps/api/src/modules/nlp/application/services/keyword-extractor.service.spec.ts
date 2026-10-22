@@ -54,6 +54,28 @@ describe('KeywordExtractorService', () => {
   });
 
   describe('formato y orden', () => {
+    it('HU #38: encuentra frases de 1 a 3 palabras y devuelve su frecuencia', () => {
+      const custom = new KeywordExtractorService();
+      custom.loadDictionary([
+        { canonical: 'devops', aliases: [] },
+        { canonical: 'cloud computing', aliases: [] },
+        { canonical: 'machine', aliases: [] },
+        { canonical: 'machine learning', aliases: [] },
+        { canonical: 'machine learning models', aliases: [] },
+      ]);
+
+      expect(custom.extract(
+        'devops devops; cloud computing cloud computing; machine learning models machine learning models',
+      )).toEqual({
+        keywords: [
+          { term: 'cloud computing', count: 2 },
+          { term: 'devops', count: 2 },
+          { term: 'machine learning models', count: 2 },
+        ],
+        unmapped: [],
+      });
+    });
+
     it('devuelve keywords y unmapped con term y count (CA1)', () => {
       expect(service.extract('React y observabilidad observabilidad')).toEqual({
         keywords: [{ term: 'react', count: 1 }],
