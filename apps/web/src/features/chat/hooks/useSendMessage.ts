@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   sendChatMessage,
-  SendMessageResult,
+  type SendChatMessageResult,
 } from '@/shared/services/chat-message.service';
 
 export const useSendMessage = () => {
@@ -12,7 +12,7 @@ export const useSendMessage = () => {
   const send = async (
     conversationId: string,
     content: string,
-  ): Promise<SendMessageResult> => {
+  ): Promise<SendChatMessageResult> => {
     setSending(true);
     setError(null);
 

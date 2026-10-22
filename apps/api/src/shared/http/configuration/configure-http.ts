@@ -14,13 +14,11 @@ export function configureHttp(app: INestApplication): void {
     response.setHeader('Cache-Control', 'no-store');
     next();
   });
-
   app.enableCors({
     origin: (origin, callback) => callback(null, !origin || origins.includes(origin)),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-CSRF-Token'],
     credentials: true,
   });
-
   app.useGlobalFilters(new ErrorHandlerFilter());
 }
