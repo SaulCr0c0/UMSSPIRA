@@ -60,3 +60,32 @@ export async function assertNoDuplicate(tx: Prisma.TransactionClient, data: Regi
     );
   }
 }
+
+export async function lockDraftForSubmission(
+  tx: Prisma.TransactionClient,
+  tokenHash: string,
+) {
+  await tx.$queryRaw`
+    SELECT id
+    FROM borrador_registro
+    WHERE token_hash = ${tokenHash}
+    FOR UPDATE
+  `;
+
+  const row = await tx.borradorRegistro.findUnique({
+    where: { token_hash: tokenHash },
+  });
+
+  if (!row) {
+    throw new BusinessRuleError(
+      'expired',
+      'REGISTRATION_EXPIRED',
+      'El registro no existe o ya no está disponible',
+    );
+  }
+
+  return {
+    row,
+    draft: toRegistrationDraft(row),
+  };
+}

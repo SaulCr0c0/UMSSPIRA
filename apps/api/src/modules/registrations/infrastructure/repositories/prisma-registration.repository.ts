@@ -5,9 +5,10 @@ import { BusinessRuleError } from '../../../../shared/errors/business-rule-error
 import type { RegistrationRepository } from '../../application/ports/registration-repository.port';
 import type { RegistrationData, RegistrationFile } from '../../domain/entities/registration';
 import type { SubmitRegistrationInput } from '../../application/contracts/registration-inputs';
-import { CODE_SECONDS, RESEND_SECONDS } from '../../domain/policies/registration.policy';
+import { CODE_SECONDS, RESEND_SECONDS, assertVerifiedDraft } from '../../domain/policies/registration.policy';
 import { toRegistrationDraft } from '../translators/registration.translator';
-import { assertNoDuplicate, lockDraft } from './registration-transactions';
+import { assertNoDuplicate, lockDraft, lockDraftForSubmission } from './registration-transactions';
+import { assertSameSubmission } from '../../domain/policies/registration-submission.policy';
 
 @Injectable()
 export class PrismaRegistrationRepository implements RegistrationRepository {
@@ -130,11 +131,70 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
     );
   }
 
+  
   async submit(tokenHash: string, input: SubmitRegistrationInput) {
     return this.prisma.$transaction(
       async (tx) => {
-        const { row, draft } = await lockDraft(tx, tokenHash, true);
-        const file = await tx.archivoRegistro.findUnique({ where: { id_borrador: row.id } });
+        const { row, draft } = await lockDraftForSubmission(
+          tx,
+          tokenHash,
+        );
+
+        if (row.id_solicitud) {
+          const previous = await tx.solicitud.findUnique({
+            where: { id: row.id_solicitud },
+            include: {
+              detalle_solicitud: true,
+              documento_respaldo: true,
+            },
+          });
+
+          if (
+            !previous ||
+            !previous.detalle_solicitud ||
+            !previous.documento_respaldo
+          ) {
+            throw new BusinessRuleError(
+              'conflict',
+              'SUBMISSION_RESULT_UNAVAILABLE',
+              'No se pudo recuperar la solicitud registrada',
+            );
+          }
+
+          const storedFile = await tx.archivoRegistro.findUnique({
+            where: { id_borrador: row.id },
+          });
+
+          if (
+            !storedFile ||
+            previous.documento_respaldo.ruta_storage !==
+              storedFile.id
+          ) {
+            throw new BusinessRuleError(
+              'conflict',
+              'SUBMISSION_DOCUMENT_MISMATCH',
+              'El documento registrado no coincide con el borrador',
+            );
+          }
+
+          assertSameSubmission(
+            input,
+            previous.detalle_solicitud,
+            storedFile,
+          );
+
+          return {
+            id: previous.id,
+            estado: 'PENDING',
+          };
+        }
+
+        assertVerifiedDraft(draft);
+
+        const file = await tx.archivoRegistro.findUnique({
+          where: { id_borrador: row.id },
+        });
+
         if (
           !file ||
           file.id !== input.rutaStorage ||
@@ -148,8 +208,11 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
             'Adjunta el respaldo cargado en este registro',
           );
         }
+
         await assertNoDuplicate(tx, draft.data);
+
         const data = draft.data;
+
         const detail = await tx.detalleSolicitud.create({
           data: {
             id_carrera: data.carreraId,
@@ -159,22 +222,33 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
             email: data.correo,
             ci: data.ci,
             extension_ci: data.complementoCi,
-            expedido_en: data.expedidoEn === 'EX' ? 'Extranjero' : data.expedidoEn,
+            expedido_en:
+              data.expedidoEn === 'EX'
+                ? 'Extranjero'
+                : data.expedidoEn,
             anio_egreso: data.anioEgreso,
             cod_sis: data.codigoSis,
             desea_mentor: input.deseaMentor,
-            fecha_titulacion: input.fechaTitulacion ? new Date(input.fechaTitulacion) : null,
-            fecha_ingreso: input.fechaIngreso ? new Date(input.fechaIngreso) : null,
+            fecha_titulacion: input.fechaTitulacion
+              ? new Date(input.fechaTitulacion)
+              : null,
+            fecha_ingreso: input.fechaIngreso
+              ? new Date(input.fechaIngreso)
+              : null,
           },
         });
+
         const document = await tx.documentoRespaldo.create({
           data: {
             ruta_storage: file.id,
-            tamanio_mb: Math.ceil(file.size_bytes / 1048576),
+            tamanio_mb: Math.ceil(
+              file.size_bytes / 1048576,
+            ),
             fecha_creacion: new Date(),
             es_valido: false,
           },
         });
+
         const application = await tx.solicitud.create({
           data: {
             id_detalle_solicitud: detail.id,
@@ -183,13 +257,22 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
             fecha_creacion: new Date(),
           },
         });
+
         await tx.borradorRegistro.update({
           where: { id: row.id },
-          data: { id_solicitud: application.id, codigo_hash: null },
+          data: {
+            id_solicitud: application.id,
+            codigo_hash: null,
+          },
         });
-        return { id: application.id, estado: 'PENDING' };
+
+        return {
+          id: application.id,
+          estado: 'PENDING',
+        };
       },
       { timeout: 20000 },
     );
   }
+
 }
