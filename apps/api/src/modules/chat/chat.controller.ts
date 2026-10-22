@@ -2,6 +2,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   BadRequestException,
   UseGuards,
@@ -27,5 +28,15 @@ export class ChatController {
       const message = error instanceof Error ? error.message : 'Error al iniciar el chat';
       throw new BadRequestException(message);
     }
+  }
+
+  @Get()
+  async getMyConversations() {
+    return this.chatService.getUserConversations();
+  }
+
+  @Get('users')
+  async getUsersToChat() {
+    return this.chatService.getAvailableUsersToChat();
   }
 }
