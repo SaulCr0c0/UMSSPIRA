@@ -36,6 +36,9 @@ import {
 } from '../../application/ports/mentorship-request-repository.port';
 import { PrismaMentorshipRequestRepository } from '../repositories/prisma-mentorship-request.repository';
 import { CreateMentorshipRequestUseCase } from '../../application/use-cases/create-mentorship-request.use-case';
+import { ListReceivedMentorshipRequestsUseCase } from '../../application/use-cases/list-received-mentorship-requests.use-case';
+import { GetReceivedMentorshipRequestUseCase } from '../../application/use-cases/get-received-mentorship-request.use-case';
+import { RespondToMentorshipRequestUseCase } from '../../application/use-cases/respond-to-mentorship-request.use-case';
 
 export const mentorshipProviders: Provider[] = [
   PrismaMentorRepository,
@@ -136,5 +139,23 @@ export const mentorshipProviders: Provider[] = [
     inject: [MENTORSHIP_REQUEST_REPOSITORY],
     useFactory: (repository: MentorshipRequestRepository) =>
       new CreateMentorshipRequestUseCase(repository),
+  },
+  {
+    provide: ListReceivedMentorshipRequestsUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new ListReceivedMentorshipRequestsUseCase(repository),
+  },
+  {
+    provide: GetReceivedMentorshipRequestUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new GetReceivedMentorshipRequestUseCase(repository),
+  },
+  {
+    provide: RespondToMentorshipRequestUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new RespondToMentorshipRequestUseCase(repository),
   },
 ];
