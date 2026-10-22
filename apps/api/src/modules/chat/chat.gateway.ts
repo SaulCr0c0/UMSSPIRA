@@ -25,6 +25,7 @@ export interface SendMessageAck {
     origin: 'http://localhost:3001',
     credentials: true,
   },
+  namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
