@@ -25,10 +25,6 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install
 
-     
-      - name: Generar Prisma Client
-        run: pnpm --filter api prisma:generate
-      
       - name: Ejecutar Linter (Requisito AC cumplido)
         run: pnpm lint
 
