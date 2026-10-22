@@ -1,9 +1,9 @@
 // apps/web/src/app/portal/mensajes/page.tsx
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MessageSquare, Loader2, WifiOff, CheckCircle2, X, Search, Send, ChevronLeft, Clock, Lock } from 'lucide-react';
+import { MessageSquare, Loader2, CheckCircle2, X, Search, Send, ChevronLeft, WifiOff, Lock } from 'lucide-react';
 import { getChatSocket, disconnectChatSocket, retryConnection } from '@/shared/services/chat-socket';
 import { sendChatMessage } from '@/shared/services/chat-message.service';
 
@@ -14,12 +14,16 @@ function MensajesContent() {
   const router = useRouter();
   const conversationId = searchParams.get('conversation');
 
-  // Estados de conexión (HU-02)
+  // --- ESTADOS DE CONEXIÓN (HU-02) ---
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [reconnectData, setReconnectData] = useState({ attempt: 0, delay: 0 });
+  const [countdown, setCountdown] = useState(0);
   const [showConnectedBanner, setShowConnectedBanner] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Estados de la App
+  // --- ESTADOS DE LA APP ---
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -28,7 +32,7 @@ function MensajesContent() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Estados del Modal
+  // --- ESTADOS DEL MODAL NUEVO CHAT ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -41,13 +45,11 @@ function MensajesContent() {
   const fetchData = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-      
       const resConv = await fetch(`${baseUrl}/api/v1/chat/conversations`, { credentials: 'include' });
       if (resConv.ok) setConversations(await resConv.json());
 
       const resUsers = await fetch(`${baseUrl}/api/v1/chat/conversations/users`, { credentials: 'include' });
       if (resUsers.ok) setAvailableUsers(await resUsers.json());
-      
     } catch (error) { 
       console.error(error); 
     } finally { 
@@ -63,44 +65,77 @@ function MensajesContent() {
     } catch (error) { console.error(error); }
   };
 
-  // --- CONEXIÓN Y LÓGICA HU-02 ---
+  // --- LÓGICA DE CONEXIÓN (HU-02) ---
   useEffect(() => {
     fetchData();
     const socket = getChatSocket();
 
+    // Función para manejar cuando se establece la conexión
     const onConnect = () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
       setStatus('connected');
+      setIsRetrying(false);
       setShowConnectedBanner(true);
-      setTimeout(() => setShowConnectedBanner(false), 3000); // Ocultar banner verde a los 3s
+      setTimeout(() => setShowConnectedBanner(false), 3000); 
     };
-    
-    const onDisconnect = () => setStatus('reconnecting');
-    
-    const onReconnectAttempting = (data: { attempt: number, delay: number }) => {
-      setReconnectData(data);
+
+    // Función para cuando se pierde la conexión
+    const onDisconnect = () => {
       setStatus('reconnecting');
     };
-    
-    const onReconnectFailed = () => setStatus('disconnected');
-    const onUnauthorized = () => setStatus('unauthorized');
-    const onConnectError = () => setStatus('reconnecting');
+
+    // Función para cuando el servidor rechaza la sesión
+    const onUnauthorized = () => {
+      setStatus('unauthorized');
+    };
+
+    // Función para cuando inicia un intento de reconexión
+    const onReconnectAttempt = (attempt: number) => {
+      const delay = attempt === 1 ? 2000 : attempt === 2 ? 4000 : 8000;
+      setReconnectData({ attempt, delay });
+      setStatus('reconnecting');
+      setIsRetrying(false); 
+
+      // Lógica del contador bajando
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setCountdown(delay / 1000);
+      
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    };
+
+    // Función para cuando fallan los 3 intentos
+    const onReconnectFailed = () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setStatus('disconnected');
+      setIsRetrying(false); 
+    };
+
+    // Si el socket ya estaba conectado al cargar la página
+    if (socket.connected) onConnect();
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('reconnect_attempting', onReconnectAttempting);
-    socket.on('reconnect_failed', onReconnectFailed);
     socket.on('chat:unauthorized', onUnauthorized);
-    socket.on('connect_error', onConnectError);
+    socket.on('reconnect_attempt', onReconnectAttempt);
+    socket.on('reconnect_failed', onReconnectFailed);
 
-    socket.connect();
+    if (!socket.connected) socket.connect();
 
     return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
-      socket.off('reconnect_attempting', onReconnectAttempting);
-      socket.off('reconnect_failed', onReconnectFailed);
       socket.off('chat:unauthorized', onUnauthorized);
-      socket.off('connect_error', onConnectError);
+      socket.off('reconnect_attempt', onReconnectAttempt);
+      socket.off('reconnect_failed', onReconnectFailed);
       disconnectChatSocket();
     };
   }, []);
@@ -113,6 +148,12 @@ function MensajesContent() {
     if (conversationId) setActiveChat(conversationId); 
   }, [conversationId]);
 
+  const handleManualRetry = () => {
+    setIsRetrying(true);
+    setStatus('connecting');
+    retryConnection();
+  };
+
   const handleSendFirstMessage = async () => {
     if (!selectedUser || !firstMessage.trim()) return;
     setSendingFirstMsg(true);
@@ -124,7 +165,7 @@ function MensajesContent() {
       socket.emit('chat:request', { targetUserId: selectedUser.usuario_id, content: firstMessage });
 
       socket.once('chat:request_sent', (data: { conversationId: string }) => {
-        setModalSuccess('¡Solicitud enviada correctamente!');
+        setModalSuccess('¡Mensaje enviado correctamente!');
         setTimeout(() => {
           setIsModalOpen(false);
           setFirstMessage('');
@@ -135,8 +176,8 @@ function MensajesContent() {
         }, 1500);
       });
 
-      socket.once('chat:request_error', (err: any) => {
-        setModalError(err.error || 'Error al enviar la solicitud');
+      socket.once('chat:request_error', (err: { error: string }) => {
+        setModalError(err.error || 'Error al enviar el mensaje');
         setSendingFirstMsg(false);
       });
     } catch (err) {
@@ -166,40 +207,50 @@ function MensajesContent() {
     setModalStep(2);
   };
 
-  // Combinar conversaciones y contactos
   const existingUserIds = new Set(conversations.map(c => c.otherUser?.id).filter(id => id && id !== 'unknown'));
   const contactUsers = availableUsers.filter(u => !existingUserIds.has(u.usuario_id));
 
   const filteredConversations = conversations.filter(c => activeTab === 'all' || c.isUnread);
   const totalUnread = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
+  
   const currentConversation = conversations.find(c => c.id === activeChat);
-  const isPending = currentConversation?.estado === 'PENDIENTE';
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
       
       {/* ================= MODALES DE LA HU-02 ================= */}
 
-      {/* CA-04, CA-05: PANTALLA DE ERROR (3 INTENTOS AGOTADOS) */}
+      {/* CA-04, CA-05: MODAL DE ERROR Y REINTENTO */}
       {status === 'disconnected' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <WifiOff className="w-8 h-8 text-red-600" />
+              {isRetrying ? <Loader2 className="w-8 h-8 text-red-600 animate-spin" /> : <WifiOff className="w-8 h-8 text-red-600" />}
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">No pudimos reconectar</h2>
-            <p className="text-gray-500 mb-6 text-sm">Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.</p>
+            
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              {isRetrying ? 'Iniciando nuevo ciclo...' : 'No pudimos reconectar'}
+            </h2>
+            
+            <p className="text-gray-500 mb-6 text-sm">
+              {isRetrying 
+                ? 'Intentando conectar con el servidor nuevamente.' 
+                : 'Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.'}
+            </p>
+            
             <button 
-              onClick={() => { retryConnection(); setStatus('connecting'); }} 
-              className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors"
+              onClick={handleManualRetry} 
+              disabled={isRetrying}
+              className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors disabled:opacity-70"
             >
-              Reintentar
+              {isRetrying ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+              {isRetrying ? 'Reintentando...' : 'Reintentar'}
             </button>
           </div>
         </div>
       )}
 
-      {/* CA-06: PANTALLA DE SESIÓN EXPIRADA */}
+      {/* CA-06: MODAL DE SESIÓN EXPIRADA */}
       {status === 'unauthorized' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
@@ -247,7 +298,7 @@ function MensajesContent() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  {availableUsers.length === 0 ? <p className="text-center text-gray-500 text-sm mt-4">No hay contactos disponibles.</p> : availableUsers.filter(u => (u.nombre || '').toLowerCase().includes(searchQuery.toLowerCase())).map((user) => (
+                  {availableUsers.filter(u => (u.nombre || '').toLowerCase().includes(searchQuery.toLowerCase())).map((user) => (
                     <div key={user.usuario_id} onClick={() => openModalForUser(user)} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0 transition-colors">
                       <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg shrink-0 uppercase">
                         {user.nombre?.substring(0, 2) || user.correo?.substring(0, 2) || 'U'}
@@ -290,7 +341,7 @@ function MensajesContent() {
                   className="w-full py-3 bg-[#0F172A] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#1E293B] disabled:opacity-50 transition-colors"
                 >
                   {sendingFirstMsg ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  {sendingFirstMsg ? 'Enviando...' : 'Enviar solicitud de chat'}
+                  {sendingFirstMsg ? 'Enviando...' : 'Enviar mensaje'}
                 </button>
               </div>
             )}
@@ -308,6 +359,7 @@ function MensajesContent() {
             </button>
           </div>
           
+          {/* INDICADOR SUPERIOR DINÁMICO */}
           <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
             {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
             {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
@@ -377,11 +429,11 @@ function MensajesContent() {
               </div>
             </div>
 
-            {/* CA-01 y CA-02: BARRA AMARILLA DE RECONEXIÓN */}
+            {/* CA-01 y CA-02: BARRA AMARILLA CON CONTADOR */}
             {status === 'reconnecting' && (
               <div className="bg-amber-100 text-amber-800 text-sm font-medium px-4 py-2 text-center border-b border-amber-200 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Reconectando... intento {reconnectData.attempt} de 3 · próximo en {reconnectData.delay / 1000} s
+                Reconectando... intento {reconnectData.attempt} de 3 · próximo en {countdown} s
               </div>
             )}
 
@@ -389,13 +441,13 @@ function MensajesContent() {
             {showConnectedBanner && status === 'connected' && (
               <div className="bg-green-100 text-green-800 text-sm font-medium px-4 py-2 text-center border-b border-green-200 flex items-center justify-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                Conectado
+                Conectado exitosamente
               </div>
             )}
             
             <div className="flex-1 bg-[#FAFAF9] p-6 overflow-y-auto flex flex-col gap-3">
               {messages.length === 0 ? (
-                <div className="text-center mt-10 text-gray-400">No hay mensajes aún.</div>
+                <div className="text-center mt-10 text-gray-400">No hay mensajes aún. ¡Escribe algo!</div>
               ) : (
                 messages.map((msg) => {
                   const isMine = msg.emisor_id !== currentConversation.otherUser.id;
@@ -411,31 +463,24 @@ function MensajesContent() {
             </div>
 
             <div className="p-4 border-t border-gray-200 bg-white">
-              {isPending ? (
-                 <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-center flex items-center justify-center gap-2">
-                    <Clock className="w-5 h-5 text-amber-500" />
-                    <p className="text-amber-800 font-medium">Esperando a que la otra persona acepte tu solicitud...</p>
-                 </div>
-              ) : (
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={newMessageText}
-                    onChange={(e) => setNewMessageText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder={status === 'connected' ? "Escribe un mensaje..." : "Esperando conexión..."}
-                    className="w-full bg-gray-100 rounded-xl pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 disabled:opacity-50"
-                    disabled={status !== 'connected'} 
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={!newMessageText.trim() || status !== 'connected'}
-                    className="absolute right-2 top-2 p-2 bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder={status === 'connected' ? "Escribe un mensaje..." : "Esperando conexión..."}
+                  className="w-full bg-gray-100 rounded-xl pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 disabled:opacity-50"
+                  disabled={status !== 'connected'} 
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={!newMessageText.trim() || status !== 'connected'}
+                  className="absolute right-2 top-2 p-2 bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         ) : (

@@ -8,7 +8,6 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
@@ -20,12 +19,15 @@ export interface RequestPayload {
 }
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
+  cors: {
+    origin: ['http://localhost:3001', 'http://localhost:3000'], // 👈 PERMITIMOS EL PUERTO DEL FRONTEND
+    credentials: true,
+  },
   namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  // @ts-expect-error - NestJS inyecta esta propiedad automáticamente en tiempo de ejecución
+  // @ts-expect-error - NestJS inyecta esta propiedad automáticamente
   server: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
@@ -57,7 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const conversation = await this.chatService.findOrCreateDirectConversation(
         userId,
         payload.targetUserId,
-        'PENDIENTE'
+        'ACEPTADO' // 👈 LO DEJAMOS ACEPTADO PARA PODER CHATEAR DIRECTO
       );
 
       await this.chatService.saveMessage({
@@ -71,7 +73,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error desconocido';
       this.logger.error('Error al enviar solicitud', error);
-      client.emit('chat:request_error', { error: 'Error al enviar solicitud: ' + message });
+      client.emit('chat:request_error', { error: 'Error: ' + message });
     }
   }
 
@@ -82,12 +84,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       let userId = client.data.userId || payload.senderId;
-      
       if (!userId) {
         const fallbackUser = await this.chatService.getFirstUser();
         userId = fallbackUser?.usuario_id;
       }
-      
       if (!userId) {throw new Error('No hay usuario válido');}
 
       const message = await this.chatService.saveMessage({
