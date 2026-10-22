@@ -287,4 +287,24 @@ function MensajesContent() {
                   disabled={!firstMessage.trim() || sendingFirstMsg || !!modalSuccess}
                   className="w-full py-3 bg-[#0F172A] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#1E293B] disabled:opacity-50 transition-colors"
                 >
-                  {sendingFirstMsg ? <Loader2 className="w-5 h-5
+                  {sendingFirstMsg ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  {sendingFirstMsg ? 'Enviando...' : 'Enviar solicitud de chat'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <p className="text-gray-500">Estado: {status}</p>
+    </div>
+  );
+}
+
+export default function MensajesPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center flex justify-center items-center h-screen text-gray-500"><Loader2 className="w-6 h-6 animate-spin mr-2"/> Cargando...</div>}>
+      <MensajesContent />
+    </Suspense>
+  );
+}
