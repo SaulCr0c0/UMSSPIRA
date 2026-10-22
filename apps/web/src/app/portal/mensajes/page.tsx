@@ -296,7 +296,79 @@ function MensajesContent() {
         </div>
       )}
 
-      <p className="text-gray-500">Estado: {status}</p>
+      {/* PANEL IZQUIERDO */}
+      <div className="w-full md:w-1/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+        <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#0F172A]">Mensajes</h1>
+            <button onClick={() => { setIsModalOpen(true); setModalStep(1); setFirstMessage(''); setModalError(null); setModalSuccess(null); }} className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Buscar personas">
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
+            {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
+            {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
+            {status === 'reconnecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Reconectando...</span></>}
+            {status === 'disconnected' && <><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span><span className="text-red-700">Desconectado</span></>}
+            {status === 'unauthorized' && <><Lock className="w-3 h-3 text-red-600"/><span className="text-red-700">Sesión expirada</span></>}
+          </div>
+        </div>
+
+        <div className="flex px-5 gap-6 border-b border-gray-200 bg-[#FAFAF9]">
+          <button onClick={() => setActiveTab('all')} className={`pb-3 pt-2 text-sm font-bold ${activeTab === 'all' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-500'}`}>Todos</button>
+          <button onClick={() => setActiveTab('unread')} className={`pb-3 pt-2 text-sm font-bold flex items-center gap-2 ${activeTab === 'unread' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-500'}`}>
+            No leídos {totalUnread > 0 && <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full">{totalUnread}</span>}
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 bg-white">
+          {loading ? <div className="flex justify-center p-6 text-gray-400"><Loader2 className="w-6 h-6 animate-spin" /></div> : (
+            <>
+              {filteredConversations.map((conv) => (
+                <div key={conv.id} onClick={() => setActiveChat(conv.id)} className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${activeChat === conv.id ? 'bg-blue-50/50 border-l-4 border-l-[#0F172A]' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg uppercase shrink-0">{conv.otherUser?.name?.substring(0, 2) || 'U'}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <h2 className={`text-[15px] truncate ${conv.isUnread ? 'font-bold text-[#0F172A]' : 'font-semibold text-gray-800'}`}>{conv.otherUser?.name || 'Usuario'}</h2>
+                        {conv.unreadCount > 0 && <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{conv.unreadCount}</span>}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate capitalize">{conv.otherUser?.role || 'Rol'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {activeTab === 'all' && contactUsers.length > 0 && (
+                <div className="px-4 py-2 text-xs font-bold text-gray-400 bg-gray-50 uppercase tracking-wider mt-2">Personas disponibles</div>
+              )}
+
+              {activeTab === 'all' && contactUsers.filter(u => (u.nombre || '').toLowerCase().includes(searchQuery.toLowerCase())).map(user => (
+                <div key={user.usuario_id} onClick={() => openModalForUser(user)} className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-lg uppercase shrink-0">{user.nombre?.substring(0, 2) || 'U'}</div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-[15px] font-semibold text-gray-700 truncate">{user.nombre || 'Usuario'}</h2>
+                      <p className="text-sm text-gray-400 truncate capitalize">{user.rol || 'Rol'}</p>
+                    </div>
+                    <span className="text-gray-300">+</span>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* PANEL DERECHO - Placeholder */}
+      <div className="hidden md:flex flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 flex-col relative overflow-hidden">
+        <div className="flex flex-col items-center justify-center h-full space-y-4 w-full bg-[#FAFAF9]">
+           <MessageSquare className="w-16 h-16 text-gray-300" />
+           <p className="text-gray-500 text-lg font-medium">Tus mensajes</p>
+           <p className="text-gray-400 text-sm max-w-xs text-center">Selecciona un contacto de la izquierda para empezar a chatear.</p>
+        </div>
+      </div>
     </div>
   );
 }
