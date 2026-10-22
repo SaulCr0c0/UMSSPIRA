@@ -12,8 +12,7 @@ export const getChatSocket = (): Socket => {
     socket = io(`${CHAT_URL}/chat`, {
       withCredentials: true,
       autoConnect: false,
-      // Reintentos automáticos (HU-02 CA-02):
-      // 2s -> 4s -> 8s, sin aleatoriedad.
+      // Reintentos automáticos (HU-02 CA-02): 2s -> 4s -> 8s, sin aleatoriedad.
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 2000,
@@ -32,8 +31,7 @@ export const disconnectChatSocket = (): void => {
   }
 };
 
-// Reinicia el ciclo de intentos manualmente (si en algún momento quieres
-// controlar tú la reconexión en vez de dejar que socket.io lo haga solo).
+// Reinicia el ciclo de intentos manualmente.
 export const retryConnection = (): void => {
   if (!socket) return;
   socket.disconnect();
