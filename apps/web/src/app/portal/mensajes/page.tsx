@@ -4,6 +4,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { getChatSocket, disconnectChatSocket } from '@/shared/services/chat-socket';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
 
@@ -53,13 +54,67 @@ function MensajesContent() {
     }
   };
 
+  const fetchMessages = async (chatId: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+      const res = await fetch(`${baseUrl}/api/v1/chat/conversations/${chatId}/messages`, { credentials: 'include' });
+      if (res.ok) setMessages(await res.json());
+    } catch (error) { console.error(error); }
+  };
+
+  // --- CONEXIÓN Y LÓGICA HU-02 ---
+  useEffect(() => {
+    fetchData();
+    const socket = getChatSocket();
+
+    const onConnect = () => {
+      setStatus('connected');
+      setShowConnectedBanner(true);
+      setTimeout(() => setShowConnectedBanner(false), 3000);
+    };
+
+    const onDisconnect = () => setStatus('reconnecting');
+
+    const onReconnectAttempting = (data: { attempt: number, delay: number }) => {
+      setReconnectData(data);
+      setStatus('reconnecting');
+    };
+
+    const onReconnectFailed = () => setStatus('disconnected');
+    const onUnauthorized = () => setStatus('unauthorized');
+    const onConnectError = () => setStatus('reconnecting');
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('reconnect_attempting', onReconnectAttempting);
+    socket.on('reconnect_failed', onReconnectFailed);
+    socket.on('chat:unauthorized', onUnauthorized);
+    socket.on('connect_error', onConnectError);
+
+    socket.connect();
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('reconnect_attempting', onReconnectAttempting);
+      socket.off('reconnect_failed', onReconnectFailed);
+      socket.off('chat:unauthorized', onUnauthorized);
+      socket.off('connect_error', onConnectError);
+      disconnectChatSocket();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeChat) fetchMessages(activeChat);
+  }, [activeChat]);
+
   useEffect(() => {
     if (conversationId) setActiveChat(conversationId);
   }, [conversationId]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
-      <p className="text-gray-500">Conversaciones: {conversations.length} · Usuarios: {availableUsers.length}</p>
+      <p className="text-gray-500">Socket status: {status} · Conversaciones: {conversations.length}</p>
     </div>
   );
 }
