@@ -65,3 +65,18 @@ it('revoca la sesión y limpia el estado antes de regresar al login', async () =
   expect(push).toHaveBeenCalledWith('/login');
   expect(refresh).toHaveBeenCalled();
 });
+
+
+it('HU-004: un administrador cierra sesión y vuelve a la bienvenida', async () => {
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({ data: { email: 'admin@umss.edu.bo', role: 'administrador' } }),
+  } as Response);
+  render(<ConnectedNavbar />);
+  expect(await screen.findByText('admin: administrador')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+  await waitFor(() => expect(push).toHaveBeenCalledWith('/'));
+  expect(revokeCurrentSession).toHaveBeenCalledTimes(1);
+  expect(clearSession).toHaveBeenCalled();
+  expect(authStore.reset).toHaveBeenCalled();
+});

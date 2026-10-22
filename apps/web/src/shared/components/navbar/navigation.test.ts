@@ -32,3 +32,17 @@ it('activa el módulo por la ruta más específica, incluidos los registros din�
   expect(activeSection('/profile/certifications/cert-1/edit')).toBe('directory');
   expect(activeSection('/portal/empleos')).toBe('jobs');
 });
+
+
+it('HU-004: la navbar oficial incluye reportes y encuestas solo para administradores', () => {
+  const adminLinks = visibleLinks(NAVBAR_ACCOUNT_LINKS, 'administrador');
+  expect(adminLinks).toEqual(expect.arrayContaining([
+    expect.objectContaining({ label: 'Reportes Institucionales', href: '/reports' }),
+    expect.objectContaining({ label: 'Encuestas de Empleabilidad', href: '/reports/encuestas' }),
+  ]));
+  for (const role of ['titulado', 'empresa', null] as const) {
+    const links = visibleLinks(NAVBAR_ACCOUNT_LINKS, role).map(link => link.href);
+    expect(links).not.toContain('/reports');
+    expect(links).not.toContain('/reports/encuestas');
+  }
+});

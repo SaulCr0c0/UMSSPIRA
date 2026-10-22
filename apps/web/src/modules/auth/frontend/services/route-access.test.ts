@@ -115,3 +115,35 @@ describe("decideAccess", () => {
     });
   });
 });
+
+describe("HU-004: control de acceso a reportería y encuestas", () => {
+  it.each(["/reports", "/reports/encuestas", "/reports/cualquier-subruta"])(
+    "envía a login a un visitante de %s", (path) => {
+      expect(decideAccess(path, undefined, undefined)).toEqual({
+        allowed: false, redirectTo: LOGIN_PATH,
+      });
+    },
+  );
+
+  it.each(["/reports", "/reports/encuestas"])(
+    "permite al administrador acceder a %s", (path) => {
+      expect(decideAccess(path, "token", "administrador")).toEqual({ allowed: true });
+    },
+  );
+
+  it.each([
+    ["titulado", PORTAL_HOME],
+    ["empresa", COMPANY_HOME],
+  ])("impide el acceso a /reports para %s", (role, redirectTo) => {
+    expect(decideAccess("/reports", "token", role)).toEqual({
+      allowed: false, redirectTo,
+    });
+    expect(decideAccess("/reports/encuestas", "token", role)).toEqual({
+      allowed: false, redirectTo,
+    });
+  });
+
+  it("no restringe rutas que solo comienzan con la palabra reports", () => {
+    expect(decideAccess("/reports-extra", "token", "titulado")).toEqual({ allowed: true });
+  });
+});

@@ -55,7 +55,8 @@ export const NAVBAR_ACCOUNT_LINKS: NavbarLink[] = [
   { id: 'my-profile', label: 'Mi perfil profesional', href: '/profile', roles: members },
   { id: 'my-company', label: 'Mi empresa', href: '/companies', roles: employers },
   { id: 'applications', label: 'Solicitudes de registro', href: '/applications', roles: admins },
-  { id: 'reports', label: 'Reportes institucionales', href: '/reports', roles: admins },
+  { id: 'reports', label: 'Reportes Institucionales', href: '/reports', roles: admins },
+  { id: 'employment-surveys', label: 'Encuestas de Empleabilidad', href: '/reports/encuestas', roles: admins },
   { id: 'admin-home', label: 'Panel administrativo', href: '/portal/admin', roles: admins },
 ];
 

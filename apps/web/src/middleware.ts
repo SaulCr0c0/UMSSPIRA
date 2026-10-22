@@ -14,7 +14,15 @@ export async function middleware(request: NextRequest) {
       headers: { Cookie: `umsspira_refresh=${encodeURIComponent(refresh)}` },
       cache: 'no-store', signal: AbortSignal.timeout(5000),
     });
-    if (response.status === 401 || response.status === 403) return redirect(LOGIN_PATH);
+    if (response.status === 401 || response.status === 403) {
+      // La sesión ya no es válida: eliminar cookies de autenticación, no solo redirigir.
+      const expired = redirect(LOGIN_PATH);
+      for (const name of ['umsspira_token', 'umsspira_refresh', 'umsspira_csrf', 'umsspira_role']) {
+        expired.cookies.delete(name);
+      }
+      expired.headers.set('Cache-Control', 'no-store');
+      return expired;
+    }
     if (!response.ok) throw new Error('Servicio no disponible');
     const body = await response.json() as { data?: { role?: unknown } };
     const role = body.data?.role;
@@ -31,6 +39,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = { matcher: [
-  '/applications/:path*', '/me/:path*', '/afinidad', '/afinidad/:path*',
+  '/applications/:path*', '/reports/:path*', '/me/:path*', '/afinidad', '/afinidad/:path*',
   '/empresa/postulantes', '/empresa/postulantes/:path*', '/postulantes', '/postulantes/:path*',
 ] };

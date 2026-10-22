@@ -67,7 +67,8 @@ export function ConnectedNavbar() {
       clearSession();
       authStore.reset();
       setSession(null);
-      router.push('/login');
+      // HU-004: el administrador regresa a la bienvenida institucional.
+      router.push(session?.role === 'administrador' ? '/' : '/login');
       router.refresh();
     } catch { setLogoutError(true); }
   };
