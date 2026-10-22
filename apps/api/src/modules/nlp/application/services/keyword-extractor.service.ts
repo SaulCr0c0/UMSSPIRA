@@ -100,16 +100,17 @@ export class KeywordExtractorService {
   }
 
   private findMatch(sequence: readonly SequenceToken[], start: number): KeywordMatch | null {
+    const maxLength = Math.min(MAX_NGRAM, this.maxWords);
     let available = 0;
     while (
+      available < maxLength &&
       start + available < sequence.length &&
       sequence[start + available] !== CLARIFICATION_BOUNDARY
     ) {
       available += 1;
     }
 
-    const maxLength = Math.min(MAX_NGRAM, this.maxWords, available);
-    for (let length = maxLength; length >= 1; length -= 1) {
+    for (let length = available; length >= 1; length -= 1) {
       const phrase = sequence.slice(start, start + length).join(' ');
       const canonical = this.dictionary.get(phrase);
       if (canonical !== undefined) {
