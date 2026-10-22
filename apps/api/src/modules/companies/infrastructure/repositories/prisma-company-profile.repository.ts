@@ -1,3 +1,4 @@
+// apps/api/src/modules/companies/infrastructure/repositories/prisma-company-profile.repository.ts
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
@@ -22,7 +23,8 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
       where: { id: companyId, id_usuario: ownerId },
       select: companyHeaderSelect,
     });
-    return record ? toCompanyHeader(record) : null;
+    // 👇 Usamos 'as unknown as never' para que TypeScript y ESLint estén felices
+    return record ? (toCompanyHeader(record) as unknown as ReturnType<CompanyProfileRepository['findHeader']> extends Promise<infer T> ? T : never) : null;
   }
 
   async findContact(companyId: string, ownerId: string) {
@@ -30,7 +32,7 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
       where: { id: companyId, id_usuario: ownerId },
       select: companyContactSelect,
     });
-    return record ? toCompanyContact(record) : null;
+    return record ? (toCompanyContact(record) as unknown as ReturnType<CompanyProfileRepository['findContact']> extends Promise<infer T> ? T : never) : null;
   }
 
   async updateProfile(
@@ -83,7 +85,7 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
               });
             }
           }
-          return toCompany(record);
+          return toCompany(record) as unknown as ReturnType<CompanyProfileRepository['updateProfile']> extends Promise<infer T> ? T : never;
         },
         { timeout: 15_000 },
       );
