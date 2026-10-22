@@ -25,7 +25,9 @@ export const StartChatButton = ({ targetUserId, targetName, className }: Props) 
         }
       >
         <MessageSquare className="w-4 h-4" />
-        {loading ? 'Abriendo chat...' : `Enviar mensaje${targetName ? ` a ${targetName}` : ''}`}
+        {loading
+          ? 'Abriendo chat...'
+          : `Enviar mensaje${targetName ? ` a ${targetName}` : ''}`}
       </button>
 
       {error && (

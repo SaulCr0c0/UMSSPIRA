@@ -1,12 +1,18 @@
 // apps/web/src/features/chat/hooks/useSendMessage.ts
 import { useState } from 'react';
-import { sendChatMessage, SendMessageResult } from '@/shared/services/chat-message.service';
+import {
+  sendChatMessage,
+  SendMessageResult,
+} from '@/shared/services/chat-message.service';
 
 export const useSendMessage = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const send = async (conversationId: string, content: string): Promise<SendMessageResult> => {
+  const send = async (
+    conversationId: string,
+    content: string,
+  ): Promise<SendMessageResult> => {
     setSending(true);
     setError(null);
 

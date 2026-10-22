@@ -1,3 +1,4 @@
+// apps/api/src/modules/chat/chat.gateway.ts
 import { Logger, Inject } from '@nestjs/common';
 import {
   OnGatewayConnection,
@@ -9,7 +10,10 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { AUTHENTICATOR, type Authenticator } from '../../shared/security/ports/authenticator.port';
+import {
+  AUTHENTICATOR,
+  type Authenticator,
+} from '../../shared/security/ports/authenticator.port';
 import { ACCESS_COOKIE } from '../../shared/http/auth/cookies/request-cookies';
 import { ChatService } from './chat.service';
 
@@ -39,13 +43,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Intento de conexión: ${client.id}`);
+
     try {
       const token = this.extractToken(client);
-      if (!token) {return this.reject(client, 'Sin token');}
+      if (!token) {
+        this.reject(client, 'Sin token');
+        return;
+      }
 
       const context = await this.auth.execute(token);
       const userId = context.actor?.id;
-      if (!userId) {return this.reject(client, 'Token sin usuario');}
+      if (!userId) {
+        this.reject(client, 'Token sin usuario');
+        return;
+      }
 
       client.data.userId = userId;
       client.join(`user_${userId}`);
@@ -83,7 +94,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.emit('chat:request_sent', { conversationId: conversation.id });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
+      const message =
+        error instanceof Error ? error.message : 'Error desconocido';
       this.logger.error('Error al enviar solicitud', error);
       client.emit('chat:request_error', { error: `Error: ${message}` });
     }
@@ -92,7 +104,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chat:send')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { conversationId: string; content: string; senderId?: string },
+    @MessageBody()
+    payload: { conversationId: string; content: string; senderId?: string },
   ): Promise<void> {
     try {
       const userId = client.data.userId ?? payload.senderId;
@@ -105,7 +118,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       client.emit('chat:message_sent', { messageId: message.id });
-      client.to(`conversation_${payload.conversationId}`).emit('chat:new_message', message);
+      client
+        .to(`conversation_${payload.conversationId}`)
+        .emit('chat:new_message', message);
     } catch (error: unknown) {
       this.logger.error('Error al enviar mensaje', error);
       client.emit('chat:message_error', { error: 'Error interno' });
@@ -114,6 +129,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private extractToken(client: Socket): string | undefined {
     let token = client.handshake.auth?.token as string | undefined;
+
     if (!token) {
       const raw = client.handshake.headers.cookie
         ?.split(';')
@@ -129,6 +145,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
     }
+
     return token;
   }
 

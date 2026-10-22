@@ -13,7 +13,7 @@ export const useStartDirectChat = () => {
   const startChat = async (targetUserId: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { conversationId } = await startDirectChat(targetUserId);
       router.push(`/portal/mensajes?conversation=${conversationId}`);
@@ -24,5 +24,10 @@ export const useStartDirectChat = () => {
     }
   };
 
-  return { startChat, loading, error, clearError: () => setError(null) };
+  return {
+    startChat,
+    loading,
+    error,
+    clearError: () => setError(null),
+  };
 };
