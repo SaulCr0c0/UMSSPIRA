@@ -1,21 +1,24 @@
 import { io, Socket } from 'socket.io-client';
 
-// Variable para guardar la conexión y no crear múltiples
+const CHAT_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+// Una conexión por pestaña (CA-07): cada pestaña tiene su propio módulo JS,
+// por lo que cerrar una no afecta a la otra.
 let socket: Socket | null = null;
 
 export const getChatSocket = (): Socket => {
   if (!socket) {
-    // CA-01: Conectamos al backend. El withCredentials es vital para enviar la cookie de sesión.
-    socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
-      withCredentials: true,
-      transports: ['websocket'],
-      autoConnect: false, // No conectar automáticamente, lo haremos manualmente en la página
+    socket = io(CHAT_URL, {
+      withCredentials: true, // el navegador envía la cookie de sesión
+      autoConnect: false,    // la conexión la abre quien use el socket
+      reconnection: false,   // la reconexión automática es HU-02, no HU-01
     });
   }
   return socket;
 };
 
-export const disconnectChatSocket = () => {
+// CA-06: cerrar la conexión al salir de la sección de chat.
+export const disconnectChatSocket = (): void => {
   if (socket) {
     socket.disconnect();
     socket = null;

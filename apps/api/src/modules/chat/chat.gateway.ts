@@ -1,26 +1,21 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 import { Logger, Inject } from '@nestjs/common';
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { AUTHENTICATOR, type Authenticator } from '../../shared/security/ports/authenticator.port';
 import { ACCESS_COOKIE } from '../../shared/http/auth/cookies/request-cookies';
 
-// Usamos require con la regla desactivada arriba para evitar el error de CommonJS
-const { WebSocketGateway, WebSocketServer } = require('@nestjs/websockets');
-
-// Tipado para evitar el error de 'any' con la sesión
-interface AuthenticatedSession {
-  id?: string;
-  userId?: string;
-  user?: { id: string };
-}
-
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3001'],
-    credentials: true, // CA-01: Permitir cookies de sesión
+    origin: 'http://localhost:3001',
+    credentials: true,
   },
 })
-export class ChatGateway {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
@@ -30,43 +25,62 @@ export class ChatGateway {
     @Inject(AUTHENTICATOR) private readonly auth: Authenticator,
   ) {}
 
-  // CA-01 y CA-02: Al conectarse, verificamos la sesión
-  async handleConnection(client: Socket) {
+  async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Intento de conexión: ${client.id}`);
-    
+
+    // CA-02: avisamos al cliente que su sesión no es válida antes de cortar,
+    // para distinguirlo de un servidor caído (CA-05).
+    const reject = (reason: string): void => {
+      this.logger.warn(`Conexión rechazada: ${reason} (${client.id})`);
+      client.emit('chat:unauthorized');
+      client.disconnect(true);
+    };
+
     try {
-      const cookies = client.handshake.headers.cookie;
-      
-      const token = cookies?.split('; ').find((row: string) => row.startsWith(`${ACCESS_COOKIE}=`))?.split('=')[1];
+      // 1. Token enviado por auth (si el cliente lo manda)
+      let token = client.handshake.auth?.token as string | undefined;
+
+      // 2. Si no hay, lo leemos de la cookie de sesión
+      if (!token) {
+        const raw = client.handshake.headers.cookie
+          ?.split(';')
+          .map((part) => part.trim())
+          .find((part) => part.startsWith(`${ACCESS_COOKIE}=`))
+          ?.slice(ACCESS_COOKIE.length + 1);
+
+        if (raw) {
+          try {
+            token = decodeURIComponent(raw);
+          } catch {
+            token = undefined;
+          }
+        }
+      }
 
       if (!token) {
-        this.logger.warn(`Conexión rechazada: Sin cookie (${client.id})`);
-        client.disconnect(); // CA-02
+        reject('Sin token');
         return;
       }
 
-      // Casteamos el resultado para evitar el error de 'any'
-      const session = (await this.auth.execute(token)) as unknown as AuthenticatedSession;
-      
-      const userId = session.userId || session.id || session.user?.id;
+      // AuthenticatedContext: { actor: { id, ... }, sessionId }
+      const context = await this.auth.execute(token);
+      const userId = context.actor?.id;
 
       if (!userId) {
-        throw new Error('Token válido pero sin ID de usuario asociado');
+        reject('Sesión sin usuario');
+        return;
       }
-      
-      client.data.userId = userId; 
-      
-      this.logger.log(`Cliente conectado: ${client.id} (Usuario: ${userId})`);
-      client.join(`user_${userId}`); // Sala privada
 
+      client.data.userId = userId;
+      client.join(`user_${userId}`);
+      client.emit('chat:ready'); // el servidor confirma que la sesión es válida
+      this.logger.log(`Cliente conectado: ${client.id} (Usuario: ${userId})`);
     } catch {
-      this.logger.warn(`Conexión rechazada: Token inválido o expirado (${client.id})`);
-      client.disconnect(); // CA-02
+      reject('Token inválido');
     }
   }
 
-  // CA-06: Cuando el cliente se desconecta
-  handleDisconnect(client: Socket) {
+  handleDisconnect(client: Socket): void {
     this.logger.log(`Cliente desconectado: ${client.id}`);
   }
 }
