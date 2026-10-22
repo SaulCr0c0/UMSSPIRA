@@ -13,6 +13,7 @@ describe('buildResolutionMail', () => {
     expect(mail.text).toContain(base.applicationId);
     expect(mail.text).toContain('24 horas');
     expect(mail.text).not.toContain('TIT-');
+    expect(mail.text).toContain('/activate');
   });
 
   it('exige el código para un dictamen aprobado', () => {

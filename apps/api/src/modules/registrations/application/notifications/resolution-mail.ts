@@ -35,7 +35,7 @@ export function buildResolutionMail(input: ResolutionMailInput): ResolutionMail 
       text: [
         hello,
         '',
-        'Tu solicitud fue aprobada. Para activar tu cuenta usa estos datos:',
+        'Tu solicitud fue aprobada. Para activar tu cuenta ingresa a la ruta /activate de la plataforma UMSSPIRA y usa estos datos:',
         '',
         'Número de solicitud: ' + input.applicationId,
         'Código de activación: ' + input.code,
