@@ -7,6 +7,7 @@ import type { ActorContext } from '../../../../shared/security/contexts/actor-co
 import type {
   ActivationCheck,
   ApplicationsRepository,
+  ResolutionMailRecord,
 } from '../../application/ports/applications-repository.port';
 
 import type {
@@ -168,6 +169,8 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
     input: ReviewInput,
     activationHash: string | null,
     encryptedMail: string,
+    mail: ResolutionMailRecord,
+
   ) {
     return this.prisma.$transaction(
       async (tx) => {
@@ -221,6 +224,16 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
         }
         await tx.correoPendiente.create({
           data: { contenido: encryptedMail, expira_en: new Date(Date.now() + 86400000) },
+        });
+        await tx.correoTramite.create({
+          data: {
+            id_solicitud: id,
+            id_dictamen: review.id,
+            tipo: mail.type,
+            email_destino: mail.to,
+            asunto: mail.subject,
+            estado: 'pendiente',
+          },
         });
         return {
           id: review.id,
