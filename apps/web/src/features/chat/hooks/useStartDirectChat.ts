@@ -28,5 +28,6 @@ export const useStartDirectChat = () => {
     startChat,
     loading,
     error,
+    clearError: () => setError(null),
   };
 };
