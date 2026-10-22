@@ -47,6 +47,11 @@ export class ChatController {
     return this.chatService.getMessages(id);
   }
 
+  @Post(':id/simulate-reply')
+  async simulateReply(@Param('id') id: string) {
+    return this.chatService.simulateReply(id, 'hola, en que le puedo ayudar');
+  }
+
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string) {
     return this.chatService.markAsRead(id);
