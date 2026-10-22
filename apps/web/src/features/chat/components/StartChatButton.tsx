@@ -1,6 +1,7 @@
 // apps/web/src/features/chat/components/StartChatButton.tsx
 'use client';
 
+import { useStartDirectChat } from '../hooks/useStartDirectChat';
 import { MessageSquare } from 'lucide-react';
 
 interface Props {
@@ -10,9 +11,7 @@ interface Props {
 }
 
 export const StartChatButton = ({ targetUserId, targetName, className }: Props) => {
-  const loading = false;
-  const error: string | null = null;
-  const startChat = (_id: string) => {};
+  const { startChat, loading, error } = useStartDirectChat();
 
   return (
     <div className="flex flex-col gap-2">
