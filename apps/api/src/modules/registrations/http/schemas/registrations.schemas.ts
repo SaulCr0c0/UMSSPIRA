@@ -1,3 +1,8 @@
+import {
+  DEFAULT_APPLICATION_PAGE_SIZE,
+  isApplicationPageSize,
+} from '../../domain/policies/application-pagination.policy';
+
 import { z } from 'zod';
 
 export const registrationIdSchema = z.uuid();
@@ -84,7 +89,11 @@ export const submitRegistrationSchema = z
   });
 export const applicationQuerySchema = z.strictObject({
   page: z.coerce.number().int().positive().max(100000).default(1),
-  pageSize: z.coerce.number().int().min(1).max(15).default(15),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .refine(isApplicationPageSize, 'Tamaño de página no permitido')
+    .default(DEFAULT_APPLICATION_PAGE_SIZE),
   career: z.string().trim().max(150).optional(),
   status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
   search: z.string().trim().max(100).optional(),
