@@ -1,6 +1,6 @@
 # Directorio y perfil de mentores
 
-Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. Las solicitudes de mentoría y los calendarios corresponden a otros sprints.
+Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. `POST /api/v1/mentorship/requests` crea solicitudes pendientes y valida que el titulado, el mentor y el horario cumplan las reglas. No requiere cambios de tablas ni migraciones.
 
 ## Rutas y acceso
 
