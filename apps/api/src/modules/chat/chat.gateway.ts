@@ -1,4 +1,3 @@
-// apps/api/src/modules/chat/chat.gateway.ts
 import { Inject, Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -45,9 +44,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`Intento de conexión: ${client.id}`);
-
-    // CA-02: avisamos al cliente que su sesión no es válida antes de cortar,
-    // para distinguirlo de un servidor caído (CA-05).
+    
     const reject = (reason: string): void => {
       this.logger.warn(`Conexión rechazada: ${reason} (${client.id})`);
       client.emit('chat:unauthorized');
@@ -104,7 +101,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: SendMessagePayload,
   ): Promise<SendMessageAck> {
-    // El emisor sale SIEMPRE de la sesión validada, nunca del payload.
     const userId = client.data.userId as string | undefined;
     if (!userId) {
       client.emit('chat:unauthorized');
