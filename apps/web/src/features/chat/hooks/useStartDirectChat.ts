@@ -8,13 +8,17 @@ import { startDirectChat } from '@/shared/services/chat-conversation.service';
 export const useStartDirectChat = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const startChat = async (targetUserId: string) => {
     setLoading(true);
+    setError(null);
 
     try {
       const { conversationId } = await startDirectChat(targetUserId);
       router.push(`/portal/mensajes?conversation=${conversationId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al iniciar el chat');
     } finally {
       setLoading(false);
     }
@@ -23,5 +27,6 @@ export const useStartDirectChat = () => {
   return {
     startChat,
     loading,
+    error,
   };
 };
