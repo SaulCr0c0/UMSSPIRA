@@ -1,0 +1,153 @@
+// apps/api/src/modules/chat/chat.service.ts
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Injectable()
+export class ChatService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getFirstUser() {
+    return this.prisma.usuario.findFirst();
+  }
+
+  async findOrCreateDirectConversation(actorId: string, targetUserId: string, status: string = 'ACEPTADO') {
+    if (!targetUserId) {throw new BadRequestException('targetUserId es requerido');}
+
+    const target = await this.prisma.usuario.findUnique({ where: { usuario_id: targetUserId } });
+    if (!target) {throw new BadRequestException('El usuario destino no existe');}
+
+    let finalActorId = actorId;
+    let actor = null;
+
+    if (finalActorId) {
+      actor = await this.prisma.usuario.findUnique({ where: { usuario_id: finalActorId } });
+    }
+    
+    if (!actor || finalActorId === targetUserId) {
+      const fallbackUser = await this.prisma.usuario.findFirst({ 
+        where: { usuario_id: { not: targetUserId } } 
+      });
+      if (fallbackUser) {
+        finalActorId = fallbackUser.usuario_id;
+      } else {
+        throw new BadRequestException('No hay otros usuarios en la BD');
+      }
+    }
+
+    const existing = await this.prisma.conversacion.findFirst({
+      where: {
+        tipo: 'directo',
+        AND: [
+          { participante_conversacion_registros: { some: { usuario_id: finalActorId } } },
+          { participante_conversacion_registros: { some: { usuario_id: targetUserId } } }
+        ]
+      },
+    });
+
+    if (existing) {return existing;}
+
+    return await this.prisma.conversacion.create({
+      data: {
+        tipo: 'directo',
+        estado_conversacion: status,
+        creado_por: finalActorId,
+        participante_conversacion_registros: {
+          create: [{ usuario_id: finalActorId }, { usuario_id: targetUserId }]
+        }
+      },
+    });
+  }
+
+  async getUserConversations() {
+    const firstUser = await this.prisma.usuario.findFirst();
+    if (!firstUser) {return [];}
+
+    const conversations = await this.prisma.conversacion.findMany({
+      where: {
+        participante_conversacion_registros: { some: { usuario_id: firstUser.usuario_id } }
+      },
+      include: {
+        participante_conversacion_registros: { include: { usuario: true } },
+        mensaje_registros: { orderBy: { fecha_mensaje: 'desc' } }
+      },
+      orderBy: { fecha_actualizacion: 'desc' }
+    });
+
+    return conversations.map((conv) => {
+      const otherParticipant = conv.participante_conversacion_registros.find(
+        (p) => p.usuario_id !== firstUser.usuario_id
+      );
+      
+      const unreadCount = conv.mensaje_registros.filter(
+        (m) => m.emisor_id !== firstUser.usuario_id && m.estado_envio !== 'leido'
+      ).length;
+
+      return {
+        id: conv.id,
+        updatedAt: conv.fecha_actualizacion,
+        unreadCount: unreadCount,
+        isUnread: unreadCount > 0,
+        estado: conv.estado_conversacion || 'ACEPTADO',
+        otherUser: {
+          id: otherParticipant?.usuario?.usuario_id || 'unknown',
+          name: otherParticipant?.usuario?.nombre || 'Usuario',
+          role: otherParticipant?.usuario?.rol || 'Desconocido'
+        }
+      };
+    });
+  }
+
+  async getAvailableUsersToChat() {
+    return this.prisma.usuario.findMany({
+      take: 100,
+      select: { usuario_id: true, nombre: true, rol: true, correo: true },
+    });
+  }
+
+  async getMessages(conversationId: string) {
+    return this.prisma.mensaje.findMany({
+      where: { id_conversacion: conversationId },
+      orderBy: { fecha_mensaje: 'asc' }
+    });
+  }
+
+  async saveMessage(payload: { conversationId: string; senderId: string; content: string }) {
+    return this.prisma.mensaje.create({
+      data: {
+        id_conversacion: payload.conversationId,
+        emisor_id: payload.senderId,
+        contenido: payload.content.trim(),
+        tipo_contenido: 'texto',
+        estado_envio: 'enviado'
+      },
+    });
+  }
+
+  async simulateReply(conversationId: string, content: string) {
+    const conv = await this.prisma.conversacion.findUnique({
+      where: { id: conversationId },
+      include: { participante_conversacion_registros: true }
+    });
+    if (!conv || conv.participante_conversacion_registros.length < 2) {return;}
+    
+    const otherUser = conv.participante_conversacion_registros.find(p => p.usuario_id !== conv.creado_por);
+    if (!otherUser) {return;}
+
+    return this.prisma.mensaje.create({
+      data: {
+        id_conversacion: conversationId,
+        emisor_id: otherUser.usuario_id,
+        contenido: content,
+        tipo_contenido: 'texto',
+        estado_envio: 'enviado'
+      }
+    });
+  }
+
+  async markAsRead(conversationId: string) {
+    return this.prisma.mensaje.updateMany({
+      where: { id_conversacion: conversationId, estado_envio: { not: 'leido' } },
+      data: { estado_envio: 'leido' }
+    });
+  }
+}
