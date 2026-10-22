@@ -1,3 +1,4 @@
+// apps/web/src/shared/services/chat-socket.ts
 import { io, Socket } from 'socket.io-client';
 
 const CHAT_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -8,10 +9,15 @@ let socket: Socket | null = null;
 
 export const getChatSocket = (): Socket => {
   if (!socket) {
-    socket = io(CHAT_URL, {
+    socket = io(`${CHAT_URL}/chat`, {
       withCredentials: true, // el navegador envía la cookie de sesión
-      autoConnect: false,    // la conexión la abre quien use el socket
-      reconnection: false,   // la reconexión automática es HU-02, no HU-01
+      autoConnect: false, // la conexión la abre quien use el socket
+      // Reintentos automáticos (HU-02 CA-02): 2s -> 4s -> 8s, sin aleatoriedad.
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 8000,
+      randomizationFactor: 0,
     });
   }
   return socket;
@@ -23,4 +29,11 @@ export const disconnectChatSocket = (): void => {
     socket.disconnect();
     socket = null;
   }
+};
+
+// Reinicia el ciclo de intentos manualmente.
+export const retryConnection = (): void => {
+  if (!socket) return;
+  socket.disconnect();
+  socket.connect();
 };
