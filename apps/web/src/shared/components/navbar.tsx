@@ -224,7 +224,7 @@ export const Navbar: React.FC = () => {
                     Mensajes
                   </h3>
                   <Link
-                    href="/mensajes"
+                   href="/portal/mensajes"
                     onClick={() => setIsMessagesOpen(false)}
                     className="block w-full text-center text-sm text-amber-600 font-semibold hover:bg-amber-50 py-2 rounded-lg transition-colors"
                   >
