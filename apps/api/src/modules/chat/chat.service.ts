@@ -70,4 +70,54 @@ export class ChatService {
       },
     });
   }
+
+  async getUserConversations() {
+    const firstUser = await this.prisma.usuario.findFirst();
+    if (!firstUser) {
+      return [];
+    }
+
+    const conversations = await this.prisma.conversacion.findMany({
+      where: {
+        participante_conversacion_registros: {
+          some: { usuario_id: firstUser.usuario_id },
+        },
+      },
+      include: {
+        participante_conversacion_registros: { include: { usuario: true } },
+        mensaje_registros: { orderBy: { fecha_mensaje: 'desc' } },
+      },
+      orderBy: { fecha_actualizacion: 'desc' },
+    });
+
+    return conversations.map((conv) => {
+      const otherParticipant = conv.participante_conversacion_registros.find(
+        (p) => p.usuario_id !== firstUser.usuario_id,
+      );
+
+      const unreadCount = conv.mensaje_registros.filter(
+        (m) => m.emisor_id !== firstUser.usuario_id && m.estado_envio !== 'leido',
+      ).length;
+
+      return {
+        id: conv.id,
+        updatedAt: conv.fecha_actualizacion,
+        unreadCount,
+        isUnread: unreadCount > 0,
+        estado: conv.estado_conversacion || 'ACEPTADO',
+        otherUser: {
+          id: otherParticipant?.usuario?.usuario_id || 'unknown',
+          name: otherParticipant?.usuario?.nombre || 'Usuario',
+          role: otherParticipant?.usuario?.rol || 'Desconocido',
+        },
+      };
+    });
+  }
+
+  async getAvailableUsersToChat() {
+    return this.prisma.usuario.findMany({
+      take: 100,
+      select: { usuario_id: true, nombre: true, rol: true, correo: true },
+    });
+  }
 }
