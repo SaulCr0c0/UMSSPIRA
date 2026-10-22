@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, WifiOff, Lock } from 'lucide-react';
+import { Loader2, WifiOff, Lock, Search, X } from 'lucide-react';
 import { getChatSocket, disconnectChatSocket, retryConnection } from '@/shared/services/chat-socket';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
@@ -18,7 +18,6 @@ function MensajesContent() {
   const [countdown, setCountdown] = useState(0);
   const [showConnectedBanner, setShowConnectedBanner] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -28,6 +27,11 @@ function MensajesContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // --- ESTADOS DEL MODAL NUEVO CHAT ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<1 | 2>(1);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -55,7 +59,6 @@ function MensajesContent() {
   useEffect(() => {
     fetchData();
     const socket = getChatSocket();
-
     const onConnect = () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       setStatus('connected');
@@ -87,7 +90,6 @@ function MensajesContent() {
       setStatus('disconnected');
       setIsRetrying(false);
     };
-
     if (socket.connected) onConnect();
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -95,7 +97,6 @@ function MensajesContent() {
     socket.on('reconnect_attempt', onReconnectAttempt);
     socket.on('reconnect_failed', onReconnectFailed);
     if (!socket.connected) socket.connect();
-
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       socket.off('connect', onConnect);
@@ -116,6 +117,12 @@ function MensajesContent() {
     retryConnection();
   };
 
+  const openModalForUser = (user: any) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+    setModalStep(2);
+  };
+
   const filteredConversations = conversations.filter(c => activeTab === 'all' || c.isUnread);
   const totalUnread = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
 
@@ -134,11 +141,7 @@ function MensajesContent() {
             <p className="text-gray-500 mb-6 text-sm">
               {isRetrying ? 'Intentando conectar con el servidor nuevamente.' : 'Error: no se pudo reconectar en los 3 intentos. Inténtalo más tarde.'}
             </p>
-            <button
-              onClick={handleManualRetry}
-              disabled={isRetrying}
-              className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors disabled:opacity-70"
-            >
+            <button onClick={handleManualRetry} disabled={isRetrying} className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors disabled:opacity-70">
               {isRetrying ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               {isRetrying ? 'Reintentando...' : 'Reintentar'}
             </button>
@@ -154,12 +157,51 @@ function MensajesContent() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Tu sesión expiró</h2>
             <p className="text-gray-500 mb-6 text-sm">Para volver al chat, inicia sesión nuevamente.</p>
-            <button
-              onClick={() => router.push('/login')}
-              className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors"
-            >
+            <button onClick={() => router.push('/login')} className="w-full py-3 bg-[#B45309] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#92400E] transition-colors">
               Iniciar sesión
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NUEVO CHAT (Lupa) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#FAFAF9] rounded-2xl shadow-xl w-full max-w-[400px] flex flex-col overflow-hidden relative min-h-[500px]">
+            <div className="flex items-center justify-between p-5 pb-2">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-[#0F172A]">
+                  {modalStep === 1 ? 'Nuevo chat' : `Mensaje a ${selectedUser?.nombre || 'Usuario'}`}
+                </h2>
+              </div>
+              <button onClick={() => { setIsModalOpen(false); setModalStep(1); }} className="text-gray-500 hover:text-gray-800">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {modalStep === 1 && (
+              <>
+                <div className="px-5 mb-4">
+                  <div className="relative">
+                    <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                    <input type="text" placeholder="Buscar contactos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  {availableUsers.filter(u => (u.nombre || '').toLowerCase().includes(searchQuery.toLowerCase())).map((user) => (
+                    <div key={user.usuario_id} onClick={() => openModalForUser(user)} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0 transition-colors">
+                      <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg shrink-0 uppercase">
+                        {user.nombre?.substring(0, 2) || user.correo?.substring(0, 2) || 'U'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-[#0F172A] truncate">{user.nombre || user.correo || 'Usuario'}</h3>
+                        <p className="text-sm text-gray-500 capitalize">{user.rol || 'Sin rol'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -167,7 +209,12 @@ function MensajesContent() {
       {/* PANEL IZQUIERDO */}
       <div className="w-full md:w-1/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#0F172A]">Mensajes</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#0F172A]">Mensajes</h1>
+            <button onClick={() => { setIsModalOpen(true); setModalStep(1); }} className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Buscar personas">
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
           <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
             {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
             {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
