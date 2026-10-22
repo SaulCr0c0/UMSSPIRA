@@ -36,7 +36,7 @@ afterEach(clearAccessToken);
 afterAll(() => { global.fetch = originalFetch; });
 
 function response(body: unknown, status = 200) {
-  return { ok: status < 400, status, json: async () => body };
+  return { ok: status < 400, status, json: async () => status < 400 ? { data: body } : { error: body } };
 }
 
 it('mapea el catálogo y la selección real y envía el Bearer token', async () => {

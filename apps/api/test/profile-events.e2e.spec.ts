@@ -1,0 +1,394 @@
+import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { randomUUID } from 'node:crypto';
+import request from 'supertest';
+import { AppModule } from '../src/app.module';
+import { configureHttp } from '../src/shared/http/configuration/configure-http';
+import { PrismaService } from '../src/shared/infrastructure/database/prisma.service';
+import { AUTHENTICATOR } from '../src/shared/security/ports/authenticator.port';
+import type { ActorContext } from '../src/shared/security/contexts/actor-context';
+import { PROFILE_REPOSITORY } from '../src/modules/profile/application/ports/profile-repository.port';
+import { EVENTS_REPOSITORY } from '../src/modules/events/application/ports/events-repository.port';
+import { BusinessRuleError } from '../src/shared/errors/business-rule-error';
+import { AccessError } from '../src/shared/security/errors/access-error';
+import { HttpError } from '../src/shared/http/errors/http-error';
+
+const graduateId = randomUUID();
+const recordId = randomUUID();
+const eventId = randomUUID();
+const coverId = randomUUID();
+const graduate: ActorContext = {
+  id: randomUUID(),
+  email: 'titulado@example.com',
+  name: 'María Pérez',
+  role: 'titulado',
+  credentialVersion: 1,
+  permissions: ['perfil:self:read', 'perfil:self:write'],
+  scopes: { graduateId, companyIds: [], careerIds: [] },
+};
+const admin: ActorContext = {
+  ...graduate,
+  id: randomUUID(),
+  role: 'administrador',
+  permissions: ['eventos:manage'],
+  scopes: { graduateId: null, companyIds: [], careerIds: [] },
+};
+const education = {
+  institucion: 'Universidad',
+  titulo: 'Ingeniería',
+  grado: 'Licenciatura',
+  anioEgreso: 2025,
+};
+const eventInput = {
+  title: 'Feria profesional',
+  startDate: '2027-01-01T10:00:00Z',
+  endDate: '2027-01-01T18:00:00Z',
+  maxCapacity: 100,
+};
+const event = {
+  id: eventId,
+  ownerId: admin.id,
+  title: eventInput.title,
+  description: null,
+  startDate: new Date(eventInput.startDate),
+  endDate: new Date(eventInput.endDate),
+  maxCapacity: 100,
+  location: null,
+  coverId: null,
+  status: 'BORRADOR',
+  creatorName: 'Administración',
+  createdAt: new Date(),
+};
+const profile = {
+  graduate: { id: graduateId, name: 'María Pérez', career: 'Sistemas', cohort: null },
+  education: [],
+  experience: [],
+  certifications: [],
+};
+
+describe('Perfil y eventos con contratos y guards compartidos', () => {
+  let app: INestApplication;
+  const profiles = {
+    summary: jest.fn(),
+    createEducation: jest.fn(),
+    createExperience: jest.fn(),
+    createCertification: jest.fn(),
+    find: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+    saveBackup: jest.fn(),
+    readBackup: jest.fn(),
+  };
+  const events = {
+    catalog: jest.fn(),
+    published: jest.fn(),
+    owned: jest.fn(),
+    findOwned: jest.fn(),
+    create: jest.fn(),
+    updateDraft: jest.fn(),
+    publishDraft: jest.fn(),
+    saveCover: jest.fn(),
+    removeCover: jest.fn(),
+    readCover: jest.fn(),
+  };
+
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService)
+      .useValue({})
+      .overrideProvider(PROFILE_REPOSITORY)
+      .useValue(profiles)
+      .overrideProvider(EVENTS_REPOSITORY)
+      .useValue(events)
+      .overrideProvider(AUTHENTICATOR)
+      .useValue({
+        execute: async (token: string) => {
+          if (token === 'expired') {
+            throw new AccessError('UNAUTHENTICATED');
+          }
+          if (token === 'database-down') {
+            throw new HttpError(503, 'DATABASE_UNAVAILABLE', 'La base de datos no está disponible');
+          }
+          return {
+            actor:
+              token === 'admin'
+                ? admin
+                : token === 'no-profile'
+                  ? { ...graduate, scopes: { ...graduate.scopes, graduateId: null } }
+                  : graduate,
+            sessionId: randomUUID(),
+          };
+        },
+      })
+      .compile();
+    app = module.createNestApplication();
+    app.useLogger(false);
+    configureHttp(app);
+    await app.init();
+  });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    profiles.summary.mockResolvedValue(profile);
+    profiles.createEducation.mockResolvedValue({
+      id: recordId,
+      graduateId,
+      kind: 'education',
+      institution: education.institucion,
+      title: education.titulo,
+      degree: education.grado,
+      graduationYear: education.anioEgreso,
+      createdAt: new Date(),
+    });
+    events.create.mockResolvedValue(event);
+    events.catalog.mockResolvedValue([]);
+    events.findOwned.mockResolvedValue(event);
+  });
+  afterAll(async () => app?.close());
+
+  it('exige sesión y permiso para consultar el perfil', async () => {
+    await request(app.getHttpServer()).get('/api/v1/perfil').expect(401);
+    await request(app.getHttpServer())
+      .get('/api/v1/perfil')
+      .set('Authorization', 'Bearer admin')
+      .expect(403);
+    expect(profiles.summary).not.toHaveBeenCalled();
+  });
+
+  it('usa el perfil ligado a la sesión, sin aceptar identidad por cabeceras', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/perfil')
+      .set('Authorization', 'Bearer graduate')
+      .set('x-user-id', randomUUID())
+      .expect(200);
+    expect(profiles.summary).toHaveBeenCalledWith({ graduateId, userId: graduate.id });
+    expect(response.body.data.formacionAcademica).toEqual({ total: 0, registros: [] });
+  });
+
+  it('rechaza cuentas sin perfil de titulado asociado', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/perfil')
+      .set('Authorization', 'Bearer no-profile')
+      .expect(403);
+    expect(profiles.summary).not.toHaveBeenCalled();
+  });
+
+  it('crea formación con datos validados y dueño derivado de la sesión', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/perfil/formacion-academica')
+      .set('Authorization', 'Bearer graduate')
+      .send(education)
+      .expect(201);
+    expect(response.body.data.idTitulado).toBe(graduateId);
+    expect(profiles.createEducation).toHaveBeenCalledWith(
+      { graduateId, userId: graduate.id },
+      education,
+    );
+  });
+
+  it('rechaza campos de propiedad y años futuros', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/perfil/formacion-academica')
+      .set('Authorization', 'Bearer graduate')
+      .send({ ...education, idTitulado: randomUUID() })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/perfil/certificaciones')
+      .set('Authorization', 'Bearer graduate')
+      .send({ nombre: 'Certificado', entidadEmisora: 'Entidad', grado: 'Curso', anioEmision: 9999 })
+      .expect(400);
+    expect(profiles.createEducation).not.toHaveBeenCalled();
+    expect(profiles.createCertification).not.toHaveBeenCalled();
+  });
+
+  it('valida fechas laborales y conserva null al indicar trabajo actual', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/perfil/experiencia-laboral')
+      .set('Authorization', 'Bearer graduate')
+      .send({
+        empresa: 'Empresa',
+        cargo: 'Desarrollo',
+        fechaInicio: '2025-02-01',
+        fechaFin: '2025-01-01',
+      })
+      .expect(400);
+    profiles.update.mockResolvedValue({
+      id: recordId,
+      graduateId,
+      kind: 'experience',
+      company: 'Empresa',
+      position: 'Desarrollo',
+      startDate: new Date('2025-02-01'),
+      endDate: null,
+      createdAt: new Date(),
+    });
+    const response = await request(app.getHttpServer())
+      .put('/api/v1/perfil/experiencia-laboral/' + recordId)
+      .set('Authorization', 'Bearer graduate')
+      .send({
+        empresa: 'Empresa',
+        cargo: 'Desarrollo',
+        fechaInicio: '2025-02-01',
+        fechaFin: null,
+      })
+      .expect(200);
+    expect(response.body.data.fechaFin).toBeNull();
+  });
+
+  it('valida UUID antes de consultar un registro', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/no-uuid')
+      .set('Authorization', 'Bearer graduate')
+      .expect(400);
+    expect(profiles.find).not.toHaveBeenCalled();
+  });
+
+  it('descarga un JSON válido con nombre de archivo normalizado', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/perfil/exportar-json')
+      .set('Authorization', 'Bearer graduate')
+      .expect(200);
+    expect(response.headers['content-disposition']).toContain('perfil_maria_perez_');
+    expect(response.body.titulado.id).toBe(graduateId);
+    expect(response.body.fechaExportacion).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
+    expect(response.body).not.toHaveProperty('password_hash');
+  });
+
+  it('protege respaldos y rechaza un PNG como respaldo JPG de certificación', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/' + recordId + '/respaldo')
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/api/v1/perfil/certificaciones/' + recordId + '/respaldo')
+      .set('Authorization', 'Bearer graduate')
+      .attach(
+        'archivo',
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        'certificado.png',
+      )
+      .expect(400);
+    expect(profiles.saveBackup).not.toHaveBeenCalled();
+  });
+
+  it('deja público el catálogo y protege la gestión de eventos', async () => {
+    await request(app.getHttpServer()).get('/api/v1/events/catalog').expect(200, { data: [] });
+    await request(app.getHttpServer()).get('/api/v1/events/owned').expect(401);
+    await request(app.getHttpServer())
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer graduate')
+      .send(eventInput)
+      .expect(403);
+    expect(events.create).not.toHaveBeenCalled();
+  });
+
+  it('crea borradores por defecto con el propietario verificado', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer admin')
+      .send(eventInput)
+      .expect(201);
+    expect(events.create).toHaveBeenCalledWith(admin.id, { ...eventInput, status: 'BORRADOR' });
+    expect(response.body.data.status).toBe('BORRADOR');
+  });
+
+  it.each([
+    { maxCapacity: 0 },
+    { maxCapacity: 10001 },
+    { title: '12345' },
+    { endDate: eventInput.startDate },
+    { startDate: '2101-01-01T10:00:00Z', endDate: '2101-01-02T10:00:00Z' },
+    { imageUrl: 'https://otro.example/imagen.jpg' },
+    { ownerId: randomUUID() },
+  ])('rechaza eventos inválidos: %j', async (change) => {
+    await request(app.getHttpServer())
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer admin')
+      .send({ ...eventInput, ...change })
+      .expect(400);
+    expect(events.create).not.toHaveBeenCalled();
+  });
+
+  it('traduce la referencia de portada a su UUID sin aceptar una URL arbitraria', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/events')
+      .set('Authorization', 'Bearer admin')
+      .send({ ...eventInput, imageUrl: '/api/v1/events/covers/' + coverId })
+      .expect(201);
+    expect(events.create).toHaveBeenCalledWith(admin.id, expect.objectContaining({ coverId }));
+  });
+
+  it('no permite abrir como borrador un evento publicado', async () => {
+    events.findOwned.mockResolvedValue({ ...event, status: 'PUBLICADO' });
+    await request(app.getHttpServer())
+      .get('/api/v1/events/drafts/' + eventId)
+      .set('Authorization', 'Bearer admin')
+      .expect(409);
+  });
+
+  it('propaga al repositorio la identidad al editar o publicar', async () => {
+    events.updateDraft.mockResolvedValue(event);
+    events.publishDraft.mockResolvedValue({ ...event, status: 'PUBLICADO' });
+    await request(app.getHttpServer())
+      .patch('/api/v1/events/drafts/' + eventId)
+      .set('Authorization', 'Bearer admin')
+      .send(eventInput)
+      .expect(200);
+    await request(app.getHttpServer())
+      .patch('/api/v1/events/drafts/' + eventId + '/publish')
+      .set('Authorization', 'Bearer admin')
+      .expect(200);
+    expect(events.updateDraft).toHaveBeenCalledWith(admin.id, eventId, eventInput);
+    expect(events.publishDraft).toHaveBeenCalledWith(admin.id, eventId);
+  });
+
+  it('no hace pública la identidad de cabeceras al leer una portada', async () => {
+    events.readCover.mockRejectedValue(
+      new BusinessRuleError('missing', 'COVER_NOT_FOUND', 'Portada no disponible'),
+    );
+    await request(app.getHttpServer())
+      .get('/api/v1/events/covers/' + coverId)
+      .set('x-user-id', admin.id)
+      .expect(404);
+    expect(events.readCover).toHaveBeenCalledWith(coverId, undefined);
+    await request(app.getHttpServer())
+      .get('/api/v1/events/covers/' + coverId)
+      .set('Authorization', 'Bearer admin')
+      .expect(404);
+    expect(events.readCover).toHaveBeenLastCalledWith(coverId, admin);
+  });
+
+  it('rechaza imágenes con tipo y contenido distintos antes de guardarlas', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/events/covers')
+      .set('Authorization', 'Bearer admin')
+      .attach('file', Buffer.from('archivo falso'), {
+        filename: 'foto.jpg',
+        contentType: 'image/jpeg',
+      })
+      .expect(400);
+    expect(events.saveCover).not.toHaveBeenCalled();
+  });
+
+  it('permite la lectura pública de portada con una cookie vencida sin conservar identidad', async () => {
+    events.readCover.mockResolvedValue({
+      id: coverId,
+      name: 'portada.jpg',
+      mime: 'image/jpeg',
+      bytes: Buffer.from([255, 216, 255]),
+      size: 3,
+    });
+    await request(app.getHttpServer())
+      .get('/api/v1/events/covers/' + coverId)
+      .set('Cookie', 'umsspira_token=expired')
+      .expect('Cross-Origin-Resource-Policy', 'cross-origin')
+      .expect(200);
+    expect(events.readCover).toHaveBeenCalledWith(coverId, undefined);
+  });
+
+  it('no disimula una falla de persistencia como lectura anónima', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/events/covers/' + coverId)
+      .set('Authorization', 'Bearer database-down')
+      .expect(503);
+    expect(events.readCover).not.toHaveBeenCalled();
+  });
+});

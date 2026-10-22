@@ -1,8 +1,19 @@
-"use client";
 
-import { Navbar } from "@/shared/components/navbar";
+'use client';
 
-// Encabezado único del portal: el Navbar se monta una sola vez para todas las rutas
+import { usePathname } from 'next/navigation';
+import { Navbar as LegacyNavbar } from '@/shared/components/navbar';
+import { ConnectedNavbar } from '@/shared/components/navbar/index';
+
+// Encabezado único del portal: selecciona el Navbar según la ruta.
 export function PortalSiteHeader() {
-  return <Navbar />;
+  const pathname = usePathname() ?? '';
+
+  const normalizedPath = pathname.replace(/\/+$/, '');
+
+  return normalizedPath === '/portal/institucional' ? (
+    <ConnectedNavbar />
+  ) : (
+    <LegacyNavbar />
+  );
 }

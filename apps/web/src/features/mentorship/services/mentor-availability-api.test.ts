@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 it('consulta la disponibilidad con el token de la sesión', async () => {
-  fetchMock.mockResolvedValue({ ok: true, json: async () => state });
+  fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: state }) });
   expect(await getMentorAvailability()).toEqual(state);
   expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/mentorship\/availability$/), expect.objectContaining({
     method: 'GET', credentials: 'omit',
@@ -61,11 +61,11 @@ it('distingue un error de red de una sesión inválida', async () => {
 
 it('envía el token y el estado seleccionado al guardar', async () => {
   const paused = { ...state, availabilityStatus: 'PAUSED' };
-  fetchMock.mockResolvedValue({ ok: true, json: async () => paused });
+  fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: paused }) });
   expect(await updateMentorAvailability('PAUSED')).toEqual(paused);
   expect(fetchMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
     method: 'PATCH', body: JSON.stringify({ availabilityStatus: 'PAUSED' }),
-    headers: expect.objectContaining({ Authorization: 'Bearer mentor-token', 'Content-Type': 'application/json' }),
+    headers: expect.objectContaining({ Authorization: 'Bearer mentor-token', 'content-type': 'application/json' }),
   }));
 });
 

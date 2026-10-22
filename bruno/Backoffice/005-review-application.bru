@@ -1,0 +1,31 @@
+meta {
+  name: Emitir dictamen
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/applications/{{applicationId}}/review
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "decision": "APPROVED"
+  }
+}
+
+docs {
+  Requiere administrador de la carrera. En este mismo archivo puedes cambiar decision por OBSERVED o REJECTED y agregar category y note; note requiere de 10 a 500 caracteres. APPROVED envía el código de activación por correo.
+
+  Permiso: solicitudes:review.
+}
