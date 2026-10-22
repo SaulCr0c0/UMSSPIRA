@@ -36,13 +36,30 @@ function MensajesContent() {
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
   const [newMessageText, setNewMessageText] = useState('');
 
+  const fetchData = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+      const resConv = await fetch(`${baseUrl}/api/v1/chat/conversations`, { credentials: 'include' });
+      if (resConv.ok) setConversations(await resConv.json());
+
+      const resUsers = await fetch(`${baseUrl}/api/v1/chat/conversations/users`, { credentials: 'include' });
+      if (resUsers.ok) setAvailableUsers(await resUsers.json());
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (conversationId) setActiveChat(conversationId);
   }, [conversationId]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-[#F8FAFC] p-4 md:p-6 gap-4 overflow-hidden relative">
-      <p className="text-gray-500">Chat activo: {activeChat ?? 'ninguno'}</p>
+      <p className="text-gray-500">Conversaciones: {conversations.length} · Usuarios: {availableUsers.length}</p>
     </div>
   );
 }
