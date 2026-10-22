@@ -8,6 +8,28 @@ jest.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/applications',
+  useSearchParams: () => {
+    const React = jest.requireActual<typeof import('react')>('react');
+    const [search, setSearch] = React.useState(() => window.location.search);
+    React.useEffect(() => {
+      const updateSearch = () => setSearch(window.location.search);
+      window.addEventListener('popstate', updateSearch);
+      return () => window.removeEventListener('popstate', updateSearch);
+    }, []);
+    return new URLSearchParams(search);
+  },
+}));
+
+const mockRouter = {
+  replace: (url: string) => {
+    window.history.replaceState({}, '', url);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  },
+};
+
 jest.mock('@/modules/applications/frontend/services/applications-board.service', () => ({
   fetchApplicationsBoard: jest.fn(),
   fetchApplicationDetail: jest.fn(),
