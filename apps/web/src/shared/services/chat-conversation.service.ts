@@ -6,7 +6,7 @@ export const startDirectChat = async (targetUserId: string) => {
   const response = await fetch(`${baseUrl}/api/v1/chat/conversations/direct`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Lo volvemos a activar porque el Guard ya está desactivado
+    credentials: 'include',
     body: JSON.stringify({ targetUserId }),
   });
 
