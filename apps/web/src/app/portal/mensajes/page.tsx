@@ -361,13 +361,88 @@ function MensajesContent() {
         </div>
       </div>
 
-      {/* PANEL DERECHO - Placeholder */}
+      {/* PANEL DERECHO */}
       <div className="hidden md:flex flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 flex-col relative overflow-hidden">
-        <div className="flex flex-col items-center justify-center h-full space-y-4 w-full bg-[#FAFAF9]">
-           <MessageSquare className="w-16 h-16 text-gray-300" />
-           <p className="text-gray-500 text-lg font-medium">Tus mensajes</p>
-           <p className="text-gray-400 text-sm max-w-xs text-center">Selecciona un contacto de la izquierda para empezar a chatear.</p>
-        </div>
+        {activeChat && currentConversation ? (
+          <div className="w-full h-full flex flex-col">
+            <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-[#FAFAF9]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-lg uppercase">{currentConversation.otherUser?.name?.substring(0, 2) || 'U'}</div>
+                <div>
+                  <h2 className="font-bold text-[#0F172A] text-lg">{currentConversation.otherUser?.name}</h2>
+                  <p className="text-sm text-gray-500 capitalize">{currentConversation.otherUser?.role} {status === 'connected' && '· En línea'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CA-01 y CA-02: BARRA AMARILLA DE RECONEXIÓN */}
+            {status === 'reconnecting' && (
+              <div className="bg-amber-100 text-amber-800 text-sm font-medium px-4 py-2 text-center border-b border-amber-200 flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Reconectando... intento {reconnectData.attempt} de 3 · próximo en {reconnectData.delay / 1000} s
+              </div>
+            )}
+
+            {/* CA-03: BARRA VERDE DE ÉXITO */}
+            {showConnectedBanner && status === 'connected' && (
+              <div className="bg-green-100 text-green-800 text-sm font-medium px-4 py-2 text-center border-b border-green-200 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Conectado
+              </div>
+            )}
+
+            <div className="flex-1 bg-[#FAFAF9] p-6 overflow-y-auto flex flex-col gap-3">
+              {messages.length === 0 ? (
+                <div className="text-center mt-10 text-gray-400">No hay mensajes aún.</div>
+              ) : (
+                messages.map((msg) => {
+                  const isMine = msg.emisor_id !== currentConversation.otherUser.id;
+                  return (
+                    <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[70%] p-3 rounded-2xl ${isMine ? 'bg-[#0F172A] text-white rounded-br-none' : 'bg-white border text-gray-800 rounded-bl-none'}`}>
+                        <p className="text-sm">{msg.contenido}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 bg-white">
+              {isPending ? (
+                 <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-center flex items-center justify-center gap-2">
+                    <Clock className="w-5 h-5 text-amber-500" />
+                    <p className="text-amber-800 font-medium">Esperando a que la otra persona acepte tu solicitud...</p>
+                 </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newMessageText}
+                    onChange={(e) => setNewMessageText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder={status === 'connected' ? "Escribe un mensaje..." : "Esperando conexión..."}
+                    className="w-full bg-gray-100 rounded-xl pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 disabled:opacity-50"
+                    disabled={status !== 'connected'}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessageText.trim() || status !== 'connected'}
+                    className="absolute right-2 top-2 p-2 bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full space-y-4 w-full bg-[#FAFAF9]">
+             <MessageSquare className="w-16 h-16 text-gray-300" />
+             <p className="text-gray-500 text-lg font-medium">Tus mensajes</p>
+             <p className="text-gray-400 text-sm max-w-xs text-center">Selecciona un contacto de la izquierda para empezar a chatear.</p>
+          </div>
+        )}
       </div>
     </div>
   );
