@@ -84,6 +84,14 @@ describe('normalizeText', () => {
     expect(normalizeText('a\r\nb\tc')).toEqual(['a', 'b', 'c']);
   });
 
+  it('mantiene su salida destructiva con barras, guiones y paréntesis', () => {
+    expect(normalizeText('JS / JavaScript')).toEqual(['js', 'javascript']);
+    expect(normalizeText('JS/JavaScript')).toEqual(['js', 'javascript']);
+    expect(normalizeText('JS - JavaScript')).toEqual(['js', 'javascript']);
+    expect(normalizeText('JavaScript (JS)')).toEqual(['javascript', 'js']);
+    expect(normalizePhrase('Node.js / JavaScript')).toBe('node.js javascript');
+  });
+
   it('normaliza 5000 caracteres en menos de 200 ms', () => {
     const sample = 'Programación Node.js, CI/CD y machine_learning. '.repeat(150).slice(0, 5000);
     normalizeText(sample);

@@ -29,6 +29,9 @@ const ENTRADAS: DictionaryEntry[] = [
     canonical: 'qa',
     aliases: ['quality assurance', 'aseguramiento de calidad'],
   },
+  { canonical: 'amazon web services', aliases: ['aws'] },
+  { canonical: 'kubernetes', aliases: [] },
+  { canonical: 'pandas', aliases: [] },
 ];
 
 const PERFIL = `Soy desarrollador de software con experiencia en
@@ -222,6 +225,93 @@ describe('KeywordExtractorService', () => {
     });
   });
 
+  describe('misma mención', () => {
+    it('consolida keyword y alias unidos por paréntesis', () => {
+      expect(service.extract('Amazon Web Services (AWS)').keywords).toEqual([
+        { term: 'amazon web services', count: 1 },
+      ]);
+      expect(service.extract('AWS (Amazon Web Services)').keywords).toEqual([
+        { term: 'amazon web services', count: 1 },
+      ]);
+      expect(service.extract('JavaScript (JS)').keywords).toEqual([
+        { term: 'javascript', count: 1 },
+      ]);
+    });
+
+    it('consolida keyword y alias unidos por una barra con espacios', () => {
+      expect(service.extract('JS / JavaScript').keywords).toEqual([
+        { term: 'javascript', count: 1 },
+      ]);
+    });
+
+    it('consolida la pareja y cuenta aparte una mención suelta', () => {
+      expect(service.extract('JavaScript (JS) y JS').keywords).toEqual([
+        { term: 'javascript', count: 2 },
+      ]);
+    });
+
+    it('no consolida menciones separadas por coma', () => {
+      expect(service.extract('conozco JS, además domino JavaScript').keywords).toEqual([
+        { term: 'javascript', count: 2 },
+      ]);
+    });
+
+    it('no consolida menciones solo adyacentes sin delimitador', () => {
+      expect(service.extract('JS JavaScript').keywords).toEqual([{ term: 'javascript', count: 2 }]);
+    });
+
+    it('no consolida con guion', () => {
+      expect(service.extract('JS - JavaScript').keywords).toEqual([
+        { term: 'javascript', count: 2 },
+      ]);
+    });
+
+    it('no consolida con barra sin espacios', () => {
+      expect(service.extract('JS/JavaScript').keywords).toEqual([{ term: 'javascript', count: 2 }]);
+    });
+
+    it('no fusiona canónicas distintas unidas por barra', () => {
+      expect(service.extract('Node.js / JavaScript').keywords).toEqual([
+        { term: 'javascript', count: 1 },
+        { term: 'node.js', count: 1 },
+      ]);
+      expect(service.extract('Docker / Kubernetes').keywords).toEqual([
+        { term: 'docker', count: 1 },
+        { term: 'kubernetes', count: 1 },
+      ]);
+      expect(service.extract('Python (Pandas)').keywords).toEqual([
+        { term: 'pandas', count: 1 },
+        { term: 'python', count: 1 },
+      ]);
+    });
+
+    it('mantiene las palabras desconocidas del paréntesis en unmapped', () => {
+      expect(service.extract('React (hooks)')).toEqual({
+        keywords: [{ term: 'react', count: 1 }],
+        unmapped: [{ term: 'hooks', count: 1 }],
+      });
+    });
+
+    it('no altera la normalización de CI/CD', () => {
+      expect(service.extract('CI/CD')).toEqual({
+        keywords: [{ term: 'ci cd', count: 1 }],
+        unmapped: [],
+      });
+    });
+
+    it('consolida una cadena de la misma canónica unida por separadores válidos', () => {
+      expect(service.extract('JS / JavaScript / JS').keywords).toEqual([
+        { term: 'javascript', count: 1 },
+      ]);
+    });
+
+    it('no cruza el límite de campo', () => {
+      expect(service.extract('Amazon Web Services\n(AWS)').keywords).toEqual([
+        { term: 'amazon web services', count: 2 },
+      ]);
+    });
+  });
+
   describe('límites de campo', () => {
     it('no cruza n-gramas entre segmentos (CA9)', () => {
       expect(service.extract('gobierno de\nti').keywords).toEqual([]);
@@ -319,7 +409,7 @@ describe('KeywordExtractorService', () => {
     it('carga la fixture sin claves ignoradas', () => {
       const report = new KeywordExtractorService().loadDictionary(ENTRADAS);
 
-      expect(report).toEqual({ loaded: 33, ignored: [] });
+      expect(report).toEqual({ loaded: 37, ignored: [] });
     });
 
     it('ignora claves sin normalizar', () => {
