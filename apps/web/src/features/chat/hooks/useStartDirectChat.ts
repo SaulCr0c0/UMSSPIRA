@@ -15,7 +15,9 @@ export const useStartDirectChat = () => {
     setError(null);
     try {
       const { conversationId } = await startDirectChat(targetUserId);
+      
       router.push(`/portal/mensajes?conversation=${conversationId}`);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar el chat');
     } finally {
