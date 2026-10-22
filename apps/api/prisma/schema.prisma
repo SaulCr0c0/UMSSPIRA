@@ -1,5 +1,6 @@
 generator client {
-  provider     = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -1212,31 +1213,4 @@ model MensajeEstado {
   usuario Usuario? @relation("mensaje_estado_usuario_id_usuario", fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "mensaje_estado_usuario_id_fkey")
 
   @@map("mensaje_estado")
-}
-
-model Conversation {
-  id        String   @id @default(uuid())
-  type      String   @default("direct") // "direct" | "group" (grupo fuera de alcance Sprint 2)
-  user1Id   String
-  user2Id   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  messages  Message[]
-
-  @@unique([user1Id, user2Id, type])
-  @@index([user1Id])
-  @@index([user2Id])
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String
-  createdAt      DateTime     @default(now())
-
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId, createdAt])
 }
