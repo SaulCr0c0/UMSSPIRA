@@ -20,7 +20,7 @@ function MensajesContent() {
   const [countdown, setCountdown] = useState(0);
   const [showConnectedBanner, setShowConnectedBanner] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-
+  
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- ESTADOS DE LA APP ---
@@ -70,6 +70,7 @@ function MensajesContent() {
     fetchData();
     const socket = getChatSocket();
 
+    // Función para manejar cuando se establece la conexión
     const onConnect = () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       setStatus('connected');
@@ -78,20 +79,24 @@ function MensajesContent() {
       setTimeout(() => setShowConnectedBanner(false), 3000); 
     };
 
+    // Función para cuando se pierde la conexión
     const onDisconnect = () => {
       setStatus('reconnecting');
     };
 
+    // Función para cuando el servidor rechaza la sesión
     const onUnauthorized = () => {
       setStatus('unauthorized');
     };
 
+    // Función para cuando inicia un intento de reconexión
     const onReconnectAttempt = (attempt: number) => {
       const delay = attempt === 1 ? 2000 : attempt === 2 ? 4000 : 8000;
       setReconnectData({ attempt, delay });
       setStatus('reconnecting');
       setIsRetrying(false); 
 
+      // Lógica del contador bajando
       if (countdownRef.current) clearInterval(countdownRef.current);
       setCountdown(delay / 1000);
       
@@ -106,12 +111,14 @@ function MensajesContent() {
       }, 1000);
     };
 
+    // Función para cuando fallan los 3 intentos
     const onReconnectFailed = () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       setStatus('disconnected');
       setIsRetrying(false); 
     };
 
+    // Si el socket ya estaba conectado al cargar la página
     if (socket.connected) onConnect();
 
     socket.on('connect', onConnect);
@@ -213,6 +220,7 @@ function MensajesContent() {
       
       {/* ================= MODALES DE LA HU-02 ================= */}
 
+      {/* CA-04, CA-05: MODAL DE ERROR Y REINTENTO */}
       {status === 'disconnected' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
@@ -242,6 +250,7 @@ function MensajesContent() {
         </div>
       )}
 
+      {/* CA-06: MODAL DE SESIÓN EXPIRADA */}
       {status === 'unauthorized' && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
@@ -350,6 +359,7 @@ function MensajesContent() {
             </button>
           </div>
           
+          {/* INDICADOR SUPERIOR DINÁMICO */}
           <div className="text-xs flex items-center gap-1 font-medium bg-gray-50 px-3 py-1.5 rounded-full">
             {status === 'connected' && <><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span><span className="text-green-700">Conectado</span></>}
             {status === 'connecting' && <><Loader2 className="w-3 h-3 animate-spin text-amber-600"/><span className="text-amber-700">Conectando...</span></>}
@@ -419,6 +429,7 @@ function MensajesContent() {
               </div>
             </div>
 
+            {/* CA-01 y CA-02: BARRA AMARILLA CON CONTADOR */}
             {status === 'reconnecting' && (
               <div className="bg-amber-100 text-amber-800 text-sm font-medium px-4 py-2 text-center border-b border-amber-200 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -426,6 +437,7 @@ function MensajesContent() {
               </div>
             )}
 
+            {/* CA-03: BARRA VERDE DE ÉXITO */}
             {showConnectedBanner && status === 'connected' && (
               <div className="bg-green-100 text-green-800 text-sm font-medium px-4 py-2 text-center border-b border-green-200 flex items-center justify-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
