@@ -1,3 +1,4 @@
+import type { ApplicationPeriod } from '../../domain/policies/application-period.policy';
 export interface SubmitRegistrationInput {
   sessionToken: string;
   fechaTitulacion?: string;
@@ -48,6 +49,10 @@ export interface ApplicationQuery {
   status?: 'PENDING' | 'APPROVED' | 'OBSERVED' | 'REJECTED';
   search?: string;
   age?: 'within48' | 'over48';
+  period?: ApplicationPeriod;
+  year?: number;
+  from?: string;
+  to?: string;
 }
 
 export interface Notification {

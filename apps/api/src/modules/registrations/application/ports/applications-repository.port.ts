@@ -2,6 +2,7 @@ import type { ActorContext } from '../../../../shared/security/contexts/actor-co
 import type { ApplicationQuery, ReviewInput } from '../contracts/registration-inputs';
 import type {
   ApplicationDetail,
+  ApplicationMetrics,
   ApplicationPage,
   ReviewResult,
 } from '../../domain/entities/application';
@@ -27,6 +28,7 @@ export interface ApplicationsRepository {
     encryptedMail: string,
   ): Promise<void>;
   list(actor: ActorContext, query: ApplicationQuery): Promise<ApplicationPage>;
+    metrics(actor: ActorContext, now: Date): Promise<ApplicationMetrics>;
   find(actor: ActorContext, id: string): Promise<ApplicationDetail>;
   document(actor: ActorContext, id: string): Promise<RegistrationFile>;
   review(
