@@ -217,9 +217,52 @@ describe('Registro documental: fronteras HTTP y permisos', () => {
     await request(app.getHttpServer())
       .post('/api/v1/applications/' + applicationId + '/review')
       .set('Authorization', 'Bearer admin')
-      .send({ decision: 'REJECTED' })
+      .send({ decision: 'RECHAZADA' })
       .expect(400);
     expect(applications.review).not.toHaveBeenCalled();
+  });
+
+  it('acepta el dictamen en español y conserva el contrato de notificación', async () => {
+    applications.find.mockResolvedValueOnce({ email: 'maria@example.com' });
+    applications.review.mockResolvedValueOnce({
+      id: randomUUID(),
+      applicationId,
+      decision: 'APROBADA',
+      status: 'APROBADA',
+      notificationStatus: 'EN_COLA',
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/applications/' + applicationId + '/review')
+      .set('Authorization', 'Bearer admin')
+      .send({ decision: 'APROBADA' })
+      .expect(201);
+
+    expect(response.body.data.status).toBe('APROBADA');
+    expect(response.body.data.notificationStatus).toBe('EN_COLA');
+    expect(applications.review).toHaveBeenCalledWith(
+      actor,
+      applicationId,
+      { decision: 'APROBADA' },
+      expect.any(String),
+      expect.any(String),
+    );
+  });
+
+  it('rechaza los estados anteriores en inglés antes de llamar al repositorio', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/applications/' + applicationId + '/review')
+      .set('Authorization', 'Bearer admin')
+      .send({ decision: 'APPROVED' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/applications?status=PENDING')
+      .set('Authorization', 'Bearer admin')
+      .expect(400);
+
+    expect(applications.find).not.toHaveBeenCalled();
+    expect(applications.review).not.toHaveBeenCalled();
+    expect(applications.list).not.toHaveBeenCalled();
   });
 
   it('mantiene privado el contenido del respaldo', async () => {

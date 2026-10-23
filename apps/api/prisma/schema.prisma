@@ -971,6 +971,7 @@ model OtpActivacion {
   solicitud Solicitud @relation(fields: [id_solicitud], references: [id], onDelete: NoAction)
 
   @@index([id_solicitud, consumido, invalidado, expira_en])
+  @@index([id_solicitud, created_at(sort: Desc)], map: "ix_otp_solicitud_fecha")
   @@map("otp_activacion")
 }
 
@@ -1015,6 +1016,8 @@ model CorreoTramite {
 
   @@index([id_solicitud, created_at])
   @@index([id_dictamen])
+  @@index([estado, siguiente_intento_en, created_at], map: "idx_correo_cola")
+  @@index([id_solicitud, created_at(sort: Desc)], map: "idx_correo_solicitud")
   @@map("correo_tramite")
 }
 
@@ -1237,7 +1240,7 @@ model PasswordResetToken {
   revocado    Boolean   @default(false)
   creado_en   DateTime  @default(now()) @db.Timestamptz(6)
 
-  usuario     Usuario               @relation(fields: [id_usuario], references: [usuario_id], onDelete: Cascade)
+  usuario     Usuario               @relation(fields: [id_usuario], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction)
   correos     PasswordResetCorreo[]
 
   @@index([id_usuario, creado_en(sort: Desc)], map: "idx_prt_usuario")
@@ -1252,7 +1255,7 @@ model PasswordResetSolicitud {
   resultado           String   @default("solicitado") @db.VarChar(30)
   creado_en           DateTime @default(now()) @db.Timestamptz(6)
 
-  usuario             Usuario? @relation(fields: [usuario_id], references: [usuario_id], onDelete: SetNull)
+  usuario             Usuario? @relation(fields: [usuario_id], references: [usuario_id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([correo_normalizado, creado_en(sort: Desc)], map: "idx_prs_correo_ventana")
   @@index([origen_hash, creado_en(sort: Desc)], map: "idx_prs_origen_ventana")
@@ -1267,7 +1270,7 @@ model PasswordResetEvento {
   metadata            Json?    @db.JsonB
   creado_en           DateTime @default(now()) @db.Timestamptz(6)
 
-  usuario             Usuario? @relation(fields: [usuario_id], references: [usuario_id], onDelete: SetNull)
+  usuario             Usuario? @relation(fields: [usuario_id], references: [usuario_id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([usuario_id, creado_en(sort: Desc)], map: "idx_pre_usuario")
   @@index([correo_normalizado, creado_en(sort: Desc)], map: "idx_pre_correo")
@@ -1290,7 +1293,7 @@ model PasswordResetCorreo {
   creado_en             DateTime  @default(now()) @db.Timestamptz(6)
   actualizado_en        DateTime  @default(now()) @db.Timestamptz(6)
 
-  token                 PasswordResetToken @relation(fields: [id_token], references: [id], onDelete: Cascade)
+  token                 PasswordResetToken @relation(fields: [id_token], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([id_token], map: "uq_prc_un_correo_por_token")
   @@index([estado, siguiente_intento_en], map: "idx_prc_pendientes") 
@@ -1305,7 +1308,7 @@ model ControlReenvioOtp {
   bloqueado_hasta     DateTime? @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @db.Timestamptz(6)
 
-  solicitud           Solicitud @relation(fields: [id_solicitud], references: [id], onDelete: Cascade)
+  solicitud           Solicitud @relation(fields: [id_solicitud], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("control_reenvio_otp")
 }
