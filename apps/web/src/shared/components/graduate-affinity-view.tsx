@@ -13,7 +13,11 @@ import RadarInspection, { AREA_NAMES_MAP } from './radar-inspection';
 import { formatPercentage } from '../utils/percentage';
 import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
-import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
+import {
+  recalculateAffinity,
+  getAffinityVector,
+  RECALCULATE_DEBOUNCE_MS,
+} from '../services/affinity-service';
 import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
 import { ArrowLeft, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -103,8 +107,9 @@ export const GraduateAffinityView: React.FC = () => {
   ]);
   const [loadedKeywords, setLoadedKeywords] = useState<string[]>([]);
 
-  const isRecalculatingRef = useRef<boolean>(false);
   const changeVersionRef = useRef<number>(0);
+  const recalculateControllerRef = useRef<AbortController | null>(null);
+  const recalculateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { hasPendingChanges, markPendingChanges, clearPendingChanges } = useRecalculateState();
 
@@ -135,17 +140,26 @@ export const GraduateAffinityView: React.FC = () => {
   }, []);
 
   const handleRecalculate = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
-    if (isRecalculatingRef.current) return;
     if (!force && !hasPendingChanges && !hasRadarError) return;
 
-    isRecalculatingRef.current = true;
+    if (recalculateTimerRef.current) clearTimeout(recalculateTimerRef.current);
+    recalculateControllerRef.current?.abort();
+    const controller = new AbortController();
+    recalculateControllerRef.current = controller;
     setIsLoading(true);
     setIsPendingDialogOpen(false);
     const versionAtStart = changeVersionRef.current;
 
     try {
+      await new Promise<void>((resolve) => {
+        recalculateTimerRef.current = setTimeout(resolve, RECALCULATE_DEBOUNCE_MS || 500);
+      });
+      recalculateTimerRef.current = null;
+      if (controller.signal.aborted || recalculateControllerRef.current !== controller) return;
+
       const previousAreas = [...candidateAreas];
-      const result = await recalculateAffinity();
+      const result = await recalculateAffinity({ signal: controller.signal });
+      if (controller.signal.aborted || recalculateControllerRef.current !== controller) return;
       setLastCalculatedDate(formatCalculatedDate(result.calculatedAt));
       const processed = processVectorAreas(result.areas as any, mockAreas);
 
@@ -170,14 +184,30 @@ export const GraduateAffinityView: React.FC = () => {
       setHasValidRadar(true);
       setIsSuccessToastOpen(true);
     } catch {
-      setHasRadarError(true);
+      if (!controller.signal.aborted && recalculateControllerRef.current === controller) {
+        setHasRadarError(true);
+      }
     } finally {
-      isRecalculatingRef.current = false;
-      setIsLoading(false);
+      if (recalculateControllerRef.current === controller) {
+        recalculateControllerRef.current = null;
+        setIsLoading(false);
+      }
     }
   }, [hasPendingChanges, hasRadarError, clearPendingChanges, candidateAreas]);
 
+  useEffect(() => () => {
+    if (recalculateTimerRef.current) clearTimeout(recalculateTimerRef.current);
+    recalculateControllerRef.current?.abort();
+  }, []);
+
   const handleProfileChange = useCallback(() => {
+    if (recalculateTimerRef.current) {
+      clearTimeout(recalculateTimerRef.current);
+      recalculateTimerRef.current = null;
+    }
+    recalculateControllerRef.current?.abort();
+    recalculateControllerRef.current = null;
+    setIsLoading(false);
     changeVersionRef.current += 1;
     setChangeVersion(changeVersionRef.current);
     markPendingChanges();
