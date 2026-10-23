@@ -13,6 +13,7 @@ export interface EventsRepository {
   create(ownerId: string, input: CreateEventInput): Promise<Event>;
   updateDraft(ownerId: string, id: string, input: EventInput): Promise<Event>;
   publishDraft(ownerId: string, id: string): Promise<Event>;
+  cancelPublished(ownerId: string, id: string): Promise<Event>;
   saveCover(ownerId: string, file: StoredFile): Promise<void>;
   removeCover(ownerId: string, id: string): Promise<void>;
   readCover(id: string, actor?: ActorContext): Promise<StoredFile>;
