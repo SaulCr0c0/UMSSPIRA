@@ -47,6 +47,8 @@ describe('Registro documental: fronteras HTTP y permisos', () => {
   const repository = {
     listCareers: jest.fn(),
     createDraft: jest.fn(),
+    updateDraft: jest.fn(),
+    draftDocument: jest.fn(),
     findDraft: jest.fn(),
     issueCode: jest.fn(),
     verifyCode: jest.fn(),
@@ -113,6 +115,39 @@ describe('Registro documental: fronteras HTTP y permisos', () => {
       expect.any(Date),
     );
     expect(JSON.stringify(response.body)).not.toContain('ci');
+  });
+
+  it('actualiza el borrador por token y normaliza el correo nuevo', async () => {
+    repository.updateDraft.mockResolvedValue({ verifiedEmail: data.correo });
+    await request(app.getHttpServer())
+      .patch('/api/v1/registrations/sessions/' + token)
+      .send({ ...data, correo: ' NUEVO@EXAMPLE.COM ' })
+      .expect(200);
+    expect(repository.updateDraft).toHaveBeenCalledWith(
+      security.hash('draft', token),
+      expect.objectContaining({ correo: 'nuevo@example.com' }),
+    );
+  });
+
+  it('no acepta que el cliente declare un correo como verificado', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/registrations/sessions/' + token)
+      .send({ ...data, verifiedEmail: data.correo })
+      .expect(400);
+    expect(repository.updateDraft).not.toHaveBeenCalled();
+  });
+
+  it('recupera el documento con el token del borrador y sin caché pública', async () => {
+    repository.draftDocument.mockResolvedValue({
+      mime: 'application/pdf',
+      bytes: Buffer.from('%PDF-1.4'),
+    });
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/registrations/sessions/' + token + '/document')
+      .expect(200);
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.headers['content-type']).toContain('application/pdf');
+    expect(repository.draftDocument).toHaveBeenCalledWith(security.hash('draft', token));
   });
 
   it('valida UUID y rechaza campos de privilegios antes de persistir', async () => {

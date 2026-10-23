@@ -1,3 +1,4 @@
+import { UpdateRegistrationController } from './http/controllers/update-registration.controller';
 import { GetDraftDocumentController } from './http/controllers/get-draft-document.controller';
 import { Module } from '@nestjs/common';
 import { RenewActivationController } from './http/controllers/renew-activation.controller';
@@ -21,10 +22,12 @@ import { GetApplicationController } from './http/controllers/get-application.con
 import { ReviewApplicationController } from './http/controllers/review-application.controller';
 import { GetApplicationDocumentLinkController } from './http/controllers/get-application-document-link.controller';
 import { GetApplicationDocumentController } from './http/controllers/get-application-document.controller';
+import { GetApplicationMetricsController } from './http/controllers/get-application-metrics.controller';
 
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
+    UpdateRegistrationController,
     GetDraftDocumentController,
     RenewActivationController,
     ListRegistrationCareersController,
@@ -37,6 +40,7 @@ import { GetApplicationDocumentController } from './http/controllers/get-applica
     VerifyActivationCodeController,
     UploadRegistrationDocumentController,
     ListApplicationsController,
+    GetApplicationMetricsController,
     GetApplicationController,
     ReviewApplicationController,
     GetApplicationDocumentLinkController,

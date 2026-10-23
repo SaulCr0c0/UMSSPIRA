@@ -1,9 +1,9 @@
+import { z } from 'zod';
+import { APPLICATION_PERIODS } from '../../domain/policies/application-period.policy';
 import {
   DEFAULT_APPLICATION_PAGE_SIZE,
   isApplicationPageSize,
 } from '../../domain/policies/application-pagination.policy';
-
-import { z } from 'zod';
 import {
   meetsPasswordPolicy,
   PASSWORD_MAX_LENGTH,
@@ -52,7 +52,10 @@ export const registrationDataSchema = z.strictObject({
     .trim()
     .regex(/^\d{6,9}$/),
 });
-export const issueCodeSchema = z.strictObject({ registrationId: z.uuid() });
+export const issueCodeSchema = z.strictObject({
+  registrationId: z.uuid(),
+  email: z.string().trim().toLowerCase().pipe(z.email()).optional(),
+});
 export const verifyCodeSchema = issueCodeSchema.extend({ code: z.string().regex(/^\d{6}$/) });
 export const uploadDocumentSchema = z.strictObject({
   sessionToken: z.uuid(),
@@ -92,18 +95,41 @@ export const submitRegistrationSchema = z
       });
     }
   });
-export const applicationQuerySchema = z.strictObject({
-  page: z.coerce.number().int().positive().max(100000).default(1),
-  pageSize: z.coerce
-    .number()
-    .int()
-    .refine(isApplicationPageSize, 'Tamaño de página no permitido')
-    .default(DEFAULT_APPLICATION_PAGE_SIZE),
-  career: z.string().trim().max(150).optional(),
-  status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
-  search: z.string().trim().max(100).optional(),
-  age: z.enum(['within48', 'over48']).optional(),
-});
+export const applicationQuerySchema = z
+  .strictObject({
+    page: z.coerce.number().int().positive().max(100000).default(1),
+    pageSize: z.coerce
+      .number()
+      .int()
+      .refine(isApplicationPageSize, 'Tamaño de página no permitido')
+      .default(DEFAULT_APPLICATION_PAGE_SIZE),
+    career: z.string().trim().max(150).optional(),
+    status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
+    search: z.string().trim().max(100).optional(),
+    age: z.enum(['within48', 'over48']).optional(),
+    // Periodo por fecha de registro (CA-08.4). Las fechas son días de Bolivia: AAAA-MM-DD.
+    period: z.enum(APPLICATION_PERIODS).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+  })
+  .refine((query) => query.period !== 'custom' || Boolean(query.from || query.to), {
+    message: 'Indica Desde, Hasta o ambos',
+    path: ['from'],
+  })
+  .refine((query) => !query.from || !query.to || query.from <= query.to, {
+    message: 'Desde no puede ser posterior a Hasta',
+    path: ['to'],
+  })
+  .refine((query) => query.period === 'custom' || (!query.from && !query.to), {
+    message: 'Desde y Hasta solo se usan con el periodo personalizado',
+    path: ['period'],
+  })
+  .refine((query) => query.year === undefined || query.period === 'semester1' || query.period === 'semester2', {
+    message: 'El año solo se usa con un semestre',
+    path: ['year'],
+  });
+
 export const reviewSchema = z
   .strictObject({
     decision: z.enum(['APPROVED', 'OBSERVED', 'REJECTED']),
@@ -124,6 +150,7 @@ export const reviewSchema = z
       }
     }
   });
+
 export const activateAccountSchema = z.strictObject({
   applicationId: z.uuid(),
   activationToken: z.string().min(1).max(500),

@@ -39,8 +39,70 @@ function createRepository({ pending, others, pendingRows = [], otherRows = [] }:
   };
   return { prisma, repository: new PrismaApplicationsRepository(prisma as never) };
 }
+
+function createMetricsRepository(counts: [number, number, number], resolved: unknown[]) {
+  const prisma = {
+    $transaction: jest.fn((operations: Promise<unknown>[]) => Promise.all(operations)),
+    solicitud: {
+      count: jest
+        .fn()
+        .mockResolvedValueOnce(counts[0])
+        .mockResolvedValueOnce(counts[1])
+        .mockResolvedValueOnce(counts[2]),
+    },
+    dictamen: { findMany: jest.fn().mockResolvedValue(resolved) },
+  };
+  return { prisma, repository: new PrismaApplicationsRepository(prisma as never) };
+}
  
 describe('PrismaApplicationsRepository.list', () => {
+  describe('filtro por periodo (CA-08.4)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-10-21T15:00:00Z'));
+    });
+ 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+ 
+    it('filtra por fecha de registro con el día de Bolivia en «Últimos 15 días»', async () => {
+      const { prisma, repository } = createRepository({ pending: 0, others: 0 });
+ 
+      await repository.list(actor, query({ period: 'last15' }));
+ 
+      const { where } = prisma.solicitud.count.mock.calls[0][0];
+      expect(where.AND).toContainEqual({
+        fecha_creacion: {
+          gte: new Date('2026-10-07T04:00:00.000Z'),
+          lt: new Date('2026-10-22T04:00:00.000Z'),
+        },
+      });
+    });
+ 
+    it('«Desde/Hasta» incluye el día final completo', async () => {
+      const { prisma, repository } = createRepository({ pending: 0, others: 0 });
+ 
+      await repository.list(actor, query({ period: 'custom', from: '2026-10-01', to: '2026-10-15' }));
+ 
+      const { where } = prisma.solicitud.count.mock.calls[0][0];
+      expect(where.AND).toContainEqual({
+        fecha_creacion: {
+          gte: new Date('2026-10-01T04:00:00.000Z'),
+          lt: new Date('2026-10-16T04:00:00.000Z'),
+        },
+      });
+    });
+ 
+    it('sin periodo no agrega ninguna condición de fecha', async () => {
+      const { prisma, repository } = createRepository({ pending: 0, others: 0 });
+ 
+      await repository.list(actor, query());
+ 
+      expect(JSON.stringify(prisma.solicitud.count.mock.calls[0][0])).not.toContain('fecha_creacion');
+    });
+  });
+  
+
   it('primera página: pendientes más antiguos primero y con el id como desempate (CA-08.2)', async () => {
     const { prisma, repository } = createRepository({
       pending: 25,
@@ -155,5 +217,73 @@ describe('PrismaApplicationsRepository.list', () => {
  
     expect(JSON.stringify(prisma.solicitud.count.mock.calls[0][0])).toContain('{"ci":{"contains":"68492"}}');
   });
+
 });
  
+describe('PrismaApplicationsRepository.metrics', () => {
+  const NOW = new Date('2026-10-21T15:00:00Z');
+ 
+  it('calcula las cuatro cifras con el día de Bolivia (CA-08.1)', async () => {
+    const { prisma, repository } = createMetricsRepository([5, 12, 3], [{ id_solicitud: 'a' }, { id_solicitud: 'b' }]);
+ 
+    const metrics = await repository.metrics(actor, NOW);
+ 
+    expect(metrics).toEqual({
+      receivedToday: 5,
+      pending: 12,
+      urgent: 3,
+      resolvedToday: 2,
+      generatedAt: '2026-10-21T15:00:00.000Z',
+      timeZone: 'America/La_Paz',
+    });
+ 
+    const [received, pending, urgent] = prisma.solicitud.count.mock.calls.map(([args]) => args.where.AND);
+    const todayRange = {
+      gte: new Date('2026-10-21T04:00:00.000Z'),
+      lt: new Date('2026-10-22T04:00:00.000Z'),
+    };
+    expect(received[1]).toEqual({ fecha_creacion: todayRange });
+    expect(pending[1]).toEqual({ estado: 'PENDING' });
+    expect(urgent[1]).toEqual({ estado: 'PENDING', fecha_creacion: { lt: new Date('2026-10-19T15:00:00.000Z') } });
+    expect(prisma.dictamen.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ distinct: ['id_solicitud'], where: expect.objectContaining({ fecha_creacion: todayRange }) }),
+    );
+  });
+ 
+  it('a las 22:00 en Bolivia «hoy» sigue siendo el mismo día', async () => {
+    const { prisma, repository } = createMetricsRepository([0, 0, 0], []);
+ 
+    await repository.metrics(actor, new Date('2026-10-22T02:00:00Z'));
+ 
+    const [received] = prisma.solicitud.count.mock.calls.map(([args]) => args.where.AND);
+    expect(received[1]).toEqual({
+      fecha_creacion: {
+        gte: new Date('2026-10-21T04:00:00.000Z'),
+        lt: new Date('2026-10-22T04:00:00.000Z'),
+      },
+    });
+  });
+ 
+  it('cuenta solo las solicitudes de las carreras del actor', async () => {
+    const { prisma, repository } = createMetricsRepository([0, 0, 0], []);
+ 
+    await repository.metrics(actor, NOW);
+ 
+    const scope = { detalle_solicitud: { is: { id_carrera: { in: ['carrera-1'] } } } };
+    for (const [args] of prisma.solicitud.count.mock.calls) {
+      expect(args.where.AND[0]).toEqual(scope);
+    }
+    expect(prisma.dictamen.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ solicitud: { is: scope } }) }),
+    );
+  });
+ 
+  it('cuenta cada solicitud resuelta una sola vez aunque tenga varios dictámenes el mismo día', async () => {
+    const { prisma, repository } = createMetricsRepository([0, 0, 0], [{ id_solicitud: 'a' }]);
+ 
+    const metrics = await repository.metrics(actor, NOW);
+ 
+    expect(metrics.resolvedToday).toBe(1);
+    expect(prisma.dictamen.findMany).toHaveBeenCalledWith(expect.objectContaining({ distinct: ['id_solicitud'] }));
+  });
+});

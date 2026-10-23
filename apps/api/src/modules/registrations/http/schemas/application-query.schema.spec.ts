@@ -37,5 +37,54 @@ describe('applicationQuerySchema', () => {
   it('rechaza parámetros desconocidos', () => {
     expect(applicationQuerySchema.safeParse({ unknown: 'x' }).success).toBe(false);
   });
+
+  it.each(['last15', 'last30', 'semester1', 'semester2'])('acepta el periodo %s (CA-08.4)', (period) => {
+    expect(applicationQuerySchema.safeParse({ period }).success).toBe(true);
+  });
+ 
+  it('rechaza un periodo desconocido', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'semana' }).success).toBe(false);
+  });
+ 
+  it('acepta un semestre con su año', () => {
+    const parsed = applicationQuerySchema.parse({ period: 'semester1', year: '2026' });
+ 
+    expect(parsed.year).toBe(2026);
+  });
+ 
+  it('rechaza el año cuando el periodo no es un semestre', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'last15', year: '2026' }).success).toBe(false);
+  });
+ 
+  it('acepta Desde y Hasta, o solo uno de ellos, con el periodo personalizado', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'custom', from: '2026-10-01', to: '2026-10-15' }).success).toBe(true);
+    expect(applicationQuerySchema.safeParse({ period: 'custom', from: '2026-10-01' }).success).toBe(true);
+    expect(applicationQuerySchema.safeParse({ period: 'custom', to: '2026-10-15' }).success).toBe(true);
+  });
+ 
+  it('rechaza el periodo personalizado sin fechas', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'custom' }).success).toBe(false);
+  });
+ 
+  it('rechaza Desde posterior a Hasta y fechas inválidas', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'custom', from: '2026-10-15', to: '2026-10-01' }).success).toBe(false);
+    expect(applicationQuerySchema.safeParse({ period: 'custom', from: '2026-13-45' }).success).toBe(false);
+  });
+ 
+  it('rechaza Desde y Hasta cuando el periodo no es personalizado', () => {
+    expect(applicationQuerySchema.safeParse({ period: 'last30', from: '2026-10-01' }).success).toBe(false);
+    expect(applicationQuerySchema.safeParse({ from: '2026-10-01' }).success).toBe(false);
+  });
+ 
+  it('combina periodo, búsqueda, estado y tamaño de página', () => {
+    const parsed = applicationQuerySchema.parse({
+      period: 'last30',
+      search: ' rojas ',
+      status: 'PENDING',
+      pageSize: '25',
+    });
+ 
+    expect(parsed).toMatchObject({ period: 'last30', search: 'rojas', status: 'PENDING', pageSize: 25 });
+  });
 });
  
