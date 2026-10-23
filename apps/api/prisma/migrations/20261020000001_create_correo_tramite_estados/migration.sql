@@ -4,22 +4,10 @@ DROP COLUMN IF EXISTS proveedor_id;
 
 -- 2. Asegurar que TODAS las columnas existan antes de los CHECK e ÍNDICES
 ALTER TABLE public.correo_tramite
-    ADD COLUMN IF NOT EXISTS id_solicitud UUID,
-    ADD COLUMN IF NOT EXISTS id_dictamen UUID,
-    ADD COLUMN IF NOT EXISTS tipo VARCHAR(20),
-    ADD COLUMN IF NOT EXISTS email_destino VARCHAR(320),
-    ADD COLUMN IF NOT EXISTS asunto VARCHAR(200),
-    ADD COLUMN IF NOT EXISTS cuerpo TEXT,
-    ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'pendiente',
-    ADD COLUMN IF NOT EXISTS intentos SMALLINT DEFAULT 0,
     ADD COLUMN IF NOT EXISTS max_intentos SMALLINT DEFAULT 3,
     ADD COLUMN IF NOT EXISTS siguiente_intento_en TIMESTAMPTZ DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS ultimo_error TEXT,
     ADD COLUMN IF NOT EXISTS clave_evento VARCHAR(200),
-    ADD COLUMN IF NOT EXISTS fecha_envio TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS fecha_ultimo_intento TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+ 
 
 -- 3. Agregar los CHECK constraints
 DO $$ 
