@@ -10,6 +10,7 @@ const AFFINITY_ENDPOINT = '/affinity/me';
 const AFFINITY_CALCULATE_ENDPOINT = '/affinity/calculate';
 const AFFINITY_CONFIG_ENDPOINT = '/affinity/config';
 export const RECALCULATE_TIMEOUT_MS = 7000;
+export const RECALCULATE_DEBOUNCE_MS = 500;
 // Por defecto se usa el mock a menos que explícitamente se desactive con 'false'
 const USE_AFFINITY_MOCK = process.env.NEXT_PUBLIC_USE_AFFINITY_MOCK !== 'false';
 
@@ -102,9 +103,25 @@ export async function saveAffinityConfig(config: AffinityConfigPayload): Promise
  * Si el recálculo falla, el último radar válido se conserva en la UI porque
  * el estado candidateAreas solo se actualiza cuando la petición es exitosa.
  */
-export async function recalculateAffinity(): Promise<AffinityVectorResponse> {
+export async function recalculateAffinity(
+  options: { signal?: AbortSignal } = {},
+): Promise<AffinityVectorResponse> {
   if (USE_AFFINITY_MOCK) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise<void>((resolve, reject) => {
+      if (options.signal?.aborted) {
+        reject(new DOMException('La solicitud fue cancelada', 'AbortError'));
+        return;
+      }
+      const timeoutId = setTimeout(() => {
+        options.signal?.removeEventListener('abort', onAbort);
+        resolve();
+      }, 1000);
+      const onAbort = () => {
+        clearTimeout(timeoutId);
+        reject(new DOMException('La solicitud fue cancelada', 'AbortError'));
+      };
+      options.signal?.addEventListener('abort', onAbort, { once: true });
+    });
     // Rotación entre los snapshots: cada recálculo responde con un radar distinto
     const snapshot = affinitySnapshotsMock[snapshotIndex];
     snapshotIndex = (snapshotIndex + 1) % affinitySnapshotsMock.length;
@@ -115,7 +132,14 @@ export async function recalculateAffinity(): Promise<AffinityVectorResponse> {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), RECALCULATE_TIMEOUT_MS);
+  let timedOut = false;
+  const onAbort = () => controller.abort();
+  if (options.signal?.aborted) onAbort();
+  else options.signal?.addEventListener('abort', onAbort, { once: true });
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, RECALCULATE_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${API_BASE_URL}${AFFINITY_CALCULATE_ENDPOINT}`, {
@@ -132,10 +156,12 @@ export async function recalculateAffinity(): Promise<AffinityVectorResponse> {
     return (await response.json()) as AffinityVectorResponse;
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
+      if (options.signal?.aborted && !timedOut) throw err;
       throw new Error('No se pudo actualizar tu radar');
     }
     throw err;
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', onAbort);
   }
 }
