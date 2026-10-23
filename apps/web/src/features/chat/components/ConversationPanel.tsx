@@ -244,7 +244,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
                 </p>
 
                 <p
-                  className={`mt-1 text-[10px] ${
+                                  className={`mt-1 text-right text-[10px] ${
                     mine ? 'text-slate-300' : 'text-slate-400'
                   }`}
                 >
@@ -252,11 +252,12 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
 
                   {message.fecha_mensaje
-    ? new Date(message.fecha_mensaje).toLocaleString('es-BO', {
-        dateStyle: 'short',
-        timeStyle: 'medium',
-      })
-    : 'Sin fecha'}
+                    ? new Date(message.fecha_mensaje).toLocaleTimeString('es-BO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                      })
+                    : 'Sin hora'}
                 </p>
               </div>
             </div>
