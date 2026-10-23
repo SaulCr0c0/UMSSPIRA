@@ -21,8 +21,14 @@ export class CreateBackupLinkUseCase {
   async execute(actor: ActorContext, id: string, now = Date.now()): Promise<BackupLink> {
     const scope = profileScope(actor);
     const owner = await this.repository.findBackupOwner(id);
-    const isOwner = owner?.graduateId === scope.graduateId && owner.userId === scope.userId;
-    if (!owner || !isOwner || !owner.hasBackup) {
+    if (owner && (owner.graduateId !== scope.graduateId || owner.userId !== scope.userId)) {
+      throw new BusinessRuleError(
+        'forbidden',
+        'BACKUP_FORBIDDEN',
+        'No tienes permiso para ver este respaldo',
+      );
+    }
+    if (!owner?.hasBackup) {
       throw new BusinessRuleError(
         'missing',
         'BACKUP_NOT_FOUND',
