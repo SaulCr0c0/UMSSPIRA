@@ -345,8 +345,9 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
           <button
             type="button"
             onClick={goToLatest}
-            className="pointer-events-auto min-h-11 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-lg hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
-          >
+            className="pointer-events-auto min-h-11 rounded-full border border-orange-300 
+            bg-[#FFB162] px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-lg hover:bg-[#FFA348] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"           >
+            
             <span role="status">Mensajes nuevos</span>
             <span aria-hidden="true"> · </span>
             Ir al final ↓
