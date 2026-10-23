@@ -145,6 +145,7 @@ export function RegistrationReview() {
         nombreCompleto: `${personalData.nombres} ${personalData.apellidos}`.trim(),
         ci: idNumber,
         correoEnmascarado: maskEmail(personalData.correo),
+        correo: personalData.correo,
         plazoHoras: 48,
         tipoDocumento: document.tipoDocumento,
         nombreArchivo: document.originalName,
