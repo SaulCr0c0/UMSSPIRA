@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Briefcase, Check, Eye, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -31,6 +31,8 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
   const [avisoBorrador, setAvisoBorrador] = useState(false);
   // Avance (0 a 100) de la subida del respaldo mientras se guarda una certificación
   const [progresoSubida, setProgresoSubida] = useState<number>();
+  // Certificación ya creada cuyo respaldo no se pudo subir: al reintentar se sube solo la foto, sin duplicar (T8.6)
+  const pendienteRef = useRef<{ clave: string; creada: CertificationRecord } | null>(null);
 
   useEffect(() => {
     if (!avisoBorrador) return;
@@ -168,11 +170,22 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
           progreso={progresoSubida}
           onAgregar={async (certificacion) => {
             setProgresoSubida(undefined);
-            // 1) se crea la certificación y 2) con su id se sube la foto
-            const creada = await crearCertificacion(certificacion);
+            const clave = JSON.stringify([
+              certificacion.nombre,
+              certificacion.entidadEmisora,
+              certificacion.anioEmision,
+              certificacion.grado,
+            ]);
+            // 1) se crea la certificación (o se reutiliza la que ya quedó creada) y 2) con su id se sube la foto
+            let creada = pendienteRef.current?.clave === clave ? pendienteRef.current.creada : null;
+            if (!creada) {
+              creada = await crearCertificacion(certificacion);
+              pendienteRef.current = { clave, creada };
+            }
             if (certificacion.respaldo) {
               await subirRespaldo(creada.id, certificacion.respaldo, setProgresoSubida);
             }
+            pendienteRef.current = null;
             // Solo se agrega al estado lo que la API guardó, con su id real
             addCertification({
               id: creada.id,

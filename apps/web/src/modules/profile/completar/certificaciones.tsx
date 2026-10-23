@@ -77,8 +77,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     if (!error) setDatos({ ...datos, respaldo: archivo });
   }
 
-  async function agregar(evento: React.FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
+  async function guardar() {
     if (guardando) return;
     setErrorGuardar(undefined);
     setGuardando(true);
@@ -91,12 +90,17 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
       setDatos(VACIO);
       setErrorRespaldo(undefined);
     } catch (error) {
-      // Se conserva lo escrito y la foto elegida para poder reintentar (T8.6)
+      // Se conserva lo escrito y la foto elegida: «Reintentar» vuelve a enviar lo mismo (T8.6)
       if (!(error instanceof ApiError)) throw error;
-      setErrorGuardar(error.message);
+      setErrorGuardar(`No se pudo guardar la certificación. ${error.message}`);
     } finally {
       setGuardando(false);
     }
+  }
+
+  function agregar(evento: React.FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    void guardar();
   }
 
   return (
@@ -277,6 +281,16 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           </div>
         )}
         <MensajeError id="error-certificacion-guardar" mensaje={errorGuardar} />
+        {errorGuardar && (
+          <button
+            type="button"
+            onClick={() => void guardar()}
+            disabled={guardando}
+            className="inline-flex h-9 items-center rounded-md border border-[#A35139] bg-white px-3 text-xs font-semibold text-[#A35139] hover:bg-[#FAF8F4] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reintentar
+          </button>
+        )}
 
         <button
           type="submit"

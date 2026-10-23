@@ -198,9 +198,38 @@ describe('FormularioCertificaciones · guardado (T8.4)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
 
-    expect(await screen.findByText('No fue posible conectar con el servidor')).toBeInTheDocument();
+    expect(
+      await screen.findByText('No se pudo guardar la certificación. No fue posible conectar con el servidor'),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('Nombre de certificación')).toHaveValue('AWS Cloud Practitioner');
     expect(screen.getByText('certificado.jpg')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /agregar certificación/i })).toBeEnabled();
+  });
+});
+
+describe('FormularioCertificaciones · reintentar (T8.6)', () => {
+  it('«Reintentar» reenvía lo mismo, conserva la foto y limpia al lograrlo', async () => {
+    const onAgregar = jest
+      .fn()
+      .mockRejectedValueOnce(new ApiError(0, 'No fue posible conectar con el servidor'))
+      .mockResolvedValueOnce(undefined);
+    render(<FormularioCertificaciones certificaciones={[]} onAgregar={onAgregar} />);
+    llenarFormulario();
+    const foto = new File(['contenido'], 'certificado.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Subir foto', { selector: 'input' }), { target: { files: [foto] } });
+    fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
+
+    await waitFor(() => expect(onAgregar).toHaveBeenCalledTimes(2));
+    expect(onAgregar.mock.calls[1][0]).toMatchObject({ nombre: 'AWS Cloud Practitioner', respaldo: foto });
+    await waitFor(() => expect(screen.getByLabelText('Nombre de certificación')).toHaveValue(''));
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/No se pudo guardar/)).not.toBeInTheDocument();
+  });
+
+  it('no muestra «Reintentar» si no hubo error', () => {
+    render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
   });
 });
