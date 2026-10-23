@@ -1,6 +1,7 @@
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
 import type { StoredFile } from '../../../../shared/files/contracts/uploaded-file';
 import type { Event } from '../../domain/entities/event';
+import type { EventRegistration } from '../../domain/entities/event-registration';
 import type { CreateEventInput, EventInput } from '../contracts/event-inputs';
 
 export const EVENTS_REPOSITORY = Symbol('EVENTS_REPOSITORY');
@@ -13,6 +14,7 @@ export interface EventsRepository {
   create(ownerId: string, input: CreateEventInput): Promise<Event>;
   updateDraft(ownerId: string, id: string, input: EventInput): Promise<Event>;
   publishDraft(ownerId: string, id: string): Promise<Event>;
+  register(userId: string, eventId: string): Promise<EventRegistration>;
   saveCover(ownerId: string, file: StoredFile): Promise<void>;
   removeCover(ownerId: string, id: string): Promise<void>;
   readCover(id: string, actor?: ActorContext): Promise<StoredFile>;

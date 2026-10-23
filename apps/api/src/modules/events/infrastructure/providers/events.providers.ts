@@ -15,6 +15,7 @@ import { PublishEventDraftUseCase } from '../../application/use-cases/publish-ev
 import { DeleteEventCoverUseCase } from '../../application/use-cases/delete-event-cover.use-case';
 import { ReadEventCoverUseCase } from '../../application/use-cases/read-event-cover.use-case';
 import { UploadEventCoverUseCase } from '../../application/use-cases/upload-event-cover.use-case';
+import { RegisterEventUseCase } from '../../application/use-cases/register-event.use-case';
 
 export const eventsProviders: Provider[] = [
   PrismaEventsRepository,
@@ -58,6 +59,11 @@ export const eventsProviders: Provider[] = [
     provide: PublishEventDraftUseCase,
     inject: [EVENTS_REPOSITORY],
     useFactory: (repository: EventsRepository) => new PublishEventDraftUseCase(repository),
+  },
+  {
+    provide: RegisterEventUseCase,
+    inject: [EVENTS_REPOSITORY],
+    useFactory: (repository: EventsRepository) => new RegisterEventUseCase(repository),
   },
   {
     provide: DeleteEventCoverUseCase,

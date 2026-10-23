@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '../../../../generated/prisma/client';
+import { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
 import type { StoredFile } from '../../../../shared/files/contracts/uploaded-file';
@@ -129,6 +129,89 @@ export class PrismaEventsRepository implements EventsRepository {
       },
       { timeout: 15000 },
     );
+  }
+
+  async register(userId: string, eventId: string) {
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          await tx.$queryRaw`SELECT id FROM evento WHERE id = ${eventId}::uuid FOR UPDATE`;
+          const event = await tx.evento.findUnique({
+            where: { id: eventId },
+            select: {
+              archivado: true,
+              estado: true,
+              fecha_fin: true,
+              cupo_maximo: true,
+            },
+          });
+          if (!event) {
+            return this.missingEvent();
+          }
+          if (
+            event.archivado ||
+            event.estado !== 'PUBLICADO' ||
+            !event.fecha_fin ||
+            event.fecha_fin <= new Date() ||
+            !event.cupo_maximo ||
+            event.cupo_maximo < 1
+          ) {
+            throw new BusinessRuleError(
+              'conflict',
+              'EVENT_NOT_AVAILABLE',
+              'El evento no estÃ¡ disponible para inscripciones',
+            );
+          }
+          const existing = await tx.inscripcionEvento.findFirst({
+            where: { id_evento: eventId, id_usuario: userId, estado: 'CONFIRMADA' },
+            select: { id: true },
+          });
+          if (existing) {
+            throw new BusinessRuleError(
+              'conflict',
+              'EVENT_REGISTRATION_ALREADY_CONFIRMED',
+              'Ya tienes una inscripciÃ³n confirmada para este evento',
+            );
+          }
+          const currentCapacity = await tx.inscripcionEvento.count({
+            where: { id_evento: eventId, estado: 'CONFIRMADA' },
+          });
+          if (currentCapacity >= event.cupo_maximo) {
+            throw new BusinessRuleError(
+              'conflict',
+              'EVENT_CAPACITY_REACHED',
+              'El evento ya no tiene cupos disponibles',
+            );
+          }
+          const registration = await tx.inscripcionEvento.create({
+            data: {
+              id_evento: eventId,
+              id_usuario: userId,
+              fecha_inscripcion: new Date(),
+              estado: 'CONFIRMADA',
+            },
+          });
+          return {
+            id: registration.id,
+            eventId,
+            userId,
+            status: 'CONFIRMADA' as const,
+            registeredAt: registration.fecha_inscripcion ?? new Date(),
+            currentCapacity: currentCapacity + 1,
+          };
+        },
+        { timeout: 15000 },
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BusinessRuleError(
+          'conflict',
+          'EVENT_REGISTRATION_ALREADY_CONFIRMED',
+          'Ya tienes una inscripciÃ³n confirmada para este evento',
+        );
+      }
+      throw error;
+    }
   }
 
   async saveCover(ownerId: string, file: StoredFile): Promise<void> {
