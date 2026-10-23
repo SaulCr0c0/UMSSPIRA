@@ -12,11 +12,13 @@ import { sendChatMessage } from '@/shared/services/chat-message.service';
 import {
   getConversationMessages,
   getConversationMessagesPage,
+  markConversationAsRead,
   type ChatMessage,
   type ConversationSummary,
 } from '@/shared/services/chat-conversation.service';
 import { getInitials } from '../utils/format';
 import { formatDayLabel, shouldShowDaySeparator } from '../utils/history';
+import { emitUnreadRefresh } from '../utils/unread-events';
 import { getChatSocket } from '@/shared/services/chat-socket';
 
 type IncomingChatMessage = ChatMessage & {
@@ -191,11 +193,20 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     setSending(false);
     setSendError(null);
 
+    // HU-07 CA-02/CA-04: con la conversación abierta, lo recibido se marca como leído
+    // y la barra superior recalcula su insignia.
+    const markRead = () => {
+      markConversationAsRead(conversation.id)
+        .catch(() => undefined)
+        .finally(emitUnreadRefresh);
+    };
+
     const onNewMessage = (message: IncomingChatMessage) => {
       if (requestVersionRef.current !== version) return;
       if (message.id_conversacion !== conversation.id) return;
 
       setMessages((current) => mergeMessages(current, [message]));
+      if (message.emisor_id === otherUser.id) markRead();
     };
 
     // Escuchar antes de cargar el historial evita perder
@@ -211,6 +222,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
         setHasMoreHistory(page.hasMore);
         setMessages((current) => mergeMessages(current, page.messages));
+        markRead();
       })
       .catch((err: unknown) => {
         if (requestVersionRef.current === version) {

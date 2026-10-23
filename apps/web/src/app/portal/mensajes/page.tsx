@@ -1,8 +1,9 @@
 // apps/web/src/app/portal/mensajes/page.tsx
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   MessageSquare,
   Loader2,
@@ -11,12 +12,11 @@ import {
   RefreshCw,
   Lock,
 } from 'lucide-react';
-import { getChatSocket, disconnectChatSocket } from '@/shared/services/chat-socket';
+import { releaseChatSocket, retainChatSocket } from '@/shared/services/chat-socket';
 import { useConversations } from '@/features/chat/hooks/useConversations';
 import { ConversationList } from '@/features/chat/components/ConversationList';
 import { ConversationPanel } from '@/features/chat/components/ConversationPanel';
 import { startDirectChat } from '@/shared/services/chat-conversation.service';
-
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
 
@@ -61,13 +61,13 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
   );
 }
 
-
 interface ChatContact {
   usuario_id: string;
   nombre: string | null;
   rol: string | null;
 }
-export default function MensajesPage() {
+
+function MensajesPageContent() {
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [attempt, setAttempt] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -78,87 +78,81 @@ export default function MensajesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
-  // HU-03 redirige a /portal/mensajes?conversation=<id>
+  // HU-03 / HU-10: abre /portal/mensajes?conversation=<id>
+  const searchParams = useSearchParams();
+  const conversationParam = searchParams.get('conversation');
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('conversation');
-    if (id) setSelectedId(id);
-  }, []);
+    if (conversationParam) setSelectedId(conversationParam);
+  }, [conversationParam]);
 
+  // HU-03: «Nuevo chat» abre la búsqueda de contactos
+  const [showContacts, setShowContacts] = useState(false);
+  const [contacts, setContacts] = useState<ChatContact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsError, setContactsError] = useState<string | null>(null);
+  const [startingUserId, setStartingUserId] = useState<string | null>(null);
+  const startingRef = useRef(false);
 
+  const handleStartChat = async () => {
+    setShowContacts(true);
+    setContactsLoading(true);
+    setContactsError(null);
 
-// Pendiente HU-03: «Iniciar chat» abrirá la búsqueda de contactos
-const [showContacts, setShowContacts] = useState(false);
-const [contacts, setContacts] = useState<ChatContact[]>([]);
-const [contactsLoading, setContactsLoading] = useState(false);
-const [contactsError, setContactsError] = useState<string | null>(null);
-const [startingUserId, setStartingUserId] = useState<string | null>(null);
-const startingRef = useRef(false);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-const handleStartChat = async () => {
-  setShowContacts(true);
-  setContactsLoading(true);
-  setContactsError(null);
+      const response = await fetch(`${baseUrl}/api/v1/chat/conversations/users`, {
+        credentials: 'include',
+      });
 
-  try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+      if (!response.ok) {
+        throw new Error(
+          response.status === 401
+            ? 'Inicia sesión nuevamente para buscar contactos.'
+            : 'No se pudieron cargar los contactos.',
+        );
+      }
 
-    const response = await fetch(
-      `${baseUrl}/api/v1/chat/conversations/users`,
-      { credentials: 'include' },
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        response.status === 401
-          ? 'Inicia sesión nuevamente para buscar contactos.'
-          : 'No se pudieron cargar los contactos.',
+      const data: ChatContact[] = await response.json();
+      setContacts(data);
+    } catch (error: unknown) {
+      setContactsError(
+        error instanceof Error ? error.message : 'No se pudieron cargar los contactos.',
       );
+    } finally {
+      setContactsLoading(false);
     }
+  };
 
-    const data: ChatContact[] = await response.json();
-    setContacts(data);
-  } catch (error: unknown) {
-    setContactsError(
-      error instanceof Error
-        ? error.message
-        : 'No se pudieron cargar los contactos.',
-    );
-  } finally {
-    setContactsLoading(false);
-  }
-};
+  const handleChooseContact = async (userId: string) => {
+    if (startingRef.current) return;
 
-const handleChooseContact = async (userId: string) => {
-  if (startingRef.current) return;
+    startingRef.current = true;
+    setStartingUserId(userId);
+    setContactsError(null);
 
-  startingRef.current = true;
-  setStartingUserId(userId);
-  setContactsError(null);
+    try {
+      const { conversationId } = await startDirectChat(userId);
 
-  try {
-    const { conversationId } = await startDirectChat(userId);
+      // Recargar la lista permite encontrar y abrir la conversación creada.
+      await retryList();
+      setSelectedId(conversationId);
 
-    // Recargar la lista permite encontrar y abrir la conversación creada.
-    await retryList();
-    setSelectedId(conversationId);
+      const url = new URL(window.location.href);
+      url.searchParams.set('conversation', conversationId);
+      window.history.replaceState(null, '', url.toString());
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('conversation', conversationId);
-    window.history.replaceState(null, '', url.toString());
+      setShowContacts(false);
+    } catch (error: unknown) {
+      setContactsError(
+        error instanceof Error ? error.message : 'No se pudo abrir la conversación.',
+      );
+    } finally {
+      startingRef.current = false;
+      setStartingUserId(null);
+    }
+  };
 
-    setShowContacts(false);
-  } catch (error: unknown) {
-    setContactsError(
-      error instanceof Error
-        ? error.message
-        : 'No se pudo abrir la conversación.',
-    );
-  } finally {
-    startingRef.current = false;
-    setStartingUserId(null);
-  }
-};
   // CA-05: el botón «Reintentar» abre una nueva conexión
   const retry = useCallback(() => {
     setIsRetrying(true);
@@ -166,7 +160,8 @@ const handleChooseContact = async (userId: string) => {
   }, []);
 
   useEffect(() => {
-    const socket = getChatSocket();
+    // HU-10: el socket es compartido con la barra superior (conteo de referencias)
+    const socket = retainChatSocket();
     unauthorizedRef.current = false;
     setStatus('connecting'); // CA-03
 
@@ -202,17 +197,18 @@ const handleChooseContact = async (userId: string) => {
     socket.on('disconnect', onDisconnect);
     socket.on('reconnect_attempt', onReconnectAttempt);
 
-    // CA-01: iniciamos la conexión
-    socket.connect();
+    // CA-01: iniciamos la conexión (o aprovechamos la que ya abrió la barra)
+    if (socket.connected) onConnect();
+    else socket.connect();
 
-    // CA-06: al salir de la página o antes de reintentar, se cierra la conexión
+    // CA-06: al salir de la página o antes de reintentar, se suelta la conexión
     return () => {
       socket.off('connect', onConnect);
       socket.off('chat:unauthorized', onUnauthorized);
       socket.off('connect_error', onConnectError);
       socket.off('disconnect', onDisconnect);
       socket.off('reconnect_attempt', onReconnectAttempt);
-      disconnectChatSocket();
+      releaseChatSocket();
     };
   }, [attempt]);
 
@@ -229,91 +225,88 @@ const handleChooseContact = async (userId: string) => {
             <h1 className="text-lg font-bold text-slate-900">Mensajes</h1>
             <StatusBadge status={status} />
           </div>
-          
+
           <div className="border-b border-slate-200 p-3">
-  <button
-    type="button"
-    onClick={() => void handleStartChat()}
-    disabled={contactsLoading || startingUserId !== null}
-    className="min-h-11 w-full rounded-xl bg-[#0F172A] px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-  >
-    Nuevo chat
-  </button>
-</div>
-
-{showContacts && (
-  <section
-    aria-label="Seleccionar contacto"
-    className="border-b border-slate-200 bg-white p-3"
-  >
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 className="text-sm font-semibold text-slate-900">
-        Selecciona una persona
-      </h2>
-
-      <button
-        type="button"
-        onClick={() => setShowContacts(false)}
-        disabled={startingUserId !== null}
-        className="rounded-lg px-2 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-      >
-        Cerrar
-      </button>
-    </div>
-
-    {contactsLoading && (
-      <p role="status" className="py-3 text-sm text-slate-500">
-        Cargando contactos...
-      </p>
-    )}
-
-    {contactsError && (
-      <p role="alert" className="mb-3 text-sm text-red-700">
-        {contactsError}
-      </p>
-    )}
-
-    {!contactsLoading && !contactsError && contacts.length === 0 && (
-      <p className="py-3 text-sm text-slate-500">
-        No hay contactos disponibles.
-      </p>
-    )}
-
-    {!contactsLoading && (
-      <ul className="max-h-72 space-y-1 overflow-y-auto">
-        {contacts.map((contact) => (
-          <li key={contact.usuario_id}>
             <button
               type="button"
-              onClick={() =>
-                void handleChooseContact(contact.usuario_id)
-              }
-              disabled={startingUserId !== null}
-              className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-3 text-left hover:bg-slate-100 disabled:opacity-50"
+              onClick={() => void handleStartChat()}
+              disabled={contactsLoading || startingUserId !== null}
+              className="min-h-11 w-full rounded-xl bg-[#0F172A] px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-slate-900">
-                  {contact.nombre || 'Usuario'}
-                </span>
-                <span className="block text-xs capitalize text-slate-500">
-                  {contact.rol || 'Sin rol'}
-                </span>
-              </span>
-
-              {startingUserId === contact.usuario_id && (
-                <Loader2
-                  className="h-4 w-4 shrink-0 animate-spin"
-                  aria-hidden="true"
-                />
-              )}
+              Nuevo chat
             </button>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-)}
+          </div>
 
+          {showContacts && (
+            <section
+              aria-label="Seleccionar contacto"
+              className="border-b border-slate-200 bg-white p-3"
+            >
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Selecciona una persona
+                </h2>
+
+                <button
+                  type="button"
+                  onClick={() => setShowContacts(false)}
+                  disabled={startingUserId !== null}
+                  className="rounded-lg px-2 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              {contactsLoading && (
+                <p role="status" className="py-3 text-sm text-slate-500">
+                  Cargando contactos...
+                </p>
+              )}
+
+              {contactsError && (
+                <p role="alert" className="mb-3 text-sm text-red-700">
+                  {contactsError}
+                </p>
+              )}
+
+              {!contactsLoading && !contactsError && contacts.length === 0 && (
+                <p className="py-3 text-sm text-slate-500">
+                  No hay contactos disponibles.
+                </p>
+              )}
+
+              {!contactsLoading && (
+                <ul className="max-h-72 space-y-1 overflow-y-auto">
+                  {contacts.map((contact) => (
+                    <li key={contact.usuario_id}>
+                      <button
+                        type="button"
+                        onClick={() => void handleChooseContact(contact.usuario_id)}
+                        disabled={startingUserId !== null}
+                        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-3 text-left hover:bg-slate-100 disabled:opacity-50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-slate-900">
+                            {contact.nombre || 'Usuario'}
+                          </span>
+                          <span className="block text-xs capitalize text-slate-500">
+                            {contact.rol || 'Sin rol'}
+                          </span>
+                        </span>
+
+                        {startingUserId === contact.usuario_id && (
+                          <Loader2
+                            className="h-4 w-4 shrink-0 animate-spin"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           <ConversationList
             conversations={conversations}
@@ -369,14 +362,12 @@ const handleChooseContact = async (userId: string) => {
           )}
 
           {selected ? (
-
-              <ConversationPanel
-                key={selected.id}
-                conversation={selected}
-                onBack={() => setSelectedId(null)}
-              />
-
-              ) : (
+            <ConversationPanel
+              key={selected.id}
+              conversation={selected}
+              onBack={() => setSelectedId(null)}
+            />
+          ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
               <MessageSquare className="w-8 h-8 text-slate-400" />
               <p className="text-sm font-semibold text-slate-900">Selecciona una conversación</p>
@@ -386,5 +377,14 @@ const handleChooseContact = async (userId: string) => {
         </section>
       </div>
     </div>
+  );
+}
+
+// useSearchParams exige un Suspense en Next.js
+export default function MensajesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MensajesPageContent />
+    </Suspense>
   );
 }

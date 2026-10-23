@@ -35,6 +35,7 @@ export interface ConversationSummary {
     senderId: string | null;
   } | null;
   lastActivityAt: string | null;
+  unreadCount?: number;
 }
 
 export interface ChatMessage {
@@ -126,4 +127,26 @@ export const getConversationMessages = async (
 ): Promise<ChatMessage[]> => {
   const page = await getConversationMessagesPage(conversationId);
   return page.messages;
+};
+
+/** HU-07 CA-02: marca como leídos los mensajes de la conversación abierta. */
+export const markConversationAsRead = async (
+  conversationId: string,
+): Promise<void> => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+  const response = await authenticatedFetch(
+    `${baseUrl}/api/v1/chat/conversations/${conversationId}/read`,
+    { method: 'PATCH', credentials: 'include' },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        'No se pudo marcar la conversación como leída',
+      ),
+    );
+  }
 };
