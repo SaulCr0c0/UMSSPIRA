@@ -71,8 +71,11 @@ export function ForgotPasswordForm() {
   if (status === "sent") {
     return (
       <div className="space-y-5">
-        <p role="status" className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-abyssal-blue">
-          {SENT_MESSAGE}
+        <p
+           role="status"
+           className="rounded-lg border border-oatmeal border-l-4 border-l-burning-flame bg-palladian px-3 py-3 text-sm text-abyssal-blue"
+        >
+           {SENT_MESSAGE}
         </p>
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <button type="button" onClick={() => setStatus("idle")} className={linkClass}>
