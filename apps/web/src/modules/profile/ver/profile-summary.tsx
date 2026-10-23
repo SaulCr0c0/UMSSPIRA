@@ -13,13 +13,32 @@ import Timeline from '@/shared/components/timeline';
 
 // Resumen del perfil (HU-03) con la descarga en JSON (HU-05), leyendo el estado compartido del perfil
 export default function ProfileSummary() {
-  const { records } = useProfileStore();
+  const { records, isLoading, loadError, retryLoad } = useProfileStore();
   const timeline = recordsToTimeline(records);
 
   const validatedBackups = timeline
     .flatMap((section) => section.items)
     .filter((item) => item.status === 'verified').length;
   const experiences = records.experience.length;
+
+  if (isLoading) {
+  return <p role="status">Cargando tu perfil…</p>;
+}
+
+if (loadError) {
+  return (
+    <div role="alert" className="flex flex-col items-start gap-3">
+      <p>No se pudo cargar tu perfil. {loadError}</p>
+      <button
+        type="button"
+        onClick={retryLoad}
+        className="rounded-lg bg-burning-flame px-4 py-2 font-bold text-abyssal-blue"
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+}
 
   return (
     <div className="flex flex-col gap-8">

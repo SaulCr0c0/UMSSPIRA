@@ -25,7 +25,7 @@ function AddEducationButton() {
 describe('ProfileStoreProvider', () => {
   it('lo agregado en el estado compartido aparece en el resumen del perfil', () => {
     render(
-      <ProfileStoreProvider>
+      <ProfileStoreProvider initialRecords={PROFILE_RECORDS_MOCK}>
         <AddEducationButton />
         <ProfileSummary />
       </ProfileStoreProvider>,
