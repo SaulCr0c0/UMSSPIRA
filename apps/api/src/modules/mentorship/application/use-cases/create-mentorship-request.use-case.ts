@@ -17,6 +17,15 @@ export class CreateMentorshipRequestUseCase {
         'Solo un titulado aprobado puede solicitar una mentoría',
       );
     }
-    return this.repository.create(actor.id, input, this.now());
+    const now = this.now();
+    const start = new Date(`${input.date}T${input.startTime}:00.000Z`);
+    if (start.getTime() <= now.getTime()) {
+      throw new BusinessRuleError(
+        'invalid',
+        'MENTORSHIP_REQUEST_PAST',
+        'Selecciona un horario futuro',
+      );
+    }
+    return this.repository.create(actor.id, input, now);
   }
 }
