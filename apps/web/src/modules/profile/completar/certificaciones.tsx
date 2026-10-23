@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Award, Camera, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
+import { formatearTamanio } from '@/modules/profile/utils/format-file-size';
 
 const GRADOS = ['Fundamentos', 'Asociado', 'Profesional', 'Especialista', 'Experto'];
 
@@ -35,6 +36,24 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
   const documentoRef = useRef<HTMLInputElement>(null);
   // Archivo rechazado (no es JPG o supera 5 MB): no se adjunta y se explica junto al campo
   const [errorRespaldo, setErrorRespaldo] = useState<string>();
+    // Dirección local de la foto elegida para mostrar su miniatura
+  const [vistaPrevia, setVistaPrevia] = useState<string>();
+
+  // Se crea al elegir la foto y se libera al quitarla, cambiarla o salir (evita fugas de memoria)
+  useEffect(() => {
+    if (!datos.respaldo || typeof URL.createObjectURL !== 'function') {
+      setVistaPrevia(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(datos.respaldo);
+    setVistaPrevia(url);
+    return () => URL.revokeObjectURL(url);
+  }, [datos.respaldo]);
+
+  function quitarRespaldo() {
+    setDatos({ ...datos, respaldo: null });
+    setErrorRespaldo(undefined);
+  }
 
   function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision' | 'grado', valor: string) {
     setDatos({ ...datos, [campo]: valor });
@@ -164,10 +183,29 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
             )}
           >
             {datos.respaldo ? (
-              <p className="flex max-w-full items-center gap-2 text-sm font-medium text-[#2C3B4D]">
-                <FileText className="h-4 w-4 shrink-0 text-[#A35139]" />
-                <span className="truncate">{datos.respaldo.name}</span>
-              </p>
+              <div className="flex w-full max-w-full items-center gap-3 text-left">
+                {vistaPrevia ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={vistaPrevia}
+                    alt="Vista previa del respaldo"
+                    className="h-16 w-16 shrink-0 rounded-md border border-[#C9C1B1] object-cover"
+                  />
+                ) : (
+                  <FileText className="h-8 w-8 shrink-0 text-[#A35139]" />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-[#2C3B4D]">
+                    {datos.respaldo.name}
+                  </span>
+                  <span className="block text-xs text-[#2C3B4D]/70">
+                    {formatearTamanio(datos.respaldo.size)}
+                  </span>
+                </span>
+                <button type="button" onClick={quitarRespaldo} className={botonRespaldoClase}>
+                  Quitar
+                </button>
+              </div>
             ) : (
               <>
                 <CloudUpload className="h-6 w-6 text-[#A35139]" />
