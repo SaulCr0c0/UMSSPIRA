@@ -281,16 +281,41 @@ export class PrismaProfileRepository implements ProfileRepository {
   }
 
   async readBackup(scope: ProfileScope, certificationId: string): Promise<StoredFile> {
-    const row = await this.prisma.archivoPerfil.findFirst({
-      where: {
-        respaldo: {
-          id_certificacion: certificationId,
-          certificacion: {
-            id_titulado: scope.graduateId,
-            titulado: { id_usuario: scope.userId },
-          },
-        },
+    return this.loadBackup({
+      id_certificacion: certificationId,
+      certificacion: {
+        id_titulado: scope.graduateId,
+        titulado: { id_usuario: scope.userId },
       },
+    });
+  }
+
+  async findBackupOwner(certificationId: string) {
+    const row = await this.prisma.certificacion.findUnique({
+      where: { id: certificationId },
+      select: {
+        id_titulado: true,
+        titulado: { select: { id_usuario: true } },
+        _count: { select: { certificacion_respaldo_registros: true } },
+      },
+    });
+    if (!row) {
+      return null;
+    }
+    return {
+      graduateId: row.id_titulado,
+      userId: row.titulado.id_usuario,
+      hasBackup: row._count.certificacion_respaldo_registros > 0,
+    };
+  }
+
+  async readBackupFile(certificationId: string): Promise<StoredFile> {
+    return this.loadBackup({ id_certificacion: certificationId });
+  }
+
+  private async loadBackup(where: Prisma.CertificacionRespaldoWhereInput): Promise<StoredFile> {
+    const row = await this.prisma.archivoPerfil.findFirst({
+      where: { respaldo: where },
       orderBy: { respaldo: { fecha_subida: 'desc' } },
     });
     if (!row) {
