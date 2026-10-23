@@ -2,6 +2,8 @@ import type { Prisma, PrismaClient } from '../../src/generated/prisma/client';
 import { seedAccessCatalog } from './access-catalog';
 import { DEMO_CAREER_ID } from './demo-accounts';
 import { AREA_IDS, CATALOG_IDS } from './demo-ids';
+import { seedRadarCatalog } from './radar-catalog';
+import { runSeedStage } from './seed-stage';
 
 export const carreras: Array<Prisma.CarreraCreateManyInput & { id: string }> = [
   { id: DEMO_CAREER_ID, nombre: 'Ingeniería de Sistemas' },
@@ -56,17 +58,16 @@ export async function seedAreas(prisma: PrismaClient): Promise<void> {
 }
 
 export async function seedCatalogs(prisma: PrismaClient): Promise<void> {
-  await seedAccessCatalog(prisma);
-  await prisma.carrera.createMany({ data: carreras, skipDuplicates: true });
-  await prisma.tipoArchivo.createMany({ data: tiposArchivo, skipDuplicates: true });
-  await prisma.modalidadTrabajo.createMany({ data: modalidades, skipDuplicates: true });
-  await prisma.tipoReporte.createMany({ data: tiposReporte, skipDuplicates: true });
-  // Se insertan primero los padres, respetando la relación de cada área.
-  for (const area of areas) {
-    await prisma.area.upsert({
-      where: { id: area.id },
-      create: { ...area, esta_activo: true, fecha_creacion: new Date() },
-      update: {},
-    });
-  }
+  // Acceso conserva su transacción y semántica; T1.9 usa el script dirigido.
+  await runSeedStage('acceso', () => seedAccessCatalog(prisma));
+  await runSeedStage('catálogos auxiliares', async () => {
+    await prisma.$transaction([
+      prisma.carrera.createMany({ data: carreras, skipDuplicates: true }),
+      prisma.tipoArchivo.createMany({ data: tiposArchivo, skipDuplicates: true }),
+      prisma.modalidadTrabajo.createMany({ data: modalidades, skipDuplicates: true }),
+      prisma.tipoReporte.createMany({ data: tiposReporte, skipDuplicates: true }),
+    ]);
+  });
+  await runSeedStage('áreas', () => seedAreas(prisma));
+  await runSeedStage('diccionario Radar', () => seedRadarCatalog(prisma));
 }
