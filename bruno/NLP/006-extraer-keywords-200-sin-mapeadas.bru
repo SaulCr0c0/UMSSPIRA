@@ -1,0 +1,49 @@
+meta {
+  name: Extraer keywords - 200 Sin keywords mapeadas
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nlp/extract
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "text": "Vendedor en tienda de barrio. Atención al cliente y caja registradora."
+  }
+}
+
+tests {
+  test("Status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("keywords es lista vacia cuando no hay coincidencias", function() {
+    expect(res.body.keywords).to.be.an("array").that.is.empty;
+  });
+
+  test("Esquema tiene unmapped", function() {
+    expect(res.body).to.have.property("unmapped").that.is.an("array");
+  });
+}
+
+docs {
+  HU-1 · T1.7 — Texto sin palabras que coincidan con el diccionario.
+  keywords debe ser [] y unmapped puede tener candidatos.
+
+  CA-7: perfil sin keywords mapeadas → keywords es lista vacía
+  (este estado dispara el radar vacío en HU-3).
+
+  Permiso: nlp:extract.
+}

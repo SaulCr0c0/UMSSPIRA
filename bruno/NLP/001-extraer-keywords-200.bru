@@ -1,0 +1,57 @@
+meta {
+  name: Extraer keywords - 200 OK
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nlp/extract
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "text": "Desarrollador Backend con Node.js y TypeScript. Experiencia en API REST, PostgreSQL y Docker. Certificación AWS Certified Solutions Architect - Associate de Amazon Web Services."
+  }
+}
+
+tests {
+  test("Status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Esquema: tiene keywords y unmapped", function() {
+    expect(res.body).to.have.property("keywords").that.is.an("array");
+    expect(res.body).to.have.property("unmapped").that.is.an("array");
+  });
+
+  test("Cada keyword tiene term y count", function() {
+    res.body.keywords.forEach(function(k) {
+      expect(k).to.have.property("term").that.is.a("string");
+      expect(k).to.have.property("count").that.is.a("number");
+    });
+  });
+
+  test("Tiempo de respuesta menor a 1 000 ms", function() {
+    expect(res.responseTime).to.be.below(1000);
+  });
+}
+
+docs {
+  HU-1 · T1.7 — Extrae keywords del texto del perfil.
+  Requiere JWT con permiso nlp:extract.
+
+  Espera 200 con { keywords: [{term, count}], unmapped: [{term, count}] }.
+  Verifica esquema, tipos de dato y tiempo de respuesta < 1 s (CA-5).
+
+  Permiso: nlp:extract.
+}
