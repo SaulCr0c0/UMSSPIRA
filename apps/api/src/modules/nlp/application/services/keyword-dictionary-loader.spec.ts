@@ -5,12 +5,33 @@ import { KeywordDictionaryLoader } from './keyword-dictionary-loader';
 import { NLP_DICTIONARY_UNAVAILABLE } from '../../domain/errors/nlp-dictionary-unavailable-error';
 import { KeywordExtractorService } from './keyword-extractor.service';
 
+
 const ENTRIES: DictionaryEntry[] = [
-  { canonical: 'node.js', aliases: ['nodejs'] },
-  { canonical: 'javascript', aliases: ['js'] },
-  { canonical: 'machine learning', aliases: ['ml'] },
-  { canonical: 'gobierno de ti', aliases: [] },
+  {
+    canonical: 'node.js',
+    aliases: ['nodejs'],
+    areas: [
+      { id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 },
+    ],
+  },
+  {
+    canonical: 'javascript',
+    aliases: ['js'],
+    areas: [
+      { id: 'area-1', nombre: 'Desarrollo de Software', peso: 4 },
+      { id: 'area-2', nombre: 'Inteligencia Artificial', peso: 2 },
+    ],
+  },
+  {
+    canonical: 'machine learning',
+    aliases: ['ml'],
+    areas: [
+      { id: 'area-2', nombre: 'Inteligencia Artificial', peso: 5 },
+    ],
+  },
+  { canonical: 'gobierno de ti', aliases: [], areas: [] },
 ];
+
 
 class FakeDictionarySource implements KeywordDictionaryPort {
   calls = 0;
@@ -121,4 +142,64 @@ describe('KeywordDictionaryLoader', () => {
       warn.mockRestore();
     }
   });
+
+  it('obtiene las áreas y los pesos de una keyword canónica', async () => {
+    const loader = createLoader(new FakeDictionarySource());
+
+    await loader.ensureLoaded();
+
+    expect(loader.getAreasForKeyword('node.js')).toEqual([
+      { id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 },
+    ]);
+  });
+
+  it('encuentra las áreas utilizando un alias', async () => {
+    const loader = createLoader(new FakeDictionarySource());
+
+    await loader.ensureLoaded();
+
+    expect(loader.getAreasForKeyword('js')).toEqual([
+      { id: 'area-1', nombre: 'Desarrollo de Software', peso: 4 },
+      { id: 'area-2', nombre: 'Inteligencia Artificial', peso: 2 },
+    ]);
+  });
+
+  it('devuelve una lista vacía cuando la keyword no tiene áreas', async () => {
+    const loader = createLoader(new FakeDictionarySource());
+
+    await loader.ensureLoaded();
+
+    expect(loader.getAreasForKeyword('gobierno de ti')).toEqual([]);
+    expect(loader.getAreasForKeyword('keyword-inexistente')).toEqual([]);
+  });
+
+  it('resuelve las áreas sin perder el término ni su cantidad', async () => {
+    const loader = createLoader(new FakeDictionarySource());
+
+    await loader.ensureLoaded();
+
+    expect(
+      loader.resolveAreasForKeywords([
+        { term: 'node.js', count: 2 },
+        { term: 'javascript', count: 3 },
+      ]),
+    ).toEqual([
+      {
+        term: 'node.js',
+        count: 2,
+        areas: [
+          { id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 },
+        ],
+      },
+      {
+        term: 'javascript',
+        count: 3,
+        areas: [
+          { id: 'area-1', nombre: 'Desarrollo de Software', peso: 4 },
+          { id: 'area-2', nombre: 'Inteligencia Artificial', peso: 2 },
+        ],
+      },
+    ]);
+  });
+
 });

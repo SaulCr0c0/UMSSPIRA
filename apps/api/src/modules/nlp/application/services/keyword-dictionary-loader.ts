@@ -1,5 +1,11 @@
+
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NlpDictionaryUnavailableError } from '../../domain/errors/nlp-dictionary-unavailable-error';
+import type {
+  DictionaryAreaAssociation,
+  DictionaryEntry,
+} from '../../domain/entities/dictionary-entry';
+import type { ExtractedKeyword } from '../../domain/entities/extracted-keyword';
 import {
   KEYWORD_DICTIONARY_PORT,
   type KeywordDictionaryPort,
@@ -7,6 +13,10 @@ import {
 import { KeywordExtractorService } from './keyword-extractor.service';
 
 const MAX_LOGGED_IGNORED_KEYS = 10;
+
+export interface KeywordWithAreas extends ExtractedKeyword {
+  areas: DictionaryAreaAssociation[];
+}
 
 /**
  * Carga el diccionario en la primera petición y reintenta en la siguiente si falla.
@@ -18,8 +28,12 @@ export class KeywordDictionaryLoader {
   private loaded = false;
   private loading: Promise<void> | null = null;
 
+  /** Relaciona cada término canónico y alias con sus áreas profesionales. */
+  private areasByKeyword = new Map<string, DictionaryAreaAssociation[]>();
+
   constructor(
-    @Inject(KEYWORD_DICTIONARY_PORT) private readonly source: KeywordDictionaryPort,
+    @Inject(KEYWORD_DICTIONARY_PORT)
+    private readonly source: KeywordDictionaryPort,
     private readonly extractor: KeywordExtractorService,
   ) {}
 
@@ -48,8 +62,26 @@ export class KeywordDictionaryLoader {
     }
   }
 
+  /**
+   * Devuelve las áreas asociadas a una keyword.
+   * Debe llamarse después de ensureLoaded().
+   */
+  getAreasForKeyword(term: string): DictionaryAreaAssociation[] {
+    return (this.areasByKeyword.get(term) ?? []).map((area) => ({ ...area }));
+  }
+
+  /** Añade las áreas correspondientes a cada keyword extraída. */
+  resolveAreasForKeywords(
+    keywords: ExtractedKeyword[],
+  ): KeywordWithAreas[] {
+    return keywords.map((keyword) => ({
+      ...keyword,
+      areas: this.getAreasForKeyword(keyword.term),
+    }));
+  }
+
   private async reload(): Promise<void> {
-    let entries;
+    let entries: DictionaryEntry[];
 
     try {
       entries = await this.source.load();
@@ -69,6 +101,22 @@ export class KeywordDictionaryLoader {
       throw this.unavailable();
     }
 
+    const newAreasByKeyword = new Map<
+      string,
+      DictionaryAreaAssociation[]
+    >();
+
+    for (const entry of entries) {
+      const areas = (entry.areas ?? []).map((area) => ({ ...area }));
+
+      newAreasByKeyword.set(entry.canonical, areas);
+
+      for (const alias of entry.aliases) {
+        newAreasByKeyword.set(alias, areas);
+      }
+    }
+
+    this.areasByKeyword = newAreasByKeyword;
     this.loaded = true;
 
     if (report.ignored.length > 0) {
@@ -76,7 +124,8 @@ export class KeywordDictionaryLoader {
         .slice(0, MAX_LOGGED_IGNORED_KEYS)
         .map(({ key, reason }) => `${key || '<vacío>'}:${reason}`)
         .join(', ');
-      const suffix = report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
+      const suffix =
+        report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
 
       this.logger.warn(
         `Diccionario NLP: ${report.ignored.length} claves ignoradas (${detail}${suffix})`,
