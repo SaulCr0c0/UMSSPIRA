@@ -33,7 +33,7 @@ export const RecalculateButton: React.FC<RecalculateButtonProps> = ({
       }`}
     >
       <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-      <span>{isLoading ? 'Recalculando...' : 'Recalcular'}</span>
+      <span aria-live="polite">{isLoading ? 'Actualizando...' : 'Recalcular'}</span>
     </button>
   );
 };
