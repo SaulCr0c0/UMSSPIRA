@@ -115,3 +115,9 @@
   .searchHeading h2 { font-size:19px; }
 }
 @media(prefers-reduced-motion:reduce) { .root * { transition:none!important; } }
+
+/* Barra pública en azul (mismo azul del portal). Bloque aislado: se puede quitar sin afectar el resto. */
+.public { --navbar-bg:#0F172A; --navbar-ink:#f1f5f9; --navbar-muted:#cbd5e1; border-bottom-color:#1e293b; }
+.public .active, .public .topLink:hover, .public .trigger:hover { color:#ffb162; }
+.root.public .login { color:#f1f5f9; border-color:#475569; }
+.root.public .login:hover { background:#1e293b; }

@@ -1,0 +1,31 @@
+meta {
+  name: Enviar solicitud documental
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/registrations/submit
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sessionToken": "{{sessionToken}}",
+    "fechaTitulacion": "2025-05-01",
+    "fechaIngreso": "2020-02-01",
+    "deseaMentor": false,
+    "tipoDocumento": "{{documentType}}",
+    "rutaStorage": "{{documentId}}",
+    "sizeBytes": {{documentSizeBytes}}
+  }
+}
+
+docs {
+  Completa documentId y documentSizeBytes con los valores de la carga. rutaStorage recibe el UUID del archivo, no una URL ni una ruta local. Copia data.idSolicitud a applicationId.
+}

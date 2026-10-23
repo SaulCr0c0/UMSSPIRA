@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
 import { ProfileStoreProvider, useProfileStore } from '@/modules/profile/state/profile-store';
 import type { EducationRecord, ExperienceRecord } from '@/modules/profile/types/profile-record';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 import { EditEducationForm } from './edit-education-form';
 import { EditExperienceForm } from './edit-experience-form';
@@ -32,17 +33,21 @@ function StoredValues() {
 const fetchMock = jest.fn();
 
 function responder(status: number, cuerpo: unknown) {
-  fetchMock.mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => cuerpo });
+  // La API responde { data } cuando todo sale bien y el error tal cual cuando falla
+  const ok = status >= 200 && status < 300;
+  fetchMock.mockResolvedValue({ ok, status, json: async () => (ok ? { data: cuerpo } : cuerpo) });
 }
 
 beforeEach(() => {
   fetchMock.mockReset();
   global.fetch = fetchMock;
+  setAccessToken('test-token');
 });
 
 afterEach(() => {
   // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
   delete global.fetch;
+  clearAccessToken();
 });
 
 // Con initialRecords el estado no consulta GET /api/v1/perfil: fetch queda solo para el PUT

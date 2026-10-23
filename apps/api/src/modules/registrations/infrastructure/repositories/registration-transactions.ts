@@ -1,0 +1,62 @@
+import type { Prisma } from '../../../../generated/prisma/client';
+import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
+import type { RegistrationData } from '../../domain/entities/registration';
+import { assertOpenDraft, assertVerifiedDraft } from '../../domain/policies/registration.policy';
+import { toRegistrationDraft } from '../translators/registration.translator';
+
+export async function lockDraft(tx: Prisma.TransactionClient, hash: string, verified = false) {
+  await tx.$queryRaw`SELECT id FROM borrador_registro WHERE token_hash = ${hash} FOR UPDATE`;
+  const row = await tx.borradorRegistro.findUnique({ where: { token_hash: hash } });
+  const draft = row ? toRegistrationDraft(row) : null;
+  if (verified) {
+    assertVerifiedDraft(draft);
+  } else {
+    assertOpenDraft(draft);
+  }
+  return { row: row!, draft };
+}
+
+export async function assertNoDuplicate(tx: Prisma.TransactionClient, data: RegistrationData) {
+  // Las mismas identidades toman los mismos bloqueos, incluso desde borradores distintos.
+  const keys = [
+    'email:' + data.correo,
+    'sis:' + Number(data.codigoSis),
+    'ci:' + data.ci + ':' + data.complementoCi,
+  ].sort();
+  for (const key of keys) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+  }
+  const identity = {
+    OR: [
+      { email: { equals: data.correo, mode: 'insensitive' as const } },
+      { cod_sis: data.codigoSis },
+      { ci: data.ci, extension_ci: data.complementoCi },
+    ],
+  };
+  const [application, user, graduate] = await Promise.all([
+    tx.solicitud.findFirst({
+      where: {
+        estado: { notIn: ['REJECTED', 'RECHAZADO', 'RECHAZADA'] },
+        detalle_solicitud: { is: identity },
+      },
+      select: { id: true },
+    }),
+    tx.usuario.findFirst({
+      where: { correo: { equals: data.correo, mode: 'insensitive' } },
+      select: { usuario_id: true },
+    }),
+    tx.titulado.findFirst({
+      where: {
+        OR: [{ cod_sis: data.codigoSis }, { ci: data.ci, extension_ci: data.complementoCi }],
+      },
+      select: { id: true },
+    }),
+  ]);
+  if (application || user || graduate) {
+    throw new BusinessRuleError(
+      'conflict',
+      'REGISTRATION_EXISTS',
+      'Ya existe una cuenta o solicitud con estos datos',
+    );
+  }
+}

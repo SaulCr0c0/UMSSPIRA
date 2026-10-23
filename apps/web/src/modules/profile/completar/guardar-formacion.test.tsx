@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { ProfileStoreProvider } from '@/modules/profile/state/profile-store';
 import type { ProfileRecords } from '@/modules/profile/types/profile-record';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 import { AcordeonPerfil } from './acordeon-perfil';
 
@@ -14,7 +15,9 @@ jest.mock('next/navigation', () => ({
 const fetchMock = jest.fn();
 
 function responder(status: number, cuerpo: unknown) {
-  fetchMock.mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => cuerpo });
+  // La API responde { data } cuando todo sale bien y el error tal cual cuando falla
+  const ok = status >= 200 && status < 300;
+  fetchMock.mockResolvedValue({ ok, status, json: async () => (ok ? { data: cuerpo } : cuerpo) });
 }
 
 const SIN_REGISTROS: ProfileRecords = { education: [], experience: [], certification: [] };
@@ -40,11 +43,13 @@ describe('Completar perfil · guardar formación académica en la API', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
     delete global.fetch;
+    clearAccessToken();
   });
 
   it('201: agrega la formación guardada y limpia el formulario', async () => {

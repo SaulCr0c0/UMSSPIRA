@@ -1,6 +1,7 @@
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
 import type { CertificationRecord } from '@/modules/profile/types/profile-record';
 import { ApiError } from '@/shared/services/api-client';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
 
@@ -8,7 +9,9 @@ import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from 
 const fetchMock = jest.fn();
 
 function responder(status: number, cuerpo: unknown) {
-  fetchMock.mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => cuerpo });
+  // La API responde { data } cuando todo sale bien y el error tal cual cuando falla
+  const ok = status >= 200 && status < 300;
+  fetchMock.mockResolvedValue({ ok, status, json: async () => (ok ? { data: cuerpo } : cuerpo) });
 }
 
 const base = { idTitulado: '9bab2c02-d99b-4e06-a16c-ba5ee762654e', fechaCreacion: '2026-10-01' };
@@ -36,11 +39,13 @@ describe('obtenerPerfil', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
     delete global.fetch;
+    clearAccessToken();
   });
 
   it('consulta GET /api/v1/perfil', async () => {
@@ -93,11 +98,13 @@ describe('crearFormacion', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
     delete global.fetch;
+    clearAccessToken();
   });
 
   it('envía POST con el año como número y los textos sin espacios', async () => {
@@ -152,11 +159,13 @@ describe('crearExperiencia', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
     delete global.fetch;
+    clearAccessToken();
   });
 
   it('envía POST con las fechas y los textos sin espacios', async () => {

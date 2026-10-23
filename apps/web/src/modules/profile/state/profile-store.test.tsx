@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { ProfileRecordsManager } from '@/modules/profile/components/profile-records-manager';
 import { PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
 import ProfileSummary from '@/modules/profile/ver/profile-summary';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 import { ProfileStoreProvider, useProfileStore } from './profile-store';
 
@@ -54,11 +55,13 @@ describe('ProfileStoreProvider · carga desde la API', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
+    setAccessToken('test-token');
   });
 
   afterEach(() => {
     // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
     delete global.fetch;
+    clearAccessToken();
   });
 
   const registro = { idTitulado: 'titulado-1', fechaCreacion: null };
@@ -71,7 +74,7 @@ describe('ProfileStoreProvider · carga desde la API', () => {
   };
 
   it('reemplaza los datos de prueba por los registros de GET /api/v1/perfil', async () => {
-    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => perfil });
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: perfil }) });
 
     render(
       <ProfileStoreProvider>

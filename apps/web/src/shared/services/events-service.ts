@@ -5,12 +5,55 @@ import type {
 } from '@umsspira/shared-types';
 
 import { apiClient } from './api-client';
+import { authenticatedFetch } from './auth-session';
+import { readApiError } from './api-contract';
 
-export function getEventCatalog(): Promise<EventItem[]> {
-  return apiClient<EventItem[]>('/api/events/catalog');
+const MAX_EVENT_COVER_SIZE = 5 * 1024 * 1024;
+const EVENT_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+export async function uploadEventCover(file: File): Promise<string> {
+  if (!EVENT_COVER_TYPES.has(file.type)) {
+    throw new Error('Formato no admitido. Solo se permiten imágenes JPG, PNG o WebP.');
+  }
+  if (file.size > MAX_EVENT_COVER_SIZE) {
+    throw new Error('La imagen no puede superar los 5 MB.');
+  }
+
+  const body = new FormData();
+  body.append('file', file);
+  const response = await authenticatedFetch(
+    '/api/v1/events/covers',
+    { method: 'POST', body },
+  );
+  const result = await response.json().catch(() => null);
+  if (!response.ok || !result?.data?.imageUrl) {
+    throw new Error(readApiError(result, 'No se pudo guardar la portada.').message);
+  }
+  return result.data.imageUrl;
 }
 
-export function createEvent(
+export async function removeEventCover(imageUrl: string): Promise<void> {
+  if (!imageUrl.startsWith('/api/v1/events/covers/')) {
+    throw new Error('La portada no pertenece a esta API.');
+  }
+  const response = await authenticatedFetch(
+    imageUrl,
+    { method: 'DELETE' },
+  );
+  if (!response.ok) throw new Error('No se pudo limpiar la portada temporal.');
+}
+
+export async function getEventCatalog(): Promise<EventItem[]> {
+  return (await apiClient<{ data: EventItem[] }>('/api/v1/events/catalog')).data;
+}
+
+export async function getPublishedEvent(eventId: string): Promise<EventItem> {
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/${encodeURIComponent(eventId)}`,
+  )).data;
+}
+
+export async function createEvent(
   event: CreateEventDto,
   userId?: string,
 ): Promise<EventItem> {
@@ -20,89 +63,88 @@ export function createEvent(
     );
   }
 
-  return apiClient<EventItem>('/api/events', {
+  return (await apiClient<{ data: EventItem }>('/api/v1/events', {
     method: 'POST',
-    headers: {
-      'x-user-id': userId,
-    },
+    authenticated: true,
     body: event,
-  });
+  })).data;
 }
 
-export function getAdminEvents(
+export async function getAdminEvents(
   userId?: string,
 ): Promise<EventItem[]> {
-  const authenticatedUserId = requireUserId(
+  requireUserId(
     userId,
     'consultar los eventos',
   );
 
-  return apiClient<EventItem[]>('/api/events/admin', {
-    headers: {
-      'x-user-id': authenticatedUserId,
-    },
-  });
+  return (await apiClient<{ data: EventItem[] }>('/api/v1/events/owned', {
+    authenticated: true,
+  })).data;
 }
 
-export function getAdminDraft(
+export async function getAdminDraft(
   eventId: string,
   userId?: string,
 ): Promise<EventItem> {
-  const authenticatedUserId = requireUserId(
+  requireUserId(
     userId,
     'consultar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}`,
-    {
-      headers: {
-        'x-user-id': authenticatedUserId,
-      },
-    },
-  );
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}`,
+    { authenticated: true },
+  )).data;
 }
 
-export function updateDraftEvent(
+export async function getAdminEvent(
+  eventId: string,
+  userId?: string,
+): Promise<EventItem> {
+  requireUserId(userId, 'consultar el evento');
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/owned/${encodeURIComponent(eventId)}`,
+    { authenticated: true },
+  )).data;
+}
+
+export async function updateDraftEvent(
   eventId: string,
   event: UpdateDraftEventDto,
   userId?: string,
 ): Promise<EventItem> {
-  const authenticatedUserId = requireUserId(
+  requireUserId(
     userId,
     'actualizar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}`,
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}`,
     {
       method: 'PATCH',
-      headers: {
-        'x-user-id': authenticatedUserId,
-      },
+      authenticated: true,
       body: event,
     },
-  );
+  )).data;
 }
 
-export function publishDraftEvent(
+export async function publishDraftEvent(
   eventId: string,
   userId?: string,
 ): Promise<EventItem> {
-  const authenticatedUserId = requireUserId(
+  requireUserId(
     userId,
     'publicar el borrador',
   );
 
-  return apiClient<EventItem>(
-    `/api/events/admin/${encodeURIComponent(eventId)}/publish`,
+  return (await apiClient<{ data: EventItem }>(
+    `/api/v1/events/drafts/${encodeURIComponent(eventId)}/publish`,
     {
       method: 'PATCH',
-      headers: {
-        'x-user-id': authenticatedUserId,
-      },
+      authenticated: true,
     },
-  );
+  )).data;
 }
 
 function requireUserId(
