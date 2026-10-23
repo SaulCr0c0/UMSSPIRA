@@ -21,7 +21,6 @@ export interface SendMessagePayload {
   content: string;
 }
 
-
 export interface SendMessageAck {
   success: boolean;
   messageId?: string;
@@ -75,18 +74,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('chat:unauthorized');
       return { success: false, error: 'No autenticado' };
     }
-
     try {
       const message = await this.chatService.saveMessage({
         conversationId: payload.conversationId,
         senderId: userId,
         content: payload.content,
       });
-
       client
         .to(`conversation_${payload.conversationId}`)
         .emit('chat:new_message', message);
-
       return { success: true, messageId: message.id };
     } catch (error) {
       this.logger.error('Error al enviar mensaje', error);
@@ -94,14 +90,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  /** CA-02: avisa al cliente antes de cortar, para distinguirlo de servidor caído. */
   private reject(client: Socket, reason: string): void {
     this.logger.warn(`Rechazado: ${reason} (${client.id})`);
     client.emit('chat:unauthorized');
     client.disconnect(true);
   }
 
-  /** Prioriza auth.token; si no, lee la cookie de sesión. */
   private extractToken(client: Socket): string | undefined {
     const fromAuth = client.handshake.auth?.token as string | undefined;
     if (fromAuth) {return fromAuth;}
