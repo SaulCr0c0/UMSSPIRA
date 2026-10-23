@@ -162,3 +162,9 @@ export const verifyActivationSchema = z.strictObject({
   code: z.string().regex(/^\d{6}$/),
 });
 export type VerifyActivationInput = z.infer<typeof verifyActivationSchema>;
+export const requestCorrectionLinkSchema = z.strictObject({
+  ci: z.string().trim().regex(/^\\d{5,10}$/, 'C.I. invalido'),
+  complemento: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{0,2}$/).optional().default(''),
+  expedidoEn: z.enum(['LP', 'CB', 'SC', 'OR', 'PT', 'TJ', 'CH', 'BE', 'PD', 'EX']),
+});
+export type RequestCorrectionLinkInput = z.infer<typeof requestCorrectionLinkSchema>;
