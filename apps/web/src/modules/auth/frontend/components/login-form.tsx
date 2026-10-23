@@ -156,15 +156,23 @@ export function LoginForm() {
         </div>
 
         {/* Preferencia de sesión persistente */}
-        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-abyssal-blue">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(event) => setRemember(event.target.checked)}
-            className="h-4 w-4 rounded border-oatmeal accent-abyssal-blue"
-          />
-          Recordar mi sesión en este equipo
-        </label>
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-abyssal-blue">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(event) => setRemember(event.target.checked)}
+              className="h-4 w-4 rounded border-oatmeal accent-abyssal-blue"
+            />
+            Recordar mi sesión en este equipo
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-xs font-bold text-abyssal-blue underline underline-offset-4 hover:text-truffle-trouble"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
         {fieldErrors.password && (
           <p className="text-xs text-truffle-trouble">
             {fieldErrors.password}
