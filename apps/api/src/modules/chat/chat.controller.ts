@@ -1,4 +1,3 @@
-// apps/api/src/modules/chat/chat.controller.ts
 import {
   Controller,
   Post,
@@ -6,54 +5,68 @@ import {
   Patch,
   Body,
   Param,
-  BadRequestException,
-  UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-
+import { CurrentActor } from '../../shared/http/auth/decorators/current-actor.decorator';
+import type { ActorContext } from '../../shared/security/contexts/actor-context';
 @Controller('chat/conversations')
-@UseGuards()
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('direct')
-  async createDirectChat(@Body() body: { targetUserId: string; senderId?: string }) {
-    try {
-      const actorId = body.senderId || '';
-      
-      const conversation = await this.chatService.findOrCreateDirectConversation(
-        actorId,
+  async createDirectChat(
+    @CurrentActor() actor: ActorContext,
+    @Body() body: { targetUserId: string },
+  ) {
+    const conversation =
+      await this.chatService.findOrCreateDirectConversation(
+        actor.id,
         body.targetUserId,
       );
-      return { conversationId: conversation.id };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error al iniciar el chat';
-      throw new BadRequestException(message);
-    }
+
+    return { conversationId: conversation.id };
   }
 
   @Get()
-  async getMyConversations() {
-    return this.chatService.getUserConversations();
+  async getMyConversations(@CurrentActor() actor: ActorContext) {
+    return this.chatService.getUserConversations(actor.id);
   }
 
   @Get('users')
-  async getUsersToChat() {
-    return this.chatService.getAvailableUsersToChat();
+  async getUsersToChat(@CurrentActor() actor: ActorContext) {
+    const users = await this.chatService.getAvailableUsersToChat();
+
+    return users.filter((user) => user.usuario_id !== actor.id);
   }
 
   @Get(':id/messages')
-  async getMessages(@Param('id') id: string) {
+  async getMessages(
+    @CurrentActor() actor: ActorContext,
+    @Param('id') id: string,
+  ) {
+    await this.chatService.assertParticipant(id, actor.id);
     return this.chatService.getMessages(id);
   }
 
   @Post(':id/simulate-reply')
-  async simulateReply(@Param('id') id: string) {
-    return this.chatService.simulateReply(id, 'hola, en que le puedo ayudar');
+  async simulateReply(
+    @CurrentActor() actor: ActorContext,
+    @Param('id') id: string,
+  ) {
+    await this.chatService.assertParticipant(id, actor.id);
+
+    return this.chatService.simulateReply(
+      id,
+      'hola, en que le puedo ayudar',
+    );
   }
 
   @Patch(':id/read')
-  async markAsRead(@Param('id') id: string) {
-    return this.chatService.markAsRead(id);
+  async markAsRead(
+    @CurrentActor() actor: ActorContext,
+    @Param('id') id: string,
+  ) {
+    await this.chatService.assertParticipant(id, actor.id);
+    return this.chatService.markAsRead(id, actor.id);
   }
 }
