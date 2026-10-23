@@ -35,13 +35,13 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
       <form onSubmit={event => { event.preventDefault(); if (dirty && !disabled) onApply(draft); }}>
         <fieldset disabled={disabled}><legend>Áreas técnicas <span>· selección múltiple</span></legend>
           {!catalog.length && <p className="directory-muted">{disabled ? 'Cargando áreas…' : 'Las áreas se mostrarán al cargar el directorio.'}</p>}
-          {catalog.map(area => <label className="directory-area-option" key={area.id}>
+          {catalog.map(area => <label className={`directory-area-option ${draft.areaIds.includes(area.id) ? 'is-selected' : ''}`} key={area.id}>
             <input type="checkbox" checked={draft.areaIds.includes(area.id)} onChange={() => toggleArea(area.id)} />{area.name}
           </label>)}
         </fieldset>
         <fieldset disabled={disabled || !interestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
           {interestsSupported ? <>
-            <p className="directory-muted">Catálogo general. Elige un área para ver solo sus intereses.</p>
+            <p className="directory-muted">{draft.areaIds.length ? 'Intereses correspondientes a las áreas seleccionadas.' : 'Catálogo general. Elige un área para ver solo sus intereses.'}</p>
             <div id="directory-interest-groups">{visibleGroups.map(area => <div className="directory-topic-group" key={area.id}>
               <h3>{area.name}</h3><div className="directory-topic-options">{area.topics.map(topic => <label key={topic.id} className={`directory-topic ${draft.topicIds.includes(topic.id) ? 'is-selected' : ''}`}>
                 <input type="checkbox" checked={draft.topicIds.includes(topic.id)} onChange={() => toggleTopic(topic.id)} />{topic.name}
