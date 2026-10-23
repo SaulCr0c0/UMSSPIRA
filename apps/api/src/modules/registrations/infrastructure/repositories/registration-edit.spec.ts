@@ -40,7 +40,7 @@ describe('Edición del borrador y reverificación', () => {
       size_bytes: 4,
     };
     const tx = {
-      $queryRaw: jest.fn(),
+      $queryRaw: jest.fn().mockResolvedValue([{ total: 0 }]),
       $executeRaw: jest.fn(),
       carrera: { findUnique: jest.fn().mockResolvedValue({ id: 'career' }) },
       solicitud: {
