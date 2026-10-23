@@ -5,6 +5,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentActor } from '../../shared/http/auth/decorators/current-actor.decorator';
@@ -39,13 +40,20 @@ export class ChatController {
     return users.filter((user) => user.usuario_id !== actor.id);
   }
 
-  @Get(':id/messages')
+    @Get(':id/messages')
   async getMessages(
     @CurrentActor() actor: ActorContext,
     @Param('id') id: string,
+    @Query('limit') limit?: string,
+    @Query('beforeId') beforeId?: string,
   ) {
     await this.chatService.assertParticipant(id, actor.id);
-    return this.chatService.getMessages(id);
+
+    return this.chatService.getMessages(
+      id,
+      Number(limit) || 30,
+      beforeId,
+    );
   }
 
   @Post(':id/simulate-reply')

@@ -143,15 +143,61 @@ const finalActorId = actorId;
     });
   }
 
-  async getMessages(conversationId: string) {
-  return this.prisma.mensaje.findMany({
-    where: { id_conversacion: conversationId },
-    orderBy: [
-      { fecha_mensaje: { sort: 'asc', nulls: 'first' } },
-      { id: 'asc' },
-    ],
-  });
-}
+  
+  
+  async getMessages(
+    conversationId: string,
+    limit = 30,
+    beforeId?: string,
+  ) {
+    const pageSize = Math.min(Math.max(Number(limit) || 30, 1), 100);
+
+    const cursorMessage = beforeId
+      ? await this.prisma.mensaje.findFirst({
+          where: {
+            id: beforeId,
+            id_conversacion: conversationId,
+          },
+          select: {
+            id: true,
+          },
+        })
+      : null;
+
+    if (beforeId && !cursorMessage) {
+      throw new BadRequestException(
+        'El mensaje de referencia no existe en esta conversación',
+      );
+    }
+
+    
+    const messages = await this.prisma.mensaje.findMany({
+      where: {
+        id_conversacion: conversationId,
+      },
+      ...(cursorMessage
+        ? {
+            cursor: { id: cursorMessage.id },
+            skip: 1,
+          }
+        : {}),
+      orderBy: [
+        { fecha_mensaje: { sort: 'desc', nulls: 'last' } },
+        { id: 'desc' },
+      ],
+      take: pageSize + 1,
+    });
+
+    const hasMore = messages.length > pageSize;
+    const page = messages.slice(0, pageSize).reverse();
+
+    return {
+      messages: page,
+      hasMore,
+      nextCursor: hasMore ? page[0]?.id ?? null : null,
+    };
+  }
+
 
   async assertParticipant(conversationId: string, userId: string): Promise<void> {
     const participant = await this.prisma.participanteConversacion.findFirst({

@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, Send } from 'lucide-react';
 import { sendChatMessage } from '@/shared/services/chat-message.service';
 import {
   getConversationMessages,
+  getConversationMessagesPage,
   type ChatMessage,
   type ConversationSummary,
 } from '@/shared/services/chat-conversation.service';
@@ -66,24 +67,100 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
   const isAtBottomRef = useRef(true);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
+
+  const nextCursorRef = useRef<string | null>(null);
+  const hasMoreHistoryRef = useRef(false);
+  const loadingOlderRef = useRef(false);
+
+  const pendingScrollRef = useRef<{
+    height: number;
+    top: number;
+  } | null>(null);
 
   const { otherUser } = conversation;
 
-  const handleHistoryScroll = () => {
-  const container = historyRef.current;
-  if (!container) return;
+  
+  const loadOlderMessages = async () => {
+    const container = historyRef.current;
+    const cursor = nextCursorRef.current;
 
-  const distanceToBottom =
-    container.scrollHeight -
-    container.scrollTop -
-    container.clientHeight;
+    if (
+      !container ||
+      !cursor ||
+      !hasMoreHistoryRef.current ||
+      loadingOlderRef.current
+    ) {
+      return;
+    }
+
+    const version = requestVersionRef.current;
+    const previousHeight = container.scrollHeight;
+    const previousTop = container.scrollTop;
+
+    loadingOlderRef.current = true;
+    setLoadingOlder(true);
+    setHistoryLoadError(null);
+
+    try {
+      const page = await getConversationMessagesPage(
+        conversation.id,
+        { limit: 15, beforeId: cursor },
+      );
+
+      if (requestVersionRef.current !== version) return;
+
+      pendingScrollRef.current = {
+        height: previousHeight,
+        top: previousTop,
+      };
+
+      nextCursorRef.current = page.nextCursor;
+      hasMoreHistoryRef.current = page.hasMore;
+
+      setHasMoreHistory(page.hasMore);
+
+      setMessages((current) =>
+        mergeMessages(page.messages, current),
+      );
+    } catch (err: unknown) {
+      if (requestVersionRef.current === version) {
+        setHistoryLoadError(
+          err instanceof Error
+            ? err.message
+            : 'No se pudieron cargar los mensajes anteriores',
+        );
+      }
+    } finally {
+      if (requestVersionRef.current === version) {
+        loadingOlderRef.current = false;
+        setLoadingOlder(false);
+      }
+    }
+  };
+
+  const handleHistoryScroll = () => {
+    const container = historyRef.current;
+    if (!container) return;
+
+    const distanceToBottom =
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
 
     isAtBottomRef.current = distanceToBottom <= 48;
 
     if (isAtBottomRef.current) {
       setHasNewMessages(false);
     }
+
+    if (container.scrollTop <= 60) {
+      void loadOlderMessages();
+    }
   };
+
 
   const goToLatest = () => {
     const container = historyRef.current;
@@ -105,10 +182,19 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
     setMessages([]);
     setLoading(true);
+    nextCursorRef.current = null;
+    hasMoreHistoryRef.current = false;
+    loadingOlderRef.current = false;
+    pendingScrollRef.current = null;
+
+    setHasMoreHistory(false);
+    setLoadingOlder(false);
+    setHistoryLoadError(null);
     setError(null);
     setDraft('');
     setSending(false);
     setSendError(null);
+    
 
     const onNewMessage = (message: IncomingChatMessage) => {
       if (requestVersionRef.current !== version) return;
@@ -121,11 +207,18 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     // mensajes que lleguen mientras termina la consulta.
     socket.on('chat:new_message', onNewMessage);
 
-    getConversationMessages(conversation.id)
-      .then((data) => {
-        if (requestVersionRef.current === version) {
-          setMessages((current) => mergeMessages(current, data));
-        }
+    
+    getConversationMessagesPage(conversation.id, { limit: 15 })
+      .then((page) => {
+        if (requestVersionRef.current !== version) return;
+
+        nextCursorRef.current = page.nextCursor;
+        hasMoreHistoryRef.current = page.hasMore;
+
+        setHasMoreHistory(page.hasMore);
+        setMessages((current) =>
+          mergeMessages(current, page.messages),
+        );
       })
       .catch((err: unknown) => {
         if (requestVersionRef.current === version) {
@@ -142,6 +235,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         }
       });
 
+
     return () => {
       requestVersionRef.current++;
       socket.off('chat:new_message', onNewMessage);
@@ -155,6 +249,23 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
     const container = historyRef.current;
     if (!container) return;
+    
+    const pendingScroll = pendingScrollRef.current;
+
+    if (pendingScroll) {
+      pendingScrollRef.current = null;
+
+      seenMessageIdsRef.current = new Set(
+        messages.map((message) => message.id),
+      );
+
+      container.scrollTop =
+        container.scrollHeight -
+        pendingScroll.height +
+        pendingScroll.top;
+
+      return;
+    }
 
     const addedMessages = messages.filter(
       (message) => !seenMessageIdsRef.current.has(message.id),
@@ -276,12 +387,36 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         aria-busy={loading}
         className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 [overflow-anchor:none]"
       >
+        {!loading && messages.length > 0 && !hasMoreHistory && (
+  	<p className="py-2 text-center text-xs text-slate-400">
+    	No hay mensajes anteriores.
+  	</p>
+	)}
         {loading && (
           <div className="flex items-center justify-center gap-2 p-8 text-sm text-slate-500">
             <Loader2
               className="h-4 w-4 animate-spin"
               aria-hidden="true"
             />
+            
+        {loadingOlder && (
+          <p className="py-2 text-center text-xs text-slate-500">
+            Cargando mensajes anteriores...
+          </p>
+        )}
+
+        {historyLoadError && (
+          <p role="alert" className="py-2 text-center text-xs text-red-700">
+            {historyLoadError}
+          </p>
+        )}
+
+        {!loading && messages.length > 0 && !hasMoreHistory && (
+          <p className="py-2 text-center text-xs text-slate-400">
+            No hay mensajes anteriores.
+          </p>
+        )}
+
             Cargando mensajes...
           </div>
         )}
