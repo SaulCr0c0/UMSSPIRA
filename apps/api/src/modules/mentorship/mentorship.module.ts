@@ -3,6 +3,8 @@ import { PrismaModule } from '../../shared/infrastructure/database/prisma.module
 import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
 import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
 import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
+import { FilterMentorProfilesController } from './http/controllers/filter-mentor-profiles.controller';
+import { GetMentorFilterOptionsController } from './http/controllers/get-mentor-filter-options.controller';
 import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
 import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
 import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
@@ -22,6 +24,8 @@ import { SetMentorAvailabilityController } from './http/controllers/set-mentor-a
   imports: [PrismaModule],
   controllers: [
     ListMentorProfilesController,
+    FilterMentorProfilesController,
+    GetMentorFilterOptionsController,
     GetMentorEligibilityController,
     GetMyMentorProfileController,
     GetMentorInformationController,

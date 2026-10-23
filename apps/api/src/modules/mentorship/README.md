@@ -22,4 +22,12 @@ AVAILABLE acepta solicitudes, PAUSED conserva la visibilidad sin aceptarlas y UN
 
 El módulo exporta MENTOR_AVAILABILITY_REPOSITORY mediante un port. Otros módulos pueden consultar canReceiveRequests sin importar Prisma ni consultar directamente estas tablas.
 
+## Filtros del directorio
+
+`GET /api/v1/mentorship/filter-options?areaIds=<uuid>&areaIds=<uuid>` requiere sesión de titulado y devuelve el catálogo de áreas activas junto con los intereses activos de las áreas seleccionadas. Sin áreas, `intereses` es una lista vacía.
+
+`GET /api/v1/mentorship/profiles/filter?areaIds=<uuid>&interestIds=<uuid>` también requiere sesión de titulado. Los filtros aceptan UUID repetidos o separados por comas; dentro de cada grupo se aplica OR y, al combinar áreas e intereses, ambos criterios deben coincidir. Los intereses enviados junto con áreas deben pertenecer a alguna de ellas. IDs inexistentes, inactivos o incompatibles responden 400. Si no hay coincidencias, se responde 200 con `data: []`.
+
+Los filtros solo leen el catálogo `area` y las relaciones `mentor_area`; no crean catálogos ni modifican perfiles. El directorio filtrado conserva la visibilidad habitual: solo titulados y mentores activos cuyo estado no sea `UNAVAILABLE`.
+
 Los [contratos HTTP](../../../docs/endpoints/epic06-grupo06-hu1.6.md) documentan las rutas nuevas. La integración del frontend queda pendiente.
