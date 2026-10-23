@@ -51,6 +51,7 @@ function row(overrides: Record<string, unknown> = {}) {
       { dia_semana: 2, horario_inicio: time('18:00'), horario_fin: time('20:00') },
       { dia_semana: 9, horario_inicio: time('08:00'), horario_fin: time('09:00') },
       { dia_semana: 3, horario_inicio: time('10:00'), horario_fin: time('09:00') },
+      { dia_semana: 0, horario_inicio: time('09:00'), horario_fin: time('10:00') },
     ],
     ...overrides,
   };
@@ -58,15 +59,21 @@ function row(overrides: Record<string, unknown> = {}) {
 
 describe('PrismaMentorRepository.detail', () => {
   const findFirst = jest.fn();
+  const findMany = jest.fn();
   const repository = new PrismaMentorRepository({
     mentor: { findFirst },
+    mentoriaSolicitud: { findMany },
   } as unknown as PrismaService);
+  const detail = () => repository.detail('mentor-1', '2026-10-23', '2026-10-29');
 
-  beforeEach(() => findFirst.mockReset());
+  beforeEach(() => {
+    findFirst.mockReset();
+    findMany.mockReset().mockResolvedValue([]);
+  });
 
   it('consulta solo perfiles activos de titulados con cuenta activa', async () => {
     findFirst.mockResolvedValue(null);
-    await expect(repository.detail('mentor-1')).resolves.toBeNull();
+    await expect(detail()).resolves.toBeNull();
     expect(findFirst.mock.calls[0][0].where).toEqual({
       id: 'mentor-1',
       esta_activo: true,
@@ -76,8 +83,8 @@ describe('PrismaMentorRepository.detail', () => {
 
   it('arma el perfil público con áreas, intereses, horarios y cargo actual', async () => {
     findFirst.mockResolvedValue(row());
-    const detail = await repository.detail('mentor-1');
-    expect(detail).toMatchObject({
+    const profile = await detail();
+    expect(profile).toMatchObject({
       availability: 'AVAILABLE',
       canRequest: true,
       position: 'Backend Developer',
@@ -86,26 +93,53 @@ describe('PrismaMentorRepository.detail', () => {
       interests: [
         { id: 'interes-nest', name: 'NestJS', area: { id: 'area-back', name: 'Backend' } },
       ],
-      schedules: [{ weekday: 2, start: '18:00', end: '20:00' }],
+      schedules: [
+        { weekday: 2, start: '18:00', end: '20:00' },
+        { weekday: 7, start: '09:00', end: '10:00' },
+      ],
     });
-    expect(detail?.mentor.graduateName).toBe('María Pérez');
-    expect(detail?.mentor.experience).toBeNull();
+    expect(profile?.mentor.graduateName).toBe('María Pérez');
+    expect(profile?.mentor.experience).toBeNull();
+  });
+
+  it('trae las solicitudes pendientes o aceptadas del rango para ocupar horarios', async () => {
+    findFirst.mockResolvedValue(row());
+    findMany.mockResolvedValue([
+      {
+        solicitud_fecha: new Date('2026-10-27T00:00:00Z'),
+        solicitud_inicio: time('18:00'),
+        solicitud_fin: time('19:00'),
+      },
+      { solicitud_fecha: null, solicitud_inicio: time('08:00'), solicitud_fin: time('09:00') },
+    ]);
+    const result = await detail();
+    expect(findMany.mock.calls[0][0].where).toEqual({
+      id_mentor: 'mentor-1',
+      estado: { in: ['PENDIENTE', 'ACEPTADO'] },
+      solicitud_fecha: {
+        gte: new Date('2026-10-23T00:00:00.000Z'),
+        lte: new Date('2026-10-29T00:00:00.000Z'),
+      },
+    });
+    expect(result?.bookings).toEqual([{ date: '2026-10-27', start: '18:00', end: '19:00' }]);
   });
 
   it('muestra un mentor en pausa sin permitir solicitudes', async () => {
     findFirst.mockResolvedValue(
       row({ disponibilidad_mentor_registros: [{ estado: 'PAUSED', fecha_actualizacion: null }] }),
     );
-    await expect(repository.detail('mentor-1')).resolves.toMatchObject({
+    await expect(detail()).resolves.toMatchObject({
       availability: 'PAUSED',
       canRequest: false,
+      bookings: [],
     });
+    expect(findMany).not.toHaveBeenCalled();
   });
 
   it('oculta el perfil de un mentor no disponible', async () => {
     findFirst.mockResolvedValue(
       row({ disponibilidad_mentor_registros: [{ estado: 'UNAVAILABLE', fecha_actualizacion: null }] }),
     );
-    await expect(repository.detail('mentor-1')).resolves.toBeNull();
+    await expect(detail()).resolves.toBeNull();
   });
 });

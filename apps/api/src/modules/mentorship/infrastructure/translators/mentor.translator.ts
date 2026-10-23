@@ -3,6 +3,7 @@ import type {
   AvailabilityStatus,
   Mentor,
   MentorAvailability,
+  MentorBooking,
   MentorSchedule,
 } from '../../domain/entities/mentor';
 
@@ -51,9 +52,22 @@ export function toSchedule(row: {
 }): MentorSchedule[] {
   const start = toTime(row.horario_inicio);
   const end = toTime(row.horario_fin);
-  const weekday = row.dia_semana;
+  // 1 = lunes … 7 = domingo; 0 también es domingo (convención de Date.getUTCDay).
+  const weekday = row.dia_semana === 0 ? 7 : row.dia_semana;
   return weekday !== null && weekday >= 1 && weekday <= 7 && start && end && start < end
     ? [{ weekday, start, end }]
+    : [];
+}
+
+export function toBooking(row: {
+  solicitud_fecha: Date | null;
+  solicitud_inicio: Date | null;
+  solicitud_fin: Date | null;
+}): MentorBooking[] {
+  const start = toTime(row.solicitud_inicio);
+  const end = toTime(row.solicitud_fin);
+  return row.solicitud_fecha && start && end
+    ? [{ date: row.solicitud_fecha.toISOString().slice(0, 10), start, end }]
     : [];
 }
 

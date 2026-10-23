@@ -143,8 +143,9 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
       interests: [],
       availability: 'AVAILABLE',
       canRequest: true,
-      schedules: [{ weekday: 2, start: '18:00', end: '20:00' }],
-      position: null,
+      schedules: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, start: '00:00', end: '23:59' })),
+      bookings: [],
+      position: 'Backend Developer',
       company: null,
     });
     reports.metrics.mockResolvedValue({
@@ -196,24 +197,29 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
       .get(`/api/v1/mentorship/profiles/${mentorId.toUpperCase()}`)
       .set('Authorization', 'Bearer graduate')
       .expect(200);
-    expect(mentors.detail).toHaveBeenCalledWith(mentorId);
-    expect(response.body.data).toEqual({
+    const day = expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/);
+    expect(mentors.detail).toHaveBeenCalledWith(mentorId, day, day);
+    const { slots, weekLabel, ...profile } = response.body.data;
+    expect(profile).toEqual({
       id: mentorId,
-      nombre: graduate.name,
-      descripcion: 'Mentora',
-      experiencia: 'Desarrollo de software',
-      informacion_relevante: 'Dato reservado',
-      anios_exp: 2,
-      foto_perfil: null,
-      cargo: null,
-      empresa: null,
-      areas: [{ id: careerId, nombre: 'Backend' }],
-      intereses: [],
-      availabilityStatus: 'AVAILABLE',
-      puedeSolicitar: true,
-      horarios: [{ dia_semana: 2, hora_inicio: '18:00', hora_fin: '20:00' }],
-      fecha_actualizacion: '2026-10-18',
+      fullName: graduate.name,
+      photoUrl: null,
+      jobTitle: 'Backend Developer',
+      company: null,
+      about: 'Mentora',
+      experience: 'Desarrollo de software',
+      relevantInfo: 'Dato reservado',
+      technicalAreas: ['Backend'],
+      interests: [],
+      availability: 'AVAILABLE',
     });
+    expect(weekLabel).toMatch(/^Del \d{1,2}( [a-z]{3})? al \d{1,2} [a-z]{3} · sesiones de 1 hora$/);
+    expect(slots.length).toBeGreaterThanOrEqual(6);
+    for (const slot of slots) {
+      expect(slot.date).toEqual(day);
+      expect(slot.dayLabel).toMatch(/^(lunes|martes|miércoles|jueves|viernes|sábado|domingo) \d{1,2} [a-z]{3}$/);
+      expect(slot.times.every((time: string) => /^\d{2}:\d{2}$/.test(time))).toBe(true);
+    }
     const body = JSON.stringify(response.body);
     expect(body).not.toContain(graduate.id);
     expect(body).not.toContain(mentor.graduateId);

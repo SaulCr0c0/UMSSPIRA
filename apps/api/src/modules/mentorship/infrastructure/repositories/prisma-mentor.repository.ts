@@ -19,6 +19,7 @@ import {
   mentorInclude,
   publicText,
   toAvailability,
+  toBooking,
   toMentor,
   toSchedule,
 } from '../translators/mentor.translator';
@@ -179,7 +180,7 @@ export class PrismaMentorRepository implements MentorRepository {
     };
   }
 
-  async detail(mentorId: string): Promise<MentorDetail | null> {
+  async detail(mentorId: string, from: string, to: string): Promise<MentorDetail | null> {
     const row = await this.prisma.mentor.findFirst({
       where: {
         id: mentorId,
@@ -235,6 +236,20 @@ export class PrismaMentorRepository implements MentorRepository {
     const byName = (a: AreaReference, b: AreaReference) => a.name.localeCompare(b.name, 'es');
     const job = row.titulado.experiencia_laboral_registros[0];
     const mentor = toMentor(row);
+    const canRequest = canReceiveMentorship(true, availability);
+    const bookings = canRequest
+      ? await this.prisma.mentoriaSolicitud.findMany({
+          where: {
+            id_mentor: row.id,
+            estado: { in: ['PENDIENTE', 'ACEPTADO'] },
+            solicitud_fecha: {
+              gte: new Date(`${from}T00:00:00.000Z`),
+              lte: new Date(`${to}T00:00:00.000Z`),
+            },
+          },
+          select: { solicitud_fecha: true, solicitud_inicio: true, solicitud_fin: true },
+        })
+      : [];
     return {
       mentor: {
         ...mentor,
@@ -244,10 +259,11 @@ export class PrismaMentorRepository implements MentorRepository {
         photoUrl: publicText(mentor.photoUrl),
       },
       availability,
-      canRequest: canReceiveMentorship(true, availability),
+      canRequest,
       areas: [...areas.values()].sort(byName),
       interests: [...interests.values()].sort((a, b) => byName(a.area, b.area) || byName(a, b)),
       schedules: row.espacio_disponible_mentor_registros.flatMap(toSchedule),
+      bookings: bookings.flatMap(toBooking),
       position: publicText(job?.cargo ?? null),
       company: publicText(job?.empresa ?? null),
     };

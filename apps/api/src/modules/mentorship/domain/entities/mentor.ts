@@ -66,13 +66,30 @@ export interface MentorSchedule {
   end: string;
 }
 
+export interface MentorBooking {
+  date: string;
+  start: string;
+  end: string;
+}
+
 export interface MentorDetail {
   mentor: Mentor;
   areas: AreaReference[];
   interests: MentorInterest[];
   availability: AvailabilityStatus | null;
   schedules: MentorSchedule[];
+  bookings: MentorBooking[];
   position: string | null;
   company: string | null;
   canRequest: boolean;
+}
+
+export interface MentorSlotDay {
+  date: string;
+  weekday: number;
+  times: string[];
+}
+
+export interface MentorProfile extends MentorDetail {
+  week: { from: string; to: string; slots: MentorSlotDay[] };
 }

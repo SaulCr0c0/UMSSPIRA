@@ -5,7 +5,7 @@ import type {
   Mentor,
   MentorAreas,
   MentorAvailability,
-  MentorDetail,
+  MentorProfile,
   MentorInterest,
 } from '../../domain/entities/mentor';
 
@@ -96,26 +96,49 @@ export function presentAvailability(state: MentorAvailability) {
   return { availabilityStatus: state.status, fecha_actualizacion: day(state.updatedAt) };
 }
 
-export function presentMentorDetail(detail: MentorDetail) {
+const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+const dayMonth = (date: string) => {
+  const [, month, dayOfMonth] = date.split('-').map(Number);
+  return { day: dayOfMonth, month: MONTHS[month - 1] };
+};
+
+function weekLabel(from: string, to: string) {
+  const start = dayMonth(from);
+  const end = dayMonth(to);
+  const first = start.month === end.month ? String(start.day) : `${start.day} ${start.month}`;
+  return `Del ${first} al ${end.day} ${end.month} · sesiones de 1 hora`;
+}
+
+/** Contrato que consume el perfil detallado del front (HU 6.9). */
+export function presentMentorDetail(profile: MentorProfile) {
+  const interests = new Map<string, { area: string; items: string[] }>();
+  for (const interest of profile.interests) {
+    const group = interests.get(interest.area.id) ?? { area: interest.area.name, items: [] };
+    group.items.push(interest.name);
+    interests.set(interest.area.id, group);
+  }
   return {
-    id: detail.mentor.id,
-    nombre: detail.mentor.graduateName,
-    descripcion: detail.mentor.description,
-    experiencia: detail.mentor.experience,
-    informacion_relevante: detail.mentor.relevantInformation,
-    anios_exp: detail.mentor.experienceYears,
-    foto_perfil: detail.mentor.photoUrl,
-    cargo: detail.position,
-    empresa: detail.company,
-    areas: detail.areas.map((area) => ({ id: area.id, nombre: area.name })),
-    intereses: detail.interests.map(presentInterest),
-    availabilityStatus: detail.availability,
-    puedeSolicitar: detail.canRequest,
-    horarios: detail.schedules.map((schedule) => ({
-      dia_semana: schedule.weekday,
-      hora_inicio: schedule.start,
-      hora_fin: schedule.end,
-    })),
-    fecha_actualizacion: day(detail.mentor.updatedAt),
+    id: profile.mentor.id,
+    fullName: profile.mentor.graduateName,
+    photoUrl: profile.mentor.photoUrl,
+    jobTitle: profile.position,
+    company: profile.company,
+    about: profile.mentor.description,
+    experience: profile.mentor.experience,
+    relevantInfo: profile.mentor.relevantInformation,
+    technicalAreas: profile.areas.map((area) => area.name),
+    interests: [...interests.values()],
+    availability: profile.availability,
+    weekLabel: weekLabel(profile.week.from, profile.week.to),
+    slots: profile.week.slots.map((slot) => {
+      const { day: dayOfMonth, month } = dayMonth(slot.date);
+      return {
+        date: slot.date,
+        dayLabel: `${WEEKDAYS[slot.weekday - 1]} ${dayOfMonth} ${month}`,
+        times: slot.times,
+      };
+    }),
   };
 }
