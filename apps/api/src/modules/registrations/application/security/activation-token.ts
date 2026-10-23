@@ -27,13 +27,19 @@ export function issueActivationToken(
 
 export function parseActivationToken(token: string): ParsedActivationToken | null {
   const separator = token.indexOf('.');
-  if (separator < 1) {return null;}
+  if (separator < 1) {
+    return null;
+  }
   const payload = Buffer.from(token.slice(0, separator), 'base64url').toString();
   const signature = token.slice(separator + 1);
   const dot = payload.lastIndexOf('.');
-  if (dot < 1 || !signature) {return null;}
+  if (dot < 1 || !signature) {
+    return null;
+  }
   const expiresAt = Number(payload.slice(dot + 1));
-  if (!Number.isFinite(expiresAt)) {return null;}
+  if (!Number.isFinite(expiresAt)) {
+    return null;
+  }
   return { applicationId: payload.slice(0, dot), expiresAt, payload, signature };
 }
 
