@@ -6,7 +6,13 @@ import type { StoredFile } from '../../../../shared/files/contracts/uploaded-fil
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
 import type { EventsRepository } from '../../application/ports/events-repository.port';
 import type { CreateEventInput, EventInput } from '../../application/contracts/event-inputs';
-import { assertDraft, validateEventDates } from '../../domain/policies/event.policy';
+import {
+  assertDraft,
+  assertRetirable,
+  inactiveStatus,
+  validateEventDates,
+} from '../../domain/policies/event.policy';
+import type { InactiveEvent, RetiredEvent } from '../../domain/entities/event'; 
 import { toEvent } from '../translators/event.translator';
 
 const eventInclude = { usuario: { select: { nombre: true } } };
@@ -42,7 +48,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   async owned(ownerId: string) {
     const rows = await this.prisma.evento.findMany({
-      where: { id_usuario: ownerId },
+      where: { id_usuario: ownerId, archivado: false },
       include: eventInclude,
       orderBy: [{ fecha_creacion: 'desc' }, { id: 'asc' }],
     });
@@ -51,7 +57,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   async findOwned(ownerId: string, id: string) {
     const row = await this.prisma.evento.findFirst({
-      where: { id, id_usuario: ownerId },
+      where: { id, id_usuario: ownerId, archivado: false },
       include: eventInclude,
     });
     if (!row) {
@@ -131,6 +137,48 @@ export class PrismaEventsRepository implements EventsRepository {
     );
   }
 
+    async inactive(ownerId: string, now: Date): Promise<InactiveEvent[]> {
+    const rows = await this.prisma.evento.findMany({
+      where: {
+        id_usuario: ownerId,
+        archivado: false,
+        OR: [{ estado: 'CANCELADO' }, { fecha_fin: { lte: now } }],
+      },
+      include: eventInclude,
+      orderBy: [{ fecha_inicio: 'desc' }, { id: 'asc' }],
+    });
+    return Promise.all(
+      rows.map(async (row) => {
+        const event = toEvent(row);
+        const status = inactiveStatus(event, now);
+        if (!status) {
+          throw new Error('Evento inactivo inconsistente');
+        }
+        return {
+          ...event,
+          inactiveStatus: status,
+          ...(await this.relationCounts(this.prisma, row.id)),
+        };
+      }),
+    );
+  }
+
+  async retire(ownerId: string, id: string, now: Date): Promise<RetiredEvent> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.lockOwned(tx, ownerId, id);
+        assertRetirable(toEvent(row), now);
+        const counts = await this.relationCounts(tx, id);
+        await tx.evento.update({
+          where: { id, id_usuario: ownerId, archivado: false },
+          data: { archivado: true, fecha_archivado: now },
+        });
+        return { id, ...counts };
+      },
+      { timeout: 15000 },
+    );
+  }
+
   async saveCover(ownerId: string, file: StoredFile): Promise<void> {
     await this.prisma.portadaEvento.create({
       data: {
@@ -149,7 +197,7 @@ export class PrismaEventsRepository implements EventsRepository {
       async (tx) => {
         await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
         const row = await tx.portadaEvento.findFirst({
-          where: { id, id_usuario: ownerId },
+                where: { id, id_usuario: ownerId, archivado: false },
           select: { id: true, evento: { select: { id: true } } },
         });
         if (!row) {
@@ -210,6 +258,14 @@ export class PrismaEventsRepository implements EventsRepository {
     };
   }
 
+    private async relationCounts(client: Prisma.TransactionClient, eventId: string) {
+    const [registrationsCount, passesCount] = await Promise.all([
+      client.inscripcionEvento.count({ where: { id_evento: eventId } }),
+      client.paseQr.count({ where: { inscripcion: { id_evento: eventId } } }),
+    ]);
+    return { registrationsCount, passesCount };
+  }
+
   private async lockOwned(tx: Prisma.TransactionClient, ownerId: string, id: string) {
     await tx.$queryRaw`SELECT id FROM evento WHERE id = ${id}::uuid FOR UPDATE`;
     const row = await tx.evento.findFirst({ where: { id, id_usuario: ownerId, archivado: false } });
@@ -230,7 +286,7 @@ export class PrismaEventsRepository implements EventsRepository {
     }
     await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
     const row = await tx.portadaEvento.findFirst({
-      where: { id, id_usuario: ownerId },
+      where: { id, id_usuario: ownerId, archivado: false },
       select: { evento: { select: { id: true } } },
     });
     if (!row) {
@@ -257,3 +313,4 @@ export class PrismaEventsRepository implements EventsRepository {
     );
   }
 }
+
