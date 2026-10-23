@@ -2,6 +2,7 @@ import { BusinessRuleError } from '../../../../shared/errors/business-rule-error
 import { ACTIVATION_TOKEN_SECONDS } from '../../domain/policies/activation.policy';
 import type { ApplicationsRepository } from '../ports/applications-repository.port';
 import type { RegistrationSecurity } from '../ports/registration-security.port';
+import { issueActivationToken } from '../security/activation-token';
 
 // Paso 1 de la activación: valida el código y entrega un pase firmado para el paso 2.
 export class VerifyActivationCodeUseCase {
@@ -36,11 +37,8 @@ export class VerifyActivationCodeUseCase {
         'El código no es válido o ya fue utilizado',
       );
     }
-    // El pase queda atado al hash vigente: al activar la cuenta el hash se borra y el pase muere.
-    const payload = id + '.' + (Date.now() + ACTIVATION_TOKEN_SECONDS * 1000);
-    const signature = this.security.hash('activation-token', payload + '.' + check.binding);
     return {
-      activationToken: Buffer.from(payload).toString('base64url') + '.' + signature,
+      activationToken: issueActivationToken(this.security, id, check.binding),
       expiresInSeconds: ACTIVATION_TOKEN_SECONDS,
     };
   }
