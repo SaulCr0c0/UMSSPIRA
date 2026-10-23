@@ -7,6 +7,8 @@ const API_URL = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isReport = path === '/reports' || path.startsWith('/reports/');
+  // Sprint 2 T4.1: las encuestas son privadas para el rol titulado.
+  const isSurvey = path === '/surveys' || path.startsWith('/surveys/');
   const refresh = request.cookies.get('umsspira_refresh')?.value;
   const redirect = (destination: string) => NextResponse.redirect(new URL(destination, request.url));
   // HU-004: conservar el motivo para explicar al visitante por qué fue redirigido.
@@ -58,6 +60,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = { matcher: [
-  '/applications/:path*', '/reports/:path*', '/me/:path*', '/afinidad', '/afinidad/:path*',
+  '/applications/:path*', '/reports/:path*', '/surveys/:path*', '/me/:path*', '/afinidad', '/afinidad/:path*',
   '/empresa/postulantes', '/empresa/postulantes/:path*', '/postulantes', '/postulantes/:path*',
 ] };

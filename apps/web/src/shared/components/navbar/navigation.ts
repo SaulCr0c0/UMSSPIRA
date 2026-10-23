@@ -56,7 +56,8 @@ export const NAVBAR_ACCOUNT_LINKS: NavbarLink[] = [
   { id: 'my-company', label: 'Mi empresa', href: '/companies', roles: employers },
   { id: 'applications', label: 'Solicitudes de registro', href: '/applications', roles: admins },
   { id: 'reports', label: 'Reportes Institucionales', href: '/reports', roles: admins },
-  { id: 'employment-surveys', label: 'Encuestas de Empleabilidad', href: '/reports/encuestas', roles: admins },
+  // La vista /surveys aún pertenece a otra task; no enlazar una ruta inexistente.
+  { id: 'employment-surveys', label: 'Encuesta de empleabilidad', pending: 'Disponible al integrar la vista /surveys', roles: graduates },
   { id: 'admin-home', label: 'Panel administrativo', href: '/portal/admin', roles: admins },
 ];
 
