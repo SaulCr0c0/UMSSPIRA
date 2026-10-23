@@ -7,9 +7,8 @@ import {
   Param,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { CurrentActor } from '../../../shared/http/auth/decorators/current-actor.decorator';
-import type { ActorContext } from '../../../shared/security/contexts/actor-context';
-
+import { CurrentActor } from '../../shared/http/auth/decorators/current-actor.decorator';
+import type { ActorContext } from '../../shared/security/contexts/actor-context';
 @Controller('chat/conversations')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
