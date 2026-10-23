@@ -207,11 +207,11 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
 
                   {message.fecha_mensaje
-                    ? new Date(message.fecha_mensaje).toLocaleString('es-BO', {
-                        dateStyle: 'short',
-                        timeStyle: 'medium',
-                      })
-                    : 'Sin fecha'}
+    ? new Date(message.fecha_mensaje).toLocaleString('es-BO', {
+        dateStyle: 'short',
+        timeStyle: 'medium',
+      })
+    : 'Sin fecha'}
                 </p>
               </div>
             </div>

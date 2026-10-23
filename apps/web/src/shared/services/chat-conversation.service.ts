@@ -1,9 +1,11 @@
 // apps/web/src/shared/services/chat-conversation.service.ts
+import { authenticatedFetch } from './auth-session';
+
 export const startDirectChat = async (targetUserId: string) => {
   const baseUrl =
     process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${baseUrl}/api/v1/chat/conversations/direct`,
     {
       method: 'POST',
@@ -49,7 +51,7 @@ const readApiError = async (response: Response, fallback: string) => {
 
 export const getMyConversations = async (): Promise<ConversationSummary[]> => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-  const response = await fetch(`${baseUrl}/api/v1/chat/conversations`, {
+  const response = await authenticatedFetch(`${baseUrl}/api/v1/chat/conversations`, {
     credentials: 'include',
   });
   if (!response.ok) {
@@ -62,7 +64,7 @@ export const getConversationMessages = async (
   conversationId: string,
 ): Promise<ChatMessage[]> => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${baseUrl}/api/v1/chat/conversations/${conversationId}/messages`,
     { credentials: 'include' },
   );

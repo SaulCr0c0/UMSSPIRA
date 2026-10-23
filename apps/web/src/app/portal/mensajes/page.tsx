@@ -15,6 +15,8 @@ import { getChatSocket, disconnectChatSocket } from '@/shared/services/chat-sock
 import { useConversations } from '@/features/chat/hooks/useConversations';
 import { ConversationList } from '@/features/chat/components/ConversationList';
 import { ConversationPanel } from '@/features/chat/components/ConversationPanel';
+import { startDirectChat } from '@/shared/services/chat-conversation.service';
+
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
 
@@ -59,6 +61,12 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
   );
 }
 
+
+interface ChatContact {
+  usuario_id: string;
+  nombre: string | null;
+  rol: string | null;
+}
 export default function MensajesPage() {
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [attempt, setAttempt] = useState(0);
@@ -76,9 +84,81 @@ export default function MensajesPage() {
     if (id) setSelectedId(id);
   }, []);
 
-  // Pendiente HU-03: «Iniciar chat» abrirá la búsqueda de contactos
-  const handleStartChat = useCallback(() => {}, []);
 
+
+// Pendiente HU-03: «Iniciar chat» abrirá la búsqueda de contactos
+const [showContacts, setShowContacts] = useState(false);
+const [contacts, setContacts] = useState<ChatContact[]>([]);
+const [contactsLoading, setContactsLoading] = useState(false);
+const [contactsError, setContactsError] = useState<string | null>(null);
+const [startingUserId, setStartingUserId] = useState<string | null>(null);
+const startingRef = useRef(false);
+
+const handleStartChat = async () => {
+  setShowContacts(true);
+  setContactsLoading(true);
+  setContactsError(null);
+
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+    const response = await fetch(
+      `${baseUrl}/api/v1/chat/conversations/users`,
+      { credentials: 'include' },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        response.status === 401
+          ? 'Inicia sesión nuevamente para buscar contactos.'
+          : 'No se pudieron cargar los contactos.',
+      );
+    }
+
+    const data: ChatContact[] = await response.json();
+    setContacts(data);
+  } catch (error: unknown) {
+    setContactsError(
+      error instanceof Error
+        ? error.message
+        : 'No se pudieron cargar los contactos.',
+    );
+  } finally {
+    setContactsLoading(false);
+  }
+};
+
+const handleChooseContact = async (userId: string) => {
+  if (startingRef.current) return;
+
+  startingRef.current = true;
+  setStartingUserId(userId);
+  setContactsError(null);
+
+  try {
+    const { conversationId } = await startDirectChat(userId);
+
+    // Recargar la lista permite encontrar y abrir la conversación creada.
+    await retryList();
+    setSelectedId(conversationId);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('conversation', conversationId);
+    window.history.replaceState(null, '', url.toString());
+
+    setShowContacts(false);
+  } catch (error: unknown) {
+    setContactsError(
+      error instanceof Error
+        ? error.message
+        : 'No se pudo abrir la conversación.',
+    );
+  } finally {
+    startingRef.current = false;
+    setStartingUserId(null);
+  }
+};
   // CA-05: el botón «Reintentar» abre una nueva conexión
   const retry = useCallback(() => {
     setIsRetrying(true);
@@ -149,6 +229,92 @@ export default function MensajesPage() {
             <h1 className="text-lg font-bold text-slate-900">Mensajes</h1>
             <StatusBadge status={status} />
           </div>
+          
+          <div className="border-b border-slate-200 p-3">
+  <button
+    type="button"
+    onClick={() => void handleStartChat()}
+    disabled={contactsLoading || startingUserId !== null}
+    className="min-h-11 w-full rounded-xl bg-[#0F172A] px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+  >
+    Nuevo chat
+  </button>
+</div>
+
+{showContacts && (
+  <section
+    aria-label="Seleccionar contacto"
+    className="border-b border-slate-200 bg-white p-3"
+  >
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h2 className="text-sm font-semibold text-slate-900">
+        Selecciona una persona
+      </h2>
+
+      <button
+        type="button"
+        onClick={() => setShowContacts(false)}
+        disabled={startingUserId !== null}
+        className="rounded-lg px-2 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+      >
+        Cerrar
+      </button>
+    </div>
+
+    {contactsLoading && (
+      <p role="status" className="py-3 text-sm text-slate-500">
+        Cargando contactos...
+      </p>
+    )}
+
+    {contactsError && (
+      <p role="alert" className="mb-3 text-sm text-red-700">
+        {contactsError}
+      </p>
+    )}
+
+    {!contactsLoading && !contactsError && contacts.length === 0 && (
+      <p className="py-3 text-sm text-slate-500">
+        No hay contactos disponibles.
+      </p>
+    )}
+
+    {!contactsLoading && (
+      <ul className="max-h-72 space-y-1 overflow-y-auto">
+        {contacts.map((contact) => (
+          <li key={contact.usuario_id}>
+            <button
+              type="button"
+              onClick={() =>
+                void handleChooseContact(contact.usuario_id)
+              }
+              disabled={startingUserId !== null}
+              className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-3 text-left hover:bg-slate-100 disabled:opacity-50"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-slate-900">
+                  {contact.nombre || 'Usuario'}
+                </span>
+                <span className="block text-xs capitalize text-slate-500">
+                  {contact.rol || 'Sin rol'}
+                </span>
+              </span>
+
+              {startingUserId === contact.usuario_id && (
+                <Loader2
+                  className="h-4 w-4 shrink-0 animate-spin"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+)}
+
+
           <ConversationList
             conversations={conversations}
             loading={loading}
@@ -203,8 +369,14 @@ export default function MensajesPage() {
           )}
 
           {selected ? (
-            <ConversationPanel conversation={selected} onBack={() => setSelectedId(null)} />
-          ) : (
+
+              <ConversationPanel
+                key={selected.id}
+                conversation={selected}
+                onBack={() => setSelectedId(null)}
+              />
+
+              ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
               <MessageSquare className="w-8 h-8 text-slate-400" />
               <p className="text-sm font-semibold text-slate-900">Selecciona una conversación</p>
