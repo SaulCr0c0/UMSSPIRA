@@ -1,4 +1,5 @@
 import { CorrectionTokenService } from './application/services/correction-token.service';
+import { CorrectionTokenGuard } from './http/guards/correction-token.guard';
 import { UpdateRegistrationController } from './http/controllers/update-registration.controller';
 import { GetDraftDocumentController } from './http/controllers/get-draft-document.controller';
 import { Module } from '@nestjs/common';
@@ -52,7 +53,8 @@ import { GetApplicationMetricsController } from './http/controllers/get-applicat
     SmtpOutboxWorker,
     RegistrationTrafficGuard,
     TrustedOriginGuard,
+    CorrectionTokenGuard,
   ],
-  exports: [CorrectionTokenService],
+  exports: [CorrectionTokenService, CorrectionTokenGuard],
 })
 export class RegistrationsModule {}
