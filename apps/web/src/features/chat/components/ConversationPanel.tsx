@@ -64,19 +64,34 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
   // Tarea 2: controlar el desplazamiento del historial.
   const historyRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   const { otherUser } = conversation;
 
   const handleHistoryScroll = () => {
+  const container = historyRef.current;
+  if (!container) return;
+
+  const distanceToBottom =
+    container.scrollHeight -
+    container.scrollTop -
+    container.clientHeight;
+
+    isAtBottomRef.current = distanceToBottom <= 48;
+
+    if (isAtBottomRef.current) {
+      setHasNewMessages(false);
+    }
+  };
+
+  const goToLatest = () => {
     const container = historyRef.current;
     if (!container) return;
 
-    const distanceToBottom =
-      container.scrollHeight -
-      container.scrollTop -
-      container.clientHeight;
-
-    isAtBottomRef.current = distanceToBottom <= 48;
+    container.scrollTop = container.scrollHeight;
+    isAtBottomRef.current = true;
+    setHasNewMessages(false);
   };
 
   useEffect(() => {
@@ -84,6 +99,8 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     const socket = getChatSocket();
 
     isAtBottomRef.current = true;
+    seenMessageIdsRef.current = new Set();
+    setHasNewMessages(false);
     sendingRef.current = false;
 
     setMessages([]);
@@ -137,10 +154,31 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     if (loading) return;
 
     const container = historyRef.current;
-    if (!container || !isAtBottomRef.current) return;
+    if (!container) return;
 
-    container.scrollTop = container.scrollHeight;
-  }, [messages, loading]);
+    const addedMessages = messages.filter(
+      (message) => !seenMessageIdsRef.current.has(message.id),
+    );
+
+    seenMessageIdsRef.current = new Set(
+      messages.map((message) => message.id),
+    );
+
+    if (isAtBottomRef.current) {
+      container.scrollTop = container.scrollHeight;
+      setHasNewMessages(false);
+      return;
+    }
+
+    const receivedNewMessage = addedMessages.some(
+      (message) => message.emisor_id === otherUser.id,
+    );
+
+    if (receivedNewMessage) {
+      setHasNewMessages(true);
+    }
+  }, [messages, loading, otherUser.id]);
+
 
   const handleSend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -229,6 +267,8 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         </div>
       </header>
 
+
+      <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         ref={historyRef}
         onScroll={handleHistoryScroll}
@@ -297,9 +337,24 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
               </div>
             </div>
           );
-        })}
-      </div>
+        })}        
+      </div>   
 
+      {hasNewMessages && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-3">
+          <button
+            type="button"
+            onClick={goToLatest}
+            className="pointer-events-auto min-h-11 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-lg hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+          >
+            <span role="status">Mensajes nuevos</span>
+            <span aria-hidden="true"> · </span>
+            Ir al final ↓
+          </button>
+        </div>
+      )}
+    </div>
+      
       <form
         onSubmit={handleSend}
         className="shrink-0 border-t border-slate-200 bg-white p-4"
