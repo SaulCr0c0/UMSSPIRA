@@ -36,6 +36,7 @@ import {
 } from '../../application/ports/mentorship-request-repository.port';
 import { PrismaMentorshipRequestRepository } from '../repositories/prisma-mentorship-request.repository';
 import { CreateMentorshipRequestUseCase } from '../../application/use-cases/create-mentorship-request.use-case';
+import { GetMentorSlotsUseCase } from '../../application/use-cases/get-mentor-slots.use-case';
 
 export const mentorshipProviders: Provider[] = [
   PrismaMentorRepository,
@@ -136,5 +137,11 @@ export const mentorshipProviders: Provider[] = [
     inject: [MENTORSHIP_REQUEST_REPOSITORY],
     useFactory: (repository: MentorshipRequestRepository) =>
       new CreateMentorshipRequestUseCase(repository),
+  },
+  {
+    provide: GetMentorSlotsUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new GetMentorSlotsUseCase(repository),
   },
 ];

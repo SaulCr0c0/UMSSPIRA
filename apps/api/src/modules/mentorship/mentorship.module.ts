@@ -19,6 +19,7 @@ import { RemoveMentorInterestController } from './http/controllers/remove-mentor
 import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
 import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
 import { CreateMentorshipRequestController } from './http/controllers/create-mentorship-request.controller';
+import { GetMentorSlotsController } from './http/controllers/get-mentor-slots.controller';
 @Module({
   imports: [PrismaModule],
   controllers: [
@@ -39,6 +40,7 @@ import { CreateMentorshipRequestController } from './http/controllers/create-men
     GetMentorAvailabilityController,
     SetMentorAvailabilityController,
     CreateMentorshipRequestController,
+    GetMentorSlotsController,
   ],
   providers: mentorshipProviders,
   exports: [MENTOR_AVAILABILITY_REPOSITORY],

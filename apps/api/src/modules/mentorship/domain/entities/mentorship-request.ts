@@ -1,3 +1,8 @@
+export interface MentorSlotDay {
+  date: string;
+  slots: { startTime: string; endTime: string }[];
+}
+
 export interface MentorshipRequest {
   id: string;
   mentorId: string;

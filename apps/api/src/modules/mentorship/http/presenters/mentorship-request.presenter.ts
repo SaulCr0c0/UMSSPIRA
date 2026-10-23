@@ -1,4 +1,14 @@
-import type { MentorshipRequest } from '../../domain/entities/mentorship-request';
+import type { MentorSlotDay, MentorshipRequest } from '../../domain/entities/mentorship-request';
+
+export function presentMentorSlots(days: MentorSlotDay[]) {
+  return days.map((day) => ({
+    fecha: day.date,
+    horarios: day.slots.map((slot) => ({
+      hora_inicio: slot.startTime,
+      hora_fin: slot.endTime,
+    })),
+  }));
+}
 
 const date = (value: Date) => value.toISOString().slice(0, 10);
 const time = (value: Date) => value.toISOString().slice(11, 16);
