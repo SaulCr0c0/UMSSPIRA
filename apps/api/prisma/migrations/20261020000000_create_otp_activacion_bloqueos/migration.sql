@@ -114,9 +114,4 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.fun_reservar_emision_otp(UUID)
-    FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.fun_reservar_emision_otp(UUID)
-    TO service_role;
-
 COMMIT;
