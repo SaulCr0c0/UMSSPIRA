@@ -80,9 +80,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         senderId: userId,
         content: payload.content,
       });
-      client
-        .to(`conversation_${payload.conversationId}`)
-        .emit('chat:new_message', message);
+      
+      const participantIds =
+        await this.chatService.getConversationParticipantIds(
+          payload.conversationId,
+          userId,
+        );
+
+      const rooms = participantIds.map((id) => `user_${id}`);
+
+      if (rooms.length > 0) {
+        this.server.to(rooms).emit('chat:new_message', message);
+      }
+
       return { success: true, messageId: message.id };
     } catch (error) {
       this.logger.error('Error al enviar mensaje', error);

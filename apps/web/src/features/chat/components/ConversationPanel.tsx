@@ -9,6 +9,35 @@ import {
   type ConversationSummary,
 } from '@/shared/services/chat-conversation.service';
 import { formatChatTime, getInitials } from '../utils/format';
+import { getChatSocket } from '@/shared/services/chat-socket';
+
+
+type IncomingChatMessage = ChatMessage & {
+    id_conversacion: string;
+  };
+
+  function mergeMessages(
+    current: ChatMessage[],
+    incoming: ChatMessage[],
+  ): ChatMessage[] {
+    const unique = new Map<string, ChatMessage>();
+
+    for (const message of [...current, ...incoming]) {
+      unique.set(message.id, message);
+    }
+
+    const timestamp = (value: string | null) => {
+      if (!value) return 0;
+      const time = Date.parse(value);
+      return Number.isNaN(time) ? 0 : time;
+    };
+
+    return [...unique.values()].sort(
+      (a, b) =>
+        timestamp(a.fecha_mensaje) - timestamp(b.fecha_mensaje) ||
+        a.id.localeCompare(b.id),
+    );
+  }
 
 interface Props {
   conversation: ConversationSummary;
@@ -28,8 +57,11 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
   const { otherUser } = conversation;
 
+  
+
   useEffect(() => {
     const version = ++requestVersionRef.current;
+    const socket = getChatSocket();
 
     setMessages([]);
     setLoading(true);
@@ -39,10 +71,21 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     setSendError(null);
     sendingRef.current = false;
 
+    const onNewMessage = (message: IncomingChatMessage) => {
+      if (requestVersionRef.current !== version) return;
+      if (message.id_conversacion !== conversation.id) return;
+
+      setMessages((current) => mergeMessages(current, [message]));
+    };
+
+    // Escuchar antes de consultar evita perder mensajes
+    // que lleguen mientras carga el historial.
+    socket.on('chat:new_message', onNewMessage);
+
     getConversationMessages(conversation.id)
       .then((data) => {
         if (requestVersionRef.current === version) {
-          setMessages(data);
+          setMessages((current) => mergeMessages(current, data));
         }
       })
       .catch((err: unknown) => {
@@ -62,6 +105,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
     return () => {
       requestVersionRef.current++;
+      socket.off('chat:new_message', onNewMessage);
     };
   }, [conversation.id]);
 
@@ -100,9 +144,10 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         const updatedMessages =
           await getConversationMessages(conversationId);
 
-        if (requestVersionRef.current === version) {
-          setMessages(updatedMessages);
-        }
+        if (requestVersionRef.current === version) 
+          setMessages((current) => mergeMessages(current, updatedMessages));
+
+        
       } catch {
         if (requestVersionRef.current === version) {
           setSendError(

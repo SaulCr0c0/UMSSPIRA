@@ -211,13 +211,29 @@ const finalActorId = actorId;
   }
 
   async markAsRead(conversationId: string, actorId: string) {
-  return this.prisma.mensaje.updateMany({
-    where: {
-      id_conversacion: conversationId,
-      emisor_id: { not: actorId },
-      estado_envio: { not: 'leido' },
-    },
-    data: { estado_envio: 'leido' },
-  });
-}
+    return this.prisma.mensaje.updateMany({
+      where: {
+        id_conversacion: conversationId,
+        emisor_id: { not: actorId },
+        estado_envio: { not: 'leido' },
+      },
+      data: { estado_envio: 'leido' },
+    });
+  }
+
+  async getConversationParticipantIds(
+      conversationId: string,
+      actorId: string,): Promise<string[]> {
+      await this.assertParticipant(conversationId, actorId);
+
+      const participants =
+        await this.prisma.participanteConversacion.findMany({
+          where: { conversacion_id: conversationId },
+          select: { usuario_id: true },
+        });
+
+      return participants
+        .map((participant) => participant.usuario_id)
+        .filter((id): id is string => typeof id === 'string');
+    }
 }
