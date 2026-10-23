@@ -1,25 +1,29 @@
-'use client';
+"use client";
 
-import { useEffect, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowRight, FolderOpen } from 'lucide-react';
-import { Button } from '@/shared/components/button';
-import { FormSelect } from '@/modules/registration/frontend/components/form-select';
-import { useRegistrationStore } from '@/modules/registration/frontend/store';
-import { useDocumentUpload } from '../hooks/use-document-upload';
-import { DOCUMENT_TYPE_OPTIONS, type DocumentType } from '../services';
-import { DOCUMENT_ERROR_MESSAGES } from '../validation/document-file';
-import { DocumentFilePicker } from './document-file-picker';
-import { DocumentPreview } from './document-preview';
-import { ReviewDocumentPreview } from '@/modules/registration/frontend/components/review-document-preview';
-import { StepNotice } from './step-notice';
-import { SWORN_DECLARATION_ERROR, SwornDeclaration } from './sworn-declaration';
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, FolderOpen } from "lucide-react";
+import { Button } from "@/shared/components/button";
+import { FormSelect } from "@/modules/registration/frontend/components/form-select";
+import { useRegistrationStore } from "@/modules/registration/frontend/store";
+import { useDocumentUpload } from "../hooks/use-document-upload";
+import { DOCUMENT_TYPE_OPTIONS, type DocumentType } from "../services";
+import { DOCUMENT_ERROR_MESSAGES } from "../validation/document-file";
+import { DocumentFilePicker } from "./document-file-picker";
+import { DocumentPreview } from "./document-preview";
+import { ReviewDocumentPreview } from "@/modules/registration/frontend/components/review-document-preview";
+import { StepNotice } from "./step-notice";
+import { SWORN_DECLARATION_ERROR, SwornDeclaration } from "./sworn-declaration";
 
-export const REGISTER_PATH = '/register';
-export const VERIFY_EMAIL_PATH = '/register/verify-email';
-export const REVIEW_PATH = '/register/review';
+export const REGISTER_PATH = "/register";
+export const VERIFY_EMAIL_PATH = "/register/verify-email";
+export const REVIEW_PATH = "/register/review";
 
-type BlockingNotice = { message: string; actionLabel: string; actionPath: string };
+type BlockingNotice = {
+  message: string;
+  actionLabel: string;
+  actionPath: string;
+};
 
 /** Paso "Documento" del registro publico (HU-03): tipo, archivo, vista previa y envio. */
 export function DocumentUploadStep() {
@@ -29,25 +33,47 @@ export function DocumentUploadStep() {
   const setDocument = useRegistrationStore((state) => state.setDocument);
 
   // El token se lee despues de montar para no diferir del HTML generado en el servidor.
-  const [sessionToken, setSessionToken] = useState<string | null | undefined>(undefined);
-  const [tipoDocumento, setTipoDocumento] = useState<DocumentType | ''>('');
+  const [sessionToken, setSessionToken] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [tipoDocumento, setTipoDocumento] = useState<DocumentType | "">("");
   const [typeError, setTypeError] = useState<string | null>(null);
   const [isDeclared, setIsDeclared] = useState(false);
   const [declarationError, setDeclarationError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
-  const [blockingNotice, setBlockingNotice] = useState<BlockingNotice | null>(null);
+  const [blockingNotice, setBlockingNotice] = useState<BlockingNotice | null>(
+    null,
+  );
 
-  const { file, previewUrl, previewKind, fileError, setFileError, isUploading, isValidating, selectFile, upload } =
-    useDocumentUpload();
+  const {
+    file,
+    previewUrl,
+    previewKind,
+    fileError,
+    setFileError,
+    isUploading,
+    isValidating,
+    selectFile,
+    upload,
+  } = useDocumentUpload();
   const isLocked = isValidating || isUploading;
   const isSending = isUploading;
-  const hasDocument = Boolean(file || (storedDocument && tipoDocumento === storedDocument.tipoDocumento));
-  const canContinue = Boolean(sessionToken && tipoDocumento && hasDocument && isDeclared && !fileError && !isLocked);
+  const hasDocument = Boolean(
+    file || (storedDocument && tipoDocumento === storedDocument.tipoDocumento),
+  );
+  const canContinue = Boolean(
+    sessionToken &&
+    tipoDocumento &&
+    hasDocument &&
+    isDeclared &&
+    !fileError &&
+    !isLocked,
+  );
   const pendingRequirements = [
-    !tipoDocumento && 'selecciona el tipo de documento',
-    !hasDocument && 'adjunta un documento válido',
-    fileError && 'revisa el archivo seleccionado',
-    !isDeclared && 'acepta la declaración jurada',
+    !tipoDocumento && "selecciona el tipo de documento",
+    !hasDocument && "adjunta un documento válido",
+    fileError && "revisa el archivo seleccionado",
+    !isDeclared && "acepta la declaración jurada",
   ].filter(Boolean);
 
   useEffect(() => {
@@ -64,7 +90,12 @@ export function DocumentUploadStep() {
     if (isLocked || fileError) return;
     setGeneralError(null);
 
-    if (!file && storedDocument && tipoDocumento === storedDocument.tipoDocumento && isDeclared) {
+    if (
+      !file &&
+      storedDocument &&
+      tipoDocumento === storedDocument.tipoDocumento &&
+      isDeclared
+    ) {
       router.push(REVIEW_PATH);
       return;
     }
@@ -87,19 +118,31 @@ export function DocumentUploadStep() {
       return;
     }
 
-    if (result.status === 403 && result.code === 'EMAIL_NOT_VERIFIED') {
+    if (result.status === 403 && result.code === "EMAIL_NOT_VERIFIED") {
       // CA-03.1: el correo debe verificarse antes de adjuntar el documento.
-      setBlockingNotice({ message: result.message, actionLabel: 'Verificar mi correo', actionPath: VERIFY_EMAIL_PATH });
+      setBlockingNotice({
+        message: result.message,
+        actionLabel: "Verificar mi correo",
+        actionPath: VERIFY_EMAIL_PATH,
+      });
       return;
     }
     if (result.status === 410) {
       resetRegistration();
-      setBlockingNotice({ message: result.message, actionLabel: 'Volver al formulario', actionPath: REGISTER_PATH });
+      setBlockingNotice({
+        message: result.message,
+        actionLabel: "Volver al formulario",
+        actionPath: REGISTER_PATH,
+      });
       return;
     }
 
-    const archivoError = result.errors.find((error) => error.field === 'archivo');
-    const tipoError = result.errors.find((error) => error.field === 'tipoDocumento');
+    const archivoError = result.errors.find(
+      (error) => error.field === "archivo",
+    );
+    const tipoError = result.errors.find(
+      (error) => error.field === "tipoDocumento",
+    );
     if (archivoError) setFileError(archivoError.message);
     if (tipoError) setTypeError(tipoError.message);
     if (!archivoError && !tipoError) setGeneralError(result.message);
@@ -131,20 +174,26 @@ export function DocumentUploadStep() {
     <section className="rounded-2xl border border-oatmeal bg-white p-6 shadow-sm sm:p-10">
       <header className="border-b border-oatmeal pb-6">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-abyssal-blue/70">
-          <FolderOpen aria-hidden="true" className="h-5 w-5 text-burning-flame" />
+          <FolderOpen
+            aria-hidden="true"
+            className="h-5 w-5 text-burning-flame"
+          />
           Trámite de acreditación
         </p>
         <h1 className="mt-3 text-[22px] font-bold leading-[30px] text-abyssal-blue sm:text-[32px] sm:leading-10">
           Carga de documento de respaldo
         </h1>
         <p className="mt-2 text-sm text-abyssal-blue/70 sm:text-lg sm:leading-[26px]">
-          Adjunta el documento digital escaneado que acredite tu condición de titulado universitario (PDF, PNG o
-          JPG, máx. 5 MB).
+          Adjunta el documento digital escaneado que acredite tu condición de
+          titulado universitario (PDF, PNG o JPG, máx. 5 MB).
         </p>
       </header>
 
       {generalError && (
-        <div role="alert" className="mt-6 rounded-lg border border-truffle-trouble/40 bg-truffle-trouble/10 p-3 text-sm font-medium text-truffle-trouble">
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-truffle-trouble/40 bg-truffle-trouble/10 p-3 text-sm font-medium text-truffle-trouble"
+        >
           {generalError}
         </div>
       )}
@@ -162,36 +211,63 @@ export function DocumentUploadStep() {
             disabled={isLocked}
             className="bg-palladian"
             onChange={(event) => {
-              setTipoDocumento(event.target.value as DocumentType | '');
+              setTipoDocumento(event.target.value as DocumentType | "");
               setTypeError(null);
             }}
           />
           {!typeError && (
-            <p className="text-xs text-abyssal-blue/70">Selecciona la denominación exacta de tu titulación expedida.</p>
+            <p className="text-xs text-abyssal-blue/70">
+              Selecciona la denominación exacta de tu titulación expedida.
+            </p>
           )}
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[13px] font-semibold text-abyssal-blue sm:text-sm">
-              Adjunto digital respaldatorio<span className="text-truffle-trouble"> *</span>
+              Adjunto digital respaldatorio
+              <span className="text-truffle-trouble"> *</span>
             </span>
-            <span className="text-xs text-abyssal-blue/70">Solo un archivo oficial</span>
+            <span className="text-xs text-abyssal-blue/70">
+              Solo un archivo oficial
+            </span>
           </div>
           {!file && storedDocument && (
             <div className="space-y-3">
-              <p className="text-sm text-abyssal-blue">Documento actual: {storedDocument.originalName}</p>
+              <p className="text-sm text-abyssal-blue">
+                Documento actual: {storedDocument.originalName}
+              </p>
               <ReviewDocumentPreview document={storedDocument} />
             </div>
           )}
-          <DocumentFilePicker onSelect={selectFile} hasError={!!fileError && !file} disabled={isLocked} />
+          {!file && (
+            <DocumentFilePicker
+              onSelect={selectFile}
+              hasError={!!fileError}
+              disabled={isLocked}
+            />
+          )}
+
           {fileError && (
-            <p role="alert" className="text-[11px] font-medium text-truffle-trouble">
+            <p
+              role="alert"
+              className="text-[11px] font-medium text-truffle-trouble"
+            >
               {fileError}
             </p>
           )}
+
           {file && previewUrl && previewKind && (
-            <DocumentPreview file={file} previewUrl={previewUrl} previewKind={previewKind} onReplace={selectFile} disabled={isLocked} />
+            <DocumentPreview
+              file={file}
+              previewUrl={previewUrl}
+              previewKind={previewKind}
+              onReplace={selectFile}
+              onRemove={() => {
+                void selectFile(null);
+              }}
+              disabled={isLocked}
+            />
           )}
         </div>
 
@@ -207,18 +283,36 @@ export function DocumentUploadStep() {
 
         <div className="space-y-3 border-t border-oatmeal pt-6">
           {!canContinue && (
-            <p id="document-step-requirements" role="status" className="text-sm font-medium text-abyssal-blue">
-              {isLocked ? 'Espera mientras procesamos el documento.' : `Para continuar: ${pendingRequirements.join(', ')}.`}
+            <p
+              id="document-step-requirements"
+              role="status"
+              className="text-sm font-medium text-abyssal-blue"
+            >
+              {isLocked
+                ? "Espera mientras procesamos el documento."
+                : `Para continuar: ${pendingRequirements.join(", ")}.`}
             </p>
           )}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             {storedDocument && (
-              <Button type="button" variant="secondary" disabled={isUploading} onClick={() => router.push(REVIEW_PATH)}>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isUploading}
+                onClick={() => router.push(REVIEW_PATH)}
+              >
                 Cancelar y conservar documento anterior
               </Button>
             )}
-            <Button type="submit" disabled={!canContinue} aria-describedby={!canContinue ? "document-step-requirements" : undefined} className="bg-burning-flame text-abyssal-blue hover:bg-burning-flame/90 hover:text-abyssal-blue disabled:hover:bg-burning-flame focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-abyssal-blue focus-visible:ring-offset-2 inline-flex h-12 items-center gap-2 px-8 text-base font-bold">
-              {isSending ? 'Cargando documento...' : 'Finalizar solicitud'}
+            <Button
+              type="submit"
+              disabled={!canContinue}
+              aria-describedby={
+                !canContinue ? "document-step-requirements" : undefined
+              }
+              className="bg-burning-flame text-abyssal-blue hover:bg-burning-flame/90 hover:text-abyssal-blue disabled:hover:bg-burning-flame focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-abyssal-blue focus-visible:ring-offset-2 inline-flex h-12 items-center gap-2 px-8 text-base font-bold"
+            >
+              {isSending ? "Cargando documento..." : "Finalizar solicitud"}
               <ArrowRight aria-hidden="true" className="h-5 w-5" />
             </Button>
           </div>
