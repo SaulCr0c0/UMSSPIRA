@@ -1,7 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { CorrectionTokenService } from '../services/correction-token.service';
-import type { RegistrationSecurity } from '../ports/registration-security.port';
+import {
+  REGISTRATION_SECURITY,
+  type RegistrationSecurity,
+} from '../ports/registration-security.port';
 import type { RequestCorrectionLinkInput } from '../../http/schemas/registrations.schemas';
 import {
   CORRECTION_REQUEST_COOLDOWN_SECONDS,
@@ -15,7 +18,7 @@ export class RequestCorrectionLinkUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: CorrectionTokenService,
-    private readonly security: RegistrationSecurity,
+    @Inject(REGISTRATION_SECURITY) private readonly security: RegistrationSecurity,
   ) {}
 
   async execute(input: RequestCorrectionLinkInput): Promise<{ message: string }> {
