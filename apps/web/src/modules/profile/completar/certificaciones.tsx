@@ -5,6 +5,7 @@ import { Award, Camera, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
 import { formatearTamanio } from '@/modules/profile/utils/format-file-size';
+import { ApiError } from '@/shared/services/api-client';
 
 const GRADOS = ['Fundamentos', 'Asociado', 'Profesional', 'Especialista', 'Experto'];
 
@@ -18,7 +19,10 @@ export type Certificacion = {
 
 type FormularioCertificacionesProps = {
   certificaciones: Certificacion[];
-  onAgregar: (certificacion: Certificacion) => void;
+  // Si la promesa falla con ApiError se muestra su mensaje y se conserva lo escrito
+  onAgregar: (certificacion: Certificacion) => void | Promise<void>;
+  // Avance (0 a 100) de la subida del respaldo mientras se guarda
+  progreso?: number;
 };
 
 const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', grado: '', respaldo: null };
@@ -30,13 +34,16 @@ const inputClase =
 const botonRespaldoClase =
   'inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C9C1B1] bg-white px-3 text-xs font-semibold text-[#2C3B4D] hover:bg-[#FAF8F4]';
 
-export function FormularioCertificaciones({ certificaciones, onAgregar }: FormularioCertificacionesProps) {
+export function FormularioCertificaciones({ certificaciones, onAgregar, progreso }: FormularioCertificacionesProps) {
   const [datos, setDatos] = useState<Certificacion>(VACIO);
   const fotoRef = useRef<HTMLInputElement>(null);
   const documentoRef = useRef<HTMLInputElement>(null);
   // Archivo rechazado (no es JPG o supera 5 MB): no se adjunta y se explica junto al campo
   const [errorRespaldo, setErrorRespaldo] = useState<string>();
-    // Dirección local de la foto elegida para mostrar su miniatura
+  const [guardando, setGuardando] = useState(false);
+  // Mensaje del backend al guardar, tal como lo envía; se quita al cambiar cualquier campo
+  const [errorGuardar, setErrorGuardar] = useState<string>();
+  // Dirección local de la foto elegida para mostrar su miniatura
   const [vistaPrevia, setVistaPrevia] = useState<string>();
 
   // Se crea al elegir la foto y se libera al quitarla, cambiarla o salir (evita fugas de memoria)
@@ -57,6 +64,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
 
   function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision' | 'grado', valor: string) {
     setDatos({ ...datos, [campo]: valor });
+    setErrorGuardar(undefined);
   }
 
   function elegirRespaldo(evento: React.ChangeEvent<HTMLInputElement>) {
@@ -69,15 +77,26 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
     if (!error) setDatos({ ...datos, respaldo: archivo });
   }
 
-  function agregar(evento: React.FormEvent<HTMLFormElement>) {
+  async function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    onAgregar({
-      ...datos,
-      nombre: datos.nombre.trim(),
-      entidadEmisora: datos.entidadEmisora.trim(),
-    });
-    setDatos(VACIO);
-    setErrorRespaldo(undefined);
+    if (guardando) return;
+    setErrorGuardar(undefined);
+    setGuardando(true);
+    try {
+      await onAgregar({
+        ...datos,
+        nombre: datos.nombre.trim(),
+        entidadEmisora: datos.entidadEmisora.trim(),
+      });
+      setDatos(VACIO);
+      setErrorRespaldo(undefined);
+    } catch (error) {
+      // Se conserva lo escrito y la foto elegida para poder reintentar (T8.6)
+      if (!(error instanceof ApiError)) throw error;
+      setErrorGuardar(error.message);
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
@@ -245,12 +264,27 @@ export function FormularioCertificaciones({ certificaciones, onAgregar }: Formul
           />
         </div>
 
+        {guardando && (
+          <div
+            role="progressbar"
+            aria-label="Avance de la subida"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progreso ?? 0}
+            className="h-2 w-full overflow-hidden rounded-full bg-[#EEE9DF]"
+          >
+            <div className="h-full bg-[#A35139] transition-all" style={{ width: `${progreso ?? 0}%` }} />
+          </div>
+        )}
+        <MensajeError id="error-certificacion-guardar" mensaje={errorGuardar} />
+
         <button
           type="submit"
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2C3B4D] bg-white px-4 text-sm font-medium text-[#2C3B4D] hover:bg-[#EEE9DF] md:w-auto"
+          disabled={guardando}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2C3B4D] bg-white px-4 text-sm font-medium text-[#2C3B4D] hover:bg-[#EEE9DF] disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
         >
           <Plus className="h-4 w-4" />
-          Agregar certificación
+          {guardando ? `Guardando…${progreso !== undefined ? ` ${progreso} %` : ''}` : 'Agregar certificación'}
         </button>
       </form>
     </div>

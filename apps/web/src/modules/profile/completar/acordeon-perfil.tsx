@@ -9,7 +9,12 @@ import { SeccionAcordeon } from './seccion-acordeon';
 import { FormularioExperiencia, type Experiencia } from './experiencia-laboral';
 import { FormacionAcademicaForm, type FormacionAcademica } from './formacion-academica';
 import { FormularioCertificaciones, type Certificacion } from './certificaciones';
-import { crearExperiencia, crearFormacion } from '@/modules/profile/services/perfil-api';
+import {
+  crearCertificacion,
+  crearExperiencia,
+  crearFormacion,
+  subirRespaldo,
+} from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import { urlDeArchivo } from '@/modules/profile/utils/backup-url';
 import type {
@@ -24,6 +29,8 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
   const { records, addEducation, addExperience, addCertification } = useProfileStore();
   const router = useRouter();
   const [avisoBorrador, setAvisoBorrador] = useState(false);
+  // Avance (0 a 100) de la subida del respaldo mientras se guarda una certificación
+  const [progresoSubida, setProgresoSubida] = useState<number>();
 
   useEffect(() => {
     if (!avisoBorrador) return;
@@ -158,18 +165,27 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       >
         <FormularioCertificaciones
           certificaciones={certificaciones}
-          onAgregar={(certificacion) =>
+          progreso={progresoSubida}
+          onAgregar={async (certificacion) => {
+            setProgresoSubida(undefined);
+            // 1) se crea la certificación y 2) con su id se sube la foto
+            const creada = await crearCertificacion(certificacion);
+            if (certificacion.respaldo) {
+              await subirRespaldo(creada.id, certificacion.respaldo, setProgresoSubida);
+            }
+            // Solo se agrega al estado lo que la API guardó, con su id real
             addCertification({
-              name: certificacion.nombre,
-              issuer: certificacion.entidadEmisora,
-              issueYear: certificacion.anioEmision,
-              degree: certificacion.grado,
+              id: creada.id,
+              name: creada.name,
+              issuer: creada.issuer,
+              issueYear: creada.issueYear,
+              degree: creada.degree,
               // Un respaldo recién subido queda en revisión hasta que la administración lo valide
               backupFile: certificacion.respaldo?.name,
               backupUrl: urlDeArchivo(certificacion.respaldo),
               backupVerified: false,
-            })
-          }
+            });
+          }}
         />
       </SeccionAcordeon>
 

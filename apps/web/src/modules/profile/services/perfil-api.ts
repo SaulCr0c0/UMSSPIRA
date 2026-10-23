@@ -1,3 +1,4 @@
+import type { Certificacion } from '@/modules/profile/completar/certificaciones';
 import type { Experiencia } from '@/modules/profile/completar/experiencia-laboral';
 import type { FormacionAcademica } from '@/modules/profile/completar/formacion-academica';
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
@@ -7,7 +8,9 @@ import type {
   ExperienceRecord,
   ProfileRecords,
 } from '@/modules/profile/types/profile-record';
-import { apiFetch } from '@/shared/services/api-client';
+import { ApiError, apiFetch } from '@/shared/services/api-client';
+import { apiUrl, readApiError } from '@/shared/services/api-contract';
+import { ensureAccessToken, getAccessToken } from '@/shared/services/auth-session';
 
 // Endpoints del perfil del backend (apps/api/src/modules/perfil)
 export const PERFIL_URL = '/api/v1/perfil';
@@ -163,4 +166,77 @@ export async function obtenerPerfil(): Promise<ProfileRecords> {
     experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
     certification: perfil.certificaciones.registros.map(aCertificationRecord),
   };
+}
+
+type CertificacionCuerpo = {
+  nombre: string;
+  entidadEmisora: string;
+  anioEmision: number;
+  // Sin grado el backend guarda «Profesional» (T8.7)
+  grado?: string;
+};
+
+function cuerpoCertificacion(certificacion: Certificacion): CertificacionCuerpo {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    // El formulario guarda el año como texto y el backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  if (certificacion.grado) cuerpo.grado = certificacion.grado;
+  return cuerpo;
+}
+
+// POST /api/v1/perfil/certificaciones -> 201 con el registro creado (con su id) o 400 por campo
+export async function crearCertificacion(certificacion: Certificacion): Promise<CertificationRecord> {
+  const creada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones`, {
+    method: 'POST',
+    body: JSON.stringify(cuerpoCertificacion(certificacion)),
+  });
+  return aCertificationRecord(creada);
+}
+
+function mensajeDeRespuesta(texto: string, porDefecto: string): string {
+  try {
+    return readApiError(JSON.parse(texto), porDefecto).message;
+  } catch {
+    return porDefecto;
+  }
+}
+
+// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo").
+// Usa XMLHttpRequest porque fetch no informa el avance de la subida; onProgreso recibe 0 a 100.
+export async function subirRespaldo(
+  id: string,
+  archivo: File,
+  onProgreso?: (porcentaje: number) => void,
+): Promise<void> {
+  let token: string;
+  try {
+    token = getAccessToken() ?? (await ensureAccessToken());
+  } catch {
+    throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
+  }
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`));
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) onProgreso?.(Math.round((evento.loaded / evento.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgreso?.(100);
+        resolve();
+      } else if (xhr.status === 401) {
+        reject(new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente'));
+      } else {
+        reject(new ApiError(xhr.status, mensajeDeRespuesta(xhr.responseText, 'No se pudo subir el respaldo')));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'No fue posible conectar con el servidor'));
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    xhr.send(formulario);
+  });
 }

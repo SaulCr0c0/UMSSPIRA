@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { ApiError } from '@/shared/services/api-client';
 import { FormularioCertificaciones } from './certificaciones';
 
 function llenarFormulario() {
@@ -97,14 +98,16 @@ describe('FormularioCertificaciones · respaldo solo JPG de hasta 5 MB (BUG-HU2-
     expect(screen.getByText('certificado.jpg')).toBeInTheDocument();
   });
 
-  it('limpia el error al agregar la certificación', () => {
+  it('limpia el error al agregar la certificación', async () => {
     render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
     llenarFormulario();
     adjuntar(archivo('certificado.pdf', 'application/pdf'));
 
     fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
 
-    expect(screen.queryByText('Formato no permitido. Solo JPG')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Formato no permitido. Solo JPG')).not.toBeInTheDocument(),
+    );
   });
 });
 
@@ -158,5 +161,46 @@ describe('FormularioCertificaciones · miniatura y quitar respaldo (T8.2)', () =
 
     expect(screen.queryByAltText('Vista previa del respaldo')).not.toBeInTheDocument();
     expect(screen.getByText('Formato no permitido. Solo JPG')).toBeInTheDocument();
+  });
+});
+
+describe('FormularioCertificaciones · guardado (T8.4)', () => {
+  function jpg(): File {
+    return new File(['contenido'], 'certificado.jpg', { type: 'image/jpeg' });
+  }
+
+  it('muestra Guardando… con el avance y limpia el formulario al terminar', async () => {
+    let terminar!: () => void;
+    const onAgregar = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          terminar = resolve;
+        }),
+    );
+    render(<FormularioCertificaciones certificaciones={[]} onAgregar={onAgregar} progreso={40} />);
+    llenarFormulario();
+
+    fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
+
+    expect(await screen.findByRole('button', { name: /guardando/i })).toBeDisabled();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '40');
+
+    terminar();
+    await waitFor(() => expect(screen.getByLabelText('Nombre de certificación')).toHaveValue(''));
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('si falla con ApiError muestra el mensaje y conserva lo escrito y la foto', async () => {
+    const onAgregar = jest.fn().mockRejectedValue(new ApiError(0, 'No fue posible conectar con el servidor'));
+    render(<FormularioCertificaciones certificaciones={[]} onAgregar={onAgregar} />);
+    llenarFormulario();
+    fireEvent.change(screen.getByLabelText('Subir foto', { selector: 'input' }), { target: { files: [jpg()] } });
+
+    fireEvent.click(screen.getByRole('button', { name: /agregar certificación/i }));
+
+    expect(await screen.findByText('No fue posible conectar con el servidor')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nombre de certificación')).toHaveValue('AWS Cloud Practitioner');
+    expect(screen.getByText('certificado.jpg')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /agregar certificación/i })).toBeEnabled();
   });
 });

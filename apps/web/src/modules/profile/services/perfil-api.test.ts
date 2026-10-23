@@ -3,7 +3,14 @@ import type { CertificationRecord } from '@/modules/profile/types/profile-record
 import { ApiError } from '@/shared/services/api-client';
 import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
-import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
+import {
+  crearCertificacion,
+  crearExperiencia,
+  crearFormacion,
+  obtenerPerfil,
+  subirRespaldo,
+  type PerfilApi,
+} from './perfil-api';
 
 // jsdom no trae fetch: se simula con la forma mínima que usa apiFetch
 const fetchMock = jest.fn();
@@ -205,5 +212,126 @@ describe('crearExperiencia', () => {
     responder(400, { statusCode: 400, message: [mensaje], error: mensaje });
 
     await expect(crearExperiencia(experiencia)).rejects.toMatchObject({ status: 400, message: mensaje });
+  });
+});
+
+describe('crearCertificacion', () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    global.fetch = fetchMock;
+    setAccessToken('test-token');
+  });
+
+  afterEach(() => {
+    // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
+    delete global.fetch;
+    clearAccessToken();
+  });
+
+  it('envía POST con el año numérico y sin grado vacío', async () => {
+    responder(201, {
+      ...base,
+      id: 'c-9',
+      nombre: 'AWS',
+      entidadEmisora: 'Amazon Web Services',
+      grado: 'Profesional',
+      anioEmision: 2022,
+    });
+
+    const creada = await crearCertificacion({
+      nombre: ' AWS ',
+      entidadEmisora: 'Amazon Web Services ',
+      anioEmision: '2022',
+      grado: '',
+      respaldo: null,
+    });
+
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/v1\/perfil\/certificaciones$/);
+    expect(opciones.method).toBe('POST');
+    expect(JSON.parse(opciones.body)).toEqual({
+      nombre: 'AWS',
+      entidadEmisora: 'Amazon Web Services',
+      anioEmision: 2022,
+    });
+    expect(creada.id).toBe('c-9');
+    expect(creada.degree).toBe('Profesional');
+  });
+});
+
+describe('subirRespaldo', () => {
+  // XMLHttpRequest mínimo para controlar la respuesta desde el test
+  class XhrFalso {
+    static instancia: XhrFalso;
+    metodo = '';
+    url = '';
+    cabeceras: Record<string, string> = {};
+    cuerpo: unknown;
+    status = 0;
+    responseText = '';
+    upload: { onprogress?: (evento: { lengthComputable: boolean; loaded: number; total: number }) => void } = {};
+    onload?: () => void;
+    onerror?: () => void;
+    constructor() {
+      XhrFalso.instancia = this;
+    }
+    open(metodo: string, url: string) {
+      this.metodo = metodo;
+      this.url = url;
+    }
+    setRequestHeader(nombre: string, valor: string) {
+      this.cabeceras[nombre] = valor;
+    }
+    send(cuerpo: unknown) {
+      this.cuerpo = cuerpo;
+    }
+  }
+
+  const xhrOriginal = global.XMLHttpRequest;
+  const archivo = () => new File(['contenido'], 'respaldo.jpg', { type: 'image/jpeg' });
+
+  beforeEach(() => {
+    Object.assign(global, { XMLHttpRequest: XhrFalso });
+    setAccessToken('test-token');
+  });
+
+  afterEach(() => {
+    Object.assign(global, { XMLHttpRequest: xhrOriginal });
+    clearAccessToken();
+  });
+
+  it('envía el archivo como multipart con el token y avisa el avance', async () => {
+    const avances: number[] = [];
+    const promesa = subirRespaldo('c-1', archivo(), (porcentaje) => avances.push(porcentaje));
+    const xhr = XhrFalso.instancia;
+
+    expect(xhr.metodo).toBe('POST');
+    expect(xhr.url).toMatch(/\/api\/v1\/perfil\/certificaciones\/c-1\/respaldo$/);
+    expect(xhr.cabeceras.Authorization).toBe('Bearer test-token');
+    expect((xhr.cuerpo as FormData).get('archivo')).toBeInstanceOf(File);
+
+    xhr.upload.onprogress?.({ lengthComputable: true, loaded: 50, total: 100 });
+    xhr.status = 200;
+    xhr.onload?.();
+
+    await expect(promesa).resolves.toBeUndefined();
+    expect(avances).toEqual([50, 100]);
+  });
+
+  it('rechaza con ApiError y el mensaje del backend', async () => {
+    const promesa = subirRespaldo('c-1', archivo());
+    const xhr = XhrFalso.instancia;
+    xhr.status = 400;
+    xhr.responseText = JSON.stringify({ error: { message: 'Formato no permitido' } });
+    xhr.onload?.();
+
+    await expect(promesa).rejects.toMatchObject({ status: 400, message: 'Formato no permitido' });
+  });
+
+  it('rechaza con ApiError(0) si no hay conexión', async () => {
+    const promesa = subirRespaldo('c-1', archivo());
+    XhrFalso.instancia.onerror?.();
+
+    await expect(promesa).rejects.toMatchObject({ status: 0 });
   });
 });
