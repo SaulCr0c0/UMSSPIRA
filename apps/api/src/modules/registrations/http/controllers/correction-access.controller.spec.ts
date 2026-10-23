@@ -5,6 +5,7 @@ import { CorrectionTokenGuard } from '../guards/correction-token.guard';
 import type { CorrectionTokenService } from '../../application/services/correction-token.service';
 import type { RequestCorrectionLinkUseCase } from '../../application/use-cases/request-correction-link.use-case';
 import { BusinessRuleError } from '../../../../shared/errors/business-rule-error';
+import { requestCorrectionLinkSchema } from '../schemas/registrations.schemas';
 
 describe('Correction Access & Request Controllers', () => {
   describe('ValidateCorrectionAccessController & CorrectionTokenGuard', () => {
@@ -82,6 +83,10 @@ describe('Correction Access & Request Controllers', () => {
       } as unknown as jest.Mocked<RequestCorrectionLinkUseCase>;
 
       controller = new RequestCorrectionLinkController(useCase);
+    });
+
+    it('valida el esquema de peticion de enlace con C.I. numerico', () => {
+      expect(requestCorrectionLinkSchema.parse({ ci: '1234567', expedidoEn: 'CB' })).toBeTruthy();
     });
 
     it('devuelve mensaje identico e inmediato exista o no la solicitud', async () => {
