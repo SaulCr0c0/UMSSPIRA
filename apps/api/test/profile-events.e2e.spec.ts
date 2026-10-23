@@ -313,6 +313,21 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
       .expect(403);
   });
 
+  it('responde 403 y no entrega enlace si el respaldo es de otro titulado', async () => {
+    profiles.findBackupOwner.mockResolvedValue({
+      graduateId: randomUUID(),
+      userId: randomUUID(),
+      hasBackup: true,
+    });
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/' + recordId + '/respaldo/enlace')
+      .set('Authorization', 'Bearer graduate')
+      .expect(403);
+    expect(response.body.error.message).toBe('No tienes permiso para ver este respaldo');
+    expect(response.body).not.toHaveProperty('data');
+    expect(profiles.readBackupFile).not.toHaveBeenCalled();
+  });
+
   it('responde 404 al pedir el enlace de una certificación sin respaldo', async () => {
     profiles.findBackupOwner.mockResolvedValue({
       graduateId,
