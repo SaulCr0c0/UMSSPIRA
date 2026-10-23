@@ -3,6 +3,11 @@ import { PROFILE_SECTIONS } from '../../domain/entities/profile-record';
 
 export const profileIdSchema = z.uuid();
 export const profileSectionSchema = z.enum(PROFILE_SECTIONS);
+export const signedBackupQuerySchema = z.object({
+  expira: z.coerce.number().int().positive(),
+  firma: z.string().min(1).max(128),
+  descargar: z.literal('1').optional(),
+});
 const yearSchema = z
   .number()
   .int()

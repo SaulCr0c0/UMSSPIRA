@@ -11,6 +11,8 @@ import { DeleteProfileRecordController } from './http/controllers/delete-profile
 import { ReadCertificationBackupController } from './http/controllers/read-certification-backup.controller';
 import { ExportProfileController } from './http/controllers/export-profile.controller';
 import { UploadCertificationBackupController } from './http/controllers/upload-certification-backup.controller';
+import { CreateBackupLinkController } from './http/controllers/create-backup-link.controller';
+import { ReadSignedBackupController } from './http/controllers/read-signed-backup.controller';
 
 @Module({
   imports: [PrismaModule],
@@ -25,6 +27,8 @@ import { UploadCertificationBackupController } from './http/controllers/upload-c
     ReadCertificationBackupController,
     ExportProfileController,
     UploadCertificationBackupController,
+    CreateBackupLinkController,
+    ReadSignedBackupController,
   ],
   providers: profileProviders,
 })

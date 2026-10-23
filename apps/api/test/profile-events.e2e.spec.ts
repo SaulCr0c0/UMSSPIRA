@@ -78,6 +78,8 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
     remove: jest.fn(),
     saveBackup: jest.fn(),
     readBackup: jest.fn(),
+    findBackupOwner: jest.fn(),
+    readBackupFile: jest.fn(),
   };
   const events = {
     catalog: jest.fn(),
@@ -269,6 +271,59 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
       )
       .expect(400);
     expect(profiles.saveBackup).not.toHaveBeenCalled();
+  });
+
+  it('entrega un enlace firmado y temporal del respaldo JPG', async () => {
+    profiles.findBackupOwner.mockResolvedValue({
+      graduateId,
+      userId: graduate.id,
+      hasBackup: true,
+    });
+    profiles.readBackupFile.mockResolvedValue({
+      id: randomUUID(),
+      name: 'aws.jpg',
+      mime: 'image/jpeg',
+      bytes: new Uint8Array([0xff, 0xd8, 0xff]),
+      size: 3,
+    });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/' + recordId + '/respaldo/enlace')
+      .expect(401);
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/' + recordId + '/respaldo/enlace')
+      .set('Authorization', 'Bearer graduate')
+      .expect(200);
+    const { url, expiraEn } = response.body.data;
+    const seconds = (new Date(expiraEn).getTime() - Date.now()) / 1000;
+    expect(seconds).toBeGreaterThan(290);
+    expect(seconds).toBeLessThanOrEqual(300);
+
+    const file = await request(app.getHttpServer()).get(url).expect(200);
+    expect(file.headers['content-type']).toContain('image/jpeg');
+    expect(file.headers['content-disposition']).toMatch(/^inline/);
+    expect(profiles.readBackupFile).toHaveBeenCalledWith(recordId);
+    const download = await request(app.getHttpServer())
+      .get(url + '&descargar=1')
+      .expect(200);
+    expect(download.headers['content-disposition']).toMatch(/^attachment/);
+
+    await request(app.getHttpServer())
+      .get(url.replace(/firma=[^&]+/, 'firma=alterada'))
+      .expect(403);
+  });
+
+  it('responde 404 al pedir el enlace de una certificación sin respaldo', async () => {
+    profiles.findBackupOwner.mockResolvedValue({
+      graduateId,
+      userId: graduate.id,
+      hasBackup: false,
+    });
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/perfil/certificaciones/' + recordId + '/respaldo/enlace')
+      .set('Authorization', 'Bearer graduate')
+      .expect(404);
+    expect(response.body.error.message).toBe('No se encontró un respaldo de tu certificación');
   });
 
   it('deja público el catálogo y protege la gestión de eventos', async () => {

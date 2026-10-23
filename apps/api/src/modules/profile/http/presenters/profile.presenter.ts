@@ -3,6 +3,7 @@ import type {
   ProfileRecord,
   ProfileSnapshot,
 } from '../../domain/entities/profile-record';
+import type { BackupLink } from '../../application/use-cases/create-backup-link.use-case';
 
 export function presentBackup(backup: CertificationBackup) {
   return {
@@ -11,6 +12,17 @@ export function presentBackup(backup: CertificationBackup) {
     tipo: backup.kind,
     archivoKey: backup.key,
     fechaSubida: backup.uploadedAt?.toISOString() ?? null,
+  };
+}
+
+export function presentBackupLink(link: BackupLink) {
+  const query = new URLSearchParams({
+    expira: String(link.expiresAt),
+    firma: link.signature,
+  });
+  return {
+    url: `/api/v1/perfil/respaldos/${link.certificationId}/archivo?${query}`,
+    expiraEn: new Date(link.expiresAt * 1000).toISOString(),
   };
 }
 
