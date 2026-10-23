@@ -73,6 +73,19 @@ describe('Enlace firmado del respaldo', () => {
   });
 
   it.each([
+    ['otro titulado', { graduateId: 'titulado-2', userId: 'usuario-2', hasBackup: true }],
+    ['otro usuario', { graduateId: 'titulado-1', userId: 'usuario-2', hasBackup: true }],
+  ])('responde 403 si la certificación es de %s y no firma el enlace', async (_, owner) => {
+    const { repository, create } = setup();
+    repository.findBackupOwner.mockResolvedValue(owner);
+
+    await expect(create.execute(actor, certificationId, now)).rejects.toMatchObject({
+      reason: 'forbidden',
+      message: 'No tienes permiso para ver este respaldo',
+    });
+  });
+
+  it.each([
     ['no existe', null],
     ['no tiene respaldo', { graduateId: 'titulado-1', userId: 'usuario-1', hasBackup: false }],
   ])('responde 404 si la certificación %s', async (_, owner) => {
