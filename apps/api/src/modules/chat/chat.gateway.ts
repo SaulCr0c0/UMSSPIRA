@@ -21,6 +21,7 @@ export interface SendMessagePayload {
   content: string;
 }
 
+
 export interface SendMessageAck {
   success: boolean;
   messageId?: string;
