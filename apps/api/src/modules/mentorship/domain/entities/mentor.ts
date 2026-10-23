@@ -43,5 +43,19 @@ export interface InterestCatalogGroup {
 export interface DirectoryMentor {
   mentor: Mentor;
   areas: AreaReference[];
+  interests: MentorInterest[];
   availability: AvailabilityStatus | null;
+  cargo: string | null;
+  empresa: string | null;
+}
+
+export interface DirectoryCatalogGroup {
+  area: AreaReference;
+  interests: AreaReference[];
+}
+
+export interface DirectoryPage {
+  entries: DirectoryMentor[];
+  total: number;
+  catalog: DirectoryCatalogGroup[];
 }

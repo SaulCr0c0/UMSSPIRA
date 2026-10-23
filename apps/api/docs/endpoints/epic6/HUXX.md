@@ -6,7 +6,7 @@
 
 ## Endpoints
 
-- `GET /api/v1/mentorship/profiles` — directorio público.
+- `GET /api/v1/mentorship/profiles` — directorio de mentores autenticado.
 - `GET /api/v1/mentorship/eligibility` — elegibilidad del titulado.
 - `GET /api/v1/mentorship/my-profile` — participación propia.
 - `PATCH /api/v1/mentorship/my-profile/participation` — activar o desactivar.
@@ -25,7 +25,7 @@
 
 ## Autenticación
 
-El directorio es público. Las operaciones propias requieren `mentores:self:write`; administración requiere `mentores:manage`.
+El directorio requiere sesión autenticada. Las operaciones propias requieren `mentores:self:write`; administración requiere `mentores:manage`.
 
 Usar Bearer del login o cookies de sesión. Las mutaciones autenticadas con cookies requieren `X-CSRF-Token`. No se aceptan headers de identidad como mecanismo de autenticación. El actor debe tener cuenta activa y un titulado asociado para participar. Usuario, titulado y mentor tienen UUID distintos.
 
@@ -35,10 +35,10 @@ Errores comunes: 401 `UNAUTHENTICATED`, 403 `FORBIDDEN`, 400 `VALIDATION_ERROR`,
 
 ## 1. Directorio — `GET /api/v1/mentorship/profiles`
 
-**Permiso:** ninguno. **Body/query:** ninguno.
-**Respuesta 200:** `{ "data": [<DirectoryMentor>] }`.
+**Autenticación:** sesión válida requerida. **Query:** `offset` opcional (por defecto `0`) y `limit` opcional (entre `1` y `100`). Sin `limit`, devuelve el conjunto completo para compatibilidad con clientes existentes.
+**Respuesta 200:** `{ "data": [<DirectoryMentor>], "total": 9, "catalog": [...] }`.
 
-Solo perfiles activos con cuenta de titulado activa. Excluye UNAVAILABLE; PAUSED y disponibilidad sin configurar permanecen visibles. Áreas raíz activas, orden por creación descendente y UUID. No expone correo, CI, ID de usuario ni información relevante privada.
+Incluye solo perfiles activos, de cuentas activas, cuyo último estado de disponibilidad es `AVAILABLE`. Ordena por creación descendente y UUID ascendente. Cada perfil incluye áreas técnicas, intereses activos asociados, y la experiencia laboral vigente más reciente (o la más reciente por fecha de inicio) como cargo y empresa. `catalog` contiene áreas raíz e intereses activos del catálogo existente. No expone correo, CI, ID de usuario ni información relevante privada. Una consulta sin coincidencias responde `200` con `data: []` y `total: 0`.
 
 ## 2. Elegibilidad — `GET /api/v1/mentorship/eligibility`
 

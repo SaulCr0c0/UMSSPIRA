@@ -1,4 +1,5 @@
 import type {
+  DirectoryCatalogGroup,
   DirectoryMentor,
   InterestCatalogGroup,
   Mentor,
@@ -43,8 +44,22 @@ export function presentDirectory(entry: DirectoryMentor) {
     descripcion: entry.mentor.description,
     foto_perfil: entry.mentor.photoUrl,
     areas: entry.areas.map((area) => ({ id: area.id, nombre: area.name })),
+    cargo: entry.cargo,
+    empresa: entry.empresa,
+    intereses: entry.interests.map((interest) => ({
+      id: interest.id,
+      nombre: interest.name,
+      area: { id: interest.area.id, nombre: interest.area.name },
+    })),
     availabilityStatus: entry.availability,
   };
+}
+
+export function presentDirectoryCatalog(catalog: DirectoryCatalogGroup[]) {
+  return catalog.map((group) => ({
+    area: { id: group.area.id, nombre: group.area.name },
+    intereses: group.interests.map((interest) => ({ id: interest.id, nombre: interest.name })),
+  }));
 }
 
 export function presentInterest(interest: MentorInterest) {
