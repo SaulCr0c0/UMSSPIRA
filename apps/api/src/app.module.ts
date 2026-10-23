@@ -12,6 +12,7 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { EventsModule } from './modules/events/events.module';
 import { MentorshipModule } from './modules/mentorship/mentorship.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { NlpModule } from './modules/nlp/nlp.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     EventsModule,
     MentorshipModule,
     ReportsModule,
+    NlpModule,
   ],
   controllers: [HealthController],
 })
