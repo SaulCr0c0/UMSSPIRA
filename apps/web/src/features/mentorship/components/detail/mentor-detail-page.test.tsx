@@ -13,10 +13,9 @@ const sampleMentorAvailable: MentorDetailProfile = {
   photoUrl: null,
   jobTitle: 'Arquitecto de Software',
   company: 'Jalasoft',
-  summary: 'Diseño plataformas distribuidas y oriento sobre arquitectura limpia.',
   about: 'Ingeniero de Sistemas (UMSS, 2011). Más de 12 años construyendo productos de software.',
   experience: 'Arquitecto de Software en Jalasoft desde 2018.',
-  relevantInfo: 'Información interna que no debe mostrarse como sección nueva.',
+  relevantInfo: 'Disponible por las tardes para revisar arquitectura de proyectos de grado.',
   technicalAreas: ['Desarrollo de Software', 'DevOps'],
   interests: [
     {
@@ -29,7 +28,7 @@ const sampleMentorAvailable: MentorDetailProfile = {
     },
   ],
   availability: 'AVAILABLE',
-  weekLabel: 'Semana del 19 al 25 oct · sesiones de 1 hora',
+  weekLabel: 'Del 19 al 25 oct · sesiones de 1 hora',
   slots: [
     {
       date: '2026-10-19',
@@ -78,11 +77,8 @@ describe('MentorDetailPage', () => {
       pending.resolve(sampleMentorAvailable);
     });
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Carlos Vargas' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Carlos Vargas' })).toBeInTheDocument();
     expect(screen.getByText('Arquitecto de Software | Jalasoft')).toBeInTheDocument();
-    expect(
-      screen.getByText('Diseño plataformas distribuidas y oriento sobre arquitectura limpia.'),
-    ).toBeInTheDocument();
 
     // Badge y botón
     expect(screen.getAllByText('Disponible')).toHaveLength(2);
@@ -92,6 +88,9 @@ describe('MentorDetailPage', () => {
     // Tarjetas izquierda
     expect(screen.getByText(sampleMentorAvailable.about!)).toBeInTheDocument();
     expect(screen.getByText(sampleMentorAvailable.experience!)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Información relevante' })).toBeInTheDocument();
+    expect(screen.getByText(sampleMentorAvailable.relevantInfo!)).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getAllByText('Desarrollo de Software')).toHaveLength(2);
     expect(screen.getAllByText('DevOps')).toHaveLength(2);
     expect(screen.getByText('Arquitectura de software')).toBeInTheDocument();
@@ -99,7 +98,7 @@ describe('MentorDetailPage', () => {
 
     // Tarjeta disponibilidad (derecha)
     expect(screen.getByText('Horarios disponibles')).toBeInTheDocument();
-    expect(screen.getByText('Semana del 19 al 25 oct · sesiones de 1 hora')).toBeInTheDocument();
+    expect(screen.getByText('Del 19 al 25 oct · sesiones de 1 hora')).toBeInTheDocument();
     expect(screen.getByText('lunes 19 oct')).toBeInTheDocument();
     expect(screen.getByText('09:00')).toBeInTheDocument();
     expect(screen.getByText('Elegirás fecha y horario al solicitar la mentoría.')).toBeInTheDocument();
@@ -118,7 +117,7 @@ describe('MentorDetailPage', () => {
 
     render(<MentorDetailPage mentorId="rodrigo" />);
 
-    const avatar = await screen.findByRole('img', { name: 'Avatar de Rodrigo Salazar Torrico' });
+    const avatar = await screen.findByRole('img', { name: 'Foto de Rodrigo Salazar Torrico no disponible' });
     expect(avatar).toHaveTextContent('RS');
     expect(avatar).not.toHaveTextContent('Rod');
   });
@@ -134,7 +133,7 @@ describe('MentorDetailPage', () => {
 
     render(<MentorDetailPage mentorId="luis-fernandez" />);
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Luis Fernández Rojas' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Luis Fernández Rojas' })).toBeInTheDocument();
     // En cabecera y en tarjeta de disponibilidad
     expect(screen.getAllByText('No disponible')).toHaveLength(2);
 
@@ -163,19 +162,31 @@ describe('MentorDetailPage', () => {
       fullName: 'Gabriela Terrazas',
       about: null,
       experience: null,
+      relevantInfo: null,
       technicalAreas: [],
       interests: [],
     });
 
     render(<MentorDetailPage mentorId="gabriela-terrazas" />);
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Gabriela Terrazas' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Gabriela Terrazas' })).toBeInTheDocument();
 
     const emptyTexts = screen.getAllByText('El mentor todavía no agregó esta información.');
-    expect(emptyTexts).toHaveLength(2); // Sobre el mentor + Experiencia
+    expect(emptyTexts).toHaveLength(3); // Sobre el mentor + Experiencia + Información relevante
 
     expect(screen.getByText('Sin áreas técnicas registradas')).toBeInTheDocument();
     expect(screen.getByText('Sin temas de interés registrados')).toBeInTheDocument();
+  });
+
+  it('trata la disponibilidad sin configurar como no disponible para solicitar', async () => {
+    mockGetMentorDetail.mockResolvedValueOnce({ ...sampleMentorAvailable, availability: null, slots: [] });
+
+    render(<MentorDetailPage mentorId="carlos-vargas" />);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Carlos Vargas' })).toBeInTheDocument();
+    expect(screen.getAllByText('Disponibilidad sin configurar')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /Solicitar mentoría/i })).toBeDisabled();
+    expect(screen.queryByText('Horarios disponibles')).not.toBeInTheDocument();
   });
 
   it('renderiza la pantalla de perfil no disponible/inexistente sin breadcrumb ni título (Mockup 5)', async () => {
@@ -217,7 +228,7 @@ describe('MentorDetailPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Carlos Vargas' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Carlos Vargas' })).toBeInTheDocument();
     expect(mockGetMentorDetail).toHaveBeenCalledTimes(2);
   });
 
@@ -245,15 +256,12 @@ describe('MentorDetailPage', () => {
 
     render(<MentorDetailPage mentorId="carlos-vargas" />);
 
-    await screen.findByRole('heading', { level: 1, name: 'Carlos Vargas' });
+    await screen.findByRole('heading', { level: 2, name: 'Carlos Vargas' });
 
     // Verificación de datos privados
     expect(screen.queryByText('privado@ejemplo.com')).not.toBeInTheDocument();
     expect(screen.queryByText('77712345')).not.toBeInTheDocument();
     expect(screen.queryByText('1234567')).not.toBeInTheDocument();
-
-    // Verificación de que no existen secciones nuevas no diseñadas (relevantInfo)
-    expect(screen.queryByText('Información interna que no debe mostrarse como sección nueva.')).not.toBeInTheDocument();
 
     // Verificación de que no existen controles de edición
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();

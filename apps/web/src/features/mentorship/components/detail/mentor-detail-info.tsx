@@ -1,4 +1,4 @@
-import { BriefcaseIcon, CompassIcon, FileTextIcon, LayersIcon } from 'lucide-react';
+import { BriefcaseIcon, CompassIcon, FileTextIcon, InfoIcon, LayersIcon } from 'lucide-react';
 import type { MentorDetailProfile } from '../../model/mentor-detail';
 
 const EMPTY_INFO_PLACEHOLDER = 'El mentor todavía no agregó esta información.';
@@ -6,6 +6,7 @@ const EMPTY_INFO_PLACEHOLDER = 'El mentor todavía no agregó esta información.
 export function MentorDetailInfo({ mentor }: { mentor: MentorDetailProfile }) {
   const hasAbout = Boolean(mentor.about && mentor.about.trim());
   const hasExperience = Boolean(mentor.experience && mentor.experience.trim());
+  const hasRelevantInfo = Boolean(mentor.relevantInfo && mentor.relevantInfo.trim());
   const hasTechnicalAreas = mentor.technicalAreas.length > 0;
   const hasInterests = mentor.interests.length > 0 && mentor.interests.some((g) => g.items.length > 0);
 
@@ -41,7 +42,22 @@ export function MentorDetailInfo({ mentor }: { mentor: MentorDetailProfile }) {
         )}
       </section>
 
-      {/* 3. Áreas técnicas */}
+      {/* 3. Información relevante (CA-NF-15) */}
+      <section className="mentor-detail-card" aria-labelledby="mentor-detail-relevant-title">
+        <h2 id="mentor-detail-relevant-title" className="mentor-detail-card-title">
+          <InfoIcon className="mentor-detail-card-icon icon" aria-hidden="true" />
+          Información relevante
+        </h2>
+        {hasRelevantInfo ? (
+          <p className="mentor-detail-card-text">{mentor.relevantInfo}</p>
+        ) : (
+          <p className="mentor-detail-card-text mentor-detail-empty-text">
+            {EMPTY_INFO_PLACEHOLDER}
+          </p>
+        )}
+      </section>
+
+      {/* 4. Áreas técnicas */}
       <section className="mentor-detail-card" aria-labelledby="mentor-detail-areas-title">
         <h2 id="mentor-detail-areas-title" className="mentor-detail-card-title">
           <LayersIcon className="mentor-detail-card-icon icon" aria-hidden="true" />
@@ -62,7 +78,7 @@ export function MentorDetailInfo({ mentor }: { mentor: MentorDetailProfile }) {
         )}
       </section>
 
-      {/* 4. Intereses de mentoría agrupados por área */}
+      {/* 5. Intereses de mentoría agrupados por área */}
       <section className="mentor-detail-card" aria-labelledby="mentor-detail-interests-title">
         <h2 id="mentor-detail-interests-title" className="mentor-detail-card-title">
           <CompassIcon className="mentor-detail-card-icon icon" aria-hidden="true" />

@@ -1,13 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { SessionError } from '@/shared/services/auth-session';
-import {
-  getMentorDetail,
-  isMentorDetailMockEnabled,
-  MentorNotFoundError,
-} from '../services/mentor-detail-api';
+import { getMentorDetail, MentorNotFoundError } from '../services/mentor-detail-api';
 import type { MentorDetailProfile } from '../model/mentor-detail';
 
 const TITLE_SUFFIX = ' | UMSSPIRA';
@@ -22,9 +17,6 @@ export interface UseMentorDetailResult {
 }
 
 export function useMentorDetail(mentorId: string): UseMentorDetailResult {
-  const searchParams = useSearchParams();
-  const simulatedState = isMentorDetailMockEnabled() ? searchParams?.get('state') : null;
-
   const [mentor, setMentor] = useState<MentorDetailProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +40,7 @@ export function useMentorDetail(mentorId: string): UseMentorDetailResult {
       document.title = `Cargando perfil del mentor${TITLE_SUFFIX}`;
     }
 
-    getMentorDetail(mentorId, { signal: controller.signal, simulatedState })
+    getMentorDetail(mentorId, { signal: controller.signal })
       .then((data) => {
         if (controller.signal.aborted) return;
         setMentor(data);
@@ -90,7 +82,7 @@ export function useMentorDetail(mentorId: string): UseMentorDetailResult {
           setLoading(false);
         }
       });
-  }, [mentorId, simulatedState]);
+  }, [mentorId]);
 
   useEffect(() => {
     executeFetch();

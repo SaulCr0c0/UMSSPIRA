@@ -122,14 +122,6 @@
   color: var(--navy);
 }
 
-.mentor-detail-summary {
-  margin-top: .625rem;
-  font-size: .9375rem;
-  line-height: 1.55;
-  color: var(--ink-75);
-  max-width: 44rem;
-}
-
 .mentor-detail-status-pill-wrap {
   margin-top: .875rem;
 }
@@ -272,6 +264,7 @@
   font-size: .9375rem;
   line-height: 1.6;
   color: var(--ink-75);
+  white-space: pre-line;
   word-break: break-word;
 }
 

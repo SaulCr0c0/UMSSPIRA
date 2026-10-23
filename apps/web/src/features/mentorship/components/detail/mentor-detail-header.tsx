@@ -21,11 +21,7 @@ export function MentorDetailHeader({ mentor }: { mentor: MentorDetailProfile }) 
     <header className="mentor-detail-header-card" aria-label={`Perfil de ${mentor.fullName}`}>
       <div className="mentor-detail-header-main">
         <div className="mentor-detail-header-info">
-          <div
-            className="mentor-detail-avatar"
-            role="img"
-            aria-label={`Avatar de ${mentor.fullName}`}
-          >
+          <div className="mentor-detail-avatar">
             {hasValidPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -38,16 +34,19 @@ export function MentorDetailHeader({ mentor }: { mentor: MentorDetailProfile }) 
                 onError={() => setFailedPhoto(mentor.photoUrl)}
               />
             ) : (
-              <span className="mentor-detail-avatar-initials" aria-hidden="true">
+              <span
+                className="mentor-detail-avatar-initials"
+                role="img"
+                aria-label={`Foto de ${mentor.fullName} no disponible`}
+              >
                 {mentorInitials(mentor.fullName)}
               </span>
             )}
           </div>
 
           <div className="mentor-detail-identity">
-            <h1 className="mentor-detail-name">{mentor.fullName}</h1>
+            <h2 className="mentor-detail-name">{mentor.fullName}</h2>
             {profession && <p className="mentor-detail-profession">{profession}</p>}
-            {mentor.summary && <p className="mentor-detail-summary">{mentor.summary}</p>}
 
             <div className="mentor-detail-status-pill-wrap">
               <span className={`mentor-detail-badge ${badge.className}`}>

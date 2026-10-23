@@ -7,7 +7,6 @@ import {
 export function MentorDetailAvailability({ mentor }: { mentor: MentorDetailProfile }) {
   const isAvailable = mentor.availability === 'AVAILABLE';
   const badge = availabilityBadgeConfig(mentor.availability);
-  const weekText = mentor.weekLabel || 'Semana del 19 al 25 oct · sesiones de 1 hora';
   const hasSlots = mentor.slots && mentor.slots.length > 0;
 
   return (
@@ -27,7 +26,7 @@ export function MentorDetailAvailability({ mentor }: { mentor: MentorDetailProfi
         <div className="mentor-detail-avail-body">
           <div className="mentor-detail-avail-subheading">
             <h3 className="mentor-detail-avail-title">Horarios disponibles</h3>
-            <p className="mentor-detail-avail-subtitle">{weekText}</p>
+            {mentor.weekLabel && <p className="mentor-detail-avail-subtitle">{mentor.weekLabel}</p>}
           </div>
 
           {hasSlots ? (
@@ -47,7 +46,7 @@ export function MentorDetailAvailability({ mentor }: { mentor: MentorDetailProfi
             </div>
           ) : (
             <p className="mentor-detail-card-text mentor-detail-empty-text">
-              No hay horarios definidos para esta semana.
+              No hay horarios libres en los próximos 7 días.
             </p>
           )}
 

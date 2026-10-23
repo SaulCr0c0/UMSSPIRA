@@ -6,66 +6,49 @@ import { setAccessToken, clearAccessToken, SessionError } from '@/shared/service
 
 const fetchMock = jest.fn();
 const originalFetch = global.fetch;
-const originalEnv = process.env.NEXT_PUBLIC_MOCK_MENTOR_DETAIL;
 
 beforeEach(() => {
   jest.resetAllMocks();
   global.fetch = fetchMock;
   setAccessToken('test-token');
-  delete process.env.NEXT_PUBLIC_MOCK_MENTOR_DETAIL;
 });
 
 afterEach(() => {
   clearAccessToken();
-  if (originalEnv !== undefined) {
-    process.env.NEXT_PUBLIC_MOCK_MENTOR_DETAIL = originalEnv;
-  } else {
-    delete process.env.NEXT_PUBLIC_MOCK_MENTOR_DETAIL;
-  }
 });
 
 afterAll(() => {
   global.fetch = originalFetch;
 });
 
-describe('getMentorDetail - API Real', () => {
+describe('getMentorDetail', () => {
+  // Respuesta real de GET /api/v1/mentorship/profiles/:id (sección 17 de HUXX.md).
   const backendMentorPayload = {
-    id: 'carlos-vargas',
+    id: '66000000-0000-4000-8000-000000000001',
     fullName: 'Carlos Vargas',
     photoUrl: 'https://example.com/carlos.jpg',
     jobTitle: 'Arquitecto de Software',
     company: 'Jalasoft',
-    summary: 'Diseño plataformas distribuidas',
     about: 'Ingeniero de Sistemas con 12 años de experiencia.',
     experience: 'Arquitecto de Software en Jalasoft.',
     relevantInfo: 'Disponible para mentorías.',
     technicalAreas: ['Desarrollo de Software'],
-    interests: [
-      {
-        area: 'Desarrollo de Software',
-        items: ['Arquitectura limpia'],
-      },
-    ],
+    interests: [{ area: 'Desarrollo de Software', items: ['Arquitectura limpia'] }],
     availability: 'AVAILABLE',
-    slots: [
-      {
-        date: '2026-10-19',
-        dayLabel: 'lunes 19 oct',
-        times: ['09:00', '11:00'],
-      },
-    ],
+    weekLabel: 'Del 23 al 29 oct · sesiones de 1 hora',
+    slots: [{ date: '2026-10-27', dayLabel: 'martes 27 oct', times: ['18:00', '19:00'] }],
   };
 
-  it('consulta el endpoint centralizado con autorización y retorna los datos públicos', async () => {
+  it('consulta el endpoint con autorización y retorna los datos públicos', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: backendMentorPayload }),
     });
 
-    const result = await getMentorDetail('carlos-vargas');
+    const result = await getMentorDetail(backendMentorPayload.id);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/v1/mentorship/profiles/carlos-vargas',
+      `/api/v1/mentorship/profiles/${backendMentorPayload.id}`,
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -73,12 +56,33 @@ describe('getMentorDetail - API Real', () => {
         }),
       }),
     );
-    expect(result.fullName).toBe('Carlos Vargas');
-    expect(result.availability).toBe('AVAILABLE');
-    expect(result.technicalAreas).toEqual(['Desarrollo de Software']);
+    expect(result).toEqual(backendMentorPayload);
   });
 
-  it('NO usa datos falsos o mock si la API real falla con 500', async () => {
+  it('acepta un mentor sin disponibilidad configurada', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { ...backendMentorPayload, availability: null, slots: [] } }),
+    });
+
+    await expect(getMentorDetail(backendMentorPayload.id)).resolves.toMatchObject({
+      availability: null,
+      slots: [],
+    });
+  });
+
+  it('descarta fotos que no son URL http(s) públicas', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { ...backendMentorPayload, photoUrl: 'javascript:alert(1)' } }),
+    });
+
+    await expect(getMentorDetail(backendMentorPayload.id)).resolves.toMatchObject({
+      photoUrl: null,
+    });
+  });
+
+  it('NO usa datos falsos si la API falla con 500', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -89,10 +93,10 @@ describe('getMentorDetail - API Real', () => {
     );
   });
 
-  it('lanza MentorNotFoundError cuando la API devuelve 404', async () => {
+  it.each([400, 404])('lanza MentorNotFoundError cuando la API devuelve %i', async (status) => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      status: 404,
+      status,
     });
 
     await expect(getMentorDetail('inexistente')).rejects.toBeInstanceOf(MentorNotFoundError);
@@ -107,76 +111,14 @@ describe('getMentorDetail - API Real', () => {
     await expect(getMentorDetail('carlos-vargas')).rejects.toBeInstanceOf(SessionError);
   });
 
-  it('ignora el parámetro ?state= cuando se conecta a la API real', async () => {
+  it('rechaza respuestas con un formato distinto al contrato', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ data: backendMentorPayload }),
+      json: async () => ({ data: { id: 'x', nombre: 'Carlos Vargas' } }),
     });
 
-    const result = await getMentorDetail('carlos-vargas', {
-      simulatedState: 'error',
-    });
-
-    expect(result.fullName).toBe('Carlos Vargas');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('getMentorDetail - Modo Mock (NEXT_PUBLIC_MOCK_MENTOR_DETAIL="true")', () => {
-  beforeEach(() => {
-    process.env.NEXT_PUBLIC_MOCK_MENTOR_DETAIL = 'true';
-  });
-
-  it('retorna el perfil mock adecuado para Carlos Vargas', async () => {
-    const mentor = await getMentorDetail('carlos-vargas');
-    expect(mentor.fullName).toBe('Carlos Vargas');
-    expect(mentor.availability).toBe('AVAILABLE');
-    expect(mentor.slots.length).toBeGreaterThan(0);
-  });
-
-  it('retorna el perfil mock adecuado para Luis Fernández (UNAVAILABLE)', async () => {
-    const mentor = await getMentorDetail('luis-fernandez');
-    expect(mentor.fullName).toBe('Luis Fernández Rojas');
-    expect(mentor.availability).toBe('UNAVAILABLE');
-    expect(mentor.slots).toHaveLength(0);
-  });
-
-  it('retorna el perfil mock adecuado para Rodrigo Salazar (PAUSED)', async () => {
-    const mentor = await getMentorDetail('rodrigo-salazar');
-    expect(mentor.fullName).toBe('Rodrigo Salazar Torrico');
-    expect(mentor.availability).toBe('PAUSED');
-  });
-
-  it('retorna el perfil sin información para Gabriela Terrazas', async () => {
-    const mentor = await getMentorDetail('gabriela-terrazas');
-    expect(mentor.fullName).toBe('Gabriela Terrazas');
-    expect(mentor.about).toBeNull();
-    expect(mentor.experience).toBeNull();
-  });
-
-  it('simula estado notfound con ?state=notfound', async () => {
-    await expect(
-      getMentorDetail('carlos-vargas', { simulatedState: 'notfound' }),
-    ).rejects.toBeInstanceOf(MentorNotFoundError);
-  });
-
-  it('simula estado error con ?state=error', async () => {
-    await expect(
-      getMentorDetail('carlos-vargas', { simulatedState: 'error' }),
-    ).rejects.toThrow('Ocurrió un problema al consultar');
-  });
-
-  it('simula estado unavailable con ?state=unavailable', async () => {
-    const mentor = await getMentorDetail('carlos-vargas', { simulatedState: 'unavailable' });
-    expect(mentor.availability).toBe('UNAVAILABLE');
-    expect(mentor.slots).toHaveLength(0);
-  });
-
-  it('simula estado empty con ?state=empty', async () => {
-    const mentor = await getMentorDetail('carlos-vargas', { simulatedState: 'empty' });
-    expect(mentor.about).toBeNull();
-    expect(mentor.experience).toBeNull();
-    expect(mentor.technicalAreas).toHaveLength(0);
-    expect(mentor.interests).toHaveLength(0);
+    await expect(getMentorDetail('x')).rejects.toThrow(
+      'No se pudo interpretar la respuesta del perfil del mentor. Inténtalo nuevamente.',
+    );
   });
 });
