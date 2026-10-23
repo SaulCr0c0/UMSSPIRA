@@ -38,7 +38,7 @@ function mergeMessages(
     return Number.isNaN(time) ? 0 : time;
   };
 
-  return [...unique.values()].sort(
+return Array.from(unique.values()).sort(
     (a, b) =>
       timestamp(a.fecha_mensaje) - timestamp(b.fecha_mensaje) ||
       a.id.localeCompare(b.id),
