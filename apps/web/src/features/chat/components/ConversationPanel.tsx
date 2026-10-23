@@ -16,6 +16,7 @@ import {
   type ConversationSummary,
 } from '@/shared/services/chat-conversation.service';
 import { getInitials } from '../utils/format';
+import { formatDayLabel, shouldShowDaySeparator } from '../utils/history';
 import { getChatSocket } from '@/shared/services/chat-socket';
 
 type IncomingChatMessage = ChatMessage & {
@@ -39,7 +40,7 @@ function mergeMessages(
     return Number.isNaN(time) ? 0 : time;
   };
 
-return Array.from(unique.values()).sort(
+  return Array.from(unique.values()).sort(
     (a, b) =>
       timestamp(a.fecha_mensaje) - timestamp(b.fecha_mensaje) ||
       a.id.localeCompare(b.id),
@@ -62,7 +63,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
   const sendingRef = useRef(false);
   const requestVersionRef = useRef(0);
 
-  // Tarea 2: controlar el desplazamiento del historial.
+  // Control del desplazamiento del historial.
   const historyRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
@@ -82,7 +83,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
   const { otherUser } = conversation;
 
-  
+  // HU-08: carga la página anterior de mensajes (CA-03)
   const loadOlderMessages = async () => {
     const container = historyRef.current;
     const cursor = nextCursorRef.current;
@@ -105,10 +106,10 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     setHistoryLoadError(null);
 
     try {
-      const page = await getConversationMessagesPage(
-        conversation.id,
-        { limit: 15, beforeId: cursor },
-      );
+      const page = await getConversationMessagesPage(conversation.id, {
+        limit: 15,
+        beforeId: cursor,
+      });
 
       if (requestVersionRef.current !== version) return;
 
@@ -122,9 +123,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
       setHasMoreHistory(page.hasMore);
 
-      setMessages((current) =>
-        mergeMessages(page.messages, current),
-      );
+      setMessages((current) => mergeMessages(page.messages, current));
     } catch (err: unknown) {
       if (requestVersionRef.current === version) {
         setHistoryLoadError(
@@ -146,9 +145,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     if (!container) return;
 
     const distanceToBottom =
-      container.scrollHeight -
-      container.scrollTop -
-      container.clientHeight;
+      container.scrollHeight - container.scrollTop - container.clientHeight;
 
     isAtBottomRef.current = distanceToBottom <= 48;
 
@@ -160,7 +157,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       void loadOlderMessages();
     }
   };
-
 
   const goToLatest = () => {
     const container = historyRef.current;
@@ -194,7 +190,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     setDraft('');
     setSending(false);
     setSendError(null);
-    
 
     const onNewMessage = (message: IncomingChatMessage) => {
       if (requestVersionRef.current !== version) return;
@@ -207,7 +202,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     // mensajes que lleguen mientras termina la consulta.
     socket.on('chat:new_message', onNewMessage);
 
-    
     getConversationMessagesPage(conversation.id, { limit: 15 })
       .then((page) => {
         if (requestVersionRef.current !== version) return;
@@ -216,9 +210,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         hasMoreHistoryRef.current = page.hasMore;
 
         setHasMoreHistory(page.hasMore);
-        setMessages((current) =>
-          mergeMessages(current, page.messages),
-        );
+        setMessages((current) => mergeMessages(current, page.messages));
       })
       .catch((err: unknown) => {
         if (requestVersionRef.current === version) {
@@ -235,7 +227,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         }
       });
 
-
     return () => {
       requestVersionRef.current++;
       socket.off('chat:new_message', onNewMessage);
@@ -249,7 +240,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
 
     const container = historyRef.current;
     if (!container) return;
-    
+
     const pendingScroll = pendingScrollRef.current;
 
     if (pendingScroll) {
@@ -260,9 +251,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       );
 
       container.scrollTop =
-        container.scrollHeight -
-        pendingScroll.height +
-        pendingScroll.top;
+        container.scrollHeight - pendingScroll.height + pendingScroll.top;
 
       return;
     }
@@ -271,9 +260,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       (message) => !seenMessageIdsRef.current.has(message.id),
     );
 
-    seenMessageIdsRef.current = new Set(
-      messages.map((message) => message.id),
-    );
+    seenMessageIdsRef.current = new Set(messages.map((message) => message.id));
 
     if (isAtBottomRef.current) {
       container.scrollTop = container.scrollHeight;
@@ -289,7 +276,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       setHasNewMessages(true);
     }
   }, [messages, loading, otherUser.id]);
-
 
   const handleSend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -323,13 +309,10 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       setDraft('');
 
       try {
-        const updatedMessages =
-          await getConversationMessages(conversationId);
+        const updatedMessages = await getConversationMessages(conversationId);
 
         if (requestVersionRef.current === version) {
-          setMessages((current) =>
-            mergeMessages(current, updatedMessages),
-          );
+          setMessages((current) => mergeMessages(current, updatedMessages));
         }
       } catch {
         if (requestVersionRef.current === version) {
@@ -372,125 +355,156 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
           <p className="truncate text-sm font-semibold text-slate-900">
             {otherUser.name}
           </p>
-          <p className="text-xs capitalize text-slate-500">
-            {otherUser.role}
-          </p>
+          <p className="text-xs capitalize text-slate-500">{otherUser.role}</p>
         </div>
       </header>
 
-
       <div className="relative flex min-h-0 flex-1 flex-col">
-      <div
-        ref={historyRef}
-        onScroll={handleHistoryScroll}
-        aria-label="Historial de mensajes"
-        aria-busy={loading}
-        className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 [overflow-anchor:none]"
-      >
-        {!loading && messages.length > 0 && !hasMoreHistory && (
-  	<p className="py-2 text-center text-xs text-slate-400">
-    	No hay mensajes anteriores.
-  	</p>
-	)}
-        {loading && (
-          <div className="flex items-center justify-center gap-2 p-8 text-sm text-slate-500">
-            <Loader2
-              className="h-4 w-4 animate-spin"
-              aria-hidden="true"
-            />
-            
-        {loadingOlder && (
-          <p className="py-2 text-center text-xs text-slate-500">
-            Cargando mensajes anteriores...
-          </p>
-        )}
+        <div
+          ref={historyRef}
+          onScroll={handleHistoryScroll}
+          aria-label="Historial de mensajes"
+          aria-busy={loading}
+          className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 [overflow-anchor:none]"
+        >
+          {loading && (
+            <div className="flex items-center justify-center gap-2 p-8 text-sm text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Cargando mensajes...
+            </div>
+          )}
 
-        {historyLoadError && (
-          <p role="alert" className="py-2 text-center text-xs text-red-700">
-            {historyLoadError}
-          </p>
-        )}
+          {error && (
+            <p role="alert" className="text-center text-sm text-red-700">
+              {error}
+            </p>
+          )}
 
-        {!loading && messages.length > 0 && !hasMoreHistory && (
-          <p className="py-2 text-center text-xs text-slate-400">
-            No hay mensajes anteriores.
-          </p>
-        )}
+          {/* HU-08: franja superior de alto fijo (evita saltos al cargar páginas) */}
+          {!loading && !error && messages.length > 0 && (
+            <div className="flex h-8 items-center justify-center text-xs">
+              {loadingOlder ? (
+                <span
+                  role="status"
+                  className="flex items-center gap-2 text-slate-500"
+                >
+                  <Loader2
+                    className="h-3.5 w-3.5 animate-spin"
+                    aria-hidden="true"
+                  />
+                  Cargando mensajes anteriores...
+                </span>
+              ) : historyLoadError ? (
+                <span
+                  role="alert"
+                  className="flex items-center gap-2 text-red-700"
+                >
+                  {historyLoadError}
+                  <button
+                    type="button"
+                    onClick={() => void loadOlderMessages()}
+                    className="rounded-lg px-2 py-1 font-semibold underline"
+                  >
+                    Reintentar
+                  </button>
+                </span>
+              ) : hasMoreHistory ? (
+                <button
+                  type="button"
+                  onClick={() => void loadOlderMessages()}
+                  className="min-h-8 rounded-full bg-[#FFB162] px-3 py-1 font-semibold text-[#0F172A] hover:bg-[#FFA348]"
+                >
+                  ↑ Cargar mensajes anteriores
+                </button>
+              ) : (
+                <span className="text-slate-400">
+                  No hay mensajes anteriores
+                </span>
+              )}
+            </div>
+          )}
 
-            Cargando mensajes...
+          {!loading && !error && messages.length === 0 && (
+            <p className="text-center text-sm text-slate-500">
+              Aún no hay mensajes. Inicia la conversación.
+            </p>
+          )}
+
+          {messages.map((message, index) => {
+            const mine = message.emisor_id !== otherUser.id;
+            const previous = index > 0 ? messages[index - 1] : null;
+            const showSeparator = shouldShowDaySeparator(
+              previous?.fecha_mensaje,
+              message.fecha_mensaje,
+              index === 0,
+            );
+            const dayLabel = formatDayLabel(message.fecha_mensaje);
+            const isStartOfConversation = index === 0 && !hasMoreHistory;
+
+            return (
+              <div key={message.id} className="space-y-2">
+                {showSeparator && (
+                  <p className="py-1 text-center text-[11px] text-slate-400">
+                    <span className="rounded-full bg-slate-100 px-3 py-1">
+                      {isStartOfConversation
+                        ? `Inicio de la conversación · ${dayLabel}`
+                        : dayLabel}
+                    </span>
+                  </p>
+                )}
+
+                <div
+                  className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`min-w-0 max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                      mine
+                        ? 'bg-[#0F172A] text-white'
+                        : 'border border-slate-200 bg-white text-slate-800'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">
+                      {message.contenido}
+                    </p>
+
+                    <p
+                      className={`mt-1 text-right text-[10px] ${
+                        mine ? 'text-slate-300' : 'text-slate-400'
+                      }`}
+                    >
+                      {message.fecha_mensaje
+                        ? new Date(message.fecha_mensaje).toLocaleTimeString(
+                            'es-BO',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false,
+                            },
+                          )
+                        : 'Sin hora'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {hasNewMessages && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-3">
+            <button
+              type="button"
+              onClick={goToLatest}
+              className="pointer-events-auto min-h-11 rounded-full border border-orange-300 bg-[#FFB162] px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-lg hover:bg-[#FFA348] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+            >
+              <span role="status">Mensajes nuevos</span>
+              <span aria-hidden="true"> · </span>
+              Ir al final ↓
+            </button>
           </div>
         )}
+      </div>
 
-        {error && (
-          <p role="alert" className="text-center text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        {!loading && !error && messages.length === 0 && (
-          <p className="text-center text-sm text-slate-500">
-            Aún no hay mensajes. Inicia la conversación.
-          </p>
-        )}
-
-        {messages.map((message) => {
-          const mine = message.emisor_id !== otherUser.id;
-
-          return (
-            <div
-              key={message.id}
-              className={`flex ${
-                mine ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`min-w-0 max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                  mine
-                    ? 'bg-[#0F172A] text-white'
-                    : 'border border-slate-200 bg-white text-slate-800'
-                }`}
-              >
-                <p className="whitespace-pre-wrap break-words">
-                  {message.contenido}
-                </p>
-
-                <p
-                  className={`mt-1 text-right text-[10px] ${
-                    mine ? 'text-slate-300' : 'text-slate-400'
-                  }`}
-                >
-                  {message.fecha_mensaje
-                    ? new Date(
-                        message.fecha_mensaje,
-                      ).toLocaleTimeString('es-BO', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      })
-                    : 'Sin hora'}
-                </p>
-              </div>
-            </div>
-          );
-        })}        
-      </div>   
-
-      {hasNewMessages && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-3">
-          <button
-            type="button"
-            onClick={goToLatest}
-            className="pointer-events-auto min-h-11 rounded-full border border-orange-300 
-            bg-[#FFB162] px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-lg hover:bg-[#FFA348] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"           >
-            
-            <span role="status">Mensajes nuevos</span>
-            <span aria-hidden="true"> · </span>
-            Ir al final ↓
-          </button>
-        </div>
-      )}
-    </div>
-      
       <form
         onSubmit={handleSend}
         className="shrink-0 border-t border-slate-200 bg-white p-4"
@@ -515,16 +529,11 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
           <button
             type="submit"
             aria-label={sending ? 'Enviando mensaje' : 'Enviar mensaje'}
-            disabled={
-              sending || loading || Boolean(error) || !draft.trim()
-            }
+            disabled={sending || loading || Boolean(error) || !draft.trim()}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0F172A] text-white transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {sending ? (
-              <Loader2
-                className="h-5 w-5 animate-spin"
-                aria-hidden="true"
-              />
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             ) : (
               <Send className="h-5 w-5" aria-hidden="true" />
             )}
