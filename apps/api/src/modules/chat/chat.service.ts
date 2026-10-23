@@ -27,24 +27,26 @@ export class ChatService {
       throw new BadRequestException('El usuario destino no existe');
     }
 
-    let finalActorId = actorId;
-    let actor: { usuario_id: string } | null = null;
-
-    if (finalActorId) {
-      actor = await this.prisma.usuario.findUnique({
-        where: { usuario_id: finalActorId },
-      });
+    if (!actorId) {
+      throw new ForbiddenException('Debes iniciar sesión');
     }
 
-    if (!actor || finalActorId === targetUserId) {
-      const fallbackUser = await this.prisma.usuario.findFirst({
-        where: { usuario_id: { not: targetUserId } },
-      });
-      if (!fallbackUser) {
-        throw new BadRequestException('No hay otros usuarios en la BD');
-      }
-      finalActorId = fallbackUser.usuario_id;
+    if (actorId === targetUserId) {
+      throw new BadRequestException(
+        'No puedes iniciar una conversación contigo mismo',
+      );
     }
+
+const actor = await this.prisma.usuario.findUnique({
+  where: { usuario_id: actorId },
+  select: { usuario_id: true },
+});
+
+if (!actor) {
+  throw new ForbiddenException('El usuario autenticado no existe');
+}
+
+const finalActorId = actorId;
 
     const existing = await this.prisma.conversacion.findFirst({
       where: {
@@ -72,7 +74,8 @@ export class ChatService {
     });
   }
 
-  async getUserConversations() {
+  async getUserConversations(actorId: string) {
+
     const firstUser = await this.prisma.usuario.findFirst();
     if (!firstUser) {
       return [];
@@ -81,7 +84,7 @@ export class ChatService {
     const conversations = await this.prisma.conversacion.findMany({
       where: {
         participante_conversacion_registros: {
-          some: { usuario_id: firstUser.usuario_id },
+          some: { usuario_id: actorId },
         },
       },
       include: {
@@ -94,14 +97,14 @@ export class ChatService {
     return conversations
       .map((conv) => {
         const otherParticipant = conv.participante_conversacion_registros.find(
-          (p) => p.usuario_id !== firstUser.usuario_id,
+          (p) => p.usuario_id !== actorId,
         );
 
         // mensaje_registros ya viene ordenado del más nuevo al más viejo
         const last = conv.mensaje_registros[0];
 
         const unreadCount = conv.mensaje_registros.filter(
-          (m) => m.emisor_id !== firstUser.usuario_id && m.estado_envio !== 'leido',
+          (m) => m.emisor_id !== actorId && m.estado_envio !== 'leido',
         ).length;
 
         return {
@@ -141,11 +144,14 @@ export class ChatService {
   }
 
   async getMessages(conversationId: string) {
-    return this.prisma.mensaje.findMany({
-      where: { id_conversacion: conversationId },
-      orderBy: { fecha_mensaje: 'asc' },
-    });
-  }
+  return this.prisma.mensaje.findMany({
+    where: { id_conversacion: conversationId },
+    orderBy: [
+      { fecha_mensaje: { sort: 'asc', nulls: 'first' } },
+      { id: 'asc' },
+    ],
+  });
+}
 
   async assertParticipant(conversationId: string, userId: string): Promise<void> {
     const participant = await this.prisma.participanteConversacion.findFirst({
@@ -204,10 +210,14 @@ export class ChatService {
     });
   }
 
-  async markAsRead(conversationId: string) {
-    return this.prisma.mensaje.updateMany({
-      where: { id_conversacion: conversationId, estado_envio: { not: 'leido' } },
-      data: { estado_envio: 'leido' },
-    });
-  }
+  async markAsRead(conversationId: string, actorId: string) {
+  return this.prisma.mensaje.updateMany({
+    where: {
+      id_conversacion: conversationId,
+      emisor_id: { not: actorId },
+      estado_envio: { not: 'leido' },
+    },
+    data: { estado_envio: 'leido' },
+  });
+}
 }
