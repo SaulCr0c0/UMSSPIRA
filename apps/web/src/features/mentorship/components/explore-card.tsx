@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { ArrowRightIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export function ExploreCard({ icon: Icon }: { icon: ComponentType<{ className?: string }> }) {
   return (
@@ -12,18 +13,13 @@ export function ExploreCard({ icon: Icon }: { icon: ComponentType<{ className?: 
         Explora mentores de la comunidad UMSS según sus áreas de especialidad e intereses de mentoría.
       </p>
       <div className="mentor-card-actions">
-        <button
-          type="button"
-          disabled
-          aria-describedby="explore-availability"
+        <Link
+          href="/mentorship/directory"
           className="mentor-button mentor-button-secondary mentor-card-button"
         >
           Explorar mentores
           <ArrowRightIcon className="icon" aria-hidden="true" />
-        </button>
-        <p id="explore-availability" className="mentor-card-notice">
-          El directorio de mentores estará disponible en una próxima versión.
-        </p>
+        </Link>
       </div>
     </article>
   );
