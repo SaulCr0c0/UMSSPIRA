@@ -26,7 +26,7 @@ export interface UploadRegistrationDocumentInput {
 
 export interface ActivateRegistrationInput {
   applicationId: string;
-  code: string;
+  activationToken: string;
   password: string;
 }
 

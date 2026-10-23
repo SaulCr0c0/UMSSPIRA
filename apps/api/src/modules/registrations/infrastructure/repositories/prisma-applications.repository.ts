@@ -9,6 +9,7 @@ import type {
   ActivationCheck,
   ApplicationsRepository,
   ResolutionMailRecord,
+  ActivationResult,
 } from '../../application/ports/applications-repository.port';
 
 import type {
@@ -322,15 +323,25 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
     );
   }
 
-  async activate(id: string, codeHash: string, passwordHash: string): Promise<string> {
+  async activate(
+  id: string,
+  passwordHash: string,
+  matchesBinding: (binding: string) => boolean,
+  ): Promise<ActivationResult> {
     return this.prisma.$transaction(
-      async (tx) => {
+      async (tx): Promise<ActivationResult> => {
         await tx.$queryRaw`SELECT id FROM solicitud WHERE id = ${id}::uuid FOR UPDATE`;
         const row = await tx.solicitud.findUnique({
           where: { id },
           include: { detalle_solicitud: true },
         });
-        if (!row || row.estado !== 'APPROVED' || row.activada_en || !row.activacion_hash) {
+        if (!row || row.estado !== 'APPROVED') {
+          return 'invalid';
+        }
+        if (row.activada_en) {
+          return 'already';
+        }
+        if (!row.activacion_hash || !matchesBinding(row.activacion_hash)) {
           return 'invalid';
         }
         if (!row.activacion_expira_en || row.activacion_expira_en.getTime() <= Date.now()) {
@@ -339,14 +350,10 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
         if (row.activacion_intentos >= 5) {
           return 'locked';
         }
-        if (!timingSafeEqual(Buffer.from(row.activacion_hash), Buffer.from(codeHash))) {
-          await tx.solicitud.update({
-            where: { id },
-            data: { activacion_intentos: { increment: 1 } },
-          });
+        const detail = row.detalle_solicitud;
+        if (!detail?.email) {
           return 'invalid';
         }
-        const detail = row.detalle_solicitud!;
         const role = await tx.rolAcceso.findUnique({ where: { codigo: 'titulado' } });
         if (!role?.habilitado) {
           throw new BusinessRuleError(
@@ -355,42 +362,77 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
             'El rol titulado no está habilitado; revisa el catálogo de permisos',
           );
         }
-        const user = await tx.usuario.create({
-          data: {
-            nombre: [detail.nombre, detail.apellido].filter(Boolean).join(' '),
-            correo: detail.email!,
-            rol: 'titulado',
-            estado: 'ACTIVO',
-            usuario_id: randomUUID(),
-            cuenta_acceso: { create: { password_hash: passwordHash } },
-          },
+        const name = [detail.nombre, detail.apellido].filter(Boolean).join(' ');
+        const existing = await tx.usuario.findUnique({
+          where: { correo: detail.email },
+          include: { cuenta_acceso: true },
         });
-        await tx.titulado.create({
-          data: {
-            id_usuario: user.usuario_id,
-            id_carrera: detail.id_carrera,
-            nombre: detail.nombre,
-            apellido: detail.apellido,
-            ci: detail.ci,
-            extension_ci: detail.extension_ci,
-            cod_sis: detail.cod_sis,
-            anio_ingreso: detail.fecha_ingreso?.getUTCFullYear(),
-          },
-        });
-        await tx.usuarioSolicitud.create({
-          data: {
-            id_usuario: user.usuario_id,
-            id_solicitud: id,
-            detalle_solicitud_id: detail.id,
-          },
+        // Todos los conflictos se resuelven antes de escribir: devolver un resultado
+        // confirmaría la transacción y dejaría filas a medias.
+        if (
+          existing &&
+          (existing.estado !== 'PENDIENTE' ||
+            existing.cuenta_acceso ||
+            (existing.rol && existing.rol !== 'titulado'))
+        ) {
+          return 'account-exists';
+        }
+        const found =
+          (row.id_titulado
+            ? await tx.titulado.findUnique({ where: { id: row.id_titulado } })
+            : null) ??
+          (existing
+            ? await tx.titulado.findUnique({ where: { id_usuario: existing.usuario_id } })
+            : null);
+        if (found?.id_usuario && found.id_usuario !== existing?.usuario_id) {
+          return 'account-exists';
+        }
+        let userId: string;
+        if (existing) {
+          await tx.usuario.update({
+            where: { usuario_id: existing.usuario_id },
+            data: {
+              nombre: name,
+              rol: 'titulado',
+              estado: 'ACTIVO',
+              cuenta_acceso: { create: { password_hash: passwordHash } },
+            },
+          });
+          userId = existing.usuario_id;
+        } else {
+          const user = await tx.usuario.create({
+            data: {
+              nombre: name,
+              correo: detail.email,
+              rol: 'titulado',
+              estado: 'ACTIVO',
+              usuario_id: randomUUID(),
+              cuenta_acceso: { create: { password_hash: passwordHash } },
+            },
+          });
+          userId = user.usuario_id;
+        }
+        const titulado = found
+          ? await tx.titulado.update({ where: { id: found.id }, data: { id_usuario: userId } })
+          : await tx.titulado.create({
+              data: {
+                id_usuario: userId,
+                id_carrera: detail.id_carrera,
+                nombre: detail.nombre,
+                apellido: detail.apellido,
+                ci: detail.ci,
+                extension_ci: detail.extension_ci,
+                cod_sis: detail.cod_sis,
+                anio_ingreso: detail.fecha_ingreso?.getUTCFullYear(),
+              },
+            });
+        await tx.usuarioSolicitud.createMany({
+          data: [{ id_usuario: userId, id_solicitud: id, detalle_solicitud_id: detail.id }],
+          skipDuplicates: true,
         });
         await tx.solicitud.update({
           where: { id },
-          data: {
-            activada_en: new Date(),
-            activacion_hash: null,
-            activacion_intentos: { increment: 1 },
-          },
+          data: { activada_en: new Date(), activacion_hash: null, id_titulado: titulado.id },
         });
         return 'activated';
       },
