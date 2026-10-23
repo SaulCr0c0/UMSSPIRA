@@ -13,6 +13,14 @@ export type ActivationCheck =
   | { result: 'invalid' | 'expired' | 'locked' }
   | { result: 'verified'; binding: string };
 
+export type ActivationResult =
+  | 'activated'
+  | 'invalid'
+  | 'expired'
+  | 'locked'
+  | 'already'
+  | 'account-exists';
+  
 export interface ResolutionMailRecord {
   type: 'aprobacion' | 'observacion' | 'rechazo';
   to: string;
@@ -38,5 +46,9 @@ export interface ApplicationsRepository {
     mail: ResolutionMailRecord,
   ): Promise<ReviewResult>;
   verifyActivation(id: string, codeHash: string): Promise<ActivationCheck>;
-  activate(id: string, codeHash: string, passwordHash: string): Promise<string>;
+    activate(
+      id: string,
+      passwordHash: string,
+      matchesBinding: (binding: string) => boolean,
+    ): Promise<ActivationResult>;
 }

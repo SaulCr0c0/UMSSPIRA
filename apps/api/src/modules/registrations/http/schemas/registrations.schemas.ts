@@ -4,6 +4,11 @@ import {
 } from '../../domain/policies/application-pagination.policy';
 
 import { z } from 'zod';
+import {
+  meetsPasswordPolicy,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_POLICY_MESSAGE,
+} from '../../domain/policies/password.policy';
 
 export const registrationIdSchema = z.uuid();
 const nameSchema = z
@@ -121,8 +126,8 @@ export const reviewSchema = z
   });
 export const activateAccountSchema = z.strictObject({
   applicationId: z.uuid(),
-  code: z.string().regex(/^\d{6}$/),
-  password: z.string().min(15).max(128),
+  activationToken: z.string().min(1).max(500),
+  password: z.string().max(PASSWORD_MAX_LENGTH).refine(meetsPasswordPolicy, PASSWORD_POLICY_MESSAGE),
 });
 
 export const verifyActivationSchema = z.strictObject({
