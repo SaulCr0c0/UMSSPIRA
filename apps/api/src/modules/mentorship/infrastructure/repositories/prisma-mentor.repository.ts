@@ -9,7 +9,21 @@ import type {
   MentorInformationInput,
   ParticipationInput,
 } from '../../application/contracts/mentor-inputs';
-import { mentorInclude, toAvailability, toMentor } from '../translators/mentor.translator';
+import type {
+  AreaReference,
+  MentorDetail,
+  MentorInterest,
+} from '../../domain/entities/mentor';
+import { canReceiveMentorship } from '../../domain/policies/mentor.policy';
+import {
+  mentorInclude,
+  publicText,
+  toAvailability,
+  toBooking,
+  toMentor,
+  toSchedule,
+} from '../translators/mentor.translator';
+import { linkedAreaInclude } from './mentor-catalog-reader';
 import {
   availabilityOrder,
   lockGraduate,
@@ -163,6 +177,95 @@ export class PrismaMentorRepository implements MentorRepository {
         area: { id: area.id, name: area.nombre ?? '' },
         interests: area.hijos.map((interest) => ({ id: interest.id, name: interest.nombre ?? '' })),
       })),
+    };
+  }
+
+  async detail(mentorId: string, from: string, to: string): Promise<MentorDetail | null> {
+    const row = await this.prisma.mentor.findFirst({
+      where: {
+        id: mentorId,
+        esta_activo: true,
+        titulado: { usuario: { estado: 'ACTIVO', rol: 'titulado' } },
+      },
+      include: {
+        titulado: {
+          select: {
+            ...mentorInclude.titulado.select,
+            experiencia_laboral_registros: {
+              orderBy: [
+                { fecha_fin: { sort: 'desc', nulls: 'first' } },
+                { fecha_inicio: 'desc' },
+                { id: 'asc' },
+              ],
+              take: 1,
+              select: { cargo: true, empresa: true },
+            },
+          },
+        },
+        disponibilidad_mentor_registros: { orderBy: availabilityOrder, take: 1 },
+        mentor_area_registros: {
+          where: { area: { esta_activo: true } },
+          include: linkedAreaInclude,
+        },
+        espacio_disponible_mentor_registros: {
+          where: { esta_activo: true },
+          orderBy: [{ dia_semana: 'asc' }, { horario_inicio: 'asc' }, { id: 'asc' }],
+        },
+      },
+    });
+    const availability = toAvailability(row?.disponibilidad_mentor_registros[0]).status;
+    if (!row || availability === 'UNAVAILABLE') {
+      return null;
+    }
+    const areas = new Map<string, AreaReference>();
+    const interests = new Map<string, MentorInterest>();
+    for (const { area } of row.mentor_area_registros) {
+      if (!area) {
+        continue;
+      }
+      if (area.padre_id === null) {
+        areas.set(area.id, { id: area.id, name: area.nombre ?? '' });
+      } else if (area.padre?.esta_activo === true) {
+        interests.set(area.id, {
+          id: area.id,
+          name: area.nombre ?? '',
+          area: { id: area.padre.id, name: area.padre.nombre ?? '' },
+        });
+      }
+    }
+    const byName = (a: AreaReference, b: AreaReference) => a.name.localeCompare(b.name, 'es');
+    const job = row.titulado.experiencia_laboral_registros[0];
+    const mentor = toMentor(row);
+    const canRequest = canReceiveMentorship(true, availability);
+    const bookings = canRequest
+      ? await this.prisma.mentoriaSolicitud.findMany({
+          where: {
+            id_mentor: row.id,
+            estado: { in: ['PENDIENTE', 'ACEPTADO'] },
+            solicitud_fecha: {
+              gte: new Date(`${from}T00:00:00.000Z`),
+              lte: new Date(`${to}T00:00:00.000Z`),
+            },
+          },
+          select: { solicitud_fecha: true, solicitud_inicio: true, solicitud_fin: true },
+        })
+      : [];
+    return {
+      mentor: {
+        ...mentor,
+        description: publicText(mentor.description),
+        experience: publicText(mentor.experience),
+        relevantInformation: publicText(mentor.relevantInformation),
+        photoUrl: publicText(mentor.photoUrl),
+      },
+      availability,
+      canRequest,
+      areas: [...areas.values()].sort(byName),
+      interests: [...interests.values()].sort((a, b) => byName(a.area, b.area) || byName(a, b)),
+      schedules: row.espacio_disponible_mentor_registros.flatMap(toSchedule),
+      bookings: bookings.flatMap(toBooking),
+      position: publicText(job?.cargo ?? null),
+      company: publicText(job?.empresa ?? null),
     };
   }
 

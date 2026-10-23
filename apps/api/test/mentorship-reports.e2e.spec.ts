@@ -73,6 +73,7 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
   let app: INestApplication;
   const mentors = {
     directory: jest.fn(),
+    detail: jest.fn(),
     eligible: jest.fn(),
     own: jest.fn(),
     participate: jest.fn(),
@@ -136,6 +137,17 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
       total: 1,
       catalog: [],
     });
+    mentors.detail.mockResolvedValue({
+      mentor,
+      areas: [{ id: careerId, name: 'Backend' }],
+      interests: [],
+      availability: 'AVAILABLE',
+      canRequest: true,
+      schedules: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, start: '00:00', end: '23:59' })),
+      bookings: [],
+      position: 'Backend Developer',
+      company: null,
+    });
     reports.metrics.mockResolvedValue({
       totalApplications: 2,
       approvedApplications: 1,
@@ -175,6 +187,66 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
       .post('/api/v1/mentorship/profiles')
       .set('Authorization', 'Bearer graduate')
       .expect(405);
+  });
+  it('exige sesión para consultar el perfil detallado de un mentor', async () => {
+    await request(app.getHttpServer()).get(`/api/v1/mentorship/profiles/${mentorId}`).expect(401);
+    expect(mentors.detail).not.toHaveBeenCalled();
+  });
+  it('entrega el perfil detallado sin datos privados', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/mentorship/profiles/${mentorId.toUpperCase()}`)
+      .set('Authorization', 'Bearer graduate')
+      .expect(200);
+    const day = expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/);
+    expect(mentors.detail).toHaveBeenCalledWith(mentorId, day, day);
+    const { slots, weekLabel, ...profile } = response.body.data;
+    expect(profile).toEqual({
+      id: mentorId,
+      fullName: graduate.name,
+      photoUrl: null,
+      jobTitle: 'Backend Developer',
+      company: null,
+      about: 'Mentora',
+      experience: 'Desarrollo de software',
+      relevantInfo: 'Dato reservado',
+      technicalAreas: ['Backend'],
+      interests: [],
+      availability: 'AVAILABLE',
+    });
+    expect(weekLabel).toMatch(/^Del \d{1,2}( [a-z]{3})? al \d{1,2} [a-z]{3} · sesiones de 1 hora$/);
+    expect(slots.length).toBeGreaterThanOrEqual(6);
+    for (const slot of slots) {
+      expect(slot.date).toEqual(day);
+      expect(slot.dayLabel).toMatch(/^(lunes|martes|miércoles|jueves|viernes|sábado|domingo) \d{1,2} [a-z]{3}$/);
+      expect(slot.times.every((time: string) => /^\d{2}:\d{2}$/.test(time))).toBe(true);
+    }
+    const body = JSON.stringify(response.body);
+    expect(body).not.toContain(graduate.id);
+    expect(body).not.toContain(mentor.graduateId);
+    expect(body).not.toContain(graduate.email);
+  });
+  it('rechaza identificadores inválidos y responde 404 si el perfil no está disponible', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/mentorship/profiles/no-es-uuid')
+      .set('Authorization', 'Bearer graduate')
+      .expect(400);
+    expect(mentors.detail).not.toHaveBeenCalled();
+    mentors.detail.mockResolvedValue(null);
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/mentorship/profiles/${randomUUID()}`)
+      .set('Authorization', 'Bearer graduate')
+      .expect(404);
+    expect(response.body.error.code).toBe('MENTOR_NOT_FOUND');
+  });
+  it('no expone acciones de escritura sobre el perfil detallado', async () => {
+    for (const method of ['post', 'put', 'patch', 'delete'] as const) {
+      const response = await request(app.getHttpServer())
+        [method](`/api/v1/mentorship/profiles/${mentorId}`)
+        .set('Authorization', 'Bearer graduate');
+      expect(response.status).toBe(404);
+    }
+    expect(mentors.detail).not.toHaveBeenCalled();
+    expect(mentors.updateInformation).not.toHaveBeenCalled();
   });
   it('exige sesión y permiso para gestionar la participación', async () => {
     await request(app.getHttpServer())
