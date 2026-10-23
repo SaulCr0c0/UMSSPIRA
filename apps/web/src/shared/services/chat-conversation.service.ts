@@ -44,32 +44,86 @@ export interface ChatMessage {
   fecha_mensaje: string | null;
 }
 
-const readApiError = async (response: Response, fallback: string) => {
+export interface ChatMessagesPage {
+  messages: ChatMessage[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+export interface ChatMessagesPageOptions {
+  limit?: number;
+  beforeId?: string;
+}
+
+const readApiError = async (
+  response: Response,
+  fallback: string,
+) => {
   const data = await response.json().catch(() => ({}));
   return data?.error?.message ?? data?.message ?? fallback;
 };
 
-export const getMyConversations = async (): Promise<ConversationSummary[]> => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-  const response = await authenticatedFetch(`${baseUrl}/api/v1/chat/conversations`, {
-    credentials: 'include',
-  });
+export const getMyConversations = async (): Promise<
+  ConversationSummary[]
+> => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+  const response = await authenticatedFetch(
+    `${baseUrl}/api/v1/chat/conversations`,
+    { credentials: 'include' },
+  );
+
   if (!response.ok) {
-    throw new Error(await readApiError(response, 'No se pudieron cargar tus conversaciones'));
+    throw new Error(
+      await readApiError(
+        response,
+        'No se pudieron cargar tus conversaciones',
+      ),
+    );
   }
+
   return response.json();
 };
 
+export const getConversationMessagesPage = async (
+  conversationId: string,
+  options: ChatMessagesPageOptions = {},
+): Promise<ChatMessagesPage> => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+  const params = new URLSearchParams();
+  params.set('limit', String(options.limit ?? 30));
+
+  if (options.beforeId) {
+    params.set('beforeId', options.beforeId);
+  }
+
+  const response = await authenticatedFetch(
+    `${baseUrl}/api/v1/chat/conversations/${conversationId}/messages?${params.toString()}`,
+    { credentials: 'include' },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        'No se pudieron cargar los mensajes',
+      ),
+    );
+  }
+
+  return response.json() as Promise<ChatMessagesPage>;
+};
+
+/**
+ * Mantiene la compatibilidad con los componentes existentes
+ * que esperan recibir únicamente un arreglo de mensajes.
+ */
 export const getConversationMessages = async (
   conversationId: string,
 ): Promise<ChatMessage[]> => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-  const response = await authenticatedFetch(
-    `${baseUrl}/api/v1/chat/conversations/${conversationId}/messages`,
-    { credentials: 'include' },
-  );
-  if (!response.ok) {
-    throw new Error(await readApiError(response, 'No se pudieron cargar los mensajes'));
-  }
-  return response.json();
+  const page = await getConversationMessagesPage(conversationId);
+  return page.messages;
 };
