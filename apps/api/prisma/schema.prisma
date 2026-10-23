@@ -1000,7 +1000,6 @@ model CorreoTramite {
   estado               String    @default("pendiente") @db.VarChar(20)
   intentos             Int       @default(0) @db.SmallInt
   ultimo_error         String?   @db.Text
-  proveedor_id         String?   @db.VarChar
   fecha_envio          DateTime? @db.Timestamptz(6)
   fecha_ultimo_intento DateTime? @db.Timestamptz(6)
   created_at           DateTime  @default(now()) @db.Timestamptz(6)
