@@ -40,7 +40,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
             'La solicitud no existe o no está a tu cargo',
           );
         }
-        if (row.estado !== 'APPROVED' || row.activada_en) {
+        if (row.estado !== 'APROBADA' || row.activada_en) {
           throw new BusinessRuleError(
             'conflict',
             'ACTIVATION_NOT_ALLOWED',
@@ -83,7 +83,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
       });
     }
     const overdue: Prisma.SolicitudWhereInput = {
-      estado: 'PENDING',
+      estado: 'PENDIENTE',
       fecha_creacion: { lt: new Date(Date.now() - 48 * 3600000) },
     };
     const where: Prisma.SolicitudWhereInput = {
@@ -101,13 +101,13 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
     // Primero pendientes antiguos; luego expedientes dictaminados recientes.
     const [total, pending] = await this.prisma.$transaction([
       this.prisma.solicitud.count({ where }),
-      this.prisma.solicitud.count({ where: { AND: [where, { estado: 'PENDING' }] } }),
+      this.prisma.solicitud.count({ where: { AND: [where, { estado: 'PENDIENTE' }] } }),
     ]);
     const offset = (query.page - 1) * query.pageSize;
     const pendingRows =
       offset < pending
         ? await this.prisma.solicitud.findMany({
-            where: { AND: [where, { estado: 'PENDING' }] },
+            where: { AND: [where, { estado: 'PENDIENTE' }] },
             include: applicationInclude,
             orderBy: [{ fecha_creacion: 'asc' }, { id: 'asc' }],
             skip: offset,
@@ -118,7 +118,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
     const otherRows =
       remaining > 0
         ? await this.prisma.solicitud.findMany({
-            where: { AND: [where, { estado: { not: 'PENDING' } }] },
+            where: { AND: [where, { estado: { not: 'PENDIENTE' } }] },
             include: applicationInclude,
             orderBy: [{ fecha_creacion: 'desc' }, { id: 'asc' }],
             skip: Math.max(0, offset - pending),
@@ -179,14 +179,14 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
             'La solicitud no existe o no está a tu cargo',
           );
         }
-        if (row.estado !== 'PENDING') {
+        if (row.estado !== 'PENDIENTE') {
           throw new BusinessRuleError(
             'conflict',
             'APPLICATION_ALREADY_REVIEWED',
             'La solicitud ya fue dictaminada',
           );
         }
-        const approved = input.decision === 'APPROVED';
+        const approved = input.decision === 'APROBADA';
         const now = new Date();
         const category = approved ? null : input.category!;
         const note = approved ? null : input.note!;
@@ -227,7 +227,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
           note,
           reviewedBy: actor.id,
           reviewedAt: now.toISOString(),
-          notificationStatus: 'QUEUED' as const,
+          notificationStatus: 'EN_COLA' as const,
         };
       },
       { timeout: 15000 },
@@ -242,7 +242,7 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
           where: { id },
           include: { detalle_solicitud: true },
         });
-        if (!row || row.estado !== 'APPROVED' || row.activada_en || !row.activacion_hash) {
+        if (!row || row.estado !== 'APROBADA' || row.activada_en || !row.activacion_hash) {
           return 'invalid';
         }
         if (!row.activacion_expira_en || row.activacion_expira_en.getTime() <= Date.now()) {
