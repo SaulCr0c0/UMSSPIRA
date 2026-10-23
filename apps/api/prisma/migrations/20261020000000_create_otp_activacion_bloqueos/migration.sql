@@ -1,18 +1,6 @@
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS public.otp_activacion (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_solicitud UUID NOT NULL REFERENCES public.solicitud(id) ON DELETE CASCADE,
-    codigo_hash TEXT NOT NULL,
-    expira_en TIMESTAMPTZ NOT NULL,
-    intentos_fallidos SMALLINT NOT NULL DEFAULT 0
-        CHECK (intentos_fallidos BETWEEN 0 AND 5),
-    consumido BOOLEAN NOT NULL DEFAULT FALSE,
-    invalidado BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (expira_en > created_at),
-    CHECK (NOT (consumido AND invalidado))
-);
+
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_otp_activo_solicitud
     ON public.otp_activacion(id_solicitud)
