@@ -14,3 +14,6 @@ export interface Event {
   creatorName: string | null;
   createdAt: Date;
 }
+
+export type InactiveEventStatus = 'CANCELADO' | 'FINALIZADO';
+
