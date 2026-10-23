@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 import { ArrowLeft, Loader2, Send } from 'lucide-react';
 import { sendChatMessage } from '@/shared/services/chat-message.service';
 import {
@@ -8,36 +14,36 @@ import {
   type ChatMessage,
   type ConversationSummary,
 } from '@/shared/services/chat-conversation.service';
-import { formatChatTime, getInitials } from '../utils/format';
+import { getInitials } from '../utils/format';
 import { getChatSocket } from '@/shared/services/chat-socket';
 
-
 type IncomingChatMessage = ChatMessage & {
-    id_conversacion: string;
+  id_conversacion: string;
+};
+
+function mergeMessages(
+  current: ChatMessage[],
+  incoming: ChatMessage[],
+): ChatMessage[] {
+  const unique = new Map<string, ChatMessage>();
+
+  for (const message of [...current, ...incoming]) {
+    unique.set(message.id, message);
+  }
+
+  const timestamp = (value: string | null): number => {
+    if (!value) return 0;
+
+    const time = Date.parse(value);
+    return Number.isNaN(time) ? 0 : time;
   };
 
-  function mergeMessages(
-    current: ChatMessage[],
-    incoming: ChatMessage[],
-  ): ChatMessage[] {
-    const unique = new Map<string, ChatMessage>();
-
-    for (const message of [...current, ...incoming]) {
-      unique.set(message.id, message);
-    }
-
-    const timestamp = (value: string | null) => {
-      if (!value) return 0;
-      const time = Date.parse(value);
-      return Number.isNaN(time) ? 0 : time;
-    };
-
-    return [...unique.values()].sort(
-      (a, b) =>
-        timestamp(a.fecha_mensaje) - timestamp(b.fecha_mensaje) ||
-        a.id.localeCompare(b.id),
-    );
-  }
+  return [...unique.values()].sort(
+    (a, b) =>
+      timestamp(a.fecha_mensaje) - timestamp(b.fecha_mensaje) ||
+      a.id.localeCompare(b.id),
+  );
+}
 
 interface Props {
   conversation: ConversationSummary;
@@ -55,13 +61,30 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
   const sendingRef = useRef(false);
   const requestVersionRef = useRef(0);
 
+  // Tarea 2: controlar el desplazamiento del historial.
+  const historyRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+
   const { otherUser } = conversation;
 
-  
+  const handleHistoryScroll = () => {
+    const container = historyRef.current;
+    if (!container) return;
+
+    const distanceToBottom =
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
+
+    isAtBottomRef.current = distanceToBottom <= 48;
+  };
 
   useEffect(() => {
     const version = ++requestVersionRef.current;
     const socket = getChatSocket();
+
+    isAtBottomRef.current = true;
+    sendingRef.current = false;
 
     setMessages([]);
     setLoading(true);
@@ -69,7 +92,6 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
     setDraft('');
     setSending(false);
     setSendError(null);
-    sendingRef.current = false;
 
     const onNewMessage = (message: IncomingChatMessage) => {
       if (requestVersionRef.current !== version) return;
@@ -78,8 +100,8 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       setMessages((current) => mergeMessages(current, [message]));
     };
 
-    // Escuchar antes de consultar evita perder mensajes
-    // que lleguen mientras carga el historial.
+    // Escuchar antes de cargar el historial evita perder
+    // mensajes que lleguen mientras termina la consulta.
     socket.on('chat:new_message', onNewMessage);
 
     getConversationMessages(conversation.id)
@@ -108,6 +130,17 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       socket.off('chat:new_message', onNewMessage);
     };
   }, [conversation.id]);
+
+  // Bajar al abrir el historial y cuando llegan mensajes
+  // si el usuario ya estaba al final.
+  useLayoutEffect(() => {
+    if (loading) return;
+
+    const container = historyRef.current;
+    if (!container || !isAtBottomRef.current) return;
+
+    container.scrollTop = container.scrollHeight;
+  }, [messages, loading]);
 
   const handleSend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -144,10 +177,11 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
         const updatedMessages =
           await getConversationMessages(conversationId);
 
-        if (requestVersionRef.current === version) 
-          setMessages((current) => mergeMessages(current, updatedMessages));
-
-        
+        if (requestVersionRef.current === version) {
+          setMessages((current) =>
+            mergeMessages(current, updatedMessages),
+          );
+        }
       } catch {
         if (requestVersionRef.current === version) {
           setSendError(
@@ -170,7 +204,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 px-4 py-3">
         <button
           type="button"
@@ -196,9 +230,11 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
       </header>
 
       <div
+        ref={historyRef}
+        onScroll={handleHistoryScroll}
         aria-label="Historial de mensajes"
         aria-busy={loading}
-        className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4"
+        className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 [overflow-anchor:none]"
       >
         {loading && (
           <div className="flex items-center justify-center gap-2 p-8 text-sm text-slate-500">
@@ -233,7 +269,7 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
               }`}
             >
               <div
-                className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                className={`min-w-0 max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                   mine
                     ? 'bg-[#0F172A] text-white'
                     : 'border border-slate-200 bg-white text-slate-800'
@@ -244,15 +280,14 @@ export const ConversationPanel = ({ conversation, onBack }: Props) => {
                 </p>
 
                 <p
-                                  className={`mt-1 text-right text-[10px] ${
+                  className={`mt-1 text-right text-[10px] ${
                     mine ? 'text-slate-300' : 'text-slate-400'
                   }`}
                 >
-
-
-
                   {message.fecha_mensaje
-                    ? new Date(message.fecha_mensaje).toLocaleTimeString('es-BO', {
+                    ? new Date(
+                        message.fecha_mensaje,
+                      ).toLocaleTimeString('es-BO', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false,

@@ -218,12 +218,12 @@ const handleChooseContact = async (userId: string) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="grid md:grid-cols-[340px_1fr] gap-4 min-h-[70vh]">
+      <div className="grid h-[75dvh] min-h-[320px] grid-rows-[minmax(0,1fr)] gap-4 md:grid-cols-[340px_1fr]">
         {/* Columna izquierda: lista de conversaciones (HU-06) */}
         <aside
           className={`${
             selected ? 'hidden md:flex' : 'flex'
-          } flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
+          } min-h-0 min-w-0 flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
         >
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200">
             <h1 className="text-lg font-bold text-slate-900">Mensajes</h1>
@@ -330,7 +330,7 @@ const handleChooseContact = async (userId: string) => {
         <section
           className={`${
             selected ? 'flex' : 'hidden md:flex'
-          } flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
+          } min-h-0 min-w-0 flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
         >
           {/* CA-02 de HU-01: sesión no válida */}
           {status === 'unauthorized' && (
