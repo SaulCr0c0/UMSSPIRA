@@ -129,7 +129,13 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
     mentors.own.mockResolvedValue(mentor);
     mentors.participate.mockResolvedValue(mentor);
     mentors.deactivate.mockResolvedValue({ ...mentor, active: false });
-    mentors.directory.mockResolvedValue([{ mentor, areas: [], availability: null }]);
+    mentors.directory.mockResolvedValue({
+      entries: [
+        { mentor, areas: [], interests: [], availability: 'AVAILABLE', cargo: null, empresa: null },
+      ],
+      total: 1,
+      catalog: [],
+    });
     reports.metrics.mockResolvedValue({
       totalApplications: 2,
       approvedApplications: 1,
@@ -142,13 +148,33 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
   });
   afterAll(async () => app?.close());
 
-  it('publica únicamente la información pública del directorio', async () => {
+  it('protege el directorio y publica únicamente la información pública paginada', async () => {
+    await request(app.getHttpServer()).get('/api/v1/mentorship/profiles').expect(401);
+
     const response = await request(app.getHttpServer())
       .get('/api/v1/mentorship/profiles')
+      .set('Authorization', 'Bearer graduate')
+      .query({ offset: 0, limit: 6 })
       .expect(200);
     expect(response.body.data[0].nombre).toBe(graduate.name);
+    expect(response.body.total).toBe(1);
+    expect(response.body.catalog).toEqual([]);
     expect(JSON.stringify(response.body)).not.toContain('Dato reservado');
     expect(JSON.stringify(response.body)).not.toContain(graduate.id);
+    expect(mentors.directory).toHaveBeenCalledWith({ offset: 0, limit: 6 });
+  });
+
+  it('valida paginación y rechaza métodos de escritura para el directorio', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/mentorship/profiles')
+      .set('Authorization', 'Bearer graduate')
+      .query({ offset: -1 })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/mentorship/profiles')
+      .set('Authorization', 'Bearer graduate')
+      .expect(405);
   });
   it('exige sesión y permiso para gestionar la participación', async () => {
     await request(app.getHttpServer())
