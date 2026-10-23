@@ -2706,6 +2706,364 @@
           }
         }
       ]
+    },
+    {
+      "name": "NLP",
+      "description": "HU-1 · T1.6 — Carpeta NLP para POST /nlp/extract.\nPermiso requerido: nlp:extract. Máximo 5 000 caracteres.\nVariables usadas: {{baseUrl}}, {{accessToken}}.",
+      "item": [
+        {
+          "name": "Extraer keywords — 200 OK",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "Extrae keywords del texto del perfil. Requiere JWT con permiso nlp:extract.\n\nEspera 200 con { keywords: [{term, count}], unmapped: [{term, count}] }.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Desarrollador Backend con Node.js y TypeScript. Experiencia en API REST, PostgreSQL y Docker. Certificación AWS Certified Solutions Architect - Associate de Amazon Web Services.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Esquema de respuesta correcto', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('keywords').that.is.an('array');",
+                  "  pm.expect(json).to.have.property('unmapped').that.is.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Cada keyword tiene term y count', function () {",
+                  "  var json = pm.response.json();",
+                  "  json.keywords.forEach(function(k) {",
+                  "    pm.expect(k).to.have.property('term').that.is.a('string');",
+                  "    pm.expect(k).to.have.property('count').that.is.a('number');",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('Tiempo de respuesta menor a 1 000 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Extraer keywords — 401 Sin token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Petición sin Authorization header. Debe responder 401 Unauthorized.\n\nCA-10: sin token → 401.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Node.js TypeScript PostgreSQL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 sin token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Extraer keywords — 403 Sin permiso nlp:extract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessTokenSinPermiso}}",
+                "type": "string"
+              }
+            },
+            "description": "Token válido pero sin el permiso nlp:extract (p.ej. rol empresa o titulado sin el permiso asignado). Debe responder 403 Forbidden.\n\nCA-10: con token sin permiso nlp:extract → 403.\n\nVariable: {{accessTokenSinPermiso}} — reemplazar con un token que no tenga nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Node.js TypeScript PostgreSQL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403 sin permiso nlp:extract', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Extraer keywords — 400 Texto supera 5 000 caracteres",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "Texto de 5 001 caracteres. Debe responder 400 Bad Request con mensaje de validación.\n\nCA-6: texto > 5 000 caracteres → 400.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{textoLargo5001}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Genera un texto de 5 001 caracteres (supera el límite de 5 000)",
+                  "var texto = 'a'.repeat(5001);",
+                  "pm.variables.set('textoLargo5001', texto);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 por texto mayor a 5 000 caracteres', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene mensaje de error', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Extraer keywords — 400 Texto vacío",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "Texto vacío o ausente. Debe responder 400 Bad Request.\n\nCA-6: texto faltante o vacío → 400.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 por texto vacío', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Extraer keywords — 200 Sin keywords mapeadas (lista vacía)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "Texto sin palabras que coincidan con el diccionario. keywords debe ser [] y unmapped puede tener candidatos.\n\nCA-7: perfil sin keywords mapeadas → keywords es lista vacía.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nlp", "extract"],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Vendedor en tienda de barrio. Atención al cliente y caja registradora.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('keywords es lista vacía cuando no hay coincidencias', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.keywords).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
@@ -2868,6 +3226,12 @@
       "key": "reportStatus",
       "value": "",
       "type": "default"
+    },
+    {
+      "key": "accessTokenSinPermiso",
+      "value": "",
+      "type": "default",
+      "description": "Token JWT válido pero sin el permiso nlp:extract. Usar para el caso 403 de la carpeta NLP. NO guardar tokens reales aquí."
     }
   ]
 }
