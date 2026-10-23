@@ -1,4 +1,4 @@
-import type { DirectoryPage, Mentor } from '../../domain/entities/mentor';
+import type { DirectoryPage, Mentor, MentorDetail } from '../../domain/entities/mentor';
 import type { MentorInformationInput, ParticipationInput } from '../contracts/mentor-inputs';
 
 export interface MentorDirectoryQuery {
@@ -10,6 +10,7 @@ export const MENTOR_REPOSITORY = Symbol('MENTOR_REPOSITORY');
 
 export interface MentorRepository {
   directory(query?: MentorDirectoryQuery): Promise<DirectoryPage>;
+  detail(mentorId: string): Promise<MentorDetail | null>;
   eligible(userId: string): Promise<boolean>;
   own(userId: string): Promise<Mentor | null>;
   participate(userId: string, input: ParticipationInput): Promise<Mentor>;

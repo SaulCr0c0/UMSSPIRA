@@ -25,7 +25,7 @@
 
 ## Autenticación
 
-El directorio requiere sesión autenticada. Las operaciones propias requieren `mentores:self:write`; administración requiere `mentores:manage`.
+El directorio y el perfil detallado requieren sesión autenticada. Las operaciones propias requieren `mentores:self:write`; administración requiere `mentores:manage`.
 
 Usar Bearer del login o cookies de sesión. Las mutaciones autenticadas con cookies requieren `X-CSRF-Token`. No se aceptan headers de identidad como mecanismo de autenticación. El actor debe tener cuenta activa y un titulado asociado para participar. Usuario, titulado y mentor tienen UUID distintos.
 
@@ -214,6 +214,42 @@ El titulado del mentor debe pertenecer a una carrera asignada al administrador.
 
 ---
 
+## 17. Perfil detallado — `GET /api/v1/mentorship/profiles/:id`
+
+**Permiso:** sesión iniciada (cualquier rol). **Body/query:** ninguno. `:id` es el UUID del mentor que entrega el directorio.
+**Respuesta 200:** `{ "data": <MentorDetail> }`.
+
+```json
+{
+  "id": "uuid",
+  "nombre": "María Pérez",
+  "descripcion": "Mentora backend",
+  "experiencia": "Desarrollo de APIs",
+  "informacion_relevante": null,
+  "anios_exp": 4,
+  "foto_perfil": null,
+  "cargo": "Backend Developer",
+  "empresa": "Acme",
+  "areas": [{ "id": "uuid", "nombre": "Backend" }],
+  "intereses": [{ "id": "uuid", "nombre": "NestJS", "area": { "id": "uuid", "nombre": "Backend" } }],
+  "availabilityStatus": "AVAILABLE",
+  "puedeSolicitar": true,
+  "horarios": [{ "dia_semana": 2, "hora_inicio": "18:00", "hora_fin": "20:00" }],
+  "fecha_actualizacion": "2026-10-20"
+}
+```
+
+- Mismo filtro que el directorio: perfil activo y cuenta de titulado activa. Un mentor UNAVAILABLE tampoco es accesible por URL.
+- PAUSED o sin disponibilidad configurada se muestra con `puedeSolicitar: false`; solo AVAILABLE permite iniciar una solicitud.
+- Áreas raíz e intereses activos, ordenados por nombre. Los textos vacíos llegan como `null` y las listas vacías como `[]`.
+- `cargo` y `empresa` vienen de la experiencia laboral actual del titulado (o la más reciente); pueden ser `null`.
+- `horarios`: rangos activos de `espacio_disponible_mentor` en hora UTC `HH:mm`; `dia_semana` va de 1 (lunes) a 7 (domingo). La solicitud (HU 6.10) divide cada rango en sesiones de 1 hora y valida el bloque con `isWithinSchedule`.
+- No expone correo, teléfono, CI ni los ID de usuario o titulado.
+
+**Errores:** 401 `UNAUTHENTICATED`; 400 `VALIDATION_ERROR` si el ID no es UUID; 404 `MENTOR_NOT_FOUND` si el perfil no existe, está inactivo o no disponible.
+
+---
+
 ## Entidad `Mentor`
 
 ```json
@@ -233,7 +269,7 @@ Experiencia, años y fechas pueden ser null. DirectoryMentor agrega nombre, desc
 
 - Los cambios del mismo mentor se serializan por titulado. No se crean varios perfiles por activar concurrentemente.
 - Desactivar no elimina información; reactivar conserva el estado de disponibilidad anterior.
-- PAUSED permanece en el directorio; aceptar solicitudes exige AVAILABLE y perfil/cuenta activos.
+- PAUSED permanece en el directorio y en el perfil detallado; aceptar solicitudes exige AVAILABLE y perfil/cuenta activos.
 - La seed de demostración agrega dos áreas raíz y tres intereses sin sobreescribir filas existentes: `pnpm --filter api db:seed:demo`.
 - La ruta antigua POST eligibility ahora es GET. La desactivación recibe UUID del mentor.
 - No se migraron las utilidades de prueba status y profiles/reset. Salud está en /health.

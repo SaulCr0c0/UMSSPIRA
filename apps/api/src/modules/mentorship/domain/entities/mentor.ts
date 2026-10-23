@@ -59,3 +59,20 @@ export interface DirectoryPage {
   total: number;
   catalog: DirectoryCatalogGroup[];
 }
+
+export interface MentorSchedule {
+  weekday: number;
+  start: string;
+  end: string;
+}
+
+export interface MentorDetail {
+  mentor: Mentor;
+  areas: AreaReference[];
+  interests: MentorInterest[];
+  availability: AvailabilityStatus | null;
+  schedules: MentorSchedule[];
+  position: string | null;
+  company: string | null;
+  canRequest: boolean;
+}

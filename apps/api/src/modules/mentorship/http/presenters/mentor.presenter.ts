@@ -5,6 +5,7 @@ import type {
   Mentor,
   MentorAreas,
   MentorAvailability,
+  MentorDetail,
   MentorInterest,
 } from '../../domain/entities/mentor';
 
@@ -93,4 +94,28 @@ export function presentInterestCatalog(groups: InterestCatalogGroup[]) {
 
 export function presentAvailability(state: MentorAvailability) {
   return { availabilityStatus: state.status, fecha_actualizacion: day(state.updatedAt) };
+}
+
+export function presentMentorDetail(detail: MentorDetail) {
+  return {
+    id: detail.mentor.id,
+    nombre: detail.mentor.graduateName,
+    descripcion: detail.mentor.description,
+    experiencia: detail.mentor.experience,
+    informacion_relevante: detail.mentor.relevantInformation,
+    anios_exp: detail.mentor.experienceYears,
+    foto_perfil: detail.mentor.photoUrl,
+    cargo: detail.position,
+    empresa: detail.company,
+    areas: detail.areas.map((area) => ({ id: area.id, nombre: area.name })),
+    intereses: detail.interests.map(presentInterest),
+    availabilityStatus: detail.availability,
+    puedeSolicitar: detail.canRequest,
+    horarios: detail.schedules.map((schedule) => ({
+      dia_semana: schedule.weekday,
+      hora_inicio: schedule.start,
+      hora_fin: schedule.end,
+    })),
+    fecha_actualizacion: day(detail.mentor.updatedAt),
+  };
 }
