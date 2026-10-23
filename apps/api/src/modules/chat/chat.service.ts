@@ -1,4 +1,5 @@
 // apps/api/src/modules/chat/chat.service.ts
+// apps/api/src/modules/chat/chat.service.ts
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
@@ -90,28 +91,46 @@ export class ChatService {
       orderBy: { fecha_actualizacion: 'desc' },
     });
 
-    return conversations.map((conv) => {
-      const otherParticipant = conv.participante_conversacion_registros.find(
-        (p) => p.usuario_id !== firstUser.usuario_id,
+    return conversations
+      .map((conv) => {
+        const otherParticipant = conv.participante_conversacion_registros.find(
+          (p) => p.usuario_id !== firstUser.usuario_id,
+        );
+
+        // mensaje_registros ya viene ordenado del más nuevo al más viejo
+        const last = conv.mensaje_registros[0];
+
+        const unreadCount = conv.mensaje_registros.filter(
+          (m) => m.emisor_id !== firstUser.usuario_id && m.estado_envio !== 'leido',
+        ).length;
+
+        return {
+          id: conv.id,
+          updatedAt: conv.fecha_actualizacion,
+          unreadCount,
+          isUnread: unreadCount > 0,
+          estado: conv.estado_conversacion || 'ACEPTADO',
+          otherUser: {
+            id: otherParticipant?.usuario?.usuario_id || 'unknown',
+            name: otherParticipant?.usuario?.nombre || 'Usuario',
+            role: otherParticipant?.usuario?.rol || 'Desconocido',
+          },
+          lastMessage: last
+            ? {
+                content: last.contenido ?? '',
+                sentAt: last.fecha_mensaje,
+                senderId: last.emisor_id,
+              }
+            : null,
+          lastActivityAt:
+            last?.fecha_mensaje ?? conv.fecha_actualizacion ?? conv.fecha_creacion ?? null,
+        };
+      })
+      .sort(
+        (a, b) =>
+          (b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0) -
+          (a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0),
       );
-
-      const unreadCount = conv.mensaje_registros.filter(
-        (m) => m.emisor_id !== firstUser.usuario_id && m.estado_envio !== 'leido',
-      ).length;
-
-      return {
-        id: conv.id,
-        updatedAt: conv.fecha_actualizacion,
-        unreadCount,
-        isUnread: unreadCount > 0,
-        estado: conv.estado_conversacion || 'ACEPTADO',
-        otherUser: {
-          id: otherParticipant?.usuario?.usuario_id || 'unknown',
-          name: otherParticipant?.usuario?.nombre || 'Usuario',
-          role: otherParticipant?.usuario?.rol || 'Desconocido',
-        },
-      };
-    });
   }
 
   async getAvailableUsersToChat() {

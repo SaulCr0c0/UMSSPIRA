@@ -10,17 +10,74 @@ import {
   CheckCircle2,
   RefreshCw,
   Lock,
-  Sparkles,
 } from 'lucide-react';
 import { getChatSocket, disconnectChatSocket } from '@/shared/services/chat-socket';
+import { useConversations } from '@/features/chat/hooks/useConversations';
+import { ConversationList } from '@/features/chat/components/ConversationList';
+import { ConversationPanel } from '@/features/chat/components/ConversationPanel';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'unauthorized';
+
+function StatusBadge({ status }: { status: ConnectionStatus }) {
+  return (
+    <div
+      className="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-medium"
+      role="status"
+      aria-live="polite"
+    >
+      {status === 'connecting' && (
+        <>
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+          <span className="text-amber-700">Conectando...</span>
+        </>
+      )}
+      {status === 'connected' && (
+        <>
+          <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+          <span className="text-green-700">Conectado</span>
+        </>
+      )}
+      {status === 'reconnecting' && (
+        <>
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+          <span className="text-amber-700">Reconectando...</span>
+        </>
+      )}
+      {status === 'unauthorized' && (
+        <>
+          <Lock className="w-3.5 h-3.5 text-red-600" />
+          <span className="text-red-700">Sesión no válida</span>
+        </>
+      )}
+      {status === 'disconnected' && (
+        <>
+          <WifiOff className="w-3.5 h-3.5 text-red-600" />
+          <span className="text-red-700">Desconectado</span>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function MensajesPage() {
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [attempt, setAttempt] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const unauthorizedRef = useRef(false);
+
+  // HU-06: lista de conversaciones y conversación abierta
+  const { conversations, loading, error: listError, retry: retryList } = useConversations();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = conversations.find((c) => c.id === selectedId) ?? null;
+
+  // HU-03 redirige a /portal/mensajes?conversation=<id>
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('conversation');
+    if (id) setSelectedId(id);
+  }, []);
+
+  // Pendiente HU-03: «Iniciar chat» abrirá la búsqueda de contactos
+  const handleStartChat = useCallback(() => {}, []);
 
   // CA-05: el botón «Reintentar» abre una nueva conexión
   const retry = useCallback(() => {
@@ -80,111 +137,81 @@ export default function MensajesPage() {
   }, [attempt]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16">
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6 text-center">
-
-        {/* Ícono principal */}
-        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
-          <MessageSquare className="w-10 h-10" />
-        </div>
-
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900">Mensajes</h1>
-          <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-            <Sparkles className="w-3.5 h-3.5" />
-            Beta — en construcción
-          </p>
-        </div>
-
-        {/* CA-02, CA-03, CA-04, CA-05: indicadores visuales */}
-        <div
-          className="flex items-center space-x-2 px-4 py-2 rounded-full bg-slate-100 text-sm font-medium"
-          role="status"
-          aria-live="polite"
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="grid md:grid-cols-[340px_1fr] gap-4 min-h-[70vh]">
+        {/* Columna izquierda: lista de conversaciones (HU-06) */}
+        <aside
+          className={`${
+            selected ? 'hidden md:flex' : 'flex'
+          } flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
         >
-          {status === 'connecting' && (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-              <span className="text-amber-700">Conectando...</span>
-            </>
-          )}
-          {status === 'connected' && (
-            <>
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span className="text-green-700">Conectado</span>
-            </>
-          )}
-          {status === 'reconnecting' && (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-              <span className="text-amber-700">Reconectando...</span>
-            </>
-          )}
-          {status === 'unauthorized' && (
-            <>
-              <Lock className="w-4 h-4 text-red-600" />
-              <span className="text-red-700">Sesión no válida</span>
-            </>
-          )}
-          {status === 'disconnected' && (
-            <>
-              <WifiOff className="w-4 h-4 text-red-600" />
-              <span className="text-red-700">Desconectado</span>
-            </>
-          )}
-        </div>
-
-        {/* CA-02: sesión no válida, se pide iniciar sesión */}
-        {status === 'unauthorized' && (
-          <>
-            <p className="text-slate-500 max-w-md">
-              Tu sesión expiró o no es válida. Inicia sesión nuevamente.
-            </p>
-            <Link
-              href="/login"
-              className="flex items-center space-x-2 px-4 py-2 bg-[#0F172A] text-white rounded-xl hover:bg-slate-800 transition-colors"
-            >
-              <span>Ir a inicio de sesión</span>
-            </Link>
-          </>
-        )}
-
-        {/* CA-05: botón de reintentar si no se pudo conectar */}
-        {status === 'disconnected' && (
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={retry}
-              disabled={isRetrying}
-              aria-label="Reintentar conexión con el servidor de chat"
-              className="flex items-center space-x-2 px-4 py-2 bg-[#0F172A] text-white rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isRetrying ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              <span>{isRetrying ? 'Reintentando...' : 'Reintentar'}</span>
-            </button>
-            {attempt > 0 && (
-              <p className="text-xs text-slate-400">
-                Intento #{attempt}
-              </p>
-            )}
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200">
+            <h1 className="text-lg font-bold text-slate-900">Mensajes</h1>
+            <StatusBadge status={status} />
           </div>
-        )}
+          <ConversationList
+            conversations={conversations}
+            loading={loading}
+            error={listError}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onRetry={retryList}
+            onStartChat={handleStartChat}
+          />
+        </aside>
 
-        <p className="text-slate-500 max-w-md">
-          Aquí aparecerá tu bandeja de entrada. (Las siguientes historias se encargarán de listar las conversaciones).
-        </p>
+        {/* Columna derecha: conversación abierta o aviso */}
+        <section
+          className={`${
+            selected ? 'flex' : 'hidden md:flex'
+          } flex-col rounded-2xl border border-slate-200 bg-white/60 overflow-hidden`}
+        >
+          {/* CA-02 de HU-01: sesión no válida */}
+          {status === 'unauthorized' && (
+            <div className="flex flex-col items-center gap-3 p-4 border-b border-slate-200 text-center">
+              <p className="text-sm text-slate-500">
+                Tu sesión expiró o no es válida. Inicia sesión nuevamente.
+              </p>
+              <Link
+                href="/login"
+                className="flex items-center space-x-2 px-4 py-2 bg-[#0F172A] text-white rounded-xl hover:bg-slate-800 transition-colors"
+              >
+                <span>Ir a inicio de sesión</span>
+              </Link>
+            </div>
+          )}
 
-        {/* Checklist para el equipo: deja claro qué falta */}
-        <ul className="text-xs text-slate-400 space-y-1 mt-4">
-          <li>• Listado de conversaciones — pendiente</li>
-          <li>• Panel de chat con historial — pendiente</li>
-          <li>• Modal de nuevo chat — pendiente</li>
-        </ul>
+          {/* CA-05 de HU-01: botón de reintentar si no se pudo conectar */}
+          {status === 'disconnected' && (
+            <div className="flex flex-col items-center gap-2 p-4 border-b border-slate-200">
+              <button
+                type="button"
+                onClick={retry}
+                disabled={isRetrying}
+                aria-label="Reintentar conexión con el servidor de chat"
+                className="flex items-center space-x-2 px-4 py-2 bg-[#0F172A] text-white rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isRetrying ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                <span>{isRetrying ? 'Reintentando...' : 'Reintentar'}</span>
+              </button>
+              {attempt > 0 && <p className="text-xs text-slate-400">Intento #{attempt}</p>}
+            </div>
+          )}
 
+          {selected ? (
+            <ConversationPanel conversation={selected} onBack={() => setSelectedId(null)} />
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+              <MessageSquare className="w-8 h-8 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-900">Selecciona una conversación</p>
+              <p className="text-xs text-slate-500">para empezar a chatear.</p>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
