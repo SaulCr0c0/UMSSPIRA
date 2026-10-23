@@ -19,7 +19,7 @@ import {
   toEducation,
   toExperience,
 } from '../translators/profile.translator';
-import { lockGraduate, profileRecordMissing } from './profile-transaction';
+import { lockGraduate, profileRecordMissing, rejectProfileRecord } from './profile-transaction';
 
 const certificationInclude = {
   certificacion_respaldo_registros: {
@@ -163,7 +163,7 @@ export class PrismaProfileRepository implements ProfileRepository {
         switch (change.section) {
           case 'formacion-academica': {
             if (!(await tx.formacionAcademica.findFirst({ where, select: { id: true } }))) {
-              profileRecordMissing();
+              await rejectProfileRecord(tx.formacionAcademica.findUnique({ where: { id } }));
             }
             await this.checkEducation(tx, scope, change.data, id);
             return toEducation(
@@ -180,7 +180,7 @@ export class PrismaProfileRepository implements ProfileRepository {
           }
           case 'experiencia-laboral': {
             if (!(await tx.experienciaLaboral.findFirst({ where, select: { id: true } }))) {
-              profileRecordMissing();
+              await rejectProfileRecord(tx.experienciaLaboral.findUnique({ where: { id } }));
             }
             return toExperience(
               await tx.experienciaLaboral.update({
@@ -196,7 +196,7 @@ export class PrismaProfileRepository implements ProfileRepository {
           }
           case 'certificaciones': {
             if (!(await tx.certificacion.findFirst({ where, select: { id: true } }))) {
-              profileRecordMissing();
+              await rejectProfileRecord(tx.certificacion.findUnique({ where: { id } }));
             }
             return toCertification(
               await tx.certificacion.update({
@@ -232,14 +232,18 @@ export class PrismaProfileRepository implements ProfileRepository {
             break;
           case 'certificaciones':
             if (!(await tx.certificacion.findFirst({ where, select: { id: true } }))) {
-              profileRecordMissing();
+              await rejectProfileRecord(tx.certificacion.findUnique({ where: { id } }));
             }
             await tx.certificacionRespaldo.deleteMany({ where: { id_certificacion: id } });
             count = (await tx.certificacion.deleteMany({ where })).count;
             break;
         }
         if (!count) {
-          profileRecordMissing();
+          await rejectProfileRecord(
+            section === 'formacion-academica'
+              ? tx.formacionAcademica.findUnique({ where: { id } })
+              : tx.experienciaLaboral.findUnique({ where: { id } }),
+          );
         }
       },
       { timeout: 15000 },
@@ -255,7 +259,7 @@ export class PrismaProfileRepository implements ProfileRepository {
           select: { id: true },
         });
         if (!certificate) {
-          profileRecordMissing();
+          await rejectProfileRecord(tx.certificacion.findUnique({ where: { id: certificationId } }));
         }
         await tx.certificacionRespaldo.deleteMany({ where: { id_certificacion: certificationId } });
         const row = await tx.certificacionRespaldo.create({
