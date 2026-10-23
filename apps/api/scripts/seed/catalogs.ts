@@ -19,13 +19,18 @@ export const modalidades: Array<Prisma.ModalidadTrabajoCreateManyInput & { id: s
   { id: CATALOG_IDS.hybrid, nombre: 'Híbrido' },
 ];
 
-// Las áreas raíz se usan como especialidades; sus hijas son los intereses del mentor.
+// N28: valores de la copia; las etiquetas largas del Radar no pertenecen a esta tabla.
 export const areas: Array<Prisma.AreaCreateManyInput & { id: string }> = [
   { id: AREA_IDS.technology, nombre: 'Tecnología', padre_id: null },
   { id: AREA_IDS.management, nombre: 'Gestión', padre_id: null },
-  { id: AREA_IDS.software, nombre: 'Desarrollo de software', padre_id: AREA_IDS.technology },
+  { id: AREA_IDS.software, nombre: 'Desarrollo de software', padre_id: null },
   { id: AREA_IDS.data, nombre: 'Análisis de datos', padre_id: AREA_IDS.technology },
   { id: AREA_IDS.projects, nombre: 'Gestión de proyectos', padre_id: AREA_IDS.management },
+  { id: AREA_IDS.cloudDevops, nombre: 'Cloud/DevOps', padre_id: null },
+  { id: AREA_IDS.dataAi, nombre: 'Ciencia de Datos/IA', padre_id: null },
+  { id: AREA_IDS.qualityAssurance, nombre: 'QA', padre_id: null },
+  { id: AREA_IDS.cybersecurityNetworks, nombre: 'Ciberseguridad', padre_id: null },
+  { id: AREA_IDS.itManagement, nombre: 'Gestión TI', padre_id: null },
 ];
 
 export const tiposReporte: Array<Prisma.TipoReporteCreateManyInput & { id: string }> = [
