@@ -42,6 +42,19 @@ export const tiposReporte: Array<Prisma.TipoReporteCreateManyInput & { id: strin
   },
 ];
 
+export async function seedAreas(prisma: PrismaClient): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    // Crear faltantes sin renombrar, reubicar ni reactivar registros existentes.
+    for (const area of areas) {
+      await tx.area.upsert({
+        where: { id: area.id },
+        create: { ...area, esta_activo: true, fecha_creacion: new Date() },
+        update: {},
+      });
+    }
+  });
+}
+
 export async function seedCatalogs(prisma: PrismaClient): Promise<void> {
   await seedAccessCatalog(prisma);
   await prisma.carrera.createMany({ data: carreras, skipDuplicates: true });
