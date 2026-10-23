@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '../../../../generated/prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
-import type { MentorRepository } from '../../application/ports/mentor-repository.port';
+import type {
+  MentorDirectoryQuery,
+  MentorRepository,
+} from '../../application/ports/mentor-repository.port';
 import type {
   MentorInformationInput,
   ParticipationInput,
@@ -17,30 +21,149 @@ import {
 export class PrismaMentorRepository implements MentorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async directory() {
-    const rows = await this.prisma.mentor.findMany({
-      where: { esta_activo: true, titulado: { usuario: { estado: 'ACTIVO', rol: 'titulado' } } },
-      include: {
-        ...mentorInclude,
-        disponibilidad_mentor_registros: { orderBy: availabilityOrder, take: 1 },
-        mentor_area_registros: {
-          where: { area: { padre_id: null, esta_activo: true } },
-          include: { area: { select: { id: true, nombre: true } } },
+  async directory(query: MentorDirectoryQuery = { offset: 0 }) {
+    const visibleMentors = Prisma.sql`
+      FROM mentor AS m
+      JOIN titulado AS t ON t.id = m.id_titulado
+      JOIN usuario AS u ON u.usuario_id = t.id_usuario
+      JOIN LATERAL (
+        SELECT d.estado
+        FROM disponibilidad_mentor AS d
+        WHERE d.id_mentor = m.id
+        ORDER BY d.fecha_actualizacion DESC NULLS LAST,
+                 d.fecha_creacion DESC NULLS LAST,
+                 d.id DESC
+        LIMIT 1
+      ) AS latest_availability ON TRUE
+      WHERE m.esta_activo IS TRUE
+        AND u.estado = 'ACTIVO'
+        AND u.rol = 'titulado'
+        AND latest_availability.estado = 'AVAILABLE'
+    `;
+    const page =
+      query.limit === undefined
+        ? Prisma.empty
+        : Prisma.sql`LIMIT ${query.limit} OFFSET ${query.offset}`;
+
+    const [idRows, countRows, catalogRows] = await Promise.all([
+      this.prisma.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`
+          SELECT m.id
+          ${visibleMentors}
+          ORDER BY m.fecha_creacion DESC NULLS LAST, m.id ASC
+          ${page}
+        `,
+      ),
+      this.prisma.$queryRaw<Array<{ total: number }>>(
+        Prisma.sql`SELECT COUNT(*)::int AS total ${visibleMentors}`,
+      ),
+      this.prisma.area.findMany({
+        where: { padre_id: null, esta_activo: true },
+        orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          nombre: true,
+          hijos: {
+            where: { esta_activo: true },
+            orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+            select: { id: true, nombre: true },
+          },
         },
-      },
-      orderBy: [{ fecha_creacion: 'desc' }, { id: 'asc' }],
+      }),
+    ]);
+
+    const rows = idRows.length
+      ? await this.prisma.mentor.findMany({
+          where: { id: { in: idRows.map((row) => row.id) } },
+          include: {
+            ...mentorInclude,
+            titulado: {
+              select: {
+                nombre: true,
+                apellido: true,
+                id_carrera: true,
+                experiencia_laboral_registros: {
+                  orderBy: [
+                    { fecha_fin: { sort: 'asc', nulls: 'first' } },
+                    { fecha_inicio: 'desc' },
+                    { id: 'asc' },
+                  ],
+                  take: 1,
+                  select: { cargo: true, empresa: true },
+                },
+              },
+            },
+            disponibilidad_mentor_registros: { orderBy: availabilityOrder, take: 1 },
+            mentor_area_registros: {
+              include: {
+                area: {
+                  select: {
+                    id: true,
+                    nombre: true,
+                    padre_id: true,
+                    esta_activo: true,
+                    padre: {
+                      select: { id: true, nombre: true, padre_id: true, esta_activo: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+      : [];
+
+    const rowsById = new Map(rows.map((row) => [row.id, row]));
+    const entries = idRows.flatMap(({ id }) => {
+      const row = rowsById.get(id);
+      if (!row) {
+        return [];
+      }
+
+      const linkedAreas = row.mentor_area_registros.flatMap((link) =>
+        link.area ? [link.area] : [],
+      );
+      const areas = linkedAreas
+        .filter((area) => area.padre_id === null && area.esta_activo === true)
+        .map((area) => ({ id: area.id, name: area.nombre ?? '' }));
+      const selectedAreaIds = new Set(areas.map((area) => area.id));
+      const interests = linkedAreas.flatMap((area) =>
+        area.padre_id !== null &&
+        area.esta_activo === true &&
+        area.padre?.esta_activo === true &&
+        area.padre.padre_id === null &&
+        selectedAreaIds.has(area.padre_id)
+          ? [
+              {
+                id: area.id,
+                name: area.nombre ?? '',
+                area: { id: area.padre.id, name: area.padre.nombre ?? '' },
+              },
+            ]
+          : [],
+      );
+      const availability = toAvailability(row.disponibilidad_mentor_registros[0]).status;
+      const experience = row.titulado.experiencia_laboral_registros[0];
+      return [
+        {
+          mentor: toMentor(row),
+          availability,
+          areas,
+          interests,
+          cargo: experience?.cargo ?? null,
+          empresa: experience?.empresa ?? null,
+        },
+      ];
     });
-    return rows
-      .filter(
-        (row) => toAvailability(row.disponibilidad_mentor_registros[0]).status !== 'UNAVAILABLE',
-      )
-      .map((row) => ({
-        mentor: toMentor(row),
-        availability: toAvailability(row.disponibilidad_mentor_registros[0]).status,
-        areas: row.mentor_area_registros.flatMap((link) =>
-          link.area ? [{ id: link.area.id, name: link.area.nombre ?? '' }] : [],
-        ),
-      }));
+
+    return {
+      entries,
+      total: countRows[0]?.total ?? 0,
+      catalog: catalogRows.map((area) => ({
+        area: { id: area.id, name: area.nombre ?? '' },
+        interests: area.hijos.map((interest) => ({ id: interest.id, name: interest.nombre ?? '' })),
+      })),
+    };
   }
 
   async eligible(userId: string): Promise<boolean> {
