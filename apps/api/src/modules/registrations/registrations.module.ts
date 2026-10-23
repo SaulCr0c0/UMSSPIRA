@@ -1,3 +1,4 @@
+import { UpdateRegistrationController } from './http/controllers/update-registration.controller';
 import { GetDraftDocumentController } from './http/controllers/get-draft-document.controller';
 import { Module } from '@nestjs/common';
 import { RenewActivationController } from './http/controllers/renew-activation.controller';
@@ -25,6 +26,7 @@ import { GetApplicationDocumentController } from './http/controllers/get-applica
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
+    UpdateRegistrationController,
     GetDraftDocumentController,
     RenewActivationController,
     ListRegistrationCareersController,

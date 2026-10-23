@@ -1,3 +1,4 @@
+import { UpdateRegistrationUseCase } from '../../application/use-cases/update-registration.use-case';
 import { GetDraftDocumentUseCase } from '../../application/use-cases/get-draft-document.use-case';
 import type { Provider } from '@nestjs/common';
 import { RenewActivationUseCase } from '../../application/use-cases/renew-activation.use-case';
@@ -34,12 +35,12 @@ import { ReviewApplicationUseCase } from '../../application/use-cases/review-app
 import { ActivateRegistrationUseCase } from '../../application/use-cases/activate-registration.use-case';
 import { VerifyActivationCodeUseCase } from '../../application/use-cases/verify-activation-code.use-case';
 export const registrationsProviders: Provider[] = [
-  {
-    provide: GetDraftDocumentUseCase,
+  ...[UpdateRegistrationUseCase, GetDraftDocumentUseCase].map((useCase) => ({
+    provide: useCase,
     inject: [REGISTRATION_REPOSITORY, REGISTRATION_SECURITY],
     useFactory: (repository: RegistrationRepository, security: RegistrationSecurity) =>
-      new GetDraftDocumentUseCase(repository, security),
-  },
+      new useCase(repository, security),
+  })),
   {
     provide: RenewActivationUseCase,
     inject: [APPLICATIONS_REPOSITORY, REGISTRATION_SECURITY],

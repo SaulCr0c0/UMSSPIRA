@@ -10,6 +10,7 @@ export interface SubmitRegistrationInput {
 }
 
 export interface IssueEmailCodeInput {
+  email?: string;
   registrationId: string;
 }
 

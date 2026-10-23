@@ -47,7 +47,10 @@ export const registrationDataSchema = z.strictObject({
     .trim()
     .regex(/^\d{6,9}$/),
 });
-export const issueCodeSchema = z.strictObject({ registrationId: z.uuid() });
+export const issueCodeSchema = z.strictObject({
+  registrationId: z.uuid(),
+  email: z.string().trim().toLowerCase().pipe(z.email()).optional(),
+});
 export const verifyCodeSchema = issueCodeSchema.extend({ code: z.string().regex(/^\d{6}$/) });
 export const uploadDocumentSchema = z.strictObject({
   sessionToken: z.uuid(),

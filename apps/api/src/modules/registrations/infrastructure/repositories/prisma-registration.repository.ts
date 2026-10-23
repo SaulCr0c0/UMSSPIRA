@@ -38,6 +38,44 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
     );
   }
 
+  async updateDraft(tokenHash: string, data: RegistrationData) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const { row, draft } = await lockDraft(tx, tokenHash);
+        if (
+          !(await tx.carrera.findUnique({ where: { id: data.carreraId }, select: { id: true } }))
+        ) {
+          throw new BusinessRuleError('invalid', 'INVALID_CAREER', 'La carrera no existe');
+        }
+        await assertNoDuplicate(tx, data);
+        // Metadata interna del JSON: nunca se acepta desde el formulario público.
+        // Permite cancelar un cambio y recuperar el último correo probado por OTP.
+        const stored = row.datos as unknown as RegistrationData & { verifiedEmail?: string };
+        const verifiedEmail = row.correo_verificado
+          ? draft.data.correo
+          : (stored.verifiedEmail ?? null);
+        const changedEmail = data.correo !== draft.data.correo;
+        await tx.borradorRegistro.update({
+          where: { id: row.id },
+          data: {
+            datos: { ...data, ...(verifiedEmail ? { verifiedEmail } : {}) },
+            correo_verificado: data.correo === verifiedEmail,
+            ...(changedEmail
+              ? {
+                  codigo_hash: null,
+                  codigo_expira_en: null,
+                  codigo_enviado_en: null,
+                  codigo_intentos: 0,
+                }
+              : {}),
+          },
+        });
+        return { verifiedEmail };
+      },
+      { timeout: 15000 },
+    );
+  }
+
   async draftDocument(tokenHash: string) {
     return this.prisma.$transaction(async (tx) => {
       const { row } = await lockDraft(tx, tokenHash);
@@ -54,10 +92,22 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
     return row ? toRegistrationDraft(row) : null;
   }
 
-  async issueCode(tokenHash: string, hash: string, encryptedMail: string): Promise<string> {
+  async issueCode(
+    tokenHash: string,
+    hash: string,
+    encryptedMail: string,
+    expectedEmail?: string,
+  ): Promise<string> {
     return this.prisma.$transaction(
       async (tx) => {
         const { row } = await lockDraft(tx, tokenHash);
+        if (expectedEmail && (row.datos as unknown as RegistrationData).correo !== expectedEmail) {
+          throw new BusinessRuleError(
+            'conflict',
+            'EMAIL_CHANGED',
+            'El correo cambió. Vuelve al resumen y verifica la dirección actual',
+          );
+        }
         if (row.correo_verificado) {
           return 'verified';
         }
@@ -88,11 +138,22 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
     );
   }
 
-  async verifyCode(tokenHash: string, candidateHash: string): Promise<string> {
+  async verifyCode(
+    tokenHash: string,
+    candidateHash: string,
+    expectedEmail?: string,
+  ): Promise<string> {
     // Los intentos fallidos se confirman antes de que el caso de uso produzca el error HTTP.
     return this.prisma.$transaction(
       async (tx) => {
         const { row } = await lockDraft(tx, tokenHash);
+        if (expectedEmail && (row.datos as unknown as RegistrationData).correo !== expectedEmail) {
+          throw new BusinessRuleError(
+            'conflict',
+            'EMAIL_CHANGED',
+            'El correo cambió. Vuelve al resumen y verifica la dirección actual',
+          );
+        }
         if (row.correo_verificado) {
           return 'verified';
         }
