@@ -7,11 +7,20 @@ type SeccionAcordeonProps = {
   titulo: string;
   descripcion: string;
   cantidad: number;
+  // Estado a mostrar en lugar del número de registros (la descripción no se cuenta por registros)
+  textoCompleto?: string;
   children?: React.ReactNode;
 };
 
 // Cabecera de sección según la v3 del Figma: número o check, título en mayúsculas y estado
-export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, children }: SeccionAcordeonProps) {
+export function SeccionAcordeon({
+  numero,
+  titulo,
+  descripcion,
+  cantidad,
+  textoCompleto,
+  children,
+}: SeccionAcordeonProps) {
   const [abierta, setAbierta] = useState(false);
   const completa = cantidad > 0;
 
@@ -54,7 +63,9 @@ export function SeccionAcordeon({ numero, titulo, descripcion, cantidad, childre
               {abierta ? titulo : `${numero}. ${titulo}`}
             </span>
             <span className={`text-[13px] ${completa ? 'font-medium text-[#0F5132]' : 'text-blue-fantastic/60'}`}>
-              {completa ? `(Completado · ${cantidad} ${cantidad === 1 ? 'registro' : 'registros'})` : '(Sin iniciar)'}
+              {completa
+                ? (textoCompleto ?? `(Completado · ${cantidad} ${cantidad === 1 ? 'registro' : 'registros'})`)
+                : '(Sin iniciar)'}
             </span>
           </span>
         </span>

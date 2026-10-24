@@ -28,6 +28,8 @@ type ProfileStore = {
   addCertification: (record: NewRecord<CertificationRecord>) => void;
   updateRecord: (section: RecordSection, record: ProfileRecord) => void;
   removeRecord: (section: RecordSection, recordId: string) => void;
+  // Reemplaza la descripción con la que quedó guardada (HU-06)
+  setDescription: (description: string) => void;
 };
 
 const ProfileStoreContext = createContext<ProfileStore | null>(null);
@@ -136,6 +138,7 @@ useEffect(() => {
       addCertification: (record) => addRecord('certification', record),
       updateRecord,
       removeRecord,
+      setDescription,
     }),
     [records, description, isLoading, loadError, retryLoad, addRecord, updateRecord, removeRecord],
   );

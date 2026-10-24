@@ -10,6 +10,7 @@ import { SeccionAcordeon } from './seccion-acordeon';
 import { FormularioExperiencia, type Experiencia } from './experiencia-laboral';
 import { FormacionAcademicaForm, type FormacionAcademica } from './formacion-academica';
 import { FormularioCertificaciones, type Certificacion } from './certificaciones';
+import { FormularioDescripcion } from './descripcion-profesional';
 import {
   crearCertificacion,
   crearExperiencia,
@@ -27,7 +28,8 @@ import type {
 // returnTo: ruta interna desde la que se llegó (por ejemplo /afinidad); al terminar se vuelve ahí (E2.3)
 export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
   // Los registros vienen del estado compartido del perfil, así lo agregado aquí aparece en el resumen
-  const { records, addEducation, addExperience, addCertification } = useProfileStore();
+  const { records, description, addEducation, addExperience, addCertification, setDescription } =
+    useProfileStore();
   const router = useRouter();
   const [avisoBorrador, setAvisoBorrador] = useState(false);
   // Avance (0 a 100) de la subida del respaldo mientras se guarda una certificación
@@ -203,7 +205,16 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
           }}
         />
       </SeccionAcordeon>
- 
+      <SeccionAcordeon
+        numero={4}
+        titulo="Descripción profesional"
+        descripcion="Un resumen de quién eres como profesional"
+        cantidad={description ? 1 : 0}
+        textoCompleto="(Completado)"
+      >
+        <FormularioDescripcion descripcion={description} onGuardar={setDescription} />
+      </SeccionAcordeon>
+
           {/* Acciones finales (v3) */}
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
