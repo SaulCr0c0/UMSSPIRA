@@ -11,6 +11,7 @@ import { GetEventDraftController } from './http/controllers/get-event-draft.cont
 import { CreateEventController } from './http/controllers/create-event.controller';
 import { UpdateEventDraftController } from './http/controllers/update-event-draft.controller';
 import { PublishEventDraftController } from './http/controllers/publish-event-draft.controller';
+import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
 import { DeleteEventCoverController } from './http/controllers/delete-event-cover.controller';
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
@@ -25,6 +26,7 @@ import { UploadEventCoverController } from './http/controllers/upload-event-cove
     CreateEventController,
     UpdateEventDraftController,
     PublishEventDraftController,
+    CancelPublishedEventController,
     DeleteEventCoverController,
     ReadEventCoverController,
     UploadEventCoverController,
