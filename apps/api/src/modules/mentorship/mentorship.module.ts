@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/database/prisma.module';
+import { RegistrationsModule } from '../registrations/registrations.module';
 import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
 import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
 import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
@@ -19,8 +20,13 @@ import { AddMentorInterestsController } from './http/controllers/add-mentor-inte
 import { RemoveMentorInterestController } from './http/controllers/remove-mentor-interest.controller';
 import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
 import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
+import { CreateMentorshipRequestController } from './http/controllers/create-mentorship-request.controller';
+import { ListReceivedMentorshipRequestsController } from './http/controllers/list-received-mentorship-requests.controller';
+import { GetReceivedMentorshipRequestController } from './http/controllers/get-received-mentorship-request.controller';
+import { AcceptMentorshipRequestController } from './http/controllers/accept-mentorship-request.controller';
+import { RejectMentorshipRequestController } from './http/controllers/reject-mentorship-request.controller';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RegistrationsModule],
   controllers: [
     ListMentorProfilesController,
     GetMentorDetailController,
@@ -39,6 +45,11 @@ import { SetMentorAvailabilityController } from './http/controllers/set-mentor-a
     RemoveMentorInterestController,
     GetMentorAvailabilityController,
     SetMentorAvailabilityController,
+    CreateMentorshipRequestController,
+    ListReceivedMentorshipRequestsController,
+    GetReceivedMentorshipRequestController,
+    AcceptMentorshipRequestController,
+    RejectMentorshipRequestController,
   ],
   providers: mentorshipProviders,
   exports: [MENTOR_AVAILABILITY_REPOSITORY],

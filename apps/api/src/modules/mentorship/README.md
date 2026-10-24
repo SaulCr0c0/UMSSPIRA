@@ -1,6 +1,6 @@
 # Directorio y perfil de mentores
 
-Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. Las solicitudes de mentoría y los calendarios corresponden a otros sprints.
+Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. `POST /api/v1/mentorship/requests` crea solicitudes pendientes y valida que el titulado, el mentor y el horario cumplan las reglas. `GET /api/v1/mentorship/requests` lista solicitudes recibidas del mentor autenticado (página máxima de 20); `GET /api/v1/mentorship/requests/:id` consulta el detalle. `PATCH /api/v1/mentorship/requests/:id/accept` y `PATCH /api/v1/mentorship/requests/:id/reject` responden solicitudes pendientes. La aceptación crea una conexión en la misma transacción y las respuestas encolan correo usando el worker SMTP existente. No requieren cambios de tablas ni migraciones.
 
 ## Rutas y acceso
 
