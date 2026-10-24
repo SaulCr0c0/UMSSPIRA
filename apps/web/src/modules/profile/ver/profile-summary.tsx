@@ -7,7 +7,9 @@ import DownloadProfileButton from '@/modules/profile/components/download-profile
 import { profileHeader } from '@/modules/profile/data/profile-data';
 import AffinityLinkCard from '@/modules/profile/ver/affinity-link-card';
 import ProfessionalDescription from '@/modules/profile/ver/professional-description';
+import ProfileCompleteness from '@/modules/profile/ver/profile-completeness';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
+import { profileCompleteness } from '@/modules/profile/utils/profile-completeness';
 import { recordsToTimeline } from '@/modules/profile/utils/records-to-timeline';
 import { sortSectionsByRecency } from '@/modules/profile/utils/sort-by-recency';
 import Timeline from '@/shared/components/timeline';
@@ -21,6 +23,7 @@ export default function ProfileSummary() {
     .flatMap((section) => section.items)
     .filter((item) => item.status === 'verified').length;
   const experiences = records.experience.length;
+  const completeness = profileCompleteness(records, description);
 
   if (isLoading) {
   return <p role="status">Cargando tu perfil…</p>;
@@ -92,6 +95,7 @@ if (loadError) {
               </li>
             </ul>
           </aside>
+          <ProfileCompleteness completeness={completeness} />
           <AffinityLinkCard />
         </div>
 

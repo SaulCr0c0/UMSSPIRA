@@ -20,6 +20,7 @@ import {
 } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import { urlDeArchivo } from '@/modules/profile/utils/backup-url';
+import { profileCompleteness } from '@/modules/profile/utils/profile-completeness';
 import type {
   CertificationRecord,
   EducationRecord,
@@ -78,8 +79,9 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
     [records.certification],
   );
  
-  const cantidades = [formaciones.length, experiencias.length, certificaciones.length];
-  const completas = cantidades.filter((cantidad) => cantidad > 0).length;
+  // Mismo cálculo que el indicador del resumen: las 3 secciones de registros y la descripción
+  const secciones = profileCompleteness(records, description).sections;
+  const completas = secciones.filter((seccion) => seccion.complete).length;
  
   return (
     <div className="flex flex-col gap-6">
@@ -89,7 +91,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
           <h1 className="text-2xl font-bold text-blue-fantastic md:text-[28px]">Completar Perfil Profesional</h1>
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-sm font-semibold text-truffle-trouble">
-              {completas} de 3 secciones completas
+              {completas} de {secciones.length} secciones completas
             </span>
             {returnTo && (
               <Link
@@ -109,7 +111,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
             </Link>
           </div>
         </div>
-        <BarraProgreso completas={completas} total={3} />
+        <BarraProgreso completas={completas} total={secciones.length} />
       </header>
  
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
