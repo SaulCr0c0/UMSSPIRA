@@ -20,10 +20,11 @@
 - `POST /api/v1/events/covers` — cargar portada.
 - `DELETE /api/v1/events/covers/:id` — eliminar portada propia sin usar.
 - `GET /api/v1/events/covers/:id` — leer imagen pública o previsualización propia.
+- `POST /api/v1/events/:id/registrations` — confirmar la inscripción del Titulado autenticado.
 
 ## Autenticación
 
-La gestión requiere permiso `eventos:manage` y propiedad por usuario creador. Usar Bearer o cookies del login; las mutaciones con cookie requieren X-CSRF-Token. Los IDs de usuario, roles y cabeceras aportados por el cliente no asignan propiedad.
+La gestión requiere permiso `eventos:manage` y propiedad por usuario creador. La inscripción requiere rol `titulado`. Usar Bearer o cookies del login; las mutaciones con cookie requieren X-CSRF-Token. Los IDs de usuario, roles y cabeceras aportados por el cliente no asignan propiedad.
 
 Catálogo y detalle publicado son públicos. Las portadas de eventos publicados también; las de borradores o cargas aún sin vincular requieren sesión del propietario y permiso de gestión. La autenticación opcional de esta lectura no hace públicos los borradores: la consulta de persistencia comprueba publicación o propiedad.
 
@@ -206,6 +207,26 @@ En ambos casos el evento deja de aparecer en la gestión activa y en el catálog
 **Respuesta 200:** `{ "data": { "id": "uuid", "registrationsCount": 0, "passesCount": 0 } }`. Los conteos describen las relaciones que se conservaron al retirar.
 
 **Errores:** 400 `VALIDATION_ERROR` para un ID inválido; 404 `EVENT_NOT_FOUND` si el evento no existe, está archivado o no pertenece al creador; 409 `EVENT_NOT_RETIRABLE` si el evento está `PUBLICADO` y aún no ha finalizado (debe cancelarse primero o esperar su finalización).
+## 12. Inscribirse — `POST /api/v1/events/:id/registrations`
+
+**Rol:** `titulado`. **Params:** UUID de evento. **Body:** ninguno.
+
+**Respuesta 201**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "eventId": "uuid",
+    "status": "CONFIRMADA",
+    "registeredAt": "2027-06-01T14:00:00.000Z",
+    "currentCapacity": 24
+  }
+}
+```
+
+Dentro de una transacción se bloquea el evento, se vuelve a comprobar PUBLICADO, vigencia y cupo, y se cuentan las inscripciones CONFIRMADA. El índice parcial de PostgreSQL evita una segunda confirmación del mismo usuario y evento. Un registro CANCELADA previo se conserva y permite una nueva inscripción.
+
+**Errores:** 400 `VALIDATION_ERROR`; 404 `EVENT_NOT_FOUND`; 409 `EVENT_NOT_AVAILABLE`, `EVENT_CAPACITY_REACHED` o `EVENT_REGISTRATION_ALREADY_CONFIRMED`.
 
 ---
 
@@ -258,6 +279,8 @@ Estos conteos indican si, al retirar, el evento se archivará (baja lógica) o s
 
 ## Casos borde
 
+- Las inscripciones CONFIRMADA reservan cupo. La cancelación y asistencia no se implementan en este módulo; una CANCELADA histórica no bloquea una nueva confirmación.
+- HU3 no genera pase QR. HU10 debe asociar su pase único en una integración posterior; no se debe declarar el flujo integral de QR como completado hasta entonces.
 - Se conserva el alcance previo de inscripciones, asistencia y control de cupos ocupados. La cancelación invalida los QR vigentes del evento, pero no implementa por sí sola la gestión de asistencia ni el control de plazas ocupadas. maxCapacity describe el cupo configurado, no reserva plazas.
 - La portada tiene FK y un único evento asociado. El servidor no confía en una URL arbitraria para establecer propiedad.
 - Los bytes se guardan en PostgreSQL con RLS; las lecturas pasan por la API. No existe un bucket público de Supabase.

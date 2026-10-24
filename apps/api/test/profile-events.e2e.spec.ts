@@ -59,6 +59,14 @@ const event = {
   creatorName: 'Administración',
   createdAt: new Date(),
 };
+const eventRegistration = {
+  id: randomUUID(),
+  eventId,
+  userId: graduate.id,
+  status: 'CONFIRMADA' as const,
+  registeredAt: new Date(),
+  currentCapacity: 1,
+};
 const profile = {
   graduate: { id: graduateId, name: 'María Pérez', career: 'Sistemas', cohort: null },
   education: [],
@@ -87,6 +95,7 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
     create: jest.fn(),
     updateDraft: jest.fn(),
     publishDraft: jest.fn(),
+    register: jest.fn(),
     cancelPublished: jest.fn(),
     saveCover: jest.fn(),
     removeCover: jest.fn(),
@@ -143,6 +152,7 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
     events.create.mockResolvedValue(event);
     events.catalog.mockResolvedValue([]);
     events.findOwned.mockResolvedValue(event);
+    events.register.mockResolvedValue(eventRegistration);
   });
   afterAll(async () => app?.close());
 
@@ -289,6 +299,48 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
       .expect(201);
     expect(events.create).toHaveBeenCalledWith(admin.id, { ...eventInput, status: 'BORRADOR' });
     expect(response.body.data.status).toBe('BORRADOR');
+  });
+
+  it('inscribe al titulado autenticado sin aceptar una identidad del cliente', async () => {
+    await request(app.getHttpServer()).post('/api/v1/events/' + eventId + '/registrations').expect(401);
+    await request(app.getHttpServer())
+      .post('/api/v1/events/' + eventId + '/registrations')
+      .set('Authorization', 'Bearer admin')
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/api/v1/events/no-uuid/registrations')
+      .set('Authorization', 'Bearer graduate')
+      .expect(400);
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/events/' + eventId + '/registrations')
+      .set('Authorization', 'Bearer graduate')
+      .set('x-user-id', randomUUID())
+      .expect(201);
+
+    expect(events.register).toHaveBeenCalledWith(graduate.id, eventId);
+    expect(response.body.data).toEqual({
+      id: eventRegistration.id,
+      eventId,
+      status: 'CONFIRMADA',
+      registeredAt: eventRegistration.registeredAt.toISOString(),
+      currentCapacity: 1,
+    });
+  });
+
+  it.each([
+    ['evento no disponible', 'EVENT_NOT_AVAILABLE'],
+    ['sin cupos', 'EVENT_CAPACITY_REACHED'],
+    ['inscripciÃ³n duplicada', 'EVENT_REGISTRATION_ALREADY_CONFIRMED'],
+  ])('expone el error de negocio al inscribirse: %s', async (_scenario, code) => {
+    events.register.mockRejectedValue(new BusinessRuleError('conflict', code, 'No disponible'));
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/events/' + eventId + '/registrations')
+      .set('Authorization', 'Bearer graduate')
+      .expect(409);
+
+    expect(response.body.error.code).toBe(code);
   });
 
   it.each([

@@ -16,6 +16,8 @@ import { CancelPublishedEventUseCase } from '../../application/use-cases/cancel-
 import { DeleteEventCoverUseCase } from '../../application/use-cases/delete-event-cover.use-case';
 import { ReadEventCoverUseCase } from '../../application/use-cases/read-event-cover.use-case';
 import { UploadEventCoverUseCase } from '../../application/use-cases/upload-event-cover.use-case';
+import { RegisterEventUseCase } from '../../application/use-cases/register-event.use-case';
+
 import { ListInactiveEventsUseCase } from '../../application/use-cases/list-inactive-events.use-case';
 import { RetireEventUseCase } from '../../application/use-cases/retire-event.use-case';
 export const eventsProviders: Provider[] = [
@@ -60,6 +62,11 @@ export const eventsProviders: Provider[] = [
     provide: PublishEventDraftUseCase,
     inject: [EVENTS_REPOSITORY],
     useFactory: (repository: EventsRepository) => new PublishEventDraftUseCase(repository),
+  },
+ {
+    provide: RegisterEventUseCase,
+    inject: [EVENTS_REPOSITORY],
+    useFactory: (repository: EventsRepository) => new RegisterEventUseCase(repository),
   },
   {
     provide: CancelPublishedEventUseCase,
