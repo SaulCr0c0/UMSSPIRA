@@ -186,9 +186,12 @@ describe('GraduateAffinityView', () => {
     affinityService.recalculateAffinity as jest.Mock;
   const mockGetAffinityVector =
     affinityService.getAffinityVector as jest.Mock;
+  const originalSimulationControls =
+    process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS = 'true';
 
     mockGetAffinityVector.mockResolvedValue(makeVector());
     mockGetAffinityConfig.mockResolvedValue({
@@ -202,6 +205,14 @@ describe('GraduateAffinityView', () => {
       ],
     });
     mockRecalculateAffinity.mockResolvedValue(makeVector());
+  });
+
+  afterAll(() => {
+    if (originalSimulationControls === undefined) {
+      delete process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS;
+    } else {
+      process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS = originalSimulationControls;
+    }
   });
 
   it('carga el radar inicial desde el servicio', async () => {
@@ -607,4 +618,115 @@ describe('GraduateAffinityView', () => {
     const link = await screen.findByRole('link', { name: /Volver a mi perfil/i });
     expect(link).toHaveAttribute('href', '/profile');
   });
+
+  it('muestra +8 % y \u22123 % en la barra del resumen con afinidad previa', async () => {
+    const areas = recalculatedAreas.map((area) => {
+      if (area.area === 'software-development') {
+        return { ...area, affinity: 83, previousAffinity: 75 };
+      }
+      if (area.area === 'cloud-devops') {
+        return { ...area, affinity: 61, previousAffinity: 64 };
+      }
+      return { ...area, previousAffinity: null };
+    });
+
+    mockGetAffinityVector.mockResolvedValueOnce(makeVector(areas));
+
+    render(<GraduateAffinityView />);
+
+    expect(await screen.findByText('+8 %')).toBeInTheDocument();
+    expect(screen.getByText('\u22123 %')).toBeInTheDocument();
+  });
+
+  it('no muestra indicadores de variación en el primer cálculo', async () => {
+    mockGetAffinityVector.mockResolvedValueOnce(makeVector());
+
+    render(<GraduateAffinityView />);
+
+    await screen.findByText('Resumen de tu afinidad');
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('conserva la variación cuando el servidor devuelve recalculated false', async () => {
+    const initialAreas = recalculatedAreas.map((area) => {
+      if (area.area === 'software-development') {
+        return { ...area, affinity: 83, previousAffinity: 75 };
+      }
+      return { ...area, previousAffinity: null };
+    });
+    const noRecalculatedAreas = recalculatedAreas.map((area) => {
+      if (area.area === 'software-development') {
+        return { ...area, affinity: 90, previousAffinity: 83 };
+      }
+      return { ...area, previousAffinity: null };
+    });
+
+    mockGetAffinityVector.mockResolvedValueOnce(makeVector(initialAreas));
+    mockRecalculateAffinity.mockResolvedValueOnce({
+      ...makeVector(noRecalculatedAreas),
+      recalculated: false,
+    });
+
+    render(<GraduateAffinityView />);
+
+    expect(await screen.findByText('+8 %')).toBeInTheDocument();
+
+    await clickSimulateProfileChange();
+
+    await waitFor(() => {
+      expect(mockRecalculateAffinity).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByText('+8 %')).toBeInTheDocument();
+    expect(screen.queryByText('90%')).not.toBeInTheDocument();
+  });
+
+  it('resalta solo los ejes cuyo porcentaje entero cambió tras recalcular', async () => {
+    const initialAreas = recalculatedAreas.map((area) => {
+      if (area.area === 'software-development') {
+        return { ...area, affinity: 85.4 };
+      }
+      return area;
+    });
+    const nextAreas = recalculatedAreas.map((area) => {
+      if (area.area === 'software-development') {
+        return { ...area, affinity: 85.2 };
+      }
+      if (area.area === 'cloud-devops') {
+        return { ...area, affinity: 66.2 };
+      }
+      return area;
+    });
+
+    mockGetAffinityVector.mockResolvedValueOnce(makeVector(initialAreas));
+    mockRecalculateAffinity.mockResolvedValueOnce(makeVector(nextAreas));
+
+    render(<GraduateAffinityView />);
+
+    await screen.findByText('Resumen de tu afinidad');
+
+    await clickSimulateProfileChange();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('radar')).toHaveAttribute(
+        'data-changed',
+        JSON.stringify(['cloud-devops']),
+      );
+    });
+  });
+
+  it('oculta los controles de simulación cuando NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS no está activo', async () => {
+    process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS = 'false';
+
+    render(<GraduateAffinityView />);
+
+    await screen.findByText('Resumen de tu afinidad');
+
+    expect(
+      screen.queryByRole('button', { name: /simular actualización del radar/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Simular Timeout/i)).not.toBeInTheDocument();
+  });
+
 });

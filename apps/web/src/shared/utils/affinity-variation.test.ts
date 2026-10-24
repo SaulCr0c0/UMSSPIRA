@@ -16,6 +16,12 @@ describe('calculateVariation', () => {
     expect(calculateVariation(40.2, 40.4)).toBeNull();
   });
 
+  it('resuelve el redondeo en el límite con los enteros mostrados', () => {
+    expect(calculateVariation(49.6, 50.4)).toBeNull();
+    expect(calculateVariation(49.4, 50.4)).toBe(-1);
+    expect(calculateVariation(50.4, 49.4)).toBe(1);
+  });
+
   it('calcula el delta con los porcentajes ya redondeados', () => {
     expect(calculateVariation(82.5, 75)).toBe(8);
     expect(calculateVariation(82.4, 75)).toBe(7);
