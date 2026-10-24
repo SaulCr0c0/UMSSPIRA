@@ -74,7 +74,7 @@ if (loadError) {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         {/* Columna izquierda: resumen (solo escritorio) y acceso a la afinidad (Épica 3) */}
         <div className="flex w-full shrink-0 flex-col gap-6 lg:w-[300px]">
-          <aside className="hidden w-full flex-col gap-4 rounded-2xl border border-abyssal-blue/10 bg-white p-6 lg:flex">
+          <aside className="flex w-full flex-col gap-4 rounded-2xl border border-abyssal-blue/10 bg-white p-6">
             <h2 className="text-xl font-bold text-blue-fantastic">Resumen del Perfil</h2>
             <p className="text-[13px] leading-[1.5] text-blue-fantastic/70">
               Este es el resumen digital de tu trayectoria académica y laboral registrada en la UMSS.

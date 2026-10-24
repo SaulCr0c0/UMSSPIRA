@@ -241,3 +241,20 @@ export async function subirRespaldo(
   }
   onProgreso?.(100);
 }
+
+// GET /api/v1/perfil/certificaciones/:id/respaldo/enlace (T10.1) -> enlace firmado que vence en 5 minutos.
+// 403 si el respaldo es ajeno, 404 si la certificación no tiene respaldo
+export type EnlaceRespaldoApi = {
+  url: string;
+  expiraEn: string;
+};
+
+// Se pide uno nuevo en cada apertura del visor: el anterior pudo haber vencido
+export async function obtenerEnlaceRespaldo(idCertificacion: string): Promise<EnlaceRespaldoApi> {
+  return apiFetch<EnlaceRespaldoApi>(`${PERFIL_URL}/certificaciones/${idCertificacion}/respaldo/enlace`);
+}
+
+// El mismo enlace con descargar=1 hace que la API responda como adjunto y el navegador baje el JPG
+export function enlaceDeDescarga(url: string): string {
+  return `${url}${url.includes('?') ? '&' : '?'}descargar=1`;
+}

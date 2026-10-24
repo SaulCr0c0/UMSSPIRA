@@ -5,6 +5,7 @@ import { recordsToTimeline } from '@/modules/profile/utils/records-to-timeline';
 export type BackupStatus = 'verified' | 'pending' | 'missing';
 
 export type TimelineItem = {
+  id?: string;
   title: string;
   subtitle: string;
   date?: string;
