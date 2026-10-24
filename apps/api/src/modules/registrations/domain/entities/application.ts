@@ -31,11 +31,11 @@ export interface ApplicationPage {
 export interface ReviewResult {
   id: string;
   applicationId: string;
-  decision: Exclude<ApplicationStatus, 'PENDING'>;
-  status: Exclude<ApplicationStatus, 'PENDING'>;
+  decision: Exclude<ApplicationStatus, 'PENDIENTE'>;
+  status: Exclude<ApplicationStatus, 'PENDIENTE'>;
   category: string | null;
   note: string | null;
   reviewedBy: string;
   reviewedAt: string;
-  notificationStatus: 'QUEUED';
+  notificationStatus: 'EN_COLA';
 }
