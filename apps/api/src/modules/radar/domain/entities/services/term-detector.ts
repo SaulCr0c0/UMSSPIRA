@@ -6,7 +6,7 @@ export type RadarArea =
   | 'quality-assurance'
   | 'cybersecurity-networks'
   | 'it-management';
-import type { RadarArea } from '@umsspira/shared-types';
+
 // Define el tipo para los términos del diccionario
 export type DictionaryTerm = {
   canonical: string;

@@ -6,7 +6,7 @@ export type AffinityArea =
   | 'quality-assurance'
   | 'cybersecurity-networks'
   | 'it-management';
-import type { AffinityArea } from '@umsspira/shared-types';
+
 
 // Define el tipo básico que usarás, basado en el contrato de la API
 
