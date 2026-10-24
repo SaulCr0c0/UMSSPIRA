@@ -6,7 +6,13 @@ import type { StoredFile } from '../../../../shared/files/contracts/uploaded-fil
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
 import type { EventsRepository } from '../../application/ports/events-repository.port';
 import type { CreateEventInput, EventInput } from '../../application/contracts/event-inputs';
-import { assertDraft, validateEventDates } from '../../domain/policies/event.policy';
+import {
+  assertDraft,
+  assertRetirable,
+  inactiveStatus,
+  validateEventDates,
+} from '../../domain/policies/event.policy';
+import type { InactiveEvent, RetiredEvent } from '../../domain/entities/event';
 import { toEvent } from '../translators/event.translator';
 
 const eventInclude = { usuario: { select: { nombre: true } } };
@@ -42,7 +48,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   async owned(ownerId: string) {
     const rows = await this.prisma.evento.findMany({
-      where: { id_usuario: ownerId },
+      where: { id_usuario: ownerId, archivado: false },
       include: eventInclude,
       orderBy: [{ fecha_creacion: 'desc' }, { id: 'asc' }],
     });
@@ -51,7 +57,7 @@ export class PrismaEventsRepository implements EventsRepository {
 
   async findOwned(ownerId: string, id: string) {
     const row = await this.prisma.evento.findFirst({
-      where: { id, id_usuario: ownerId },
+      where: { id, id_usuario: ownerId, archivado: false },
       include: eventInclude,
     });
     if (!row) {
@@ -126,6 +132,86 @@ export class PrismaEventsRepository implements EventsRepository {
             include: eventInclude,
           }),
         );
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async inactive(ownerId: string, now: Date): Promise<InactiveEvent[]> {
+    const rows = await this.prisma.evento.findMany({
+      where: {
+        id_usuario: ownerId,
+        archivado: false,
+        OR: [{ estado: 'CANCELADO' }, { fecha_fin: { lte: now } }],
+      },
+      include: eventInclude,
+      orderBy: [{ fecha_inicio: 'desc' }, { id: 'asc' }],
+    });
+    return Promise.all(
+      rows.map(async (row) => {
+        const event = toEvent(row);
+        const status = inactiveStatus(event, now);
+        if (!status) {
+          throw new Error('Evento inactivo inconsistente');
+        }
+        return {
+          ...event,
+          inactiveStatus: status,
+          ...(await this.relationCounts(this.prisma, row.id)),
+        };
+      }),
+    );
+  }
+
+  async retire(ownerId: string, id: string, now: Date): Promise<RetiredEvent> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.lockOwned(tx, ownerId, id);
+        assertRetirable(toEvent(row), now);
+        const counts = await this.relationCounts(tx, id);
+        await tx.evento.update({
+          where: { id, id_usuario: ownerId, archivado: false },
+          data: { archivado: true, fecha_archivado: now },
+        });
+        return { id, ...counts };
+      },
+      { timeout: 15000 },
+    );
+  }
+
+  async cancelPublished(ownerId: string, id: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.lockOwned(tx, ownerId, id);
+
+        if (row.estado !== 'PUBLICADO') {
+          throw new BusinessRuleError(
+            'conflict',
+            'EVENT_NOT_PUBLISHED',
+            'El evento debe estar PUBLICADO para poder cancelarlo',
+          );
+        }
+
+        const cancelled = await tx.evento.update({
+          where: {
+            id,
+            id_usuario: ownerId,
+            estado: 'PUBLICADO',
+            archivado: false,
+          },
+          data: { estado: 'CANCELADO' },
+          include: eventInclude,
+        });
+
+        await tx.paseQr.updateMany({
+          where: {
+            estado: 'VIGENTE',
+            inscripcion: { is: { id_evento: id } },
+          },
+          data: { estado: 'INVALIDADO' },
+        });
+
+        return toEvent(cancelled);
       },
       { timeout: 15000 },
     );
@@ -208,6 +294,17 @@ export class PrismaEventsRepository implements EventsRepository {
       ubicacion: input.location ?? null,
       ...(input.coverId !== undefined ? { id_portada: input.coverId } : {}),
     };
+  }
+
+  private async relationCounts(
+    client: Prisma.TransactionClient | PrismaService,
+    eventId: string,
+  ) {
+    const [registrationsCount, passesCount] = await Promise.all([
+      client.inscripcionEvento.count({ where: { id_evento: eventId } }),
+      client.paseQr.count({ where: { inscripcion: { id_evento: eventId } } }),
+    ]);
+    return { registrationsCount, passesCount };
   }
 
   private async lockOwned(tx: Prisma.TransactionClient, ownerId: string, id: string) {

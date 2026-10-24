@@ -14,6 +14,7 @@
 - `POST /api/v1/events` — crear evento.
 - `PATCH /api/v1/events/drafts/:id` — editar borrador.
 - `PATCH /api/v1/events/drafts/:id/publish` — publicar borrador.
+- `PATCH /api/v1/events/:id/cancel` — cancelar evento publicado propio.
 - `POST /api/v1/events/covers` — cargar portada.
 - `DELETE /api/v1/events/covers/:id` — eliminar portada propia sin usar.
 - `GET /api/v1/events/covers/:id` — leer imagen pública o previsualización propia.
@@ -69,6 +70,7 @@ Solo PUBLICADO, con fecha de fin posterior al momento actual y cupo entre 1 y 10
 **Permiso:** `eventos:manage`.
 
 **Body**
+
 ```json
 {
   "title": "Feria profesional",
@@ -116,13 +118,34 @@ Comprueba propiedad, estado, fechas y cupo dentro de la transacción. Dos public
 
 **Errores:** 404 `EVENT_NOT_FOUND`; 409 `EVENT_NOT_DRAFT`; 400 `INVALID_EVENT_DATES` o `INVALID_EVENT_CAPACITY`.
 
-## 9. Cargar portada — `POST /api/v1/events/covers`
+## 9. Cancelar evento publicado — `PATCH /api/v1/events/:id/cancel`
+
+**Permiso:** `eventos:manage`. **Params:** ID UUID del evento propio.
+**Body:** ninguno.
+
+Cancela un evento propio que se encuentre en estado PUBLICADO.
+La operación se ejecuta dentro de una transacción: el evento pasa a
+CANCELADO y los pases QR en estado VIGENTE asociados a sus inscripciones
+se invalidan con estado INVALIDADO.
+
+No permite cancelar eventos en BORRADOR ni eventos que ya no estén
+PUBLICADO.
+
+**Respuesta 200:** `{ "data": <EventItem> }`, con `status: "CANCELADO"`.
+
+**Errores:** 400 `VALIDATION_ERROR` para un ID inválido; 404
+`EVENT_NOT_FOUND` si el evento no existe, está archivado o no pertenece
+al creador autenticado; 409 `EVENT_NOT_PUBLISHED` si el evento no está
+PUBLICADO.
+
+## 10. Cargar portada — `POST /api/v1/events/covers`
 
 **Permiso:** `eventos:manage`. **Body:** multipart/form-data con archivo en `file`.
 
 JPG/JPEG, PNG o WebP; extensión coherente con firma binaria, máximo 5 MiB (5 242 880 bytes).
 
 **Respuesta 201**
+
 ```json
 {
   "data": {
@@ -136,7 +159,7 @@ La ruta es relativa al origen de la API. Puede previsualizarse con sesión propi
 
 **Errores:** 400 `COVER_REQUIRED` o `INVALID_IMAGE`; 413 `PAYLOAD_TOO_LARGE`.
 
-## 10. Eliminar portada temporal — `DELETE /api/v1/events/covers/:id`
+## 11. Eliminar portada temporal — `DELETE /api/v1/events/covers/:id`
 
 **Permiso:** `eventos:manage`. **Params:** UUID de portada propia.
 
@@ -144,7 +167,7 @@ La ruta es relativa al origen de la API. Puede previsualizarse con sesión propi
 
 **Errores:** 404 `COVER_NOT_FOUND`; 409 `COVER_IN_USE`. Al cancelar la creación o descartar una carga, el frontend puede usar esta operación; no se necesita enviar la URL completa como query.
 
-## 11. Leer portada — `GET /api/v1/events/covers/:id`
+## 12. Leer portada — `GET /api/v1/events/covers/:id`
 
 **Permiso:** público si está vinculada a un evento PUBLICADO; en otro caso, creador autenticado con `eventos:manage`.
 
@@ -173,24 +196,24 @@ La ruta es relativa al origen de la API. Puede previsualizarse con sesión propi
 }
 ```
 
-description, location, imageUrl y creatorName pueden ser null. Los estados reconocidos son BORRADOR, PUBLICADO y CANCELADO; esta entrega no agrega una operación de cancelación.
+description, location, imageUrl y creatorName pueden ser null. Los estados reconocidos son BORRADOR, PUBLICADO y CANCELADO. La operación de cancelación permite pasar de PUBLICADO a CANCELADO; no permite cancelar un borrador.
 
 ## Casos borde
 
-- Se conserva el alcance previo: no se añadieron inscripciones, cancelación, asistencia ni control de cupos ocupados. maxCapacity describe el cupo configurado, no reserva plazas.
+- Se conserva el alcance previo de inscripciones, asistencia y control de cupos ocupados. La cancelación invalida los QR vigentes del evento, pero no implementa por sí sola la gestión de asistencia ni el control de plazas ocupadas. maxCapacity describe el cupo configurado, no reserva plazas.
 - La portada tiene FK y un único evento asociado. El servidor no confía en una URL arbitraria para establecer propiedad.
 - Los bytes se guardan en PostgreSQL con RLS; las lecturas pasan por la API. No existe un bucket público de Supabase.
 - El frontend conserva sus URLs antiguas y espera varias respuestas sin sobre data. Habrá que adaptar esa integración; no se modificó en esta entrega.
 
 ## Equivalencia con el backend anterior
 
-| Anterior | Actual |
-| --- | --- |
-| /api/events/catalog | /api/v1/events/catalog |
-| /api/events/:id | /api/v1/events/:id |
-| /api/events/admin | /api/v1/events/owned |
-| /api/events/admin/event/:id | /api/v1/events/owned/:id |
-| GET y PATCH /api/events/admin/:id | GET y PATCH /api/v1/events/drafts/:id |
-| PATCH /api/events/admin/:id/publish | PATCH /api/v1/events/drafts/:id/publish |
-| POST /api/events/admin/cover | POST /api/v1/events/covers |
-| DELETE /api/events/admin/cover?imageUrl=... | DELETE /api/v1/events/covers/:id |
+| Anterior                                    | Actual                                  |
+| ------------------------------------------- | --------------------------------------- |
+| /api/events/catalog                         | /api/v1/events/catalog                  |
+| /api/events/:id                             | /api/v1/events/:id                      |
+| /api/events/admin                           | /api/v1/events/owned                    |
+| /api/events/admin/event/:id                 | /api/v1/events/owned/:id                |
+| GET y PATCH /api/events/admin/:id           | GET y PATCH /api/v1/events/drafts/:id   |
+| PATCH /api/events/admin/:id/publish         | PATCH /api/v1/events/drafts/:id/publish |
+| POST /api/events/admin/cover                | POST /api/v1/events/covers              |
+| DELETE /api/events/admin/cover?imageUrl=... | DELETE /api/v1/events/covers/:id        |

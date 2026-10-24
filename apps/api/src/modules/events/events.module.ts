@@ -11,11 +11,15 @@ import { GetEventDraftController } from './http/controllers/get-event-draft.cont
 import { CreateEventController } from './http/controllers/create-event.controller';
 import { UpdateEventDraftController } from './http/controllers/update-event-draft.controller';
 import { PublishEventDraftController } from './http/controllers/publish-event-draft.controller';
+import { ListInactiveEventsController } from './http/controllers/list-inactive-events.controller';
+import { RetireEventController } from './http/controllers/retire-event.controller';
 import { DeleteEventCoverController } from './http/controllers/delete-event-cover.controller';
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
 import { GenerateEventPassService } from './application/generate-event-pass.service';
 import { EventPassesController } from './http/event-passes.controller';
+import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
+
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
@@ -26,11 +30,15 @@ import { EventPassesController } from './http/event-passes.controller';
     CreateEventController,
     UpdateEventDraftController,
     PublishEventDraftController,
+    ListInactiveEventsController,
+    RetireEventController,
     DeleteEventCoverController,
     ReadEventCoverController,
     UploadEventCoverController,
     GetPublishedEventController,
     EventPassesController,
+    CancelPublishedEventController,
+
   ],
   providers: [...eventsProviders, OptionalAuthenticationGuard , GenerateEventPassService],
 })
