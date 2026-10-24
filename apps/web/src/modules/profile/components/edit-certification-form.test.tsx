@@ -6,6 +6,11 @@ import type { CertificationRecord } from '@/modules/profile/types/profile-record
 
 import { EditCertificationForm } from './edit-certification-form';
 
+jest.mock('@/modules/profile/services/perfil-api', () => ({
+  ...jest.requireActual('@/modules/profile/services/perfil-api'),
+  obtenerEnlaceRespaldo: jest.fn().mockResolvedValue({ url: '/api/v1/perfil/respaldos/cert-1/archivo', expiraEn: '' }),
+}));
+
 const push = jest.fn();
 let routeId = 'cert-1';
 
@@ -57,6 +62,18 @@ describe('EditCertificationForm', () => {
     renderForm();
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(push).toHaveBeenCalledWith('/profile/records?seccion=certification');
+  });
+
+  it('abre el visor del respaldo y al cerrarlo conserva lo escrito', async () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText('Nombre de la certificación'), { target: { value: 'Nombre sin guardar' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver respaldo' }));
+    expect(await screen.findByRole('img', { name: 'Respaldo de AWS Solutions Architect' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nombre de la certificación')).toHaveValue('Nombre sin guardar');
   });
 
   it('avisa si la certificación no existe', () => {
