@@ -1,5 +1,5 @@
+import { RADAR_AREA_IDS } from '@umsspira/shared-types';
 import { mapKeywordsToAreas } from './keyword-area-mapper';
-import { RADAR_AREA_IDS } from '../../../radar/domain/entities/radar-area';
 import type { DictionaryAreaAssociation } from '../../domain/entities/dictionary-entry';
 
 describe('mapKeywordsToAreas', () => {

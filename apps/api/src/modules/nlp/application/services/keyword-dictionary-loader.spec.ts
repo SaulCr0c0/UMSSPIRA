@@ -7,7 +7,7 @@ import {
   NLP_DICTIONARY_UNAVAILABLE,
 } from '../../domain/errors/nlp-dictionary-unavailable-error';
 import { KeywordExtractorService } from './keyword-extractor.service';
-import { RADAR_AREA_IDS } from '../../../radar/domain/entities/radar-area';
+import { RADAR_AREA_IDS } from '@umsspira/shared-types';
 
 const ENTRIES: DictionaryEntry[] = [
   {

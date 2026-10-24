@@ -1,6 +1,6 @@
+import { RADAR_AREA_IDS, type RadarArea } from '@umsspira/shared-types';
 import type { DictionaryAreaAssociation } from '../../domain/entities/dictionary-entry';
 import type { ExtractedKeyword } from '../../domain/entities/extracted-keyword';
-import { RADAR_AREA_IDS, type RadarArea } from '../../../radar/domain/entities/radar-area';
 
 export interface KeywordAreaWeight {
   term: string;
