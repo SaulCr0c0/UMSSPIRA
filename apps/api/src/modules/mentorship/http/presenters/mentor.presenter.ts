@@ -8,6 +8,7 @@ import type {
   MentorProfile,
   MentorInterest,
 } from '../../domain/entities/mentor';
+import type { MentorFilterOptions } from '../../application/contracts/mentor-directory-filters';
 
 const day = (date: Date | null) => date?.toISOString().slice(0, 10) ?? null;
 
@@ -53,6 +54,18 @@ export function presentDirectory(entry: DirectoryMentor) {
       area: { id: interest.area.id, nombre: interest.area.name },
     })),
     availabilityStatus: entry.availability,
+  };
+}
+
+export function presentMentorFilterOptions(options: MentorFilterOptions) {
+  return {
+    areas: options.areas.map((area) => ({ id: area.id, nombre: area.name })),
+    intereses: options.interests.map((interest) => ({
+      id: interest.id,
+      nombre: interest.name,
+      id_area: interest.area.id,
+      area: { id: interest.area.id, nombre: interest.area.name },
+    })),
   };
 }
 

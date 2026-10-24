@@ -14,7 +14,14 @@ import {
   type MentorAvailabilityRepository,
 } from '../../application/ports/mentor-availability-repository.port';
 import { PrismaMentorAvailabilityRepository } from '../repositories/prisma-mentor-availability.repository';
+import {
+  MENTORSHIP_REQUEST_REPOSITORY,
+  type MentorshipRequestRepository,
+} from '../../application/ports/mentorship-request-repository.port';
+import { PrismaMentorshipRequestRepository } from '../repositories/prisma-mentorship-request.repository';
 import { ListMentorProfilesUseCase } from '../../application/use-cases/list-mentor-profiles.use-case';
+import { FilterMentorProfilesUseCase } from '../../application/use-cases/filter-mentor-profiles.use-case';
+import { GetMentorFilterOptionsUseCase } from '../../application/use-cases/get-mentor-filter-options.use-case';
 import { GetMentorDetailUseCase } from '../../application/use-cases/get-mentor-detail.use-case';
 import { GetMentorEligibilityUseCase } from '../../application/use-cases/get-mentor-eligibility.use-case';
 import { GetMyMentorProfileUseCase } from '../../application/use-cases/get-my-mentor-profile.use-case';
@@ -31,11 +38,6 @@ import { AddMentorInterestsUseCase } from '../../application/use-cases/add-mento
 import { RemoveMentorInterestUseCase } from '../../application/use-cases/remove-mentor-interest.use-case';
 import { GetMentorAvailabilityUseCase } from '../../application/use-cases/get-mentor-availability.use-case';
 import { SetMentorAvailabilityUseCase } from '../../application/use-cases/set-mentor-availability.use-case';
-import {
-  MENTORSHIP_REQUEST_REPOSITORY,
-  type MentorshipRequestRepository,
-} from '../../application/ports/mentorship-request-repository.port';
-import { PrismaMentorshipRequestRepository } from '../repositories/prisma-mentorship-request.repository';
 import { CreateMentorshipRequestUseCase } from '../../application/use-cases/create-mentorship-request.use-case';
 import { ListReceivedMentorshipRequestsUseCase } from '../../application/use-cases/list-received-mentorship-requests.use-case';
 import { GetReceivedMentorshipRequestUseCase } from '../../application/use-cases/get-received-mentorship-request.use-case';
@@ -54,6 +56,16 @@ export const mentorshipProviders: Provider[] = [
     provide: ListMentorProfilesUseCase,
     inject: [MENTOR_REPOSITORY],
     useFactory: (repository: MentorRepository) => new ListMentorProfilesUseCase(repository),
+  },
+  {
+    provide: FilterMentorProfilesUseCase,
+    inject: [MENTOR_REPOSITORY],
+    useFactory: (repository: MentorRepository) => new FilterMentorProfilesUseCase(repository),
+  },
+  {
+    provide: GetMentorFilterOptionsUseCase,
+    inject: [MENTOR_REPOSITORY],
+    useFactory: (repository: MentorRepository) => new GetMentorFilterOptionsUseCase(repository),
   },
   {
     provide: GetMentorDetailUseCase,

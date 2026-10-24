@@ -155,11 +155,24 @@
 /* Opción de área */
 .directory-area-option {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: .625rem;
-  padding: .625rem 0;
+  padding: .5rem .625rem;
+  margin-bottom: .25rem;
+  border-radius: .375rem;
   font-size: .875rem;
   cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.directory-area-option:hover {
+  background: var(--palladian);
+}
+
+.directory-area-option.is-selected {
+  background: var(--palladian);
+  color: var(--navy);
+  font-weight: 600;
 }
 
 /* Filtro por tema */
@@ -183,9 +196,21 @@
 }
 
 .directory-topic-group h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: .375rem;
   font-size: .6875rem;
   color: var(--ink-75);
+}
+
+.directory-topic-badge {
+  font-size: .6875rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--palladian);
+  padding: .125rem .375rem;
+  border-radius: 9999px;
 }
 
 .directory-topic-options {
@@ -203,11 +228,24 @@
   border-radius: .25rem;
   font-size: .75rem;
   cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.directory-topic:hover {
+  background: var(--palladian);
+  border-color: var(--navy);
+}
+
+.directory-topic:focus-within {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
 }
 
 .directory-topic.is-selected {
   border-color: var(--navy);
   background: var(--palladian);
+  color: var(--navy);
+  font-weight: 600;
 }
 
 /* Acciones del panel */
