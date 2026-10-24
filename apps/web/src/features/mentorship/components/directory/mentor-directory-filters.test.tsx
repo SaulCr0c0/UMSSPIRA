@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MentorDirectoryFilters } from './mentor-directory-filters';
 import { SPRINT1_CATALOG } from '../../model/mentor-directory';
 
-describe('MentorDirectoryFilters - Tareas 101 y 102', () => {
+describe('MentorDirectoryFilters - Tareas 101, 102 y 103', () => {
   const onApplyMock = jest.fn();
 
   beforeEach(() => {
@@ -234,6 +234,151 @@ describe('MentorDirectoryFilters - Tareas 101 y 102', () => {
         areaIds: ['security'],
         topicIds: ['crypto'],
       });
+    });
+  });
+
+  describe('Tarea 103: Implementar la selección de intereses de mentoría', () => {
+    it('permite seleccionar un interés individual y actualiza su estado visual (.is-selected)', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['software'], topicIds: [] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      const apiTopic = screen.getByRole('checkbox', { name: 'APIs REST' });
+      const apiLabel = apiTopic.closest('label');
+
+      expect(apiTopic).not.toBeChecked();
+      expect(apiLabel).not.toHaveClass('is-selected');
+
+      fireEvent.click(apiTopic);
+
+      expect(apiTopic).toBeChecked();
+      expect(apiLabel).toHaveClass('is-selected');
+    });
+
+    it('permite seleccionar múltiples intereses en la misma área y muestra el badge de conteo', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['software'], topicIds: [] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      const apiTopic = screen.getByRole('checkbox', { name: 'APIs REST' });
+      const webTopic = screen.getByRole('checkbox', { name: 'Desarrollo web' });
+      const cleanCodeTopic = screen.getByRole('checkbox', { name: 'Clean Code y patrones' });
+
+      fireEvent.click(apiTopic);
+      fireEvent.click(webTopic);
+      fireEvent.click(cleanCodeTopic);
+
+      expect(apiTopic).toBeChecked();
+      expect(webTopic).toBeChecked();
+      expect(cleanCodeTopic).toBeChecked();
+
+      // Verifica el badge con el conteo de seleccionados en el encabezado del área
+      expect(screen.getByLabelText('3 seleccionados')).toHaveTextContent('(3)');
+    });
+
+    it('permite seleccionar intereses entre diferentes áreas técnicas simultáneamente', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['devops', 'data'], topicIds: [] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      const dockerTopic = screen.getByRole('checkbox', { name: 'Docker y Contenedores' });
+      const sqlTopic = screen.getByRole('checkbox', { name: 'PostgreSQL y SQL' });
+
+      fireEvent.click(dockerTopic);
+      fireEvent.click(sqlTopic);
+
+      expect(dockerTopic).toBeChecked();
+      expect(dockerTopic.closest('label')).toHaveClass('is-selected');
+      expect(sqlTopic).toBeChecked();
+      expect(sqlTopic.closest('label')).toHaveClass('is-selected');
+
+      expect(screen.getAllByLabelText('1 seleccionados')).toHaveLength(2);
+    });
+
+    it('permite deseleccionar un interés individualmente', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['software'], topicIds: ['api', 'web'] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      const apiTopic = screen.getByRole('checkbox', { name: 'APIs REST' });
+      const webTopic = screen.getByRole('checkbox', { name: 'Desarrollo web' });
+
+      expect(apiTopic).toBeChecked();
+      expect(webTopic).toBeChecked();
+
+      fireEvent.click(apiTopic);
+
+      expect(apiTopic).not.toBeChecked();
+      expect(apiTopic.closest('label')).not.toHaveClass('is-selected');
+      expect(webTopic).toBeChecked();
+      expect(webTopic.closest('label')).toHaveClass('is-selected');
+    });
+
+    it('envía los intereses seleccionados al enviar el formulario con Aplicar filtros', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['software'], topicIds: [] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('checkbox', { name: 'APIs REST' }));
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Pruebas automatizadas' }));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+
+      expect(onApplyMock).toHaveBeenCalledTimes(1);
+      expect(onApplyMock).toHaveBeenCalledWith({
+        areaIds: ['software'],
+        topicIds: ['api', 'testing'],
+      });
+    });
+
+    it('limpia todos los intereses seleccionados al presionar Limpiar filtros', () => {
+      render(
+        <MentorDirectoryFilters
+          catalog={SPRINT1_CATALOG}
+          applied={{ areaIds: ['software'], topicIds: ['api'] }}
+          interestsSupported={true}
+          disabled={false}
+          onApply={onApplyMock}
+        />,
+      );
+
+      const apiTopic = screen.getByRole('checkbox', { name: 'APIs REST' });
+      expect(apiTopic).toBeChecked();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+
+      expect(apiTopic).not.toBeChecked();
+      expect(onApplyMock).toHaveBeenCalledWith({ areaIds: [], topicIds: [] });
     });
   });
 });

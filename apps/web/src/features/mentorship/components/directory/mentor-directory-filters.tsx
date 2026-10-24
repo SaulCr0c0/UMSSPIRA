@@ -75,11 +75,18 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
                 : 'Selecciona al menos un área técnica para ver sus intereses correspondientes.'}
             </p>
             {/* CA-03: Muestra únicamente los grupos de interés de las áreas seleccionadas */}
-            <div id="directory-interest-groups">{visibleGroups.map(area => <div className="directory-topic-group" key={area.id}>
-              <h3>{area.name}</h3><div className="directory-topic-options">{area.topics.map(topic => <label key={topic.id} className={`directory-topic ${draft.topicIds.includes(topic.id) ? 'is-selected' : ''}`}>
-                <input type="checkbox" checked={draft.topicIds.includes(topic.id)} onChange={() => toggleTopic(topic.id)} />{topic.name}
-              </label>)}</div>
-            </div>)}</div>
+            <div id="directory-interest-groups">{visibleGroups.map(area => {
+              const selectedCount = area.topics.filter(topic => draft.topicIds.includes(topic.id)).length;
+              return <div className="directory-topic-group" key={area.id}>
+                <h3>
+                  <span>{area.name}</span>
+                  {selectedCount > 0 && <span className="directory-topic-badge" aria-label={`${selectedCount} seleccionados`}>({selectedCount})</span>}
+                </h3>
+                <div className="directory-topic-options">{area.topics.map(topic => <label key={topic.id} className={`directory-topic ${draft.topicIds.includes(topic.id) ? 'is-selected' : ''}`}>
+                  <input type="checkbox" checked={draft.topicIds.includes(topic.id)} onChange={() => toggleTopic(topic.id)} />{topic.name}
+                </label>)}</div>
+              </div>;
+            })}</div>
             {!expandedInterests && !draft.areaIds.length && groups.length > 3 && <button type="button" className="mentor-button mentor-button-secondary directory-expand-interests" aria-controls="directory-interest-groups" onClick={() => setExpandedInterests(true)}>Cargar más intereses</button>}
           </> : <p className="directory-muted">Los intereses se mostrarán cuando estén disponibles.</p>}
         </fieldset>
