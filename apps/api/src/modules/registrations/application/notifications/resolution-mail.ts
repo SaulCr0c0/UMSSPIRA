@@ -10,6 +10,7 @@ export interface ResolutionMailInput {
   category?: string;
   note?: string;
   correctionUrl?: string;
+  activationUrl?: string;
 }
 
 export interface ResolutionMail {
@@ -25,20 +26,27 @@ function greeting(fullName: string) {
 // Plantillas del dictamen. Nunca incluyen el código TIT, que es solo para administración.
 export function buildResolutionMail(input: ResolutionMailInput): ResolutionMail {
   const hello = greeting(input.fullName);
-  if (input.decision === 'APROBADA') {
+    if (input.decision === 'APROBADA') {
     if (!input.code) {
       throw new Error('Un dictamen aprobado requiere el código de activación');
     }
+    const webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3001';
+    const activationLink = input.activationUrl
+      ? input.activationUrl
+      : `${webOrigin}/activate?applicationId=${input.applicationId}`;
+
     return {
       type: 'aprobacion',
       subject: 'Tu solicitud en UMSSPIRA fue aprobada',
       text: [
         hello,
         '',
-        'Tu solicitud fue aprobada. Para activar tu cuenta ingresa a la ruta /activate de la plataforma UMSSPIRA y usa estos datos:',
+        'Tu solicitud fue aprobada. Para activar tu cuenta ingresa directamente al siguiente enlace:',
         '',
-        'Número de solicitud: ' + input.applicationId,
+        activationLink,
+        '',
         'Código de activación: ' + input.code,
+        'Número de solicitud: ' + input.applicationId,
         '',
         'El código tiene 6 dígitos, vence en 24 horas y se invalida tras 5 intentos incorrectos.',
         'Si vence, pide uno nuevo a la administración de tu carrera.',
