@@ -1,4 +1,4 @@
-// @ts-expect-error: Jest no resuelve el alias del monorepo
+
 import type { AffinityArea } from '@umsspira/shared-types';
 
 // Define el tipo básico que usarás, basado en el contrato de la API

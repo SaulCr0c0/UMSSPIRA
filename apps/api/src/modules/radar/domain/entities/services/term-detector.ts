@@ -1,4 +1,4 @@
-// @ts-expect-error: Jest no resuelve el alias del monorepo
+
 import type { RadarArea } from '@umsspira/shared-types';
 // Define el tipo para los términos del diccionario
 export type DictionaryTerm = {
