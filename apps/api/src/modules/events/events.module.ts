@@ -18,6 +18,7 @@ import { ReadEventCoverController } from './http/controllers/read-event-cover.co
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
 import { RegisterEventController } from './http/controllers/register-event.controller';
 import { GenerateEventPassService } from './application/generate-event-pass.service';
+import { ListUserPassesService } from './application/list-user-passes.service'; // <-- 1. AÑADIDO AQUÍ
 import { EventPassesController } from './http/event-passes.controller';
 import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
 
@@ -41,6 +42,6 @@ import { CancelPublishedEventController } from './http/controllers/cancel-publis
     EventPassesController,
     CancelPublishedEventController,
   ],
-  providers: [...eventsProviders, OptionalAuthenticationGuard, GenerateEventPassService],
+  providers: [...eventsProviders, OptionalAuthenticationGuard , GenerateEventPassService, ListUserPassesService],
 })
 export class EventsModule {}
