@@ -15,6 +15,12 @@ const dateSchema = z.iso
     (value) => value <= new Date().toISOString().slice(0, 10),
     'La fecha no puede ser futura',
   );
+// Fecha mínima de una experiencia laboral (BUG-HU2-008); la misma que usa el frontend
+export const MIN_EXPERIENCE_DATE = '1950-01-01';
+const experienceDateSchema = dateSchema.refine(
+  (value) => value >= MIN_EXPERIENCE_DATE,
+  'La fecha no puede ser anterior a 1950',
+);
 
 export const educationSchema = z.strictObject({
   institucion: text(150),
@@ -26,8 +32,8 @@ export const experienceSchema = z
   .strictObject({
     empresa: text(150),
     cargo: text(100),
-    fechaInicio: dateSchema,
-    fechaFin: dateSchema.nullable().optional(),
+    fechaInicio: experienceDateSchema,
+    fechaFin: experienceDateSchema.nullable().optional(),
   })
   .superRefine((value, context) => {
     if (value.fechaFin && value.fechaFin < value.fechaInicio) {
