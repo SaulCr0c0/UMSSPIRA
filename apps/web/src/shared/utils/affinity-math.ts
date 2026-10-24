@@ -1,12 +1,14 @@
-// Re-declaración temporal para evitar errores de resolución de módulos en CI
-export type AffinityArea = 
-  | 'software-development'
-  | 'cloud-devops'
-  | 'data-ai'
-  | 'quality-assurance'
-  | 'cybersecurity-networks'
-  | 'it-management';
-
+// Definición temporal del objeto completo para evitar errores de CI
+export interface AffinityArea {
+  area: 
+    | 'software-development'
+    | 'cloud-devops'
+    | 'data-ai'
+    | 'quality-assurance'
+    | 'cybersecurity-networks'
+    | 'it-management';
+  affinity: number;
+}
 
 // Define el tipo básico que usarás, basado en el contrato de la API
 
