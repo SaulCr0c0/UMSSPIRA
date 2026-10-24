@@ -6,8 +6,6 @@ import type { StoredFile } from '../../../../shared/files/contracts/uploaded-fil
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
 import type { EventsRepository } from '../../application/ports/events-repository.port';
 import type { CreateEventInput, EventInput } from '../../application/contracts/event-inputs';
-import { assertDraft, validateEventDates } from '../../domain/policies/event.policy';
-import { eventInclude, toEvent } from '../translators/event.translator';
 import {
   assertDraft,
   assertRetirable,
@@ -167,7 +165,7 @@ export class PrismaEventsRepository implements EventsRepository {
             throw new BusinessRuleError(
               'conflict',
               'EVENT_NOT_AVAILABLE',
-              'El evento no estÃ¡ disponible para inscripciones',
+              'El evento no está disponible para inscripciones',
             );
           }
           const existing = await tx.inscripcionEvento.findFirst({
@@ -178,7 +176,7 @@ export class PrismaEventsRepository implements EventsRepository {
             throw new BusinessRuleError(
               'conflict',
               'EVENT_REGISTRATION_ALREADY_CONFIRMED',
-              'Ya tienes una inscripciÃ³n confirmada para este evento',
+              'Ya tienes una inscripción confirmada para este evento',
             );
           }
           const currentCapacity = await tx.inscripcionEvento.count({
@@ -215,11 +213,13 @@ export class PrismaEventsRepository implements EventsRepository {
         throw new BusinessRuleError(
           'conflict',
           'EVENT_REGISTRATION_ALREADY_CONFIRMED',
-          'Ya tienes una inscripciÃ³n confirmada para este evento',
+          'Ya tienes una inscripción confirmada para este evento',
         );
       }
       throw error;
     }
+  }
+
   async inactive(ownerId: string, now: Date): Promise<InactiveEvent[]> {
     const rows = await this.prisma.evento.findMany({
       where: {
