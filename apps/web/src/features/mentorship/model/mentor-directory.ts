@@ -133,6 +133,36 @@ export function filterDirectory(mentors: DirectoryMentor[], filters: InterestCon
   });
 }
 
+/**
+ * Fusiona el catálogo del backend con el catálogo oficial del Sprint 1 (CA-01).
+ * Garantiza que las 6 áreas técnicas del Sprint 1 y sus tópicos estén siempre disponibles.
+ */
+export function mergeCatalog(backendCatalog: InterestArea[] = [], baseCatalog: InterestArea[] = SPRINT1_CATALOG): InterestArea[] {
+  const map = new Map<string, InterestArea>();
+  for (const area of baseCatalog) {
+    map.set(area.name.trim().toLowerCase(), {
+      ...area,
+      topics: area.topics.map(t => ({ ...t })),
+    });
+  }
+  for (const area of backendCatalog) {
+    const key = area.name.trim().toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      existing.id = area.id;
+      if (area.description) existing.description = area.description;
+      for (const topic of area.topics) {
+        if (!existing.topics.some(t => t.id === topic.id || t.name.trim().toLowerCase() === topic.name.trim().toLowerCase())) {
+          existing.topics.push(topic);
+        }
+      }
+    } else {
+      map.set(key, { ...area, topics: [...area.topics] });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+}
+
 export function directoryCatalog(mentors: DirectoryMentor[]): InterestArea[] {
   const groups = new Map<string, InterestArea>();
   for (const mentor of mentors) {

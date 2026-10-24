@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
-import { emptyDirectoryFilters, SPRINT1_CATALOG } from '../../model/mentor-directory';
+import { emptyDirectoryFilters, mergeCatalog, SPRINT1_CATALOG } from '../../model/mentor-directory';
 import { sameConfiguration, type InterestArea, type InterestConfiguration } from '../../model/mentor-interests';
 
 export function MentorDirectoryFilters({ catalog, applied, interestsSupported, disabled, onApply }: {
@@ -16,8 +16,9 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
   const [expandedInterests, setExpandedInterests] = useState(false);
   useEffect(() => { setDraft(applied); }, [applied]);
 
-  const activeCatalog = catalog.length > 0 ? catalog : SPRINT1_CATALOG;
-  const activeInterestsSupported = interestsSupported || (!catalog.length && activeCatalog.length > 0);
+  // Combina el catálogo del backend con el oficial de Sprint 1 para asegurar todas las áreas y tópicos
+  const activeCatalog = catalog.length ? mergeCatalog(catalog) : SPRINT1_CATALOG;
+  const activeInterestsSupported = activeCatalog.some(a => a.topics.length > 0) || interestsSupported;
 
   const dirty = !sameConfiguration(draft, applied);
 
