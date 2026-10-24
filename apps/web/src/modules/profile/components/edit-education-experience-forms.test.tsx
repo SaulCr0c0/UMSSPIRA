@@ -91,7 +91,7 @@ describe('EditEducationForm', () => {
     fireEvent.change(screen.getByLabelText('Año de egreso'), { target: { value: '20a19' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
+    expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
     expect(screen.getByTestId('guardado')).toHaveTextContent('UMSS|2019');
     const [url, opciones] = fetchMock.mock.calls[0];
     expect(url).toMatch(/\/api\/v1\/perfil\/formacion-academica\/edu-1$/);
@@ -156,7 +156,7 @@ describe('EditEducationForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
+    expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
     expect(screen.queryByText('La formación académica ya se encuentra registrada')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -224,7 +224,7 @@ describe('EditExperienceForm', () => {
     fireEvent.change(screen.getByLabelText('Empresa'), { target: { value: ' Jala ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
+    expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
     expect(screen.getByTestId('guardado')).toHaveTextContent('Jala|2023-06-30');
     const [url, opciones] = fetchMock.mock.calls[0];
     expect(url).toMatch(/\/api\/v1\/perfil\/experiencia-laboral\/exp-2$/);
@@ -245,7 +245,7 @@ describe('EditExperienceForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Guardado');
+    expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
     expect(screen.getByTestId('guardado')).toHaveTextContent('Jalasoft|actual');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('fechaFin');
   });
@@ -281,5 +281,36 @@ describe('EditExperienceForm', () => {
     renderWith(<EditExperienceForm />);
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(push).toHaveBeenCalledWith('/profile/records?seccion=experience');
+  });
+});
+
+describe('aviso de resultado al editar (T9.6)', () => {
+  const registro = { idTitulado: 'titulado-1', fechaCreacion: null };
+
+  it.each([
+    [
+      'formación académica',
+      'edu-1',
+      <EditEducationForm key="education" />,
+      { ...registro, id: 'edu-1', institucion: 'UMSS', titulo: 'Licenciatura en Ingeniería de Sistemas', grado: 'Licenciatura', anioEgreso: 2018 },
+      'formacion-academica',
+    ],
+    [
+      'experiencia laboral',
+      'exp-2',
+      <EditExperienceForm key="experience" />,
+      { ...registro, id: 'exp-2', empresa: 'Jalasoft', cargo: 'Desarrollador', fechaInicio: '2021-01-01', fechaFin: '2023-06-30' },
+      'experiencia-laboral',
+    ],
+  ])('en %s muestra "Registro actualizado" y solo llama a nuestro endpoint', async (_seccion, id, form, respuesta, ruta) => {
+    routeId = id;
+    responder(200, respuesta);
+    renderWith(form);
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
+    // CA-06: se guarda con el endpoint del perfil, sin llamar al motor de afinidad
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toMatch(new RegExp(`/api/v1/perfil/${ruta}/${id}$`));
   });
 });

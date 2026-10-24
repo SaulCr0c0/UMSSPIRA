@@ -1,3 +1,4 @@
+import type { Certificacion } from '@/modules/profile/completar/certificaciones';
 import type { Experiencia } from '@/modules/profile/completar/experiencia-laboral';
 import type { FormacionAcademica } from '@/modules/profile/completar/formacion-academica';
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
@@ -7,7 +8,9 @@ import type {
   ExperienceRecord,
   ProfileRecords,
 } from '@/modules/profile/types/profile-record';
-import { apiFetch } from '@/shared/services/api-client';
+import { ApiError, apiFetch } from '@/shared/services/api-client';
+import { apiUrl, readApiError } from '@/shared/services/api-contract';
+import { ensureAccessToken, getAccessToken } from '@/shared/services/auth-session';
 
 // Endpoints del perfil del backend (apps/api/src/modules/perfil)
 export const PERFIL_URL = '/api/v1/perfil';
@@ -43,20 +46,39 @@ export type ExperienciaApi = RegistroApi & Omit<ExperienciaCuerpo, 'fechaFin'> &
   fechaFin: string | null;
 };
 
-export type CertificacionApi = RegistroApi & {
+// Cuerpo de POST/PUT de certificaciones (certificationSchema del backend)
+type CertificacionCuerpo = {
   nombre: string;
   entidadEmisora: string;
-  grado: string;
   anioEmision: number;
+  // Sin grado el backend guarda «Profesional» (T8.7)
+  grado?: string;
+};
+
+export type CertificacionApi = RegistroApi & Required<CertificacionCuerpo> & {
   // tieneRespaldo null = el backend todavía no sabe leer respaldos
   respaldo?: { tieneRespaldo: boolean | null };
 };
 
-// GET /api/v1/perfil (perfil-resumen.service.ts del backend)
+// GET /api/v1/perfil (profile.presenter.ts del backend)
 export type PerfilApi = {
   formacionAcademica: { registros: FormacionApi[] };
   experienciaLaboral: { registros: ExperienciaApi[] };
   certificaciones: { registros: CertificacionApi[] };
+  // Descripción profesional guardada en perfil_area (T6.4); vacía = sin registrar
+  descripcionProfesional: string;
+};
+
+// GET y PUT /api/v1/perfil/descripcion-profesional (T6.4)
+export type DescripcionApi = {
+  descripcionProfesional: string;
+  fechaActualizacion: string | null;
+};
+
+// Resumen del perfil: registros de las 3 secciones y descripción profesional (vacía = sin registrar)
+export type ResumenPerfil = {
+  records: ProfileRecords;
+  description: string;
 };
 
 // La API solo devuelve registros del titulado actual, así que todos son del egresado con sesión
@@ -155,12 +177,138 @@ export async function actualizarExperiencia(id: string, experiencia: Experiencia
   return aExperienceRecord(actualizada);
 }
 
-// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
-export async function obtenerPerfil(): Promise<ProfileRecords> {
+// GET /api/v1/perfil -> registros de las 3 secciones y descripción profesional del egresado
+export async function obtenerResumenPerfil(): Promise<ResumenPerfil> {
   const perfil = await apiFetch<PerfilApi>(PERFIL_URL);
   return {
-    education: perfil.formacionAcademica.registros.map(aEducationRecord),
-    experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
-    certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    records: {
+      education: perfil.formacionAcademica.registros.map(aEducationRecord),
+      experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
+      certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    },
+    description: perfil.descripcionProfesional?.trim() ?? '',
   };
+}
+
+// GET /api/v1/perfil/certificaciones/:id -> la certificación guardada, 404 si no existe o 403 si es de otro egresado
+export async function obtenerCertificacion(id: string): Promise<CertificationRecord> {
+  const certificacion = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`);
+  return aCertificationRecord(certificacion);
+}
+
+// PUT /api/v1/perfil/certificaciones/:id -> el mismo registro actualizado (no crea otro), 400 por campo,
+// 403 si es de otro egresado o 404 si ya no existe
+export async function actualizarCertificacion(
+  id: string,
+  certificacion: { nombre: string; entidadEmisora: string; grado: string; anioEmision: string },
+): Promise<CertificationRecord> {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    grado: certificacion.grado,
+    // El formulario guarda el año como texto y el esquema del backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  const actualizada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(cuerpo),
+  });
+  return aCertificationRecord(actualizada);
+}
+
+// PUT /api/v1/perfil/descripcion-profesional -> la descripción guardada (recortada) o 400 si supera 5000
+// caracteres. Solo cambia la del egresado con sesión; vacía la borra
+export async function guardarDescripcion(descripcion: string): Promise<string> {
+  const guardada = await apiFetch<DescripcionApi>(`${PERFIL_URL}/descripcion-profesional`, {
+    method: 'PUT',
+    body: JSON.stringify({ descripcionProfesional: descripcion }),
+  });
+  return guardada.descripcionProfesional;
+}
+
+// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
+export async function obtenerPerfil(): Promise<ProfileRecords> {
+  return (await obtenerResumenPerfil()).records;
+}
+
+function cuerpoCertificacion(certificacion: Certificacion): CertificacionCuerpo {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    // El formulario guarda el año como texto y el backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  if (certificacion.grado) cuerpo.grado = certificacion.grado;
+  return cuerpo;
+}
+
+// POST /api/v1/perfil/certificaciones -> 201 con el registro creado (con su id) o 400 por campo
+export async function crearCertificacion(certificacion: Certificacion): Promise<CertificationRecord> {
+  const creada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones`, {
+    method: 'POST',
+    body: JSON.stringify(cuerpoCertificacion(certificacion)),
+  });
+  return aCertificationRecord(creada);
+}
+
+function mensajeDeRespuesta(texto: string, porDefecto: string): string {
+  try {
+    return readApiError(JSON.parse(texto), porDefecto).message;
+  } catch {
+    return porDefecto;
+  }
+}
+
+// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo").
+// Usa XMLHttpRequest porque fetch no informa el avance de la subida; onProgreso recibe 0 a 100.
+export async function subirRespaldo(
+  id: string,
+  archivo: File,
+  onProgreso?: (porcentaje: number) => void,
+): Promise<void> {
+  let token: string;
+  try {
+    token = getAccessToken() ?? (await ensureAccessToken());
+  } catch {
+    throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
+  }
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`));
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) onProgreso?.(Math.round((evento.loaded / evento.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgreso?.(100);
+        resolve();
+      } else if (xhr.status === 401) {
+        reject(new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente'));
+      } else {
+        reject(new ApiError(xhr.status, mensajeDeRespuesta(xhr.responseText, 'No se pudo subir el respaldo')));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'No fue posible conectar con el servidor'));
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    xhr.send(formulario);
+  });
+}
+
+// GET /api/v1/perfil/certificaciones/:id/respaldo/enlace (T10.1) -> enlace firmado que vence en 5 minutos.
+// 403 si el respaldo es ajeno, 404 si la certificación no tiene respaldo
+export type EnlaceRespaldoApi = {
+  url: string;
+  expiraEn: string;
+};
+
+// Se pide uno nuevo en cada apertura del visor: el anterior pudo haber vencido
+export async function obtenerEnlaceRespaldo(idCertificacion: string): Promise<EnlaceRespaldoApi> {
+  return apiFetch<EnlaceRespaldoApi>(`${PERFIL_URL}/certificaciones/${idCertificacion}/respaldo/enlace`);
+}
+
+// El mismo enlace con descargar=1 hace que la API responda como adjunto y el navegador baje el JPG
+export function enlaceDeDescarga(url: string): string {
+  return `${url}${url.includes('?') ? '&' : '?'}descargar=1`;
 }

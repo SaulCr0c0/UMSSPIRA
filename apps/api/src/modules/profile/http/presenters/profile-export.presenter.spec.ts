@@ -6,6 +6,7 @@ const profile: ProfileSnapshot = {
   education: [],
   experience: [],
   certifications: [],
+  description: { text: '', updatedAt: null },
 };
 
 describe('presentProfileExport (HU5-05)', () => {
