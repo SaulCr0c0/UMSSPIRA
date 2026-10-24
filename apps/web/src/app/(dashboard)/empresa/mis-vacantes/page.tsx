@@ -120,7 +120,7 @@ export default function MisVacantesPage() {
               key={tab}
               onClick={() => setActiveTab(tab.split(' ')[0])}
               style={{ 
-                padding: '0.4rem 1rem', borderRadius: '99px', fontSize: '0.85rem', fontWeight: 500, border: 'none', cursor: 'pointer',
+                padding: '0.4rem 1rem', borderRadius: '99px', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
                 backgroundColor: isActive ? '#2d3748' : '#fff', color: isActive ? '#fff' : 'var(--ink)',
                 border: isActive ? 'none' : '1px solid var(--oatmeal)'
               }}
