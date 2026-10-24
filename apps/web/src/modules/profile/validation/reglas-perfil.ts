@@ -58,7 +58,8 @@ export function validarRespaldo(archivo: File): string | undefined {
   if (archivo.size > TAMANIO_MAXIMO_RESPALDO) return MENSAJE_RESPALDO_TAMANIO;
   return undefined;
 }
-// Certificaciones T8.3: los 4 campos son obligatorios y el año va de 1980 al año actual
+
+// Certificaciones (HU-08, T8.3): los 4 campos son obligatorios y el año va de 1980 al año actual
 export const MENSAJE_CAMPO_OBLIGATORIO = 'Este campo es obligatorio';
 export const MENSAJE_RESPALDO_OBLIGATORIO = 'Adjunta el respaldo de la certificación (JPG de hasta 5 MB)';
 export const ANIO_MINIMO_CERTIFICACION = 1980;

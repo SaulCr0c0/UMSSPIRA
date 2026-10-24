@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Award, Camera, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
-import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
+import {
+  type ErroresCertificacion,
+  validarCertificacion,
+  validarRespaldo,
+} from '@/modules/profile/validation/reglas-perfil';
 import { formatearTamanio } from '@/modules/profile/utils/format-file-size';
 import { ApiError } from '@/shared/services/api-client';
 
@@ -27,6 +31,7 @@ const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', 
 
 const subtituloClase = 'text-xs font-bold uppercase tracking-wide text-[#2C3B4D]';
 const labelClase = 'block text-xs font-semibold text-[#2C3B4D]';
+// Asterisco de obligatorio con CSS (::after): no cambia el texto de la etiqueta que leen los lectores de pantalla y los tests
 const labelObligatorioClase = `${labelClase} after:ml-0.5 after:text-truffle-trouble after:content-['*']`;
 const inputClase =
   'mt-1.5 h-11 w-full rounded-md border border-[#C9C1B1] bg-white px-3 text-sm text-[#2C3B4D] placeholder:text-[#2C3B4D]/40 focus:border-[#FFB162] focus:outline-none';
@@ -39,6 +44,8 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
   const documentoRef = useRef<HTMLInputElement>(null);
   // Archivo rechazado (no es JPG o supera 5 MB): no se adjunta y se explica junto al campo
   const [errorRespaldo, setErrorRespaldo] = useState<string>();
+  // Errores por campo al intentar agregar (T8.3); con alguno no se envía nada a la API
+  const [errores, setErrores] = useState<ErroresCertificacion>({});
   const [guardando, setGuardando] = useState(false);
   // Mensaje del backend al guardar, tal como lo envía; se quita al cambiar cualquier campo
   const [errorGuardar, setErrorGuardar] = useState<string>();
@@ -61,8 +68,14 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     setErrorRespaldo(undefined);
   }
 
+  // Al corregir un campo se quita su mensaje
+  function limpiarError(campo: keyof ErroresCertificacion) {
+    if (errores[campo]) setErrores({ ...errores, [campo]: undefined });
+  }
+
   function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision', valor: string) {
     setDatos({ ...datos, [campo]: valor });
+    limpiarError(campo);
     setErrorGuardar(undefined);
   }
 
@@ -73,7 +86,10 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     // El atributo accept se puede saltar eligiendo "Todos los archivos"
     const error = validarRespaldo(archivo);
     setErrorRespaldo(error);
-    if (!error) setDatos({ ...datos, respaldo: archivo });
+    if (!error) {
+      setDatos({ ...datos, respaldo: archivo });
+      limpiarError('respaldo');
+    }
   }
 
   async function guardar() {
@@ -99,6 +115,9 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
 
   function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    const encontrados = validarCertificacion(datos);
+    setErrores(encontrados);
+    if (Object.keys(encontrados).length > 0) return;
     void guardar();
   }
 
@@ -133,7 +152,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
 
       <p className={subtituloClase}>Agregar nueva certificación</p>
 
-      <form onSubmit={agregar} className="mt-4 space-y-4">
+      <form onSubmit={agregar} noValidate className="mt-4 space-y-4">
         <div>
           <label htmlFor="nombreCertificacion" className={labelObligatorioClase}>Nombre de certificación</label>
           <input
@@ -143,8 +162,11 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             placeholder="Ej. AWS Cloud Practitioner"
             value={datos.nombre}
             onChange={(e) => cambiar('nombre', e.target.value)}
-            className={inputClase}
+            aria-invalid={Boolean(errores.nombre)}
+            aria-describedby={errores.nombre ? 'error-nombre' : undefined}
+            className={claseCampo(inputClase, errores.nombre)}
           />
+          <MensajeError id="error-nombre" mensaje={errores.nombre} />
         </div>
 
         <div>
@@ -156,8 +178,11 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             placeholder="Ej. Amazon Web Services"
             value={datos.entidadEmisora}
             onChange={(e) => cambiar('entidadEmisora', e.target.value)}
-            className={inputClase}
+            aria-invalid={Boolean(errores.entidadEmisora)}
+            aria-describedby={errores.entidadEmisora ? 'error-entidadEmisora' : undefined}
+            className={claseCampo(inputClase, errores.entidadEmisora)}
           />
+          <MensajeError id="error-entidadEmisora" mensaje={errores.entidadEmisora} />
         </div>
 
         <div>
@@ -174,8 +199,11 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             placeholder="Ej. 2023"
             value={datos.anioEmision}
             onChange={(e) => cambiar('anioEmision', e.target.value.replace(/\D/g, ''))}
-            className={inputClase}
+            aria-invalid={Boolean(errores.anioEmision)}
+            aria-describedby={errores.anioEmision ? 'error-anioEmision' : undefined}
+            className={claseCampo(inputClase, errores.anioEmision)}
           />
+          <MensajeError id="error-anioEmision" mensaje={errores.anioEmision} />
         </div>
 
         <div>
@@ -183,7 +211,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           <div
             className={claseCampo(
               'mt-1.5 flex flex-col items-center gap-3 rounded-md border-2 border-dashed border-[#C9C1B1] bg-[#EEE9DF] px-4 py-6 text-center',
-              errorRespaldo,
+              errorRespaldo ?? errores.respaldo,
             )}
           >
             {datos.respaldo ? (
@@ -229,7 +257,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             {/* Decisión del equipo: el backend y el almacenamiento solo aceptan JPG (BUG-HU2-007) */}
             <p className="text-xs text-[#2C3B4D]/70">Solo JPG, máximo 5 MB</p>
           </div>
-          <MensajeError id="error-respaldo" mensaje={errorRespaldo} />
+          <MensajeError id="error-respaldo" mensaje={errorRespaldo ?? errores.respaldo} />
 
           <input
             ref={fotoRef}
