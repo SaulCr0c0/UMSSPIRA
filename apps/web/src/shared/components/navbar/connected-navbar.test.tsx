@@ -8,8 +8,9 @@ import type { NavbarProps } from './types';
 const push = jest.fn();
 const replace = jest.fn();
 const refresh = jest.fn();
+const mockRouter = { push, replace, refresh };
 let mockPathname = '/portal/institucional';
-jest.mock('next/navigation', () => ({ usePathname: () => mockPathname, useRouter: () => ({ push, replace, refresh }) }));
+jest.mock('next/navigation', () => ({ usePathname: () => mockPathname, useRouter: () => mockRouter }));
 jest.mock('@/modules/auth/frontend/services/session', () => ({ getSessionToken: jest.fn(), clearSession: jest.fn() }));
 jest.mock('@/shared/services/auth-session', () => ({
   ...jest.requireActual('@/shared/services/auth-session'),
