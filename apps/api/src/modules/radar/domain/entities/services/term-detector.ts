@@ -1,4 +1,11 @@
-
+// Re-declaración temporal para evitar errores de resolución de módulos en CI
+export type RadarArea = 
+  | 'software-development'
+  | 'cloud-devops'
+  | 'data-ai'
+  | 'quality-assurance'
+  | 'cybersecurity-networks'
+  | 'it-management';
 import type { RadarArea } from '@umsspira/shared-types';
 // Define el tipo para los términos del diccionario
 export type DictionaryTerm = {
