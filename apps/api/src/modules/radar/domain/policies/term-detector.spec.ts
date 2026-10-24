@@ -3,8 +3,8 @@ import { aggregateRadarScores, detectTerms, KeywordDictionaryMap, DictionaryTerm
 describe('Term Detector', () => {
   describe('detectTerms', () => {
     it('la frase más larga prevalece sobre términos más cortos', () => {
-      const text = 'experiencia en machine learning y machine';
-      // Estructura correcta para detectTerms (DictionaryTerm[])
+      // Usamos este texto para verificar que la palabra "machine" contenida en "machine learning" se ignore
+      const text = 'experiencia en machine learning y otras cosas';
       const dictionary: DictionaryTerm[] = [
         { canonical: 'machine learning', alias: 'machine learning', wordCount: 2 },
         { canonical: 'machine', alias: 'machine', wordCount: 1 }
