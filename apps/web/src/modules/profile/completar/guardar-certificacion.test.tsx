@@ -34,10 +34,10 @@ const CREADA: CertificationRecord = {
   backupVerified: false,
 };
  
-function abrirCertificaciones() {
+function abrirCertificaciones(returnTo?: string) {
   render(
     <ProfileStoreProvider initialRecords={SIN_REGISTROS}>
-      <AcordeonPerfil />
+      <AcordeonPerfil returnTo={returnTo} />
     </ProfileStoreProvider>,
   );
   fireEvent.click(screen.getByRole('button', { name: /certificaciones/i }));
@@ -103,6 +103,18 @@ describe('Completar perfil · guardar certificación con respaldo (T8.4 y T8.6)'
     expect(crearCertificacion).toHaveBeenCalledTimes(1);
     expect(subirRespaldo).toHaveBeenCalledTimes(2);
     expect(subirRespaldo).toHaveBeenLastCalledWith('cert-1', foto, expect.any(Function));
+  });
+ 
+  it('al llegar desde Mi afinidad, suma la certificación a la lista y ofrece volver (T8.5)', async () => {
+    crearCertificacion.mockResolvedValue(CREADA);
+    subirRespaldo.mockResolvedValue(undefined);
+    abrirCertificaciones('/afinidad');
+ 
+    llenarYAgregar();
+ 
+    expect(await screen.findByText('Certificación guardada')).toBeInTheDocument();
+    expect(screen.getByText('AWS Cloud Practitioner')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver mi afinidad →' })).toHaveAttribute('href', '/afinidad');
   });
 });
  

@@ -1,5 +1,6 @@
-'use client';
 
+'use client';
+ 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Briefcase, Check, Eye, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
@@ -22,7 +23,7 @@ import type {
   EducationRecord,
   ExperienceRecord,
 } from '@/modules/profile/types/profile-record';
-
+ 
 // returnTo: ruta interna desde la que se llegó (por ejemplo /afinidad); al terminar se vuelve ahí (E2.3)
 export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
   // Los registros vienen del estado compartido del perfil, así lo agregado aquí aparece en el resumen
@@ -33,13 +34,13 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
   const [progresoSubida, setProgresoSubida] = useState<number>();
   // Certificación ya creada cuyo respaldo no se pudo subir: al reintentar se sube solo la foto, sin duplicar (T8.6)
   const pendienteRef = useRef<{ clave: string; creada: CertificationRecord } | null>(null);
-
+ 
   useEffect(() => {
     if (!avisoBorrador) return;
     const temporizador = setTimeout(() => setAvisoBorrador(false), 3000);
     return () => clearTimeout(temporizador);
   }, [avisoBorrador]);
-
+ 
   const formaciones = useMemo<FormacionAcademica[]>(
     () =>
       (records.education as EducationRecord[]).map((registro) => ({
@@ -50,7 +51,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       })),
     [records.education],
   );
-
+ 
   const experiencias = useMemo<Experiencia[]>(
     () =>
       (records.experience as ExperienceRecord[]).map((registro) => ({
@@ -61,7 +62,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       })),
     [records.experience],
   );
-
+ 
   const certificaciones = useMemo<Certificacion[]>(
     () =>
       (records.certification as CertificationRecord[]).map((registro) => ({
@@ -73,10 +74,10 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       })),
     [records.certification],
   );
-
+ 
   const cantidades = [formaciones.length, experiencias.length, certificaciones.length];
   const completas = cantidades.filter((cantidad) => cantidad > 0).length;
-
+ 
   return (
     <div className="flex flex-col gap-6">
       {/* Cabecera con progreso (v3: "Completar Perfil Profesional") */}
@@ -107,7 +108,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
         </div>
         <BarraProgreso completas={completas} total={3} />
       </header>
-
+ 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         {/* Tarjeta informativa (v3: "Tu Base de Datos Egresado") */}
         <aside className="flex flex-col gap-4 rounded-2xl border border-abyssal-blue/10 bg-white p-6 lg:w-[300px] lg:shrink-0">
@@ -128,9 +129,9 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
             </p>
           </div>
         </aside>
-
+ 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-
+ 
       <SeccionAcordeon
         numero={1}
         titulo="Formación académica"
@@ -167,6 +168,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       >
         <FormularioCertificaciones
           certificaciones={certificaciones}
+          returnTo={returnTo}
           progreso={progresoSubida}
           onAgregar={async (certificacion) => {
             setProgresoSubida(undefined);
@@ -201,7 +203,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
           }}
         />
       </SeccionAcordeon>
-
+ 
           {/* Acciones finales (v3) */}
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
@@ -221,7 +223,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
           </div>
         </div>
       </div>
-
+ 
       {avisoBorrador && (
         <div
           role="status"
@@ -234,3 +236,4 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
     </div>
   );
 }
+ 

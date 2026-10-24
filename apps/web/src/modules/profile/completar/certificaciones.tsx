@@ -2,6 +2,7 @@
 'use client';
  
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Award, Camera, Check, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import {
@@ -26,6 +27,8 @@ type FormularioCertificacionesProps = {
   onAgregar: (certificacion: Certificacion) => void | Promise<void>;
   // Avance (0 a 100) de la subida del respaldo mientras se guarda
   progreso?: number;
+  // Ruta interna desde la que se llegó (por ejemplo /afinidad desde la Épica 3); al guardar se ofrece volver ahí (T8.5)
+  returnTo?: string;
 };
  
 const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', grado: '', respaldo: null };
@@ -39,7 +42,12 @@ const inputClase =
 const botonRespaldoClase =
   'inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C9C1B1] bg-white px-3 text-xs font-semibold text-[#2C3B4D] hover:bg-[#FAF8F4]';
  
-export function FormularioCertificaciones({ certificaciones, onAgregar, progreso }: FormularioCertificacionesProps) {
+export function FormularioCertificaciones({
+  certificaciones,
+  onAgregar,
+  progreso,
+  returnTo,
+}: FormularioCertificacionesProps) {
   const [datos, setDatos] = useState<Certificacion>(VACIO);
   const fotoRef = useRef<HTMLInputElement>(null);
   const documentoRef = useRef<HTMLInputElement>(null);
@@ -300,6 +308,14 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             <Check className="h-4 w-4 text-[#A35139]" aria-hidden="true" />
             Certificación guardada
           </p>
+        )}
+        {guardada && returnTo && (
+          <Link
+            href={returnTo}
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-burning-flame px-4 text-sm font-bold text-abyssal-blue transition hover:brightness-95 md:w-auto"
+          >
+            Ver mi afinidad →
+          </Link>
         )}
         <MensajeError id="error-certificacion-guardar" mensaje={errorGuardar} />
         {errorGuardar && (
