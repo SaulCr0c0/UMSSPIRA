@@ -1,6 +1,10 @@
-import { CircleCheck } from 'lucide-react';
+import { ChevronRight, CircleCheck } from 'lucide-react';
+import Link from 'next/link';
 
-import type { ProfileCompleteness as Completeness } from '@/modules/profile/utils/profile-completeness';
+import {
+  completarSeccionHref,
+  type ProfileCompleteness as Completeness,
+} from '@/modules/profile/utils/profile-completeness';
 
 // Indicador de completitud del resumen (HU-06): porcentaje y secciones que faltan
 export default function ProfileCompleteness({ completeness }: { completeness: Completeness }) {
@@ -39,9 +43,19 @@ export default function ProfileCompleteness({ completeness }: { completeness: Co
           <p className="text-[13px] font-semibold text-blue-fantastic">Te falta completar:</p>
           <ul aria-label="Secciones faltantes" className="flex flex-col gap-2">
             {missing.map((section) => (
-              <li key={section.id} className="flex items-center gap-2 text-[13px] text-blue-fantastic/80">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-truffle-trouble" aria-hidden="true" />
-                {section.label}
+              <li key={section.id}>
+                {/* Acceso directo al formulario de esa sección (T6.6) */}
+                <Link
+                  href={completarSeccionHref(section.id)}
+                  aria-label={`Completar ${section.label}`}
+                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[13px] text-blue-fantastic/80 transition hover:bg-palladian hover:text-blue-fantastic"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-truffle-trouble" aria-hidden="true" />
+                    {section.label}
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </Link>
               </li>
             ))}
           </ul>

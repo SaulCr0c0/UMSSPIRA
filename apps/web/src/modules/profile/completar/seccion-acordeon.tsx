@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 type SeccionAcordeonProps = {
@@ -9,6 +9,8 @@ type SeccionAcordeonProps = {
   cantidad: number;
   // Estado a mostrar en lugar del número de registros (la descripción no se cuenta por registros)
   textoCompleto?: string;
+  // Llega abierta y a la vista desde un acceso directo del indicador de completitud (T6.6)
+  abiertaInicial?: boolean;
   children?: React.ReactNode;
 };
 
@@ -19,9 +21,16 @@ export function SeccionAcordeon({
   descripcion,
   cantidad,
   textoCompleto,
+  abiertaInicial = false,
   children,
 }: SeccionAcordeonProps) {
-  const [abierta, setAbierta] = useState(false);
+  const [abierta, setAbierta] = useState(abiertaInicial);
+  const seccionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // jsdom no implementa scrollIntoView, por eso la llamada es opcional
+    if (abiertaInicial) seccionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [abiertaInicial]);
   const completa = cantidad > 0;
 
   let indicador = (
@@ -45,6 +54,7 @@ export function SeccionAcordeon({
 
   return (
     <section
+      ref={seccionRef}
       className={`rounded-2xl border bg-white transition-colors ${
         abierta ? 'border-truffle-trouble' : 'border-abyssal-blue/10'
       }`}

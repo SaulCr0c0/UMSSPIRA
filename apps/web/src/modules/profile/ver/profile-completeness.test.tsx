@@ -25,3 +25,20 @@ describe('ProfileCompleteness (T6.5)', () => {
     expect(screen.queryByRole('list', { name: 'Secciones faltantes' })).not.toBeInTheDocument();
   });
 });
+
+describe('Accesos directos a las secciones faltantes (T6.6)', () => {
+  it('cada sección faltante lleva a su formulario con returnTo=/profile', () => {
+    const records = { ...PROFILE_RECORDS_MOCK, certification: [] };
+    render(<ProfileCompleteness completeness={profileCompleteness(records, '')} />);
+
+    expect(screen.getByRole('link', { name: 'Completar Certificaciones' })).toHaveAttribute(
+      'href',
+      '/profile/completar?seccion=certificaciones&returnTo=%2Fprofile',
+    );
+    expect(screen.getByRole('link', { name: 'Completar Descripción' })).toHaveAttribute(
+      'href',
+      '/profile/completar?seccion=descripcion-profesional&returnTo=%2Fprofile',
+    );
+    expect(screen.queryByRole('link', { name: 'Completar Formación' })).not.toBeInTheDocument();
+  });
+});

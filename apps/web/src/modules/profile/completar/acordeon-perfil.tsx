@@ -20,15 +20,25 @@ import {
 } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import { urlDeArchivo } from '@/modules/profile/utils/backup-url';
-import { profileCompleteness } from '@/modules/profile/utils/profile-completeness';
+import {
+  profileCompleteness,
+  type CompletenessSectionId,
+} from '@/modules/profile/utils/profile-completeness';
 import type {
   CertificationRecord,
   EducationRecord,
   ExperienceRecord,
 } from '@/modules/profile/types/profile-record';
  
-// returnTo: ruta interna desde la que se llegó (por ejemplo /afinidad); al terminar se vuelve ahí (E2.3)
-export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
+// returnTo: ruta interna desde la que se llegó (por ejemplo /afinidad); al terminar se vuelve ahí (E2.3).
+// seccionInicial: sección que se abre al llegar desde el indicador de completitud (T6.6)
+export function AcordeonPerfil({
+  returnTo,
+  seccionInicial,
+}: {
+  returnTo?: string;
+  seccionInicial?: CompletenessSectionId;
+}) {
   // Los registros vienen del estado compartido del perfil, así lo agregado aquí aparece en el resumen
   const { records, description, addEducation, addExperience, addCertification, setDescription } =
     useProfileStore();
@@ -139,6 +149,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
  
       <SeccionAcordeon
         numero={1}
+        abiertaInicial={seccionInicial === 'formacion-academica'}
         titulo="Formación académica"
         descripcion="Tu formación académica principal"
         cantidad={formaciones.length}
@@ -153,6 +164,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       </SeccionAcordeon>
       <SeccionAcordeon
         numero={2}
+        abiertaInicial={seccionInicial === 'experiencia-laboral'}
         titulo="Experiencia laboral"
         descripcion="Tu experiencia profesional más relevante"
         cantidad={experiencias.length}
@@ -167,6 +179,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       </SeccionAcordeon>
       <SeccionAcordeon
         numero={3}
+        abiertaInicial={seccionInicial === 'certificaciones'}
         titulo="Certificaciones"
         descripcion="Credenciales que respaldan tu perfil"
         cantidad={certificaciones.length}
@@ -210,6 +223,7 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
       </SeccionAcordeon>
       <SeccionAcordeon
         numero={4}
+        abiertaInicial={seccionInicial === 'descripcion-profesional'}
         titulo="Descripción profesional"
         descripcion="Un resumen de quién eres como profesional"
         cantidad={description ? 1 : 0}

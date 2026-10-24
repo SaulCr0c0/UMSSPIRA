@@ -7,6 +7,23 @@ export type CompletenessSectionId =
   | 'certificaciones'
   | 'descripcion-profesional';
 
+const SECTION_IDS: readonly CompletenessSectionId[] = [
+  'formacion-academica',
+  'experiencia-laboral',
+  'certificaciones',
+  'descripcion-profesional',
+];
+
+// ?seccion= llega por URL: solo se acepta una de las 4 secciones
+export function seccionDeUrl(valor: string | undefined): CompletenessSectionId | undefined {
+  return SECTION_IDS.find((id) => id === valor);
+}
+
+// Acceso directo al formulario de la sección faltante; al terminar, «Volver» regresa al resumen (T6.6)
+export function completarSeccionHref(id: CompletenessSectionId): string {
+  return `/profile/completar?${new URLSearchParams({ seccion: id, returnTo: '/profile' })}`;
+}
+
 export type CompletenessSection = {
   id: CompletenessSectionId;
   label: string;
