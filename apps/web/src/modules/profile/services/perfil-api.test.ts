@@ -3,7 +3,13 @@ import type { CertificationRecord } from '@/modules/profile/types/profile-record
 import { ApiError } from '@/shared/services/api-client';
 import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
-import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
+import {
+  crearExperiencia,
+  crearFormacion,
+  obtenerPerfil,
+  obtenerResumenPerfil,
+  type PerfilApi,
+} from './perfil-api';
 
 // jsdom no trae fetch: se simula con la forma mínima que usa apiFetch
 const fetchMock = jest.fn();
@@ -80,6 +86,21 @@ describe('obtenerPerfil', () => {
       ['c-1', '2022', 'respaldo.jpg'],
       ['c-2', '2021', undefined],
     ]);
+  });
+
+  it('incluye la descripción profesional en el resumen del perfil', async () => {
+    responder(200, { ...PERFIL_API, descripcionProfesional: '  Ingeniero de sistemas.  ' });
+
+    const resumen = await obtenerResumenPerfil();
+
+    expect(resumen.description).toBe('Ingeniero de sistemas.');
+    expect(resumen.records.education).toHaveLength(1);
+  });
+
+  it('deja la descripción vacía si la API no la devuelve', async () => {
+    responder(200, PERFIL_API);
+
+    expect((await obtenerResumenPerfil()).description).toBe('');
   });
 
   it('propaga el error de la API con su estado y mensaje', async () => {

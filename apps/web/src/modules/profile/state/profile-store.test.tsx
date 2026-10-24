@@ -25,7 +25,7 @@ function AddEducationButton() {
 describe('ProfileStoreProvider', () => {
   it('lo agregado en el estado compartido aparece en el resumen del perfil', () => {
     render(
-      <ProfileStoreProvider>
+      <ProfileStoreProvider initialRecords={PROFILE_RECORDS_MOCK}>
         <AddEducationButton />
         <ProfileSummary />
       </ProfileStoreProvider>,
@@ -38,7 +38,7 @@ describe('ProfileStoreProvider', () => {
 
   it('"Mis registros" y el resumen muestran los mismos datos de prueba', () => {
     render(
-      <ProfileStoreProvider>
+      <ProfileStoreProvider initialRecords={PROFILE_RECORDS_MOCK}>
         <ProfileRecordsManager />
       </ProfileStoreProvider>,
     );
@@ -87,7 +87,7 @@ describe('ProfileStoreProvider · carga desde la API', () => {
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/v1\/perfil$/);
   });
 
-  it('mantiene los datos de prueba si la API no responde', async () => {
+  it('si la API no responde, "Mis registros" muestra el error en vez de los datos de prueba (T9.1)', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
     render(
@@ -97,7 +97,26 @@ describe('ProfileStoreProvider · carga desde la API', () => {
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    expect(screen.getAllByText('Universidad Mayor de San Simón').length).toBeGreaterThan(0);
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar tus registros');
+    expect(screen.queryAllByText('Universidad Mayor de San Simón')).toHaveLength(0);
+  });
+
+  it('muestra en el resumen la descripción y "Sin registros" en las secciones vacías', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { ...perfil, descripcionProfesional: 'Ingeniero de sistemas.' } }),
+    });
+
+    render(
+      <ProfileStoreProvider>
+        <ProfileSummary />
+      </ProfileStoreProvider>,
+    );
+
+    expect(await screen.findByText('Ingeniero de sistemas.')).toBeInTheDocument();
+    // Experiencia y certificaciones llegan vacías desde la API
+    expect(screen.getAllByText('Sin registros')).toHaveLength(2);
   });
 
   it('no consulta la API si recibe registros iniciales', () => {

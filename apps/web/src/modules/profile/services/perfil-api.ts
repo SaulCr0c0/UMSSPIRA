@@ -7,7 +7,9 @@ import type {
   ExperienceRecord,
   ProfileRecords,
 } from '@/modules/profile/types/profile-record';
-import { apiFetch } from '@/shared/services/api-client';
+import { ApiError, apiFetch } from '@/shared/services/api-client';
+import { apiUrl, readApiError } from '@/shared/services/api-contract';
+import { authenticatedFetch, SessionError } from '@/shared/services/auth-session';
 
 // Endpoints del perfil del backend (apps/api/src/modules/perfil)
 export const PERFIL_URL = '/api/v1/perfil';
@@ -43,11 +45,15 @@ export type ExperienciaApi = RegistroApi & Omit<ExperienciaCuerpo, 'fechaFin'> &
   fechaFin: string | null;
 };
 
-export type CertificacionApi = RegistroApi & {
+// Cuerpo de PUT de certificaciones (certificationSchema del backend)
+type CertificacionCuerpo = {
   nombre: string;
   entidadEmisora: string;
   grado: string;
   anioEmision: number;
+};
+
+export type CertificacionApi = RegistroApi & CertificacionCuerpo & {
   // tieneRespaldo null = el backend todavía no sabe leer respaldos
   respaldo?: { tieneRespaldo: boolean | null };
 };
@@ -57,6 +63,14 @@ export type PerfilApi = {
   formacionAcademica: { registros: FormacionApi[] };
   experienciaLaboral: { registros: ExperienciaApi[] };
   certificaciones: { registros: CertificacionApi[] };
+  // PROVISIONAL (esperando T6.4): el backend aún no devuelve la descripción profesional
+  descripcionProfesional?: string | null;
+};
+
+// Resumen del perfil: registros de las 3 secciones y descripción profesional (vacía = sin registrar)
+export type ResumenPerfil = {
+  records: ProfileRecords;
+  description: string;
 };
 
 // La API solo devuelve registros del titulado actual, así que todos son del egresado con sesión
@@ -155,12 +169,75 @@ export async function actualizarExperiencia(id: string, experiencia: Experiencia
   return aExperienceRecord(actualizada);
 }
 
-// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
-export async function obtenerPerfil(): Promise<ProfileRecords> {
+// GET /api/v1/perfil -> registros de las 3 secciones y descripción profesional del egresado
+export async function obtenerResumenPerfil(): Promise<ResumenPerfil> {
   const perfil = await apiFetch<PerfilApi>(PERFIL_URL);
   return {
-    education: perfil.formacionAcademica.registros.map(aEducationRecord),
-    experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
-    certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    records: {
+      education: perfil.formacionAcademica.registros.map(aEducationRecord),
+      experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
+      certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    },
+    description: perfil.descripcionProfesional?.trim() ?? '',
   };
+}
+
+// GET /api/v1/perfil/certificaciones/:id -> la certificación guardada, 404 si no existe o 403 si es de otro egresado
+export async function obtenerCertificacion(id: string): Promise<CertificationRecord> {
+  const certificacion = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`);
+  return aCertificationRecord(certificacion);
+}
+
+// PUT /api/v1/perfil/certificaciones/:id -> el mismo registro actualizado (no crea otro), 400 por campo,
+// 403 si es de otro egresado o 404 si ya no existe
+export async function actualizarCertificacion(
+  id: string,
+  certificacion: { nombre: string; entidadEmisora: string; grado: string; anioEmision: string },
+): Promise<CertificationRecord> {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    grado: certificacion.grado,
+    // El formulario guarda el año como texto y el esquema del backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  const actualizada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(cuerpo),
+  });
+  return aCertificationRecord(actualizada);
+}
+
+// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
+export async function obtenerPerfil(): Promise<ProfileRecords> {
+  return (await obtenerResumenPerfil()).records;
+}
+
+// PROVISIONAL (esperando T8.4): la versión real está en la rama HU-08 con la misma firma
+// (XMLHttpRequest para informar el avance). Al integrar HU-08 se borra esta y se queda la de T8.4.
+// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo", JPG de máximo 5 MB)
+export async function subirRespaldo(
+  id: string,
+  archivo: File,
+  onProgreso?: (porcentaje: number) => void,
+): Promise<void> {
+  const formulario = new FormData();
+  formulario.append('archivo', archivo);
+  let respuesta: Response;
+  try {
+    // Sin Content-Type: el navegador lo arma con el boundary del multipart
+    respuesta = await authenticatedFetch(apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`), {
+      method: 'POST',
+      body: formulario,
+    });
+  } catch (error) {
+    if (error instanceof SessionError) throw new ApiError(error.status, error.message);
+    throw new ApiError(0, 'No fue posible conectar con el servidor');
+  }
+  if (!respuesta.ok) {
+    if (respuesta.status === 401) throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
+    const cuerpo = await respuesta.json().catch(() => null);
+    throw new ApiError(respuesta.status, readApiError(cuerpo, 'No se pudo subir el respaldo').message);
+  }
+  onProgreso?.(100);
 }
