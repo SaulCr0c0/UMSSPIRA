@@ -63,10 +63,12 @@ export const eventsProviders: Provider[] = [
     inject: [EVENTS_REPOSITORY],
     useFactory: (repository: EventsRepository) => new PublishEventDraftUseCase(repository),
   },
-  {
+ {
     provide: RegisterEventUseCase,
     inject: [EVENTS_REPOSITORY],
     useFactory: (repository: EventsRepository) => new RegisterEventUseCase(repository),
+  },
+  {
     provide: CancelPublishedEventUseCase,
     inject: [EVENTS_REPOSITORY],
     useFactory: (repository: EventsRepository) => new CancelPublishedEventUseCase(repository),
