@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PROFILE_SECTIONS } from '../../domain/entities/profile-record';
+import { PROFESSIONAL_DESCRIPTION_MAX_LENGTH } from '../../domain/entities/professional-description';
 
 export const profileIdSchema = z.uuid();
 export const profileSectionSchema = z.enum(PROFILE_SECTIONS);
@@ -59,6 +60,17 @@ export const DEFAULT_CERTIFICATION_DEGREE = 'Profesional';
 export const createCertificationSchema = certificationSchema.extend({
   grado: text(50).default(DEFAULT_CERTIFICATION_DEGREE),
 });
+// Vacía se acepta: borra la descripción y la sección vuelve a contar como pendiente (T6.5)
+export const professionalDescriptionSchema = z.strictObject({
+  descripcionProfesional: z
+    .string()
+    .trim()
+    .max(
+      PROFESSIONAL_DESCRIPTION_MAX_LENGTH,
+      `La descripción no puede superar ${PROFESSIONAL_DESCRIPTION_MAX_LENGTH} caracteres`,
+    ),
+});
+export type ProfessionalDescriptionBody = z.infer<typeof professionalDescriptionSchema>;
 export const profileChangeSchema = z.discriminatedUnion('section', [
   z.strictObject({ section: z.literal('formacion-academica'), data: educationSchema }),
   z.strictObject({ section: z.literal('experiencia-laboral'), data: experienceSchema }),

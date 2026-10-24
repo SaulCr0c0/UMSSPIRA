@@ -55,6 +55,7 @@ export class PrismaProfileRepository implements ProfileRepository {
           ],
           include: certificationInclude,
         },
+        perfil_area_registros: { orderBy: descriptionOrder, take: 1 },
       },
     });
     if (!row) {
@@ -74,6 +75,7 @@ export class PrismaProfileRepository implements ProfileRepository {
       education: row.formacion_academica_registros.map(toEducation),
       experience: row.experiencia_laboral_registros.map(toExperience),
       certifications: row.certificacion_registros.map(toCertification),
+      description: toDescription(row.perfil_area_registros[0]),
     };
   }
 

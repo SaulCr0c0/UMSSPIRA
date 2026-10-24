@@ -21,6 +21,8 @@ import { ExportProfileUseCase } from '../../application/use-cases/export-profile
 import { UploadCertificationBackupUseCase } from '../../application/use-cases/upload-certification-backup.use-case';
 import { CreateBackupLinkUseCase } from '../../application/use-cases/create-backup-link.use-case';
 import { ReadSignedBackupUseCase } from '../../application/use-cases/read-signed-backup.use-case';
+import { GetProfessionalDescriptionUseCase } from '../../application/use-cases/get-professional-description.use-case';
+import { SaveProfessionalDescriptionUseCase } from '../../application/use-cases/save-professional-description.use-case';
 
 export const profileProviders: Provider[] = [
   PrismaProfileRepository,
@@ -88,5 +90,17 @@ export const profileProviders: Provider[] = [
     inject: [PROFILE_REPOSITORY, BACKUP_LINK_SIGNER],
     useFactory: (repository: ProfileRepository, signer: BackupLinkSigner) =>
       new ReadSignedBackupUseCase(repository, signer),
+  },
+  {
+    provide: GetProfessionalDescriptionUseCase,
+    inject: [PROFILE_REPOSITORY],
+    useFactory: (repository: ProfileRepository) =>
+      new GetProfessionalDescriptionUseCase(repository),
+  },
+  {
+    provide: SaveProfessionalDescriptionUseCase,
+    inject: [PROFILE_REPOSITORY],
+    useFactory: (repository: ProfileRepository) =>
+      new SaveProfessionalDescriptionUseCase(repository),
   },
 ];

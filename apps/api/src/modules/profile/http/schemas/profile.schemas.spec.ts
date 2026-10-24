@@ -1,4 +1,8 @@
-import { createCertificationSchema, experienceSchema } from './profile.schemas';
+import {
+  createCertificationSchema,
+  experienceSchema,
+  professionalDescriptionSchema,
+} from './profile.schemas';
 
 const base = { empresa: 'Jalasoft', cargo: 'Desarrollador Backend' };
 
@@ -41,5 +45,34 @@ describe('Grado por defecto al crear una certificación (T8.7)', () => {
 
   it('rechaza un grado vacío', () => {
     expect(createCertificationSchema.safeParse({ ...datos, grado: '' }).success).toBe(false);
+  });
+});
+
+describe('Descripción profesional (T6.4)', () => {
+  it('recorta espacios y acepta hasta 5000 caracteres', () => {
+    expect(professionalDescriptionSchema.parse({ descripcionProfesional: '  Hola  ' })).toEqual({
+      descripcionProfesional: 'Hola',
+    });
+    expect(
+      professionalDescriptionSchema.safeParse({ descripcionProfesional: 'a'.repeat(5000) }).success,
+    ).toBe(true);
+  });
+
+  it('rechaza más de 5000 caracteres con un mensaje claro', () => {
+    const result = professionalDescriptionSchema.safeParse({
+      descripcionProfesional: 'a'.repeat(5001),
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe('La descripción no puede superar 5000 caracteres');
+  });
+
+  it('acepta vacía para borrar la descripción y rechaza campos de más', () => {
+    expect(professionalDescriptionSchema.safeParse({ descripcionProfesional: '' }).success).toBe(
+      true,
+    );
+    expect(
+      professionalDescriptionSchema.safeParse({ descripcionProfesional: 'x', idTitulado: 't2' })
+        .success,
+    ).toBe(false);
   });
 });

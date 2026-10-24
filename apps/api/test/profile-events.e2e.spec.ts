@@ -64,6 +64,7 @@ const profile = {
   education: [],
   experience: [],
   certifications: [],
+  description: { text: '', updatedAt: null },
 };
 
 describe('Perfil y eventos con contratos y guards compartidos', () => {

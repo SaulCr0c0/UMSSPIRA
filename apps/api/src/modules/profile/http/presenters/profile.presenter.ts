@@ -3,7 +3,15 @@ import type {
   ProfileRecord,
   ProfileSnapshot,
 } from '../../domain/entities/profile-record';
+import type { ProfessionalDescription } from '../../domain/entities/professional-description';
 import type { BackupLink } from '../../application/use-cases/create-backup-link.use-case';
+
+export function presentDescription(description: ProfessionalDescription) {
+  return {
+    descripcionProfesional: description.text,
+    fechaActualizacion: description.updatedAt?.toISOString() ?? null,
+  };
+}
 
 export function presentBackup(backup: CertificationBackup) {
   return {
@@ -80,5 +88,7 @@ export function presentProfile(profile: ProfileSnapshot) {
     formacionAcademica: section(profile.education),
     experienciaLaboral: section(profile.experience),
     certificaciones: section(profile.certifications),
+    // El resumen y el indicador de completitud del perfil la leen junto con las 3 secciones
+    descripcionProfesional: profile.description.text,
   };
 }
