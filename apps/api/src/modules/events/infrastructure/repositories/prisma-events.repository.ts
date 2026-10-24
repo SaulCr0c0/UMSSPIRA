@@ -174,6 +174,39 @@ export class PrismaEventsRepository implements EventsRepository {
           data: { archivado: true, fecha_archivado: now },
         });
         return { id, ...counts };
+  async cancelPublished(ownerId: string, id: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.lockOwned(tx, ownerId, id);
+
+        if (row.estado !== 'PUBLICADO') {
+          throw new BusinessRuleError(
+            'conflict',
+            'EVENT_NOT_PUBLISHED',
+            'El evento debe estar PUBLICADO para poder cancelarlo',
+          );
+        }
+
+        const cancelled = await tx.evento.update({
+          where: {
+            id,
+            id_usuario: ownerId,
+            estado: 'PUBLICADO',
+            archivado: false,
+          },
+          data: { estado: 'CANCELADO' },
+          include: eventInclude,
+        });
+
+        await tx.paseQr.updateMany({
+          where: {
+            estado: 'VIGENTE',
+            inscripcion: { is: { id_evento: id } },
+          },
+          data: { estado: 'INVALIDADO' },
+        });
+
+        return toEvent(cancelled);
       },
       { timeout: 15000 },
     );

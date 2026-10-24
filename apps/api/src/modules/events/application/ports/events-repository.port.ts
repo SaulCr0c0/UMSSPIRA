@@ -15,6 +15,7 @@ export interface EventsRepository {
   publishDraft(ownerId: string, id: string): Promise<Event>;
   inactive(ownerId: string, now: Date): Promise<InactiveEvent[]>;
   retire(ownerId: string, id: string, now: Date): Promise<RetiredEvent>;
+  cancelPublished(ownerId: string, id: string): Promise<Event>;
   saveCover(ownerId: string, file: StoredFile): Promise<void>;
   removeCover(ownerId: string, id: string): Promise<void>;
   readCover(id: string, actor?: ActorContext): Promise<StoredFile>;
