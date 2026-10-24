@@ -43,11 +43,15 @@ export type ExperienciaApi = RegistroApi & Omit<ExperienciaCuerpo, 'fechaFin'> &
   fechaFin: string | null;
 };
 
-export type CertificacionApi = RegistroApi & {
+// Cuerpo de PUT de certificaciones (certificationSchema del backend)
+type CertificacionCuerpo = {
   nombre: string;
   entidadEmisora: string;
   grado: string;
   anioEmision: number;
+};
+
+export type CertificacionApi = RegistroApi & CertificacionCuerpo & {
   // tieneRespaldo null = el backend todavía no sabe leer respaldos
   respaldo?: { tieneRespaldo: boolean | null };
 };
@@ -163,4 +167,30 @@ export async function obtenerPerfil(): Promise<ProfileRecords> {
     experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
     certification: perfil.certificaciones.registros.map(aCertificationRecord),
   };
+}
+
+// GET /api/v1/perfil/certificaciones/:id -> la certificación guardada, 404 si no existe o 403 si es de otro egresado
+export async function obtenerCertificacion(id: string): Promise<CertificationRecord> {
+  const certificacion = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`);
+  return aCertificationRecord(certificacion);
+}
+
+// PUT /api/v1/perfil/certificaciones/:id -> el mismo registro actualizado (no crea otro), 400 por campo,
+// 403 si es de otro egresado o 404 si ya no existe
+export async function actualizarCertificacion(
+  id: string,
+  certificacion: { nombre: string; entidadEmisora: string; grado: string; anioEmision: string },
+): Promise<CertificationRecord> {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    grado: certificacion.grado,
+    // El formulario guarda el año como texto y el esquema del backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  const actualizada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(cuerpo),
+  });
+  return aCertificationRecord(actualizada);
 }

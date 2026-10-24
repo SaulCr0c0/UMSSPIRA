@@ -15,6 +15,8 @@ type EditRecordLayoutProps = {
   sectionTitle: string;
   sectionSubtitle: string;
   isSaved: boolean;
+  // Texto del aviso al guardar (por defecto "Guardado")
+  savedLabel?: string;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
   children: React.ReactNode;
@@ -28,6 +30,7 @@ export function EditRecordLayout({
   sectionTitle,
   sectionSubtitle,
   isSaved,
+  savedLabel = 'Guardado',
   onSubmit,
   onCancel,
   children,
@@ -56,7 +59,7 @@ export function EditRecordLayout({
               className="flex items-center gap-1 rounded-full bg-truffle-trouble px-2.5 py-[5px] text-[11px] font-bold text-white"
             >
               <Check className="h-3 w-3" aria-hidden="true" />
-              Guardado
+              {savedLabel}
             </span>
           )}
         </div>

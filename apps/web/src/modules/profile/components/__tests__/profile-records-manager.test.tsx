@@ -3,17 +3,31 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { ProfileRecordsManager } from '@/modules/profile/components/profile-records-manager';
 import { PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
+import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
+
+// jsdom no trae fetch: se simula la respuesta del DELETE real
+const fetchMock = jest.fn();
+
+function responder(status: number, cuerpo: unknown = null) {
+  fetchMock.mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => cuerpo });
+}
 
 function getDesktopRows() {
   return within(screen.getByRole('table')).getAllByRole('row').slice(1);
 }
 
-function setOnline(isOnline: boolean) {
-  Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: isOnline });
-}
-
 describe('ProfileRecordsManager', () => {
-  afterEach(() => setOnline(true));
+  beforeEach(() => {
+    fetchMock.mockReset();
+    global.fetch = fetchMock;
+    setAccessToken('test-token');
+  });
+
+  afterEach(() => {
+    // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
+    delete global.fetch;
+    clearAccessToken();
+  });
 
   it('muestra iconos de editar y eliminar en cada registro', () => {
     render(<ProfileRecordsManager />);
@@ -32,7 +46,8 @@ describe('ProfileRecordsManager', () => {
     expect(getDesktopRows()).toHaveLength(PROFILE_RECORDS_MOCK.experience.length);
   });
 
-  it('pide confirmación y elimina solo el registro seleccionado', async () => {
+  it('pide confirmación, llama al DELETE real y quita solo ese registro sin recargar', async () => {
+    responder(204);
     render(<ProfileRecordsManager />);
     const [, secondRow] = getDesktopRows();
     fireEvent.click(within(secondRow).getByRole('button', { name: 'Eliminar registro' }));
@@ -43,6 +58,9 @@ describe('ProfileRecordsManager', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(new RegExp(`/api/v1/perfil/formacion-academica/${PROFILE_RECORDS_MOCK.education[1].id}$`));
+    expect(opciones.method).toBe('DELETE');
     expect(getDesktopRows()).toHaveLength(PROFILE_RECORDS_MOCK.education.length - 1);
     expect(screen.queryByText('Universidad Católica Boliviana')).not.toBeInTheDocument();
     expect(screen.getAllByText('Universidad Mayor de San Simón').length).toBeGreaterThan(0);
@@ -50,7 +68,7 @@ describe('ProfileRecordsManager', () => {
   });
 
   it('muestra error de conexión con opción de reintentar sin borrar el registro', async () => {
-    setOnline(false);
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
     render(<ProfileRecordsManager />);
     fireEvent.click(within(getDesktopRows()[0]).getByRole('button', { name: 'Eliminar registro' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
@@ -61,10 +79,8 @@ describe('ProfileRecordsManager', () => {
   });
 
   it('rechaza eliminar un registro de otro egresado (403) sin modificar la lista', async () => {
-    const records = {
-      ...PROFILE_RECORDS_MOCK,
-      education: [{ ...PROFILE_RECORDS_MOCK.education[0], ownerId: 'graduate-otro' }],
-    };
+    responder(403, { error: { message: 'No tienes permiso' } });
+    const records = { ...PROFILE_RECORDS_MOCK, education: [PROFILE_RECORDS_MOCK.education[0]] };
     render(<ProfileRecordsManager initialRecords={records} />);
     fireEvent.click(within(getDesktopRows()[0]).getByRole('button', { name: 'Eliminar registro' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));

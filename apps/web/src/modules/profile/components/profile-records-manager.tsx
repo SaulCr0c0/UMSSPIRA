@@ -63,7 +63,7 @@ export function ProfileRecordsManager({
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      await deleteProfileRecord(recordToDelete);
+      await deleteProfileRecord(activeSection, recordToDelete);
       // Se actualiza solo la lista en memoria, sin recargar la pantalla
       if (store) {
         store.removeRecord(activeSection, recordToDelete.id);
