@@ -19,14 +19,14 @@ describe('sortAreasByAffinityDesc', () => {
     });
   });
 
-  describe('calculateAffinityVariation', () => {
-    it('retorna 100 si no hay valor previo (undefined)', () => {
+ describe('calculateAffinityVariation', () => {
+    it('retorna undefined si no hay valor previo (undefined)', () => {
       const variation = calculateAffinityVariation(50, undefined);
-      expect(variation).toBe(100);
+      expect(variation).toBeUndefined();
     });
 
-    it('retorna 0 si la diferencia entre ambos valores es nula', () => {
+    it('retorna undefined si la diferencia entre ambos valores es nula', () => {
       const variation = calculateAffinityVariation(50, 50);
-      expect(variation).toBe(0);
+      expect(variation).toBeUndefined();
     });
   });
