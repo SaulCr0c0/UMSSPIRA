@@ -77,7 +77,7 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
         <div className="mt-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-palladian">
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- el enlace firmado vence, no se optimiza con next/image
-            <img src={imageUrl} alt={`Respaldo de ${certificationName}`} className="max-h-full w-full rounded-lg object-contain" />
+            <img src={imageUrl} alt={`Respaldo de ${certificationName}`} className="max-h-[60dvh] w-full rounded-lg object-contain sm:max-h-[70vh]" />
           )}
         </div>
 
