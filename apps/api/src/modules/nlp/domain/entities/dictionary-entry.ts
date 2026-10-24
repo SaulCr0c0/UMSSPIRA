@@ -17,10 +17,12 @@ export interface DictionaryAreaAssociation {
  * Entrada normalizada del diccionario de palabras clave.
  *
  * El extractor NLP solo necesita canonical y aliases para reconocer
- * palabras clave, por lo que areas puede omitirse en contextos de extracción.
+ * palabras clave. Por ello, areas es opcional en contextos que solo
+ * requieren reconocimiento de términos.
  *
- * El repositorio Prisma proporciona las áreas asociadas a cada entrada.
- * Si una palabra no tiene asociaciones, areas debe ser un arreglo vacío.
+ * El repositorio Prisma incluye las asociaciones de áreas al cargar
+ * el diccionario para el cálculo del radar. Si una entrada no tiene
+ * asociaciones, proporciona areas como un arreglo vacío.
  */
 export interface DictionaryEntry {
   /** Forma canónica de la palabra clave. */
@@ -29,6 +31,9 @@ export interface DictionaryEntry {
   /** Variantes o alias que también permiten reconocer la palabra clave. */
   aliases: string[];
 
-  /** Áreas profesionales asociadas; puede omitirse en contextos de extracción. */
+  /**
+   * Áreas profesionales asociadas.
+   * Puede omitirse si el contexto solo necesita reconocer palabras clave.
+   */
   areas?: DictionaryAreaAssociation[];
 }
