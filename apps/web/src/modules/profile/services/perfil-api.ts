@@ -57,6 +57,14 @@ export type PerfilApi = {
   formacionAcademica: { registros: FormacionApi[] };
   experienciaLaboral: { registros: ExperienciaApi[] };
   certificaciones: { registros: CertificacionApi[] };
+  // PROVISIONAL (esperando T6.4): el backend aún no devuelve la descripción profesional
+  descripcionProfesional?: string | null;
+};
+
+// Resumen del perfil: registros de las 3 secciones y descripción profesional (vacía = sin registrar)
+export type ResumenPerfil = {
+  records: ProfileRecords;
+  description: string;
 };
 
 // La API solo devuelve registros del titulado actual, así que todos son del egresado con sesión
@@ -155,12 +163,20 @@ export async function actualizarExperiencia(id: string, experiencia: Experiencia
   return aExperienceRecord(actualizada);
 }
 
-// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
-export async function obtenerPerfil(): Promise<ProfileRecords> {
+// GET /api/v1/perfil -> registros de las 3 secciones y descripción profesional del egresado
+export async function obtenerResumenPerfil(): Promise<ResumenPerfil> {
   const perfil = await apiFetch<PerfilApi>(PERFIL_URL);
   return {
-    education: perfil.formacionAcademica.registros.map(aEducationRecord),
-    experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
-    certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    records: {
+      education: perfil.formacionAcademica.registros.map(aEducationRecord),
+      experience: perfil.experienciaLaboral.registros.map(aExperienceRecord),
+      certification: perfil.certificaciones.registros.map(aCertificationRecord),
+    },
+    description: perfil.descripcionProfesional?.trim() ?? '',
   };
+}
+
+// GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
+export async function obtenerPerfil(): Promise<ProfileRecords> {
+  return (await obtenerResumenPerfil()).records;
 }

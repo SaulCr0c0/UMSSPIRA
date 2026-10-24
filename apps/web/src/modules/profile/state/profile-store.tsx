@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { CURRENT_GRADUATE_ID, PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
-import { obtenerPerfil } from '@/modules/profile/services/perfil-api';
+import { obtenerResumenPerfil } from '@/modules/profile/services/perfil-api';
 import type {
   CertificationRecord,
   EducationRecord,
@@ -18,6 +18,8 @@ type NewRecord<T> = Omit<T, 'id' | 'ownerId'> & { id?: string };
 
 type ProfileStore = {
   records: ProfileRecords;
+  // Descripción profesional del egresado; vacía = sin registrar
+  description: string;
   isLoading: boolean;
   loadError: string | null;
   retryLoad: () => void;
@@ -44,11 +46,14 @@ function createId(section: RecordSection): string {
 export function ProfileStoreProvider({
   children,
   initialRecords,
+  initialDescription = '',
 }: {
   children: React.ReactNode;
   initialRecords?: ProfileRecords;
+  initialDescription?: string;
 }) {
   const [records, setRecords] = useState<ProfileRecords>(initialRecords ?? PROFILE_RECORDS_MOCK);
+  const [description, setDescription] = useState(initialDescription);
   const [isLoading, setIsLoading] = useState(initialRecords === undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -69,10 +74,11 @@ useEffect(() => {
     setLoadError(null);
 
     try {
-      const perfil = await obtenerPerfil();
+      const perfil = await obtenerResumenPerfil();
 
       if (vigente) {
-        setRecords(perfil);
+        setRecords(perfil.records);
+        setDescription(perfil.description);
       }
     } catch (error) {
       if (vigente) {
@@ -121,6 +127,7 @@ useEffect(() => {
   const value = useMemo<ProfileStore>(
     () => ({
       records,
+      description,
       isLoading,
       loadError,
       retryLoad,
@@ -130,7 +137,7 @@ useEffect(() => {
       updateRecord,
       removeRecord,
     }),
-    [records, isLoading, loadError, retryLoad, addRecord, updateRecord, removeRecord],
+    [records, description, isLoading, loadError, retryLoad, addRecord, updateRecord, removeRecord],
   );
 
   return <ProfileStoreContext.Provider value={value}>{children}</ProfileStoreContext.Provider>;
