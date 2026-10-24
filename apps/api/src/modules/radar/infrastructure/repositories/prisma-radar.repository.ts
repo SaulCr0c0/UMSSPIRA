@@ -3,7 +3,11 @@ import { PrismaService } from '../../../../shared/infrastructure/database/prisma
 import { AFFINITY_ALGORITHM_VERSION } from '../../domain/affinity-config';
 import { RADAR_AREA_IDS } from '../../domain/entities/radar-area';
 import type { AffinityCalculation } from '../../domain/entities/affinity-calculation';
-import type { RadarRepositoryPort } from '../../application/ports/radar-repository.port';
+import type { 
+  RadarRepositoryPort,
+  RadarCalculationSnapshot,
+  AreaScoreRecord
+} from '../../application/ports/radar-repository.port';
 
 @Injectable()
 export class PrismaRadarRepository implements RadarRepositoryPort {
@@ -61,5 +65,41 @@ export class PrismaRadarRepository implements RadarRepositoryPort {
         });
       }
     });
+  }
+  // --- Métodos agregados para T3.1 (A ser implementados en BD por Mirko) ---
+
+  async getLatestCalculation(_tituladoId: string): Promise<RadarCalculationSnapshot | null> {
+    return null;
+  }
+
+  async getPreviousCalculation(_tituladoId: string, _currentCalculationId: string): Promise<RadarCalculationSnapshot | null> {
+    return null;
+  }
+
+  async executeWithAdvisoryLock<T>(_tituladoId: string, operation: () => Promise<T>): Promise<T> {
+    return await operation();
+  }
+
+  async saveCalculation(_params: {
+    tituladoId: string;
+    hashEntrada: string;
+    estado: 'COMPLETADO' | 'VACIO';
+    versionAlgoritmo: string;
+    areas: AreaScoreRecord[];
+    unmapped: Array<{ term: string; count: number }>;
+  }): Promise<RadarCalculationSnapshot> {
+    return {
+      id: 'mock-id',
+      tituladoId: _params.tituladoId,
+      hashEntrada: _params.hashEntrada,
+      estado: _params.estado,
+      versionAlgoritmo: _params.versionAlgoritmo,
+      fechaCalculo: new Date(),
+      afinidad: [],
+    };
+  }
+
+  async getAreaWeights(): Promise<Record<string, Array<{ term: string; peso: number }>>> {
+    return {};
   }
 }
