@@ -1,3 +1,4 @@
+import { ObservedApplicationService } from './application/services/observed-application.service';
 import { CorrectionTokenService } from './application/services/correction-token.service';
 import { CorrectionTokenGuard } from './http/guards/correction-token.guard';
 import { ValidateCorrectionAccessController } from './http/controllers/validate-correction-access.controller';
@@ -59,6 +60,6 @@ import { GetApplicationMetricsController } from './http/controllers/get-applicat
     TrustedOriginGuard,
     CorrectionTokenGuard,
   ],
-  exports: [CorrectionTokenService, CorrectionTokenGuard],
+  exports: [CorrectionTokenService, CorrectionTokenGuard, ObservedApplicationService],
 })
 export class RegistrationsModule {}
