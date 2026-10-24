@@ -191,7 +191,7 @@ export const updateObservedDataSchema = z
   })
   .superRefine((data, context) => {
     const today = new Date().toISOString().slice(0, 10);
-    for (const field of ['fechaTitulacion', 'fechaIngreso']) {
+    for (const field of ['fechaTitulacion', 'fechaIngreso'] as const) {
       const val = data[field];
       if (val && val > today) {
         context.addIssue({
