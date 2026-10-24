@@ -1,3 +1,8 @@
+export interface MentorSlotDay {
+  date: string;
+  slots: { startTime: string; endTime: string }[];
+}
+
 export const MENTORSHIP_REQUEST_STATUSES = [
   'PENDIENTE',
   'ACEPTADO',

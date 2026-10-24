@@ -1,6 +1,7 @@
 import type { CreateMentorshipRequestInput } from '../contracts/create-mentorship-request.input';
 import type { MentorshipRequestQuery } from '../contracts/mentorship-request-query';
 import type {
+  MentorSlotDay,
   MentorshipRequest,
   MentorshipRequestPage,
   MentorshipRequestStatus,
@@ -9,6 +10,7 @@ import type {
 export const MENTORSHIP_REQUEST_REPOSITORY = Symbol('MENTORSHIP_REQUEST_REPOSITORY');
 
 export interface MentorshipRequestRepository {
+  slots(mentorId: string, now: Date, days: number): Promise<MentorSlotDay[]>;
   create(
     userId: string,
     input: CreateMentorshipRequestInput,

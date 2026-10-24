@@ -27,6 +27,7 @@ import { ListReceivedMentorshipRequestsController } from './http/controllers/lis
 import { GetReceivedMentorshipRequestController } from './http/controllers/get-received-mentorship-request.controller';
 import { AcceptMentorshipRequestController } from './http/controllers/accept-mentorship-request.controller';
 import { RejectMentorshipRequestController } from './http/controllers/reject-mentorship-request.controller';
+import { GetMentorSlotsController } from './http/controllers/get-mentor-slots.controller';
 
 @Module({
   imports: [PrismaModule, RegistrationsModule],
@@ -55,6 +56,7 @@ import { RejectMentorshipRequestController } from './http/controllers/reject-men
     GetReceivedMentorshipRequestController,
     AcceptMentorshipRequestController,
     RejectMentorshipRequestController,
+    GetMentorSlotsController,
   ],
   providers: mentorshipProviders,
   exports: [MENTOR_AVAILABILITY_REPOSITORY],

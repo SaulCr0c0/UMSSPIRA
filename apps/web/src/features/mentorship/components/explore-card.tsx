@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
 
