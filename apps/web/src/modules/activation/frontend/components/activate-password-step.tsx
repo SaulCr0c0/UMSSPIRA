@@ -178,7 +178,7 @@ export const ActivatePasswordStep: React.FC<ActivatePasswordStepProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-oatmeal bg-[#F5F2EA]/60 px-4 py-3.5 pr-11 text-sm font-medium text-abyssal-blue outline-none transition focus:border-2 focus:border-burning-flame focus:bg-white disabled:opacity-50"
+              className="w-full rounded-xl border border-oatmeal bg-[#F5F2EA]/60 px-4 py-3.5 pr-11 text-sm font-medium text-abyssal-blue outline-none transition focus:border-2 focus:border-burning-flame focus:bg-white disabled:opacity-50 placeholder:text-abyssal-blue/30 focus:placeholder-transparent"
             />
             <button
               type="button"
@@ -213,7 +213,7 @@ export const ActivatePasswordStep: React.FC<ActivatePasswordStepProps> = ({
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-oatmeal bg-[#F5F2EA]/60 px-4 py-3.5 pr-11 text-sm font-medium text-abyssal-blue outline-none transition focus:border-2 focus:border-burning-flame focus:bg-white disabled:opacity-50"
+              className="w-full rounded-xl border border-oatmeal bg-[#F5F2EA]/60 px-4 py-3.5 pr-11 text-sm font-medium text-abyssal-blue outline-none transition focus:border-2 focus:border-burning-flame focus:bg-white disabled:opacity-50 placeholder:text-abyssal-blue/30 focus:placeholder-transparent"
             />
             <button
               type="button"

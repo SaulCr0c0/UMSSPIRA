@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useRef, useEffect, type KeyboardEvent, type ClipboardEvent, type ChangeEvent } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type ClipboardEvent,
+  type ChangeEvent,
+} from 'react';
 import { useActivation } from '../hooks/use-activation';
 import {
   CheckCircle2,
@@ -46,6 +53,7 @@ export const ActivateOtpStep: React.FC<ActivateOtpStepProps> = ({
   });
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     // Foco automático en la primera casilla
@@ -158,11 +166,16 @@ export const ActivateOtpStep: React.FC<ActivateOtpStepProps> = ({
                   value={digit}
                   disabled={isVerifying || isResending || isOtpInvalidated}
                   aria-label={`Dígito ${index + 1} de 6`}
-                  placeholder="•"
+                  placeholder={focusedIndex === index ? '' : '•'}
+                  onFocus={(e) => {
+                    setFocusedIndex(index);
+                    e.target.select();
+                  }}
+                  onBlur={() => setFocusedIndex(null)}
                   onChange={(e) => handleChange(index, e)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className={`h-14 w-12 rounded-xl text-center text-2xl font-bold outline-none transition-all sm:h-16 sm:w-14 ${
+                  className={`h-14 w-12 rounded-xl text-center text-2xl font-bold outline-none transition-all sm:h-16 sm:w-14 caret-burning-flame placeholder:text-abyssal-blue/25 focus:placeholder-transparent ${
                     isFilled ? 'bg-[#F5F2EA] text-abyssal-blue' : 'bg-[#F5F2EA]/60 text-abyssal-blue'
                   } border focus:border-2 focus:border-burning-flame focus:bg-white ${
                     error
