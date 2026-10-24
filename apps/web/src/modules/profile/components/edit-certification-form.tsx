@@ -12,10 +12,11 @@ import {
 } from '@/modules/profile/components/edit-record-layout';
 import { urlDeArchivo } from '@/modules/profile/utils/backup-url';
 import { recordsHref } from '@/modules/profile/data/profile-records-data';
-import { actualizarCertificacion, obtenerCertificacion } from '@/modules/profile/services/perfil-api';
+import { actualizarCertificacion, obtenerCertificacion, subirRespaldo } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
 import type { CertificationRecord } from '@/modules/profile/types/profile-record';
 import { MensajeError } from '@/modules/profile/validation/mensaje-error';
+import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
 import { ApiError } from '@/shared/services/api-client';
 
 type CertificationFormData = {
@@ -91,6 +92,15 @@ function EditCertificationFields({ certification }: { certification: Certificati
   const [documentName, setDocumentName] = useState(certification.backupFile ?? '');
   const [documentUrl, setDocumentUrl] = useState(certification.backupUrl);
   const [isNewDocument, setIsNewDocument] = useState(false);
+  // Foto JPG elegida que todavía no se subió (T9.4); se conserva si la subida falla
+  const [pendingDocument, setPendingDocument] = useState<File | null>(null);
+  // Respaldo que ya quedó guardado en el backend; es el que se muestra si la subida falla
+  const [savedBackup, setSavedBackup] = useState({
+    file: certification.backupFile,
+    url: certification.backupUrl,
+    verified: certification.backupVerified,
+  });
+  const [documentError, setDocumentError] = useState<string>();
   const [isSaved, setIsSaved] = useState(false);
   // Mensaje del backend (400, 403, 404) o de conexión, tal como lo envía apiFetch
   const [saveError, setSaveError] = useState<string>();
@@ -105,12 +115,17 @@ function EditCertificationFields({ certification }: { certification: Certificati
 
   function handleDocumentChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (file) {
-      setDocumentName(file.name);
-      setDocumentUrl(urlDeArchivo(file));
-      setIsNewDocument(true);
-      setIsSaved(false);
-    }
+    if (!file) return;
+    // El accept del input se puede saltar: mismas reglas que el backend (solo JPG, máximo 5 MB)
+    const error = validarRespaldo(file);
+    setDocumentError(error);
+    if (error) return;
+    setDocumentName(file.name);
+    setDocumentUrl(urlDeArchivo(file));
+    setIsNewDocument(true);
+    setPendingDocument(file);
+    setIsSaved(false);
+    setSaveError(undefined);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -118,6 +133,7 @@ function EditCertificationFields({ certification }: { certification: Certificati
     if (isSaving) return;
 
     setIsSaving(true);
+    setSaveError(undefined);
     try {
       // PUT sobre el mismo id: el backend actualiza el registro, no crea uno nuevo
       const actualizada = await actualizarCertificacion(certification.id, {
@@ -126,15 +142,33 @@ function EditCertificationFields({ certification }: { certification: Certificati
         grado: formData.degree,
         anioEmision: formData.year,
       });
-      // El cambio de respaldo se sube aparte (T9.4): mientras tanto se conserva el del formulario
+      let backup = savedBackup;
+      let uploadError: string | undefined;
+      // Después del PUT se sube la foto nueva, que reemplaza al respaldo anterior (T9.4)
+      if (pendingDocument) {
+        try {
+          await subirRespaldo(certification.id, pendingDocument);
+          // Un respaldo nuevo vuelve a quedar en revisión
+          backup = { file: pendingDocument.name, url: documentUrl, verified: false };
+          setSavedBackup(backup);
+          setPendingDocument(null);
+        } catch (apiError) {
+          if (!(apiError instanceof ApiError)) throw apiError;
+          // CA-08: el registro conserva su respaldo anterior y el formulario la foto elegida para reintentar
+          uploadError = apiError.message;
+        }
+      }
       updateRecord('certification', {
         ...actualizada,
-        backupFile: documentName || undefined,
-        backupUrl: documentName ? documentUrl : undefined,
-        // Un respaldo nuevo vuelve a quedar en revisión
-        backupVerified: isNewDocument ? false : certification.backupVerified,
+        backupFile: backup.file,
+        backupUrl: backup.file ? backup.url : undefined,
+        backupVerified: backup.verified,
       });
-      setIsSaved(true);
+      if (uploadError) {
+        setSaveError(`Los datos se guardaron, pero no se pudo subir el respaldo: ${uploadError}`);
+      } else {
+        setIsSaved(true);
+      }
     } catch (apiError) {
       if (!(apiError instanceof ApiError)) throw apiError;
       // Si falla, el formulario conserva lo escrito y el registro guardado queda como estaba
@@ -194,6 +228,7 @@ function EditCertificationFields({ certification }: { certification: Certificati
         isVerified={Boolean(documentName) && !isNewDocument && Boolean(certification.backupVerified)}
         onDocumentChange={handleDocumentChange}
       />
+      <MensajeError id="error-certification-backup" mensaje={documentError} />
 
       <MensajeError id="error-certification-save" mensaje={saveError} />
     </EditRecordLayout>

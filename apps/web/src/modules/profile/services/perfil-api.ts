@@ -7,7 +7,9 @@ import type {
   ExperienceRecord,
   ProfileRecords,
 } from '@/modules/profile/types/profile-record';
-import { apiFetch } from '@/shared/services/api-client';
+import { ApiError, apiFetch } from '@/shared/services/api-client';
+import { apiUrl, readApiError } from '@/shared/services/api-contract';
+import { authenticatedFetch, SessionError } from '@/shared/services/auth-session';
 
 // Endpoints del perfil del backend (apps/api/src/modules/perfil)
 export const PERFIL_URL = '/api/v1/perfil';
@@ -209,4 +211,33 @@ export async function actualizarCertificacion(
 // GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil
 export async function obtenerPerfil(): Promise<ProfileRecords> {
   return (await obtenerResumenPerfil()).records;
+}
+
+// PROVISIONAL (esperando T8.4): la versión real está en la rama HU-08 con la misma firma
+// (XMLHttpRequest para informar el avance). Al integrar HU-08 se borra esta y se queda la de T8.4.
+// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo", JPG de máximo 5 MB)
+export async function subirRespaldo(
+  id: string,
+  archivo: File,
+  onProgreso?: (porcentaje: number) => void,
+): Promise<void> {
+  const formulario = new FormData();
+  formulario.append('archivo', archivo);
+  let respuesta: Response;
+  try {
+    // Sin Content-Type: el navegador lo arma con el boundary del multipart
+    respuesta = await authenticatedFetch(apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`), {
+      method: 'POST',
+      body: formulario,
+    });
+  } catch (error) {
+    if (error instanceof SessionError) throw new ApiError(error.status, error.message);
+    throw new ApiError(0, 'No fue posible conectar con el servidor');
+  }
+  if (!respuesta.ok) {
+    if (respuesta.status === 401) throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
+    const cuerpo = await respuesta.json().catch(() => null);
+    throw new ApiError(respuesta.status, readApiError(cuerpo, 'No se pudo subir el respaldo').message);
+  }
+  onProgreso?.(100);
 }

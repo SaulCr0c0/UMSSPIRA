@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { actualizarCertificacion, obtenerCertificacion } from '@/modules/profile/services/perfil-api';
+import { actualizarCertificacion, obtenerCertificacion, subirRespaldo } from '@/modules/profile/services/perfil-api';
 
 import { ProfileStoreProvider, useProfileStore } from '@/modules/profile/state/profile-store';
 import type { CertificationRecord } from '@/modules/profile/types/profile-record';
@@ -21,10 +21,12 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/modules/profile/services/perfil-api', () => ({
   obtenerCertificacion: jest.fn(),
   actualizarCertificacion: jest.fn(),
+  subirRespaldo: jest.fn(),
   obtenerPerfil: jest.fn(() => new Promise(() => {})),
 }));
 const obtenerCertificacionMock = obtenerCertificacion as jest.MockedFunction<typeof obtenerCertificacion>;
 const actualizarCertificacionMock = actualizarCertificacion as jest.MockedFunction<typeof actualizarCertificacion>;
+const subirRespaldoMock = subirRespaldo as jest.MockedFunction<typeof subirRespaldo>;
 
 const GUARDADA: CertificationRecord = {
   id: 'cert-1',
@@ -40,7 +42,22 @@ const GUARDADA: CertificationRecord = {
 function CertificationName({ id }: { id: string }) {
   const { records } = useProfileStore();
   const certification = (records.certification as CertificationRecord[]).find((record) => record.id === id);
-  return <p data-testid="nombre-guardado">{certification?.name}</p>;
+  return (
+    <>
+      <p data-testid="nombre-guardado">{certification?.name}</p>
+      <p data-testid="respaldo-guardado">{certification?.backupFile}</p>
+    </>
+  );
+}
+
+function jpg(nombre: string, bytes = 1024) {
+  return new File([new Uint8Array(bytes)], nombre, { type: 'image/jpeg' });
+}
+
+// "Subir foto" es el primer input de archivo del respaldo
+function elegirFoto(archivo: File) {
+  const [inputFoto] = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="file"]'));
+  fireEvent.change(inputFoto, { target: { files: [archivo] } });
 }
 
 function renderForm() {
@@ -59,6 +76,7 @@ describe('EditCertificationForm', () => {
     obtenerCertificacionMock.mockReset();
     obtenerCertificacionMock.mockResolvedValue(GUARDADA);
     actualizarCertificacionMock.mockReset();
+    subirRespaldoMock.mockReset();
   });
 
   it('pide la certificación al backend y precarga sus datos y su respaldo', async () => {
@@ -123,5 +141,81 @@ describe('EditCertificationForm', () => {
     obtenerCertificacionMock.mockRejectedValue(new ApiError(404, 'No encontrado'));
     renderForm();
     expect(await screen.findByText('No encontramos esta certificación')).toBeInTheDocument();
+  });
+
+  describe('cambio de respaldo (T9.4)', () => {
+    it('sin foto nueva solo hace el PUT y no sube respaldo', async () => {
+      actualizarCertificacionMock.mockResolvedValue(GUARDADA);
+      renderForm();
+      fireEvent.click(await screen.findByRole('button', { name: 'Guardar cambios' }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
+      expect(subirRespaldoMock).not.toHaveBeenCalled();
+    });
+
+    it('primero hace el PUT, después sube la foto JPG y muestra el respaldo nuevo', async () => {
+      const orden: string[] = [];
+      actualizarCertificacionMock.mockImplementation(async () => {
+        orden.push('put');
+        return GUARDADA;
+      });
+      subirRespaldoMock.mockImplementation(async () => {
+        orden.push('respaldo');
+      });
+      renderForm();
+      await screen.findByLabelText('Nombre de la certificación');
+      const foto = jpg('certificado-nuevo.jpg');
+      elegirFoto(foto);
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
+      expect(orden).toEqual(['put', 'respaldo']);
+      expect(subirRespaldoMock).toHaveBeenCalledWith('cert-1', foto);
+      // El campo de respaldo muestra la foto nueva en lugar de la anterior
+      expect(screen.getByText('certificado-nuevo.jpg', { selector: 'span' })).toBeInTheDocument();
+      expect(screen.queryByText('respaldo.jpg')).not.toBeInTheDocument();
+      expect(screen.getByTestId('respaldo-guardado')).toHaveTextContent('certificado-nuevo.jpg');
+    });
+
+    it('si la subida falla muestra el error y conserva el respaldo guardado y la foto elegida (CA-08)', async () => {
+      actualizarCertificacionMock.mockResolvedValue(GUARDADA);
+      subirRespaldoMock.mockRejectedValueOnce(new ApiError(0, 'No fue posible conectar con el servidor'));
+      renderForm();
+      await screen.findByLabelText('Nombre de la certificación');
+      const foto = jpg('certificado-nuevo.jpg');
+      elegirFoto(foto);
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+      expect(
+        await screen.findByText('Los datos se guardaron, pero no se pudo subir el respaldo: No fue posible conectar con el servidor'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Registro actualizado')).not.toBeInTheDocument();
+      expect(screen.getByTestId('respaldo-guardado')).toHaveTextContent('respaldo.jpg');
+      expect(screen.getByText('certificado-nuevo.jpg')).toBeInTheDocument();
+
+      // Al volver a guardar se reintenta con la misma foto
+      subirRespaldoMock.mockResolvedValueOnce();
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+      expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
+      expect(subirRespaldoMock).toHaveBeenLastCalledWith('cert-1', foto);
+      expect(screen.getByTestId('respaldo-guardado')).toHaveTextContent('certificado-nuevo.jpg');
+    });
+
+    it('rechaza archivos que no son JPG o superan 5 MB sin subirlos', async () => {
+      actualizarCertificacionMock.mockResolvedValue(GUARDADA);
+      renderForm();
+      await screen.findByLabelText('Nombre de la certificación');
+
+      elegirFoto(new File(['%PDF'], 'certificado.pdf', { type: 'application/pdf' }));
+      expect(screen.getByText('Formato no permitido. Solo JPG')).toBeInTheDocument();
+
+      elegirFoto(jpg('enorme.jpg', 5 * 1024 * 1024 + 1));
+      expect(screen.getByText('El archivo no puede superar 5 MB')).toBeInTheDocument();
+      expect(screen.getByText('respaldo.jpg')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+      expect(await screen.findByRole('status')).toHaveTextContent('Registro actualizado');
+      expect(subirRespaldoMock).not.toHaveBeenCalled();
+    });
   });
 });
