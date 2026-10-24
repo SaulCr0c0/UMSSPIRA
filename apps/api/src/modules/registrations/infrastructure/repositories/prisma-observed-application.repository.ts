@@ -4,7 +4,7 @@ import { BusinessRuleError } from '../../../../shared/errors/business-rule-error
 import type {
   ObservedApplicationDetail,
   UpdateObservedDataResponse,
-} from '@umsspira/shared-types';
+} from '../../domain/entities/observed-application';
 import type { ObservedApplicationPort } from '../../application/ports/observed-application.port';
 import type { UpdateObservedDataUseCaseInput } from '../../application/contracts/registration-inputs';
 

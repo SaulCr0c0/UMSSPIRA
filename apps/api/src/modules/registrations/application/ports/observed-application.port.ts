@@ -1,7 +1,7 @@
 import type {
   ObservedApplicationDetail,
   UpdateObservedDataResponse,
-} from '@umsspira/shared-types';
+} from '../../domain/entities/observed-application';
 import type { UpdateObservedDataUseCaseInput } from '../contracts/registration-inputs';
 
 export const OBSERVED_APPLICATION_PORT = Symbol('OBSERVED_APPLICATION_PORT');

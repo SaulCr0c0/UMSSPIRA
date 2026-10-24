@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type {
   ObservedApplicationDetail,
   UpdateObservedDataResponse,
-} from '@umsspira/shared-types';
+} from '../../domain/entities/observed-application';
 import {
   OBSERVED_APPLICATION_PORT,
   type ObservedApplicationPort,
