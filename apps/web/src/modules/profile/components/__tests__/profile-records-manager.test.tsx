@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { ProfileRecordsManager } from '@/modules/profile/components/profile-records-manager';
 import { PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
+import { ProfileStoreProvider } from '@/modules/profile/state/profile-store';
 import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
 // jsdom no trae fetch: se simula la respuesta del DELETE real
@@ -87,5 +88,80 @@ describe('ProfileRecordsManager', () => {
 
     expect(await screen.findByText('No tienes permiso para eliminar este registro')).toBeInTheDocument();
     expect(getDesktopRows()).toHaveLength(1);
+  });
+
+  describe('lista conectada a GET /api/v1/perfil (T9.1)', () => {
+    const registro = { idTitulado: 'titulado-1', fechaCreacion: null };
+    const perfil = {
+      formacionAcademica: {
+        registros: [
+          { ...registro, id: 'f-1', institucion: 'Universidad Privada del Valle', titulo: 'Diplomado en Datos', grado: 'Diplomado', anioEgreso: 2024 },
+        ],
+      },
+      experienciaLaboral: {
+        registros: [{ ...registro, id: 'e-1', empresa: 'Jalasoft', cargo: 'Desarrollador', fechaInicio: '2023-02-01', fechaFin: null }],
+      },
+      certificaciones: { registros: [] },
+    };
+
+    function renderConectado() {
+      return render(
+        <ProfileStoreProvider>
+          <ProfileRecordsManager />
+        </ProfileStoreProvider>,
+      );
+    }
+
+    it('muestra "Cargando tus registros…" sin datos de prueba mientras llega el perfil', () => {
+      fetchMock.mockReturnValue(new Promise(() => {}));
+      renderConectado();
+
+      expect(screen.getByRole('status')).toHaveTextContent('Cargando tus registros…');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(screen.queryAllByText('Universidad Mayor de San Simón')).toHaveLength(0);
+    });
+
+    it('si falla la carga muestra el error y "Reintentar" vuelve a pedir el perfil', async () => {
+      fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      renderConectado();
+
+      const alerta = await screen.findByRole('alert');
+      expect(alerta).toHaveTextContent('No se pudieron cargar tus registros');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+      fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: perfil }) });
+      fireEvent.click(within(alerta).getByRole('button', { name: 'Reintentar' }));
+
+      expect((await screen.findAllByText('Universidad Privada del Valle')).length).toBeGreaterThan(0);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('muestra en cada pestaña los registros guardados en la base', async () => {
+      responder(200, { data: perfil });
+      renderConectado();
+
+      expect(await screen.findByRole('table')).toBeInTheDocument();
+      expect(getDesktopRows()).toHaveLength(1);
+      expect(within(getDesktopRows()[0]).getByText('Universidad Privada del Valle')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: 'Experiencia' }));
+      expect(getDesktopRows()).toHaveLength(1);
+      expect(within(getDesktopRows()[0]).getByText('Jalasoft')).toBeInTheDocument();
+    });
+
+    it('muestra el estado vacío en cada pestaña sin registros', async () => {
+      responder(200, {
+        data: { formacionAcademica: { registros: [] }, experienciaLaboral: { registros: [] }, certificaciones: { registros: [] } },
+      });
+      renderConectado();
+
+      expect(await screen.findByText('Aún no tienes registros guardados en esta sección.')).toBeInTheDocument();
+      for (const pestana of ['Certificaciones', 'Experiencia']) {
+        fireEvent.click(screen.getByRole('tab', { name: pestana }));
+        expect(screen.getByText('Aún no tienes registros guardados en esta sección.')).toBeInTheDocument();
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      }
+    });
   });
 });
