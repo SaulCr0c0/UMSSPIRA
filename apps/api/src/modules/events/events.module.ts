@@ -16,6 +16,8 @@ import { RetireEventController } from './http/controllers/retire-event.controlle
 import { DeleteEventCoverController } from './http/controllers/delete-event-cover.controller';
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
+import { GenerateEventPassService } from './application/generate-event-pass.service';
+import { EventPassesController } from './http/event-passes.controller';
 import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
 
 @Module({
@@ -34,9 +36,10 @@ import { CancelPublishedEventController } from './http/controllers/cancel-publis
     ReadEventCoverController,
     UploadEventCoverController,
     GetPublishedEventController,
+    EventPassesController,
     CancelPublishedEventController,
 
   ],
-  providers: [...eventsProviders, OptionalAuthenticationGuard],
+  providers: [...eventsProviders, OptionalAuthenticationGuard , GenerateEventPassService],
 })
 export class EventsModule {}
