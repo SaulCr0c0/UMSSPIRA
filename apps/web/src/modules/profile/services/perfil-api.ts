@@ -60,13 +60,19 @@ export type CertificacionApi = RegistroApi & Required<CertificacionCuerpo> & {
   respaldo?: { tieneRespaldo: boolean | null };
 };
 
-// GET /api/v1/perfil (perfil-resumen.service.ts del backend)
+// GET /api/v1/perfil (profile.presenter.ts del backend)
 export type PerfilApi = {
   formacionAcademica: { registros: FormacionApi[] };
   experienciaLaboral: { registros: ExperienciaApi[] };
   certificaciones: { registros: CertificacionApi[] };
-  // PROVISIONAL (esperando T6.4): el backend aún no devuelve la descripción profesional
-  descripcionProfesional?: string | null;
+  // Descripción profesional guardada en perfil_area (T6.4); vacía = sin registrar
+  descripcionProfesional: string;
+};
+
+// GET y PUT /api/v1/perfil/descripcion-profesional (T6.4)
+export type DescripcionApi = {
+  descripcionProfesional: string;
+  fechaActualizacion: string | null;
 };
 
 // Resumen del perfil: registros de las 3 secciones y descripción profesional (vacía = sin registrar)
@@ -208,6 +214,16 @@ export async function actualizarCertificacion(
     body: JSON.stringify(cuerpo),
   });
   return aCertificationRecord(actualizada);
+}
+
+// PUT /api/v1/perfil/descripcion-profesional -> la descripción guardada (recortada) o 400 si supera 5000
+// caracteres. Solo cambia la del egresado con sesión; vacía la borra
+export async function guardarDescripcion(descripcion: string): Promise<string> {
+  const guardada = await apiFetch<DescripcionApi>(`${PERFIL_URL}/descripcion-profesional`, {
+    method: 'PUT',
+    body: JSON.stringify({ descripcionProfesional: descripcion }),
+  });
+  return guardada.descripcionProfesional;
 }
 
 // GET /api/v1/perfil -> registros de las 3 secciones con el formato del estado del perfil

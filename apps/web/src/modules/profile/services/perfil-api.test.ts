@@ -8,6 +8,7 @@ import {
   crearExperiencia,
   crearFormacion,
   enlaceDeDescarga,
+  guardarDescripcion,
   obtenerPerfil,
   obtenerResumenPerfil,
   subirRespaldo,
@@ -42,6 +43,7 @@ const PERFIL_API: PerfilApi = {
       { ...base, id: 'c-2', nombre: 'PSM I', entidadEmisora: 'Scrum.org', grado: 'Asociado', anioEmision: 2021, respaldo: { tieneRespaldo: false } },
     ],
   },
+  descripcionProfesional: '',
 };
 
 describe('obtenerPerfil', () => {
@@ -100,7 +102,7 @@ describe('obtenerPerfil', () => {
     expect(resumen.records.education).toHaveLength(1);
   });
 
-  it('deja la descripción vacía si la API no la devuelve', async () => {
+  it('deja la descripción vacía si el egresado aún no la registró', async () => {
     responder(200, PERFIL_API);
 
     expect((await obtenerResumenPerfil()).description).toBe('');
@@ -113,6 +115,39 @@ describe('obtenerPerfil', () => {
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 403, message: 'El usuario no es un titulado' });
+  });
+});
+
+describe('guardarDescripcion', () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    global.fetch = fetchMock;
+    setAccessToken('test-token');
+  });
+
+  afterEach(() => {
+    // @ts-expect-error se vuelve al entorno de jsdom, que no tiene fetch
+    delete global.fetch;
+    clearAccessToken();
+  });
+
+  it('envía PUT a la descripción del egresado con sesión y devuelve la guardada', async () => {
+    responder(200, { descripcionProfesional: 'Analista de datos', fechaActualizacion: '2026-10-24T12:00:00.000Z' });
+
+    const guardada = await guardarDescripcion('Analista de datos');
+
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/v1\/perfil\/descripcion-profesional$/);
+    expect(opciones.method).toBe('PUT');
+    expect(JSON.parse(opciones.body)).toEqual({ descripcionProfesional: 'Analista de datos' });
+    expect(guardada).toBe('Analista de datos');
+  });
+
+  it('400: rechaza con el mensaje del backend', async () => {
+    const mensaje = 'La descripción no puede superar 5000 caracteres';
+    responder(400, { statusCode: 400, message: [mensaje], error: mensaje });
+
+    await expect(guardarDescripcion('a')).rejects.toMatchObject({ status: 400, message: mensaje });
   });
 });
 

@@ -15,6 +15,7 @@ import {
   crearCertificacion,
   crearExperiencia,
   crearFormacion,
+  guardarDescripcion,
   subirRespaldo,
 } from '@/modules/profile/services/perfil-api';
 import { useProfileStore } from '@/modules/profile/state/profile-store';
@@ -212,7 +213,13 @@ export function AcordeonPerfil({ returnTo }: { returnTo?: string }) {
         cantidad={description ? 1 : 0}
         textoCompleto="(Completado)"
       >
-        <FormularioDescripcion descripcion={description} onGuardar={setDescription} />
+        <FormularioDescripcion
+          descripcion={description}
+          onGuardar={async (descripcion) => {
+            // El resumen muestra lo que la API guardó; si falla, el estado no cambia
+            setDescription(await guardarDescripcion(descripcion));
+          }}
+        />
       </SeccionAcordeon>
 
           {/* Acciones finales (v3) */}
