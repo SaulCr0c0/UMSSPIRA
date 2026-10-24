@@ -101,10 +101,12 @@ type BackupFieldProps = {
   documentUrl?: string;
   isVerified: boolean;
   onDocumentChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  // Abre el visor del respaldo guardado (HU-10); sin él no se muestra «Ver respaldo»
+  onViewBackup?: () => void;
 };
 
 // Respaldo documental con estado, enlace al archivo y botones para subir foto o documento
-export function BackupField({ documentName, documentUrl, isVerified, onDocumentChange }: BackupFieldProps) {
+export function BackupField({ documentName, documentUrl, isVerified, onDocumentChange, onViewBackup }: BackupFieldProps) {
   return (
     <div className="flex flex-col gap-[7px]">
       <span className="text-[13px] font-semibold text-blue-fantastic">Respaldo documental</span>
@@ -124,6 +126,15 @@ export function BackupField({ documentName, documentUrl, isVerified, onDocumentC
             </a>
           ) : (
             <span className="text-[13px] font-medium text-truffle-trouble">{documentName}</span>
+          )}
+          {onViewBackup && (
+            <button
+              type="button"
+              onClick={onViewBackup}
+              className="rounded-md border border-oatmeal bg-white px-3 py-1 text-[12px] font-semibold text-blue-fantastic transition hover:bg-palladian"
+            >
+              Ver respaldo
+            </button>
           )}
         </div>
       )}
