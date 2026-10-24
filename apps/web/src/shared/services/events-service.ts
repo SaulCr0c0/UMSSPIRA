@@ -3,6 +3,8 @@ import type {
   EventParticipantsDto,
   EventRegistrationItem,
   EventItem,
+  InactiveEventItem,
+  RetiredEventItem,
   UpdateDraftEventDto,
 } from '@umsspira/shared-types';
 

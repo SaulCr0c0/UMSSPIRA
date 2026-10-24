@@ -95,14 +95,13 @@ export const eventsProviders: Provider[] = [
     useFactory: (repository: EventsRepository) => new UploadEventCoverUseCase(repository),
   },
   {
-  provide: ListInactiveEventsUseCase,
-  useFactory: (repository: EventsRepository) => new ListInactiveEventsUseCase(repository),
-  inject: [EVENTS_REPOSITORY],
-},
-{
-  provide: RetireEventUseCase,
-  inject: [EVENTS_REPOSITORY],
-  useFactory: (repository: EventsRepository) => new RetireEventUseCase(repository),
-},
+    provide: ListInactiveEventsUseCase,
+    useFactory: (repository: EventsRepository) => new ListInactiveEventsUseCase(repository),
+    inject: [EVENTS_REPOSITORY],
+  },
+  {
+    provide: RetireEventUseCase,
+    inject: [EVENTS_REPOSITORY],
+    useFactory: (repository: EventsRepository) => new RetireEventUseCase(repository),
+  },
 ];
-
