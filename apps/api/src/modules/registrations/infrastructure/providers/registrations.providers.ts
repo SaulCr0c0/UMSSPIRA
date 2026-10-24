@@ -2,6 +2,10 @@ import { UpdateRegistrationUseCase } from '../../application/use-cases/update-re
 import { GetDraftDocumentUseCase } from '../../application/use-cases/get-draft-document.use-case';
 import type { Provider } from '@nestjs/common';
 import { RenewActivationUseCase } from '../../application/use-cases/renew-activation.use-case';
+import { CORRECTION_TOKEN_PORT } from '../../application/ports/correction-token.port';
+import { PrismaCorrectionTokenRepository } from '../repositories/prisma-correction-token.repository';
+import { CorrectionTokenService } from '../../application/services/correction-token.service';
+import { RequestCorrectionLinkUseCase } from '../../application/use-cases/request-correction-link.use-case';
 import { GetApplicationMetricsUseCase } from '../../application/use-cases/get-application-metrics.use-case';
 import {
   PASSWORD_HASHER,
@@ -50,6 +54,10 @@ export const registrationsProviders: Provider[] = [
   },
   PrismaRegistrationRepository,
   PrismaApplicationsRepository,
+  PrismaCorrectionTokenRepository,
+  { provide: CORRECTION_TOKEN_PORT, useExisting: PrismaCorrectionTokenRepository },
+  CorrectionTokenService,
+  RequestCorrectionLinkUseCase,
   NodeRegistrationSecurity,
   { provide: REGISTRATION_REPOSITORY, useExisting: PrismaRegistrationRepository },
   { provide: APPLICATIONS_REPOSITORY, useExisting: PrismaApplicationsRepository },

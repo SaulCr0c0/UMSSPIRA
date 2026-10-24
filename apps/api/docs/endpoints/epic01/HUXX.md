@@ -20,6 +20,8 @@
 - `POST /api/v1/applications/:id/review` — dictaminar · permiso: `solicitudes:review`.
 - `POST /api/v1/applications/:id/activation` — reenviar activación · permiso: `solicitudes:review`.
 - `POST /api/v1/registrations/activate` — establecer contraseña y activar cuenta aprobada.
+- `GET /api/v1/registrations/observed/access` — validar acceso con token de corrección.
+- `POST /api/v1/registrations/observed/request-link` — solicitar nuevo enlace de corrección por C.I.
 
 ## Autenticación
 
@@ -237,6 +239,42 @@ Contraseña de 15–128 caracteres; nunca se utiliza el código como contraseña
 **Respuesta 200:** `{ "data": { "activated": true } }`. Crea usuario ACTIVO, credencial Argon2id, perfil titulado y relación con la solicitud en una sola transacción. Después se utiliza el login existente; no emite una sesión automáticamente.
 
 **Errores:** 400 `INVALID_ACTIVATION`; 410 `ACTIVATION_EXPIRED`; 429 `ACTIVATION_ATTEMPTS_EXCEEDED`; 409 `ROLE_UNAVAILABLE` si falta o está deshabilitado el rol del catálogo.
+
+---
+
+---
+
+## 15. Validar acceso de corrección — `GET /api/v1/registrations/observed/access`
+
+**Permiso:** Header `X-Correction-Token: <token>`.
+
+**Respuesta 200:** `{ "data": { "valid": true } }`.
+
+**Respuesta 404:** Token inválido, vencido o solicitud no observada devuelve `{ "error": { "code": "TOKEN_NOT_FOUND", "message": "El recurso solicitado no existe o no está disponible" } }`.
+
+---
+
+## 16. Solicitar enlace de corrección — `POST /api/v1/registrations/observed/request-link`
+
+**Permiso:** ninguno. Rate limit: cooldown de 60s y tope diario de 5 peticiones.
+
+**Body**
+```json
+{
+  "ci": "12345678",
+  "complemento": "",
+  "expedidoEn": "CB"
+}
+```
+
+**Respuesta 200 (inmediata e indistinguible):**
+```json
+{
+  "data": {
+    "message": "Si los datos corresponden a una solicitud observada, se enviará un enlace de corrección al correo registrado"
+  }
+}
+```
 
 ---
 
