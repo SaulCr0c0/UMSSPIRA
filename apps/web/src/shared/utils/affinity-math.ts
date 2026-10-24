@@ -1,14 +1,4 @@
-// Definición temporal del objeto completo para evitar errores de CI
-export interface AffinityArea {
-  area: 
-    | 'software-development'
-    | 'cloud-devops'
-    | 'data-ai'
-    | 'quality-assurance'
-    | 'cybersecurity-networks'
-    | 'it-management';
-  affinity: number;
-}
+import type { AffinityArea } from '@umsspira/shared-types';
 
 // Define el tipo básico que usarás, basado en el contrato de la API
 

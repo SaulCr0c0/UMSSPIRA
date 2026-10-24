@@ -1,12 +1,4 @@
-// Re-declaración temporal para evitar errores de resolución de módulos en CI
-export type RadarArea = 
-  | 'software-development'
-  | 'cloud-devops'
-  | 'data-ai'
-  | 'quality-assurance'
-  | 'cybersecurity-networks'
-  | 'it-management';
-
+import type { RadarArea } from '@umsspira/shared-types';
 // Define el tipo para los términos del diccionario
 export type DictionaryTerm = {
   canonical: string;
@@ -47,10 +39,6 @@ export const detectTerms = (normalizedText: string, dictionary: DictionaryTerm[]
       remainingText = remainingText.replace(regex, '-'.repeat(term.alias.length));
     }
   }
-
-  // 3. Aplicar el tope máximo de 3 apariciones por keyword según las reglas
-  
-
   return detectedCounts;
 };
 
