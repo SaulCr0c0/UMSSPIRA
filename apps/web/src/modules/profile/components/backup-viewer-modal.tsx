@@ -36,6 +36,15 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
     };
   }, [certificationId]);
 
+  // Esc cierra el visor sin cambios desde cualquier parte de la página
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyssal-blue/50 px-4">
       <div
