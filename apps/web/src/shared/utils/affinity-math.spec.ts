@@ -30,3 +30,27 @@ describe('sortAreasByAffinityDesc', () => {
       expect(variation).toBeUndefined();
     });
   });
+
+  it('prevalece la frase más larga y descarta términos más cortos incluidos (HU6-C2)', () => {
+    const dictionary = [
+      { canonical: 'machine learning', alias: 'machine learning', wordCount: 2 },
+      { canonical: 'machine', alias: 'machine', wordCount: 1 }
+    ];
+    const text = 'machine learning';
+    const detected = detectTerms(text, dictionary);
+    expect(detected['machine learning']).toBe(1);
+    expect(detected['machine']).toBeUndefined();
+  });
+
+  it('suma puntaje a múltiples áreas mapeadas para una misma keyword sin dividirlo (HU6-C9)', () => {
+    const detected = { 'python': 1 };
+    const keywordMap = {
+      'python': [
+        { area: 'data-ai', weight: 3 },
+        { area: 'software-development', weight: 2 }
+      ]
+    };
+    const scores = aggregateRadarScores(detected, keywordMap);
+    expect(scores['data-ai']).toBe(3);
+    expect(scores['software-development']).toBe(2);
+  });

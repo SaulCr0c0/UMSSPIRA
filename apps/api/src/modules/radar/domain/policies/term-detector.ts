@@ -12,10 +12,10 @@ export type DictionaryTerm = {
  */
 export const detectTerms = (normalizedText: string, dictionary: DictionaryTerm[]): Record<string, number> => {
   const detectedCounts: Record<string, number> = {};
-  
+
   // 1. Ordenar el diccionario por longitud de palabras (descendente: 3, luego 2, luego 1)
   const sortedDictionary = [...dictionary].sort((a, b) => b.wordCount - a.wordCount);
-  
+
   // Usaremos un string mutable para ir "tachando" lo que ya encontramos
   let remainingText = ` ${normalizedText} `; // Espacios para coincidencia exacta de límites
 
@@ -23,17 +23,17 @@ export const detectTerms = (normalizedText: string, dictionary: DictionaryTerm[]
   for (const term of sortedDictionary) {
     // Escapar caracteres especiales del alias (como +, #, .)
     const escapedAlias = term.alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
+
     // Crear regex que busque la palabra completa, respetando límites
     // Usamos lookarounds (?<=\s) y (?=\s) para asegurar que coincida con palabras enteras
     const regex = new RegExp(`(?<=\\s)${escapedAlias}(?=\\s)`, 'g');
-    
+
     const matches = remainingText.match(regex);
-    
+
     if (matches && matches.length > 0) {
       // Registrar las ocurrencias usando el nombre canónico
       detectedCounts[term.canonical] = (detectedCounts[term.canonical] || 0) + matches.length;
-      
+
       // "Tachar" el término encontrado reemplazándolo por un marcador (ej. guiones)
       // Esto evita que "machine" se cuente después de encontrar "machine learning"
       remainingText = remainingText.replace(regex, '-'.repeat(term.alias.length));

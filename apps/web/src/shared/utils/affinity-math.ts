@@ -12,11 +12,11 @@ export const calculateAffinityVariation = (current: number, previous?: number): 
   // Aseguramos que los valores sean enteros, como dice el ajuste de QA
   const currentInt = Math.round(current);
   const previousInt = Math.round(previous);
-  
+
   const difference = currentInt - previousInt;
 
   if (difference === 0) return undefined; // Sin cambio, no se muestra indicador
-  
+
   if (difference > 0) return `+${difference}%`;
   return `${difference}%`; // El signo negativo ya viene incluido si es menor a 0
 };
@@ -29,6 +29,6 @@ export const sortAreasByAffinityDesc = (areas: AffinityArea[]): AffinityArea[] =
   // Usamos [...areas] para no mutar el array original (buena práctica en React)
   return [...areas].sort((a, b) => {
     // Si la afinidad es igual, podríamos desempatar por nombre, pero el principal es el porcentaje
-    return b.affinity - a.affinity; 
+    return b.affinity - a.affinity;
   });
 };
