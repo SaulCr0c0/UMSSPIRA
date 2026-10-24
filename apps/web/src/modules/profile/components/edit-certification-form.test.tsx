@@ -76,6 +76,27 @@ describe('EditCertificationForm', () => {
     expect(screen.getByLabelText('Nombre de la certificación')).toHaveValue('Nombre sin guardar');
   });
 
+  it('sin respaldo no ofrece «Ver respaldo»', () => {
+    routeId = 'cert-3';
+    renderForm();
+
+    expect(screen.getByLabelText('Nombre de la certificación')).toHaveValue('Google Cloud Engineer');
+    expect(screen.queryByRole('button', { name: 'Ver respaldo' })).not.toBeInTheDocument();
+  });
+
+  it('un archivo recién elegido no abre el visor hasta guardarse', () => {
+    routeId = 'cert-3';
+    renderForm();
+    const file = new File(['foto'], 'google.jpg', { type: 'image/jpeg' });
+
+    fireEvent.change(screen.getByText('Subir foto').querySelector('input') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+
+    expect(screen.getByText('google.jpg')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver respaldo' })).not.toBeInTheDocument();
+  });
+
   it('avisa si la certificación no existe', () => {
     routeId = 'no-existe';
     renderForm();
