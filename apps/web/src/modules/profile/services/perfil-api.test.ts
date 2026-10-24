@@ -3,7 +3,7 @@ import type { CertificationRecord } from '@/modules/profile/types/profile-record
 import { ApiError } from '@/shared/services/api-client';
 import { clearAccessToken, setAccessToken } from '@/shared/services/auth-session';
 
-import { crearExperiencia, crearFormacion, obtenerPerfil, type PerfilApi } from './perfil-api';
+import { crearExperiencia, crearFormacion, enlaceDeDescarga, obtenerPerfil, type PerfilApi } from './perfil-api';
 
 // jsdom no trae fetch: se simula con la forma mínima que usa apiFetch
 const fetchMock = jest.fn();
@@ -205,5 +205,14 @@ describe('crearExperiencia', () => {
     responder(400, { statusCode: 400, message: [mensaje], error: mensaje });
 
     await expect(crearExperiencia(experiencia)).rejects.toMatchObject({ status: 400, message: mensaje });
+  });
+});
+
+describe('enlaceDeDescarga', () => {
+  it('agrega descargar=1 respetando los parámetros del enlace firmado', () => {
+    expect(enlaceDeDescarga('/api/v1/perfil/respaldos/c-1/archivo?expira=1&firma=x')).toBe(
+      '/api/v1/perfil/respaldos/c-1/archivo?expira=1&firma=x&descargar=1',
+    );
+    expect(enlaceDeDescarga('/archivo')).toBe('/archivo?descargar=1');
   });
 });

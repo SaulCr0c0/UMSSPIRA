@@ -45,4 +45,32 @@ describe('BackupViewerModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('«Descargar» apunta al JPG original como adjunto', async () => {
+    render(<BackupViewerModal certificationId="cert-1" certificationName="AWS" onClose={jest.fn()} />);
+
+    expect(await screen.findByRole('link', { name: 'Descargar' })).toHaveAttribute('href', `${ENLACE}&descargar=1`);
+  });
+
+  it('Esc cierra el visor', async () => {
+    const onClose = jest.fn();
+    render(<BackupViewerModal certificationId="cert-1" certificationName="AWS" onClose={onClose} />);
+    await screen.findByRole('img');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('clic fuera del cuadro cierra el visor, pero clic dentro no', async () => {
+    const onClose = jest.fn();
+    render(<BackupViewerModal certificationId="cert-1" certificationName="AWS" onClose={onClose} />);
+    const dialog = screen.getByRole('dialog');
+    await screen.findByRole('img');
+
+    fireEvent.click(dialog);
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(dialog.parentElement as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
