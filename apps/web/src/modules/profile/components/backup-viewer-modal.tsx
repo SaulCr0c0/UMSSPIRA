@@ -51,16 +51,16 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-abyssal-blue/50 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-abyssal-blue/50 px-4 py-4"
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="backup-viewer-title"
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[720px] flex-col rounded-2xl bg-white p-6 shadow-xl"
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[720px] flex-col rounded-2xl bg-white p-4 shadow-xl sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id="backup-viewer-title" className="text-lg font-bold leading-snug text-blue-fantastic">
+          <h2 id="backup-viewer-title" className="min-w-0 break-words text-base font-bold leading-snug text-blue-fantastic sm:text-lg">
             {certificationName}
           </h2>
           <button
