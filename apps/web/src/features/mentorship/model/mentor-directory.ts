@@ -34,10 +34,16 @@ export function mentorInitials(name: string): string {
   return words.slice(0, 2).map(word => Array.from(word)[0]).join('').toLocaleUpperCase('es') || 'M';
 }
 
+/**
+ * Filtra mentores según los criterios aplicados de áreas e intereses (CA-06, CA-07, Tarea 105).
+ * - Dentro de áreas se aplica lógica OR (coincide con cualquiera de las áreas seleccionadas).
+ * - Dentro de intereses se aplica lógica OR (coincide con cualquiera de los intereses seleccionados).
+ * - Entre áreas e intereses se aplica lógica AND (debe coincidir con ambos grupos cuando ambos están activos).
+ */
 export function filterDirectory(mentors: DirectoryMentor[], filters: InterestConfiguration) {
   return mentors.filter(mentor =>
     (!filters.areaIds.length || mentor.areas.some(area => filters.areaIds.includes(area.id)))
-    && (!filters.topicIds.length || mentor.interests?.some(interest => filters.topicIds.includes(interest.id))),
+    && (!filters.topicIds.length || (mentor.interests && mentor.interests.some(interest => filters.topicIds.includes(interest.id)))),
   );
 }
 
