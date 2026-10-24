@@ -1,24 +1,25 @@
-import { aggregateRadarScores, detectTerms, KeywordDictionaryMap } from './term-detector';
+import { aggregateRadarScores, detectTerms, KeywordDictionaryMap, DictionaryTerm } from './term-detector';
 
 describe('Term Detector', () => {
   describe('detectTerms', () => {
     it('la frase más larga prevalece sobre términos más cortos', () => {
       const text = 'experiencia en machine learning y machine';
-      const keywordMap: KeywordDictionaryMap = {
-        'machine learning': [{ area: 'data-ai', weight: 3 }],
-        'machine': [{ area: 'software-development', weight: 1 }]
-      };
-      const detected = detectTerms(text, keywordMap);
+      // Estructura correcta para detectTerms (DictionaryTerm[])
+      const dictionary: DictionaryTerm[] = [
+        { canonical: 'machine learning', alias: 'machine learning', wordCount: 2 },
+        { canonical: 'machine', alias: 'machine', wordCount: 1 }
+      ];
+      const detected = detectTerms(text, dictionary);
       expect(detected['machine learning']).toBe(1);
       expect(detected['machine']).toBeUndefined();
     });
 
     it('cuenta las repeticiones sin aplicar tope', () => {
       const text = 'react react react react react';
-      const keywordMap: KeywordDictionaryMap = {
-        'react': [{ area: 'software-development', weight: 1 }]
-      };
-      const detected = detectTerms(text, keywordMap);
+      const dictionary: DictionaryTerm[] = [
+        { canonical: 'react', alias: 'react', wordCount: 1 }
+      ];
+      const detected = detectTerms(text, dictionary);
       expect(detected['react']).toBe(5);
     });
   });
