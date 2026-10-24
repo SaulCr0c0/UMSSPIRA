@@ -30,7 +30,7 @@ describe('applicationQuerySchema', () => {
   });
  
   it('acepta solo los estados definidos', () => {
-    expect(applicationQuerySchema.safeParse({ status: 'PENDING' }).success).toBe(true);
+    expect(applicationQuerySchema.safeParse({ status: 'PENDIENTE' }).success).toBe(true);
     expect(applicationQuerySchema.safeParse({ status: 'pendiente' }).success).toBe(false);
   });
  
@@ -80,11 +80,11 @@ describe('applicationQuerySchema', () => {
     const parsed = applicationQuerySchema.parse({
       period: 'last30',
       search: ' rojas ',
-      status: 'PENDING',
+      status: 'PENDIENTE',
       pageSize: '25',
     });
  
-    expect(parsed).toMatchObject({ period: 'last30', search: 'rojas', status: 'PENDING', pageSize: 25 });
+    expect(parsed).toMatchObject({ period: 'last30', search: 'rojas', status: 'PENDIENTE', pageSize: 25 });
   });
 });
  

@@ -257,7 +257,7 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
 
           return {
             id: previous.id,
-            estado: 'PENDING',
+            estado: 'PENDIENTE',
           };
         }
 
@@ -325,7 +325,7 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
           data: {
             id_detalle_solicitud: detail.id,
             id_documento_respaldo: document.id,
-            estado: 'PENDING',
+            estado: 'PENDIENTE',
             fecha_creacion: new Date(),
           },
         });
@@ -337,11 +337,7 @@ export class PrismaRegistrationRepository implements RegistrationRepository {
             codigo_hash: null,
           },
         });
-
-        return {
-          id: application.id,
-          estado: 'PENDING',
-        };
+        return { id: application.id, estado: 'PENDIENTE' };
       },
       { timeout: 20000 },
     );

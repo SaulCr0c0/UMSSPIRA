@@ -20,6 +20,10 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: 'Aprobado',
   OBSERVED: 'Observado',
   REJECTED: 'Rechazado',
+  PENDIENTE: 'Pendiente',
+  APROBADA: 'Aprobado',
+  OBSERVADA: 'Observado',
+  RECHAZADA: 'Rechazado',
 };
 
 /**

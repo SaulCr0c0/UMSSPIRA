@@ -95,6 +95,7 @@ export const submitRegistrationSchema = z
       });
     }
   });
+
 export const applicationQuerySchema = z
   .strictObject({
     page: z.coerce.number().int().positive().max(100000).default(1),
@@ -104,7 +105,7 @@ export const applicationQuerySchema = z
       .refine(isApplicationPageSize, 'Tamaño de página no permitido')
       .default(DEFAULT_APPLICATION_PAGE_SIZE),
     career: z.string().trim().max(150).optional(),
-    status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
+    status: z.enum(['PENDIENTE', 'APROBADA', 'OBSERVADA', 'RECHAZADA']).optional(),
     search: z.string().trim().max(100).optional(),
     age: z.enum(['within48', 'over48']).optional(),
     // Periodo por fecha de registro (CA-08.4). Las fechas son días de Bolivia: AAAA-MM-DD.
@@ -132,13 +133,13 @@ export const applicationQuerySchema = z
 
 export const reviewSchema = z
   .strictObject({
-    decision: z.enum(['APPROVED', 'OBSERVED', 'REJECTED']),
+    decision: z.enum(['APROBADA', 'OBSERVADA', 'RECHAZADA']),
     category: z.string().trim().min(1).max(100).optional(),
     note: z.string().trim().min(10).max(500).optional(),
     notifyDean: z.literal(false).optional(),
   })
   .superRefine((data, context) => {
-    if (data.decision !== 'APPROVED') {
+    if (data.decision !== 'APROBADA') {
       for (const field of ['category', 'note'] as const) {
         if (!data[field]) {
           context.addIssue({

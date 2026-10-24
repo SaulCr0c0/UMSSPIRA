@@ -43,7 +43,7 @@ const boardPage = {
     {
       id: 's-1', code: 'EGR-2025-ABCDEF', fullName: 'Alejandro Rojas', email: 'a@x.com',
       ci: '6849201', issuedIn: '', sisCode: '201804921', career: 'Ingeniería de Sistemas',
-      careerId: 'c-1', status: 'PENDING', submittedAt: new Date(Date.now() - 54 * 3_600_000).toISOString(),
+      careerId: 'c-1', status: 'PENDIENTE', submittedAt: new Date(Date.now() - 54 * 3_600_000).toISOString(),
     },
   ],
   total: 1, page: 1, pageSize: 15,
@@ -53,7 +53,8 @@ describe('ApplicationsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.history.replaceState({}, '', '/applications');
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) });
+    // Reemplazar la línea 56 por:
+(globalThis as any).fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) });
   });
 
   it('muestra la bandeja con el total y la alerta de +48 horas (CA-04.1)', async () => {
@@ -79,10 +80,11 @@ describe('ApplicationsPage', () => {
 
   it('conserva la búsqueda aplicada al cambiar de carrera', async () => {
     mockedFetchBoard.mockResolvedValue({ ok: true, data: boardPage });
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [{ id: 'c-1', nombre: 'Ingeniería de Sistemas' }] }),
-    });
+    
+    (globalThis as any).fetch = jest.fn().mockResolvedValue({
+     ok: true,
+     json: async () => ({ data: [{ id: 'c-1', nombre: 'Ingeniería de Sistemas' }] }),
+     });
     render(<ApplicationsPage />);
     await screen.findByText('Bandeja de Solicitudes');
 
@@ -112,7 +114,7 @@ describe('ApplicationsPage', () => {
     window.history.replaceState(
       {},
       '',
-      '/applications?page=3&size=10&q=ana&career=Sistemas&status=PENDING',
+      '/applications?page=3&size=10&q=ana&career=Sistemas&status=PENDIENTE',
     );
     mockedFetchBoard.mockImplementation(async (query: {
       page: number;
@@ -133,7 +135,7 @@ describe('ApplicationsPage', () => {
           pageSize: 10,
           search: 'ana',
           career: 'Sistemas',
-          status: 'PENDING',
+          status: 'PENDIENTE',
         }),
       ),
     );
@@ -148,14 +150,14 @@ describe('ApplicationsPage', () => {
       expect(params.get('size')).toBe('25');
       expect(params.get('q')).toBe('ana');
       expect(params.get('career')).toBe('Sistemas');
-      expect(params.get('status')).toBe('PENDING');
+      expect(params.get('status')).toBe('PENDIENTE');
       expect(mockedFetchBoard).toHaveBeenLastCalledWith(
         expect.objectContaining({
           page: 1,
           pageSize: 25,
           search: 'ana',
           career: 'Sistemas',
-          status: 'PENDING',
+          status: 'PENDIENTE',
         }),
       );
     });
@@ -165,7 +167,7 @@ describe('ApplicationsPage', () => {
     window.history.replaceState(
       {},
       '',
-      '/applications?page=2&size=25&q=ana&career=Sistemas&status=PENDING',
+      '/applications?page=2&size=25&q=ana&career=Sistemas&status=PENDIENTE',
     );
     mockedFetchBoard.mockImplementation(async (query: {
       page: number;
@@ -187,14 +189,14 @@ describe('ApplicationsPage', () => {
       expect(params.get('size')).toBe('25');
       expect(params.get('q')).toBe('ana');
       expect(params.get('career')).toBe('Sistemas');
-      expect(params.get('status')).toBe('PENDING');
+      expect(params.get('status')).toBe('PENDIENTE');
       expect(mockedFetchBoard).toHaveBeenLastCalledWith(
         expect.objectContaining({
           page: 3,
           pageSize: 25,
           search: 'ana',
           career: 'Sistemas',
-          status: 'PENDING',
+          status: 'PENDIENTE',
         }),
       );
     });
@@ -217,7 +219,7 @@ describe('ApplicationsPage', () => {
       data: {
         id: 's-1', code: 'EGR-2025-ABCDEF', fullName: 'Alejandro Rojas', email: 'a@x.com',
         ci: '6849201', issuedIn: '', sisCode: '201804921', career: 'Ingeniería de Sistemas',
-        careerId: 'c-1', status: 'PENDING', submittedAt: new Date().toISOString(),
+        careerId: 'c-1', status: 'PENDIENTE', submittedAt: new Date().toISOString(),
         firstName: 'Alejandro', lastName: 'Rojas', phone: '', graduationYear: 2020,
         documentName: 'titulo.pdf', documentPath: 'solicitudes/x/y.pdf', documentFormat: 'PDF',
       },

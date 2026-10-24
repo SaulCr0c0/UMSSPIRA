@@ -9,10 +9,10 @@ export const OVERDUE_HOURS = 48;
 export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_BADGE_MAP: Record<BoardStatus, RequestStatus> = {
-  PENDING: 'pending',
-  OBSERVED: 'observed',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
+  PENDIENTE: 'pending',
+  OBSERVADA: 'observed',
+  APROBADA: 'approved',
+  RECHAZADA: 'rejected',
 };
 
 export function hoursSince(iso: string, now: number = Date.now()): number {
@@ -21,7 +21,7 @@ export function hoursSince(iso: string, now: number = Date.now()): number {
 
 // Solo una solicitud pendiente puede estar vencida (CA-04.1).
 export function isOverdue(item: BoardItem, now: number = Date.now()): boolean {
-  return item.status === 'PENDING' && hoursSince(item.submittedAt, now) > OVERDUE_HOURS;
+  return item.status === 'PENDIENTE' && hoursSince(item.submittedAt, now) > OVERDUE_HOURS;
 }
 
 function formatSentDate(iso: string): string {

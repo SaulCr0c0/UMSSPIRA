@@ -9,25 +9,24 @@ export class ReviewApplicationUseCase {
     private readonly repository: ApplicationsRepository,
     private readonly security: RegistrationSecurity,
   ) {}
-
-  async execute(actor: ActorContext, id: string, input: ReviewInput) {
-    const detail = await this.repository.find(actor, id);
-    const code = input.decision === 'APPROVED' ? this.security.code() : null;
-    const mail = buildResolutionMail({
-      decision: input.decision,
-      applicationId: id,
-      fullName: detail.fullName,
-      code,
-      category: input.category,
-      note: input.note,
-    });
-    return this.repository.review(
-      actor,
-      id,
-      input,
-      code ? this.security.hash('activation', id + ':' + code) : null,
-      this.security.seal({ to: detail.email, subject: mail.subject, text: mail.text }),
-      { type: mail.type, to: detail.email, subject: mail.subject },
-    );
-  }
+ async execute(actor: ActorContext, id: string, input: ReviewInput) {
+      const detail = await this.repository.find(actor, id);
+      const code = input.decision === 'APROBADA' ? this.security.code() : null;
+      const mail = buildResolutionMail({
+        decision: input.decision,
+        applicationId: id,
+        fullName: detail.fullName,
+        code,
+        category: input.category,
+        note: input.note,
+      });
+      return this.repository.review(
+        actor,
+        id,
+        input,
+        code ? this.security.hash('activation', id + ':' + code) : null,
+        this.security.seal({ to: detail.email, subject: mail.subject, text: mail.text }),
+        { type: mail.type, to: detail.email, subject: mail.subject },
+      );
+    }
 }
