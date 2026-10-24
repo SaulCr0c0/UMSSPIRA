@@ -110,6 +110,24 @@ describe('PrismaObservedApplicationRepository', () => {
       expect((result.documento as unknown as Record<string, unknown>).ruta_storage).toBeUndefined();
     });
 
+    it('acepta la solicitud tanto en estado OBSERVED como OBSERVADA', async () => {
+      for (const estado of ['OBSERVED', 'OBSERVADA']) {
+        const { repository } = createRepo({
+          application: {
+            id: applicationId,
+            estado,
+            detalle_solicitud: mockDetail,
+            documento_respaldo: mockDocument,
+            dictamen_registros: [mockReview],
+            version_registros: [],
+          },
+        });
+
+        const result = await repository.getObservedApplication(applicationId);
+        expect(result.id).toBe(applicationId);
+      }
+    });
+
     it('lanza 404 generico si la solicitud no existe', async () => {
       const { repository } = createRepo({ application: null });
 
@@ -119,8 +137,8 @@ describe('PrismaObservedApplicationRepository', () => {
       });
     });
 
-    it('lanza 404 generico si la solicitud no esta en estado OBSERVED', async () => {
-      for (const estado of ['PENDING', 'APPROVED', 'REJECTED']) {
+    it('lanza 404 generico si la solicitud no esta en estado OBSERVED u OBSERVADA', async () => {
+      for (const estado of ['PENDING', 'APPROVED', 'REJECTED', 'PENDIENTE', 'APROBADA', 'RECHAZADA']) {
         const { repository } = createRepo({
           application: {
             id: applicationId,
@@ -182,6 +200,24 @@ describe('PrismaObservedApplicationRepository', () => {
       });
     });
 
+    it('permite actualizar tanto en estado OBSERVED como OBSERVADA', async () => {
+      for (const estado of ['OBSERVED', 'OBSERVADA']) {
+        const { repository } = createRepo({
+          application: {
+            id: applicationId,
+            estado,
+            id_detalle_solicitud: 'detail-1',
+            id_documento_respaldo: 'doc-1',
+            detalle_solicitud: mockDetail,
+            version_registros: [],
+          },
+        });
+
+        const response = await repository.updateObservedApplication(applicationId, updateInput);
+        expect(response.version).toBe(2);
+      }
+    });
+
     it('lanza 409 VERSION_CONFLICT cuando expectedVersion no coincide', async () => {
       const { repository } = createRepo({
         application: {
@@ -204,7 +240,7 @@ describe('PrismaObservedApplicationRepository', () => {
     });
 
     it('lanza 404 generico si la solicitud paso a REJECTED, APPROVED o PENDING', async () => {
-      for (const estado of ['REJECTED', 'APPROVED', 'PENDING']) {
+      for (const estado of ['REJECTED', 'APPROVED', 'PENDING', 'RECHAZADA', 'APROBADA', 'PENDIENTE']) {
         const { repository } = createRepo({
           application: {
             id: applicationId,

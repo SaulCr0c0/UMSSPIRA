@@ -28,7 +28,7 @@ export class PrismaObservedApplicationRepository implements ObservedApplicationP
       },
     });
 
-    if (!row || row.estado !== 'OBSERVED') {
+    if (!row || (row.estado !== 'OBSERVED' && row.estado !== 'OBSERVADA')) {
       throw new BusinessRuleError(
         'missing',
         'APPLICATION_NOT_FOUND',
@@ -109,7 +109,7 @@ export class PrismaObservedApplicationRepository implements ObservedApplicationP
           },
         });
 
-        if (!row || row.estado !== 'OBSERVED') {
+        if (!row || (row.estado !== 'OBSERVED' && row.estado !== 'OBSERVADA')) {
           throw new BusinessRuleError(
             'missing',
             'APPLICATION_NOT_FOUND',
