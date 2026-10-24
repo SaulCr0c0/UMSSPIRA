@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, Loader2, X } from 'lucide-react';
 
 import { enlaceDeDescarga, obtenerEnlaceRespaldo } from '@/modules/profile/services/perfil-api';
 
@@ -75,6 +75,12 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
 
         {/* La foto ocupa el espacio que sobra y se encoge para que los botones sigan a la vista */}
         <div className="mt-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-palladian">
+          {!imageUrl && (
+            <p role="status" className="flex items-center gap-2 px-4 py-16 text-sm font-medium text-blue-fantastic">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Cargando respaldo…
+            </p>
+          )}
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- el enlace firmado vence, no se optimiza con next/image
             <img src={imageUrl} alt={`Respaldo de ${certificationName}`} className="max-h-[60dvh] w-full rounded-lg object-contain sm:max-h-[70vh]" />
