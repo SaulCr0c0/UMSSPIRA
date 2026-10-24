@@ -14,3 +14,4 @@ export * from './email-verification';
 export * from './review';
 export * from './affinity';
 export * from './event-pass';
+export * from './correction';

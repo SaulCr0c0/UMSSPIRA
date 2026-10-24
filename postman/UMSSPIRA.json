@@ -851,7 +851,7 @@
                 },
                 {
                   "key": "status",
-                  "value": "PENDING"
+                  "value": "PENDIENTE"
                 },
                 {
                   "key": "search",
@@ -982,7 +982,7 @@
                 "type": "string"
               }
             },
-            "description": "Requiere administrador de la carrera. En este mismo archivo puedes cambiar decision por OBSERVED o REJECTED y agregar category y note; note requiere de 10 a 500 caracteres. APPROVED envía el código de activación por correo.\n\nPermiso: solicitudes:review.",
+            "description": "Requiere administrador de la carrera. En este mismo archivo puedes cambiar decision por OBSERVADA o RECHAZADA y agregar category y note; note requiere de 10 a 500 caracteres. APROBADA envía el código de activación por correo.\n\nPermiso: solicitudes:review.",
             "url": {
               "raw": "{{baseUrl}}/api/v1/applications/{{applicationId}}/review",
               "protocol": "",
@@ -1001,7 +1001,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"decision\": \"APPROVED\"\n}",
+              "raw": "{\n  \"decision\": \"APROBADA\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1569,7 +1569,7 @@
                 "type": "string"
               }
             },
-            "description": "Requiere participación activa. Cambia el valor de este archivo a AVAILABLE, PAUSED o UNAVAILABLE según corresponda.\n\nPermiso: mentores:self:write.",
+            "description": "Requiere participación activa. Cambia el valor de este archivo a DISPONIBLE, EN_PAUSA o NO_DISPONIBLE según corresponda.\n\nPermiso: mentores:self:write.",
             "url": {
               "raw": "{{baseUrl}}/api/v1/mentorship/availability",
               "protocol": "",
@@ -1587,7 +1587,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"availabilityStatus\": \"AVAILABLE\"\n}",
+              "raw": "{\n  \"availabilityStatus\": \"DISPONIBLE\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2563,7 +2563,7 @@
                 "type": "string"
               }
             },
-            "description": "Listado paginado. Habilita los filtros opcionales que necesites; reportStatus admite PENDING, APPROVED, OBSERVED o REJECTED.\n\nPermiso: reportes:read.",
+            "description": "Listado paginado. Habilita los filtros opcionales que necesites; reportStatus admite PENDIENTE, APROBADA, OBSERVADA o RECHAZADA.\n\nPermiso: reportes:read.",
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/graduates?page=1&limit=10",
               "protocol": "",
@@ -2660,7 +2660,7 @@
                 "type": "string"
               }
             },
-            "description": "Descarga CSV de los registros filtrados. Guarda la respuesta desde Bruno. Para aprobados o rechazados, habilita status y completa reportStatus con APPROVED o REJECTED.\n\nPermiso: reportes:read.",
+            "description": "Descarga CSV de los registros filtrados. Guarda la respuesta desde Bruno. Para aprobados o rechazados, habilita status y completa reportStatus con APROBADA o RECHAZADA.\n\nPermiso: reportes:read.",
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/graduates/csv",
               "protocol": "",
