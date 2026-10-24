@@ -20,6 +20,10 @@
 - `POST /api/v1/applications/:id/review` — dictaminar · permiso: `solicitudes:review`.
 - `POST /api/v1/applications/:id/activation` — reenviar activación · permiso: `solicitudes:review`.
 - `POST /api/v1/registrations/activate` — establecer contraseña y activar cuenta aprobada.
+- `GET /api/v1/registrations/observed/access` — validar acceso con token de corrección.
+- `POST /api/v1/registrations/observed/request-link` — solicitar nuevo enlace de corrección por C.I.
+- `GET /api/v1/registrations/observed` — obtener datos del expediente observado · header: `X-Correction-Token`.
+- `PATCH /api/v1/registrations/observed` — actualizar datos con control de versión optimista · header: `X-Correction-Token`.
 
 ## Autenticación
 
@@ -237,6 +241,123 @@ Contraseña de 15–128 caracteres; nunca se utiliza el código como contraseña
 **Respuesta 200:** `{ "data": { "activated": true } }`. Crea usuario ACTIVO, credencial Argon2id, perfil titulado y relación con la solicitud en una sola transacción. Después se utiliza el login existente; no emite una sesión automáticamente.
 
 **Errores:** 400 `INVALID_ACTIVATION`; 410 `ACTIVATION_EXPIRED`; 429 `ACTIVATION_ATTEMPTS_EXCEEDED`; 409 `ROLE_UNAVAILABLE` si falta o está deshabilitado el rol del catálogo.
+
+---
+
+---
+
+## 15. Validar acceso de corrección — `GET /api/v1/registrations/observed/access`
+
+**Permiso:** Header `X-Correction-Token: <token>`.
+
+**Respuesta 200:** `{ "data": { "valid": true } }`.
+
+**Respuesta 404:** Token inválido, vencido o solicitud no observada devuelve `{ "error": { "code": "TOKEN_NOT_FOUND", "message": "El recurso solicitado no existe o no está disponible" } }`.
+
+---
+
+## 16. Solicitar enlace de corrección — `POST /api/v1/registrations/observed/request-link`
+
+**Permiso:** ninguno. Rate limit: cooldown de 60s y tope diario de 5 peticiones.
+
+**Body**
+```json
+{
+  "ci": "12345678",
+  "complemento": "",
+  "expedidoEn": "CB"
+}
+```
+
+**Respuesta 200 (inmediata e indistinguible):**
+```json
+{
+  "data": {
+    "message": "Si los datos corresponden a una solicitud observada, se enviará un enlace de corrección al correo registrado"
+  }
+}
+```
+
+## 17. Obtener datos del expediente observado — `GET /api/v1/registrations/observed`
+
+**Header requerido:** `X-Correction-Token: <token>`
+
+**Respuesta 200:**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "version": 1,
+    "nombres": "Carlos",
+    "apellidos": "Montaño",
+    "ci": "12345678",
+    "complementoCi": "",
+    "expedidoEn": "CB",
+    "codigoSis": "202012345",
+    "correo": "carlos@example.com",
+    "telefono": "77777777",
+    "carreraId": "uuid",
+    "anioEgreso": 2024,
+    "deseaMentor": true,
+    "fechaTitulacion": "2024-05-10",
+    "fechaIngreso": "2019-02-15",
+    "observacion": {
+      "categoria": "documento_ilegible",
+      "justificacion": "El documento adjunto no es legible",
+      "fecha": "2026-10-20T10:00:00.000Z"
+    },
+    "documento": {
+      "id": "uuid",
+      "nombre": "titulo.pdf",
+      "tipoDocumento": "diploma_academico",
+      "mime": "application/pdf",
+      "sizeBytes": 1048576
+    }
+  }
+}
+```
+
+## 18. Actualizar datos del expediente observado — `PATCH /api/v1/registrations/observed`
+
+**Header requerido:** `X-Correction-Token: <token>`
+
+**Body:**
+```json
+{
+  "expectedVersion": 1,
+  "nombres": "Carlos Alberto",
+  "apellidos": "Montaño Díaz",
+  "correo": "carlos.nuevo@example.com",
+  "telefono": "78888888",
+  "carreraId": "uuid",
+  "anioEgreso": 2024,
+  "deseaMentor": true,
+  "fechaTitulacion": "2024-05-10",
+  "fechaIngreso": "2019-02-15"
+}
+```
+
+**Respuesta 200:**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "version": 2,
+    "requiresEmailVerification": true,
+    "message": "Datos actualizados. Debe verificar su nueva dirección de correo electrónico."
+  }
+}
+```
+
+**Respuesta 409 (Conflicto de versión optimista):**
+```json
+{
+  "error": {
+    "code": "VERSION_CONFLICT",
+    "message": "La solicitud cambió; actualiza antes de guardar"
+  }
+}
+```
 
 ---
 

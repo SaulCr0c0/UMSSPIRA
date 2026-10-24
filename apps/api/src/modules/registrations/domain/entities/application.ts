@@ -26,6 +26,16 @@ export interface ApplicationPage {
   total: number;
   page: number;
   pageSize: number;
+  totalPages: number;
+}
+
+export interface ApplicationMetrics {
+  receivedToday: number;
+  pending: number;
+  urgent: number;
+  resolvedToday: number;
+  generatedAt: string;
+  timeZone: string;
 }
 
 export interface ReviewResult {

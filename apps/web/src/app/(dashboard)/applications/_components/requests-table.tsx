@@ -1,11 +1,12 @@
 'use client';
 
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/modules/applications/frontend/services/application-query';
 import { StatusBadge, type RequestStatus } from '@/shared/components/badge';
 import { Button } from '@/shared/components/button';
 import type { BoardItem, BoardStatus } from '@/modules/applications/frontend/services/applications-board.service';
 
 export const OVERDUE_HOURS = 48;
-export const PAGE_SIZE = 15;
+export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_BADGE_MAP: Record<BoardStatus, RequestStatus> = {
   PENDIENTE: 'pending',
@@ -32,12 +33,21 @@ export interface RequestsTableProps {
   total: number;
   page: number;
   pageSize: number;
+  onPageSizeChange: (pageSize: number) => void;
   onPageChange: (page: number) => void;
   onSelect: (id: string) => void;
 }
 
 // Tabla de solicitudes con alerta de antigüedad y paginación (CA-04.1).
-export function RequestsTable({ items, total, page, pageSize, onPageChange, onSelect }: RequestsTableProps) {
+export function RequestsTable({
+  items,
+  total,
+  page,
+  pageSize,
+  onPageSizeChange,
+  onPageChange,
+  onSelect,
+}: RequestsTableProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
@@ -113,9 +123,27 @@ export function RequestsTable({ items, total, page, pageSize, onPageChange, onSe
       </div>
 
       <div className="flex flex-col items-center justify-between gap-3 border-t border-oatmeal/60 px-4 py-3 sm:flex-row">
-        <p className="text-xs text-abyssal-blue/70">
-          Mostrando {start}-{end} de {total} solicitudes
-        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <p className="text-xs text-abyssal-blue/70">
+            Mostrando {start}-{end} de {total} solicitudes
+          </p>
+          <label className="flex items-center gap-2 text-xs text-abyssal-blue/70">
+            Mostrar
+            <select
+              aria-label="Filas por página"
+              value={pageSize}
+              onChange={(event) => onPageSizeChange(Number(event.target.value))}
+              className="h-9 rounded-lg border border-oatmeal bg-palladian px-2 text-sm text-abyssal-blue outline-none focus:border-blue-fantastic"
+            >
+              {PAGE_SIZE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            por página
+          </label>
+        </div>
         <nav aria-label="Paginación" className="flex items-center gap-2">
           <Button
             type="button"
