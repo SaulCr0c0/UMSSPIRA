@@ -50,6 +50,10 @@ export const certificationSchema = z.strictObject({
   grado: text(50),
   anioEmision: yearSchema,
 });
+export const DEFAULT_CERTIFICATION_DEGREE = 'Profesional';
+export const createCertificationSchema = certificationSchema.extend({
+  grado: text(50).default(DEFAULT_CERTIFICATION_DEGREE),
+});
 export const profileChangeSchema = z.discriminatedUnion('section', [
   z.strictObject({ section: z.literal('formacion-academica'), data: educationSchema }),
   z.strictObject({ section: z.literal('experiencia-laboral'), data: experienceSchema }),

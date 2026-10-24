@@ -184,6 +184,38 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
       education,
     );
   });
+  it('crea certificación con grado Profesional por defecto y dueño derivado de la sesión', async () => {
+    profiles.createCertification.mockResolvedValue({
+      id: recordId,
+      graduateId,
+      kind: 'certification',
+      name: 'AWS Solutions Architect',
+      issuer: 'Amazon Web Services',
+      degree: 'Profesional',
+      issuedYear: 2022,
+      backup: null,
+      createdAt: new Date(),
+    });
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/perfil/certificaciones')
+      .set('Authorization', 'Bearer graduate')
+      .send({
+        nombre: 'AWS Solutions Architect',
+        entidadEmisora: 'Amazon Web Services',
+        anioEmision: 2022,
+      })
+      .expect(201);
+    expect(response.body.data.grado).toBe('Profesional');
+    expect(profiles.createCertification).toHaveBeenCalledWith(
+      { graduateId, userId: graduate.id },
+      {
+        nombre: 'AWS Solutions Architect',
+        entidadEmisora: 'Amazon Web Services',
+        anioEmision: 2022,
+        grado: 'Profesional',
+      },
+    );
+  });
 
   it('rechaza campos de propiedad y años futuros', async () => {
     await request(app.getHttpServer())

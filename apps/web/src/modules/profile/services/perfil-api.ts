@@ -1,3 +1,4 @@
+import type { Certificacion } from '@/modules/profile/completar/certificaciones';
 import type { Experiencia } from '@/modules/profile/completar/experiencia-laboral';
 import type { FormacionAcademica } from '@/modules/profile/completar/formacion-academica';
 import { CURRENT_GRADUATE_ID } from '@/modules/profile/data/profile-records-data';
@@ -9,7 +10,7 @@ import type {
 } from '@/modules/profile/types/profile-record';
 import { ApiError, apiFetch } from '@/shared/services/api-client';
 import { apiUrl, readApiError } from '@/shared/services/api-contract';
-import { authenticatedFetch, SessionError } from '@/shared/services/auth-session';
+import { ensureAccessToken, getAccessToken } from '@/shared/services/auth-session';
 
 // Endpoints del perfil del backend (apps/api/src/modules/perfil)
 export const PERFIL_URL = '/api/v1/perfil';
@@ -45,15 +46,16 @@ export type ExperienciaApi = RegistroApi & Omit<ExperienciaCuerpo, 'fechaFin'> &
   fechaFin: string | null;
 };
 
-// Cuerpo de PUT de certificaciones (certificationSchema del backend)
+// Cuerpo de POST/PUT de certificaciones (certificationSchema del backend)
 type CertificacionCuerpo = {
   nombre: string;
   entidadEmisora: string;
-  grado: string;
   anioEmision: number;
+  // Sin grado el backend guarda «Profesional» (T8.7)
+  grado?: string;
 };
 
-export type CertificacionApi = RegistroApi & CertificacionCuerpo & {
+export type CertificacionApi = RegistroApi & Required<CertificacionCuerpo> & {
   // tieneRespaldo null = el backend todavía no sabe leer respaldos
   respaldo?: { tieneRespaldo: boolean | null };
 };
@@ -213,33 +215,69 @@ export async function obtenerPerfil(): Promise<ProfileRecords> {
   return (await obtenerResumenPerfil()).records;
 }
 
-// PROVISIONAL (esperando T8.4): la versión real está en la rama HU-08 con la misma firma
-// (XMLHttpRequest para informar el avance). Al integrar HU-08 se borra esta y se queda la de T8.4.
-// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo", JPG de máximo 5 MB)
+function cuerpoCertificacion(certificacion: Certificacion): CertificacionCuerpo {
+  const cuerpo: CertificacionCuerpo = {
+    nombre: certificacion.nombre.trim(),
+    entidadEmisora: certificacion.entidadEmisora.trim(),
+    // El formulario guarda el año como texto y el backend exige un entero
+    anioEmision: Number(certificacion.anioEmision),
+  };
+  if (certificacion.grado) cuerpo.grado = certificacion.grado;
+  return cuerpo;
+}
+
+// POST /api/v1/perfil/certificaciones -> 201 con el registro creado (con su id) o 400 por campo
+export async function crearCertificacion(certificacion: Certificacion): Promise<CertificationRecord> {
+  const creada = await apiFetch<CertificacionApi>(`${PERFIL_URL}/certificaciones`, {
+    method: 'POST',
+    body: JSON.stringify(cuerpoCertificacion(certificacion)),
+  });
+  return aCertificationRecord(creada);
+}
+
+function mensajeDeRespuesta(texto: string, porDefecto: string): string {
+  try {
+    return readApiError(JSON.parse(texto), porDefecto).message;
+  } catch {
+    return porDefecto;
+  }
+}
+
+// POST /api/v1/perfil/certificaciones/:id/respaldo (multipart, campo "archivo").
+// Usa XMLHttpRequest porque fetch no informa el avance de la subida; onProgreso recibe 0 a 100.
 export async function subirRespaldo(
   id: string,
   archivo: File,
   onProgreso?: (porcentaje: number) => void,
 ): Promise<void> {
-  const formulario = new FormData();
-  formulario.append('archivo', archivo);
-  let respuesta: Response;
+  let token: string;
   try {
-    // Sin Content-Type: el navegador lo arma con el boundary del multipart
-    respuesta = await authenticatedFetch(apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`), {
-      method: 'POST',
-      body: formulario,
-    });
-  } catch (error) {
-    if (error instanceof SessionError) throw new ApiError(error.status, error.message);
-    throw new ApiError(0, 'No fue posible conectar con el servidor');
+    token = getAccessToken() ?? (await ensureAccessToken());
+  } catch {
+    throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
   }
-  if (!respuesta.ok) {
-    if (respuesta.status === 401) throw new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente');
-    const cuerpo = await respuesta.json().catch(() => null);
-    throw new ApiError(respuesta.status, readApiError(cuerpo, 'No se pudo subir el respaldo').message);
-  }
-  onProgreso?.(100);
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl(`${PERFIL_URL}/certificaciones/${id}/respaldo`));
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) onProgreso?.(Math.round((evento.loaded / evento.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgreso?.(100);
+        resolve();
+      } else if (xhr.status === 401) {
+        reject(new ApiError(401, 'Tu sesion expiro. Inicia sesion nuevamente'));
+      } else {
+        reject(new ApiError(xhr.status, mensajeDeRespuesta(xhr.responseText, 'No se pudo subir el respaldo')));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'No fue posible conectar con el servidor'));
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    xhr.send(formulario);
+  });
 }
 
 // GET /api/v1/perfil/certificaciones/:id/respaldo/enlace (T10.1) -> enlace firmado que vence en 5 minutos.
