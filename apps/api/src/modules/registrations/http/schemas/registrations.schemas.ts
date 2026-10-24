@@ -168,3 +168,46 @@ export const requestCorrectionLinkSchema = z.strictObject({
   expedidoEn: z.enum(['LP', 'CB', 'SC', 'OR', 'PT', 'TJ', 'CH', 'BE', 'PD', 'EX']),
 });
 export type RequestCorrectionLinkInput = z.infer<typeof requestCorrectionLinkSchema>;
+
+export const updateObservedDataSchema = z
+  .strictObject({
+    expectedVersion: z.number().int().positive(),
+    nombres: nameSchema,
+    apellidos: nameSchema,
+    correo: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+    telefono: z
+      .string()
+      .trim()
+      .regex(/^\d{8}$/),
+    carreraId: z.uuid(),
+    anioEgreso: z
+      .number()
+      .int()
+      .min(1970)
+      .refine((year) => year <= new Date().getFullYear(), 'Año futuro no permitido'),
+    deseaMentor: z.boolean().optional(),
+    fechaTitulacion: z.iso.date().optional().nullable(),
+    fechaIngreso: z.iso.date().optional().nullable(),
+  })
+  .superRefine((data, context) => {
+    const today = new Date().toISOString().slice(0, 10);
+    for (const field of ['fechaTitulacion', 'fechaIngreso']) {
+      const val = data[field];
+      if (val && val > today) {
+        context.addIssue({
+          code: 'custom',
+          path: [field],
+          message: 'La fecha no puede ser futura',
+        });
+      }
+    }
+    if (data.fechaIngreso && data.fechaTitulacion && data.fechaIngreso > data.fechaTitulacion) {
+      context.addIssue({
+        code: 'custom',
+        path: ['fechaIngreso'],
+        message: 'Debe ser anterior a la titulación',
+      });
+    }
+  });
+
+export type UpdateObservedDataInput = z.infer<typeof updateObservedDataSchema>;
