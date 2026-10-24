@@ -154,3 +154,69 @@ it('mantiene la pantalla consultiva sin acciones de edición ni ordenamiento ava
   expect(screen.queryByRole('combobox', { name: /Ordenar por/i })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /editar|eliminar|crear|publicar/i })).not.toBeInTheDocument();
 });
+
+it('CA-06 y CA-07 (Tarea 105): muestra únicamente los mentores que coinciden con los filtros aplicados', async () => {
+  const mentorSoftware: DirectoryMentor = {
+    id: 'm-soft',
+    name: 'Carlos Software',
+    description: 'Mentor en desarrollo web y apis',
+    photoUrl: null,
+    availability: 'AVAILABLE',
+    areas: [{ id: 'software', name: 'Desarrollo de Software' }],
+    interests: [{ id: 'api', name: 'APIs REST', areaId: 'software' }],
+  };
+  const mentorData: DirectoryMentor = {
+    id: 'm-data',
+    name: 'Diana Datos',
+    description: 'Mentora en SQL y bases de datos',
+    photoUrl: null,
+    availability: 'AVAILABLE',
+    areas: [{ id: 'data', name: 'Bases de Datos' }],
+    interests: [{ id: 'sql', name: 'PostgreSQL', areaId: 'data' }],
+  };
+
+  load.mockResolvedValueOnce({
+    mentors: [mentorSoftware, mentorData],
+    total: 2,
+    catalog,
+    interestsSupported: true,
+  });
+
+  render(<MentorDirectoryPage />);
+  await screen.findByText('Carlos Software');
+  expect(screen.getByText('Diana Datos')).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('2 mentores encontrados');
+
+  // Aplicar filtro por Bases de Datos (solo Diana coincide)
+  load.mockResolvedValueOnce({
+    mentors: [mentorData],
+    total: 1,
+    catalog,
+    interestsSupported: true,
+  });
+
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Bases de Datos' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+
+  await waitFor(() => {
+    expect(screen.getByText('Diana Datos')).toBeInTheDocument();
+    expect(screen.queryByText('Carlos Software')).not.toBeInTheDocument();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('1 mentor encontrado');
+
+  // Limpiar filtros (CA-06)
+  load.mockResolvedValueOnce({
+    mentors: [mentorSoftware, mentorData],
+    total: 2,
+    catalog,
+    interestsSupported: true,
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+
+  await waitFor(() => {
+    expect(screen.getByText('Carlos Software')).toBeInTheDocument();
+    expect(screen.getByText('Diana Datos')).toBeInTheDocument();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('2 mentores encontrados');
+});
