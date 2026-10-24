@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSurveyDraft } from '../hooks/use-survey-draft';
+import { useSurveyUserId } from '../hooks/use-survey-user-id';
+import { SurveyDraftNotice } from './survey-draft-notice';
 import { Button } from '@/shared/components/button';
 import type { WorkCondition } from '../types/survey.types';
 import { SurveyWorkConditionSelector } from './survey-work-condition-selector';
@@ -9,11 +12,19 @@ export function SurveyContainer() {
   // TODO: reemplazar por use-survey-form (Task 1.2, Anelis)
   const [workCondition, setWorkCondition] = useState<WorkCondition | null>(null);
   const [error, setError] = useState<string | undefined>();
+  const userId = useSurveyUserId();
+  const { draft, status, saveDraft } = useSurveyDraft(userId);
+
+  useEffect(() => {
+    if (draft) setWorkCondition(draft.workCondition);
+   }, [draft]);
 
   const handleChange = (value: WorkCondition) => {
     setWorkCondition(value);
     setError(undefined);
-  };
+     // TODO (Task 1.2, Natalie): guardar el formulario completo cuando exista use-survey-form 
+    saveDraft({ workCondition: value });
+  }; 
 
   const handleNext = () => {
     if (!workCondition) {
@@ -91,6 +102,9 @@ export function SurveyContainer() {
             </p>
           </div>
         )}
+        <div className="mt-4 empty:hidden">
+           <SurveyDraftNotice status={status} />
+        </div>
       </section>
 
       <p className="mt-4 text-xs text-abyssal-blue/70">
