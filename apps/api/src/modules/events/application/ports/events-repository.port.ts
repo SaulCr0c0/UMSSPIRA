@@ -1,10 +1,8 @@
 import type { ActorContext } from '../../../../shared/security/contexts/actor-context';
 import type { StoredFile } from '../../../../shared/files/contracts/uploaded-file';
-import type { Event } from '../../domain/entities/event';
-import type { EventRegistration } from '../../domain/entities/event-registration';
 import type { Event, InactiveEvent, RetiredEvent } from '../../domain/entities/event';
+import type { EventRegistration } from '../../domain/entities/event-registration';
 import type { CreateEventInput, EventInput } from '../contracts/event-inputs';
-
 export const EVENTS_REPOSITORY = Symbol('EVENTS_REPOSITORY');
 
 export interface EventsRepository {
