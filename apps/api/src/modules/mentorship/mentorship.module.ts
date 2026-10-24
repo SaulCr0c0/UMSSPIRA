@@ -4,6 +4,7 @@ import { RegistrationsModule } from '../registrations/registrations.module';
 import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
 import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
 import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
+import { GetMentorDetailController } from './http/controllers/get-mentor-detail.controller';
 import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
 import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
 import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
@@ -28,6 +29,7 @@ import { RejectMentorshipRequestController } from './http/controllers/reject-men
   imports: [PrismaModule, RegistrationsModule],
   controllers: [
     ListMentorProfilesController,
+    GetMentorDetailController,
     GetMentorEligibilityController,
     GetMyMentorProfileController,
     GetMentorInformationController,

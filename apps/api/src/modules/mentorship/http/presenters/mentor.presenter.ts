@@ -1,9 +1,11 @@
 import type {
+  DirectoryCatalogGroup,
   DirectoryMentor,
   InterestCatalogGroup,
   Mentor,
   MentorAreas,
   MentorAvailability,
+  MentorProfile,
   MentorInterest,
 } from '../../domain/entities/mentor';
 
@@ -43,8 +45,22 @@ export function presentDirectory(entry: DirectoryMentor) {
     descripcion: entry.mentor.description,
     foto_perfil: entry.mentor.photoUrl,
     areas: entry.areas.map((area) => ({ id: area.id, nombre: area.name })),
+    cargo: entry.cargo,
+    empresa: entry.empresa,
+    intereses: entry.interests.map((interest) => ({
+      id: interest.id,
+      nombre: interest.name,
+      area: { id: interest.area.id, nombre: interest.area.name },
+    })),
     availabilityStatus: entry.availability,
   };
+}
+
+export function presentDirectoryCatalog(catalog: DirectoryCatalogGroup[]) {
+  return catalog.map((group) => ({
+    area: { id: group.area.id, nombre: group.area.name },
+    intereses: group.interests.map((interest) => ({ id: interest.id, nombre: interest.name })),
+  }));
 }
 
 export function presentInterest(interest: MentorInterest) {
@@ -78,4 +94,51 @@ export function presentInterestCatalog(groups: InterestCatalogGroup[]) {
 
 export function presentAvailability(state: MentorAvailability) {
   return { availabilityStatus: state.status, fecha_actualizacion: day(state.updatedAt) };
+}
+
+const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+const dayMonth = (date: string) => {
+  const [, month, dayOfMonth] = date.split('-').map(Number);
+  return { day: dayOfMonth, month: MONTHS[month - 1] };
+};
+
+function weekLabel(from: string, to: string) {
+  const start = dayMonth(from);
+  const end = dayMonth(to);
+  const first = start.month === end.month ? String(start.day) : `${start.day} ${start.month}`;
+  return `Del ${first} al ${end.day} ${end.month} · sesiones de 1 hora`;
+}
+
+/** Contrato que consume el perfil detallado del front (HU 6.9). */
+export function presentMentorDetail(profile: MentorProfile) {
+  const interests = new Map<string, { area: string; items: string[] }>();
+  for (const interest of profile.interests) {
+    const group = interests.get(interest.area.id) ?? { area: interest.area.name, items: [] };
+    group.items.push(interest.name);
+    interests.set(interest.area.id, group);
+  }
+  return {
+    id: profile.mentor.id,
+    fullName: profile.mentor.graduateName,
+    photoUrl: profile.mentor.photoUrl,
+    jobTitle: profile.position,
+    company: profile.company,
+    about: profile.mentor.description,
+    experience: profile.mentor.experience,
+    relevantInfo: profile.mentor.relevantInformation,
+    technicalAreas: profile.areas.map((area) => area.name),
+    interests: [...interests.values()],
+    availability: profile.availability,
+    weekLabel: weekLabel(profile.week.from, profile.week.to),
+    slots: profile.week.slots.map((slot) => {
+      const { day: dayOfMonth, month } = dayMonth(slot.date);
+      return {
+        date: slot.date,
+        dayLabel: `${WEEKDAYS[slot.weekday - 1]} ${dayOfMonth} ${month}`,
+        times: slot.times,
+      };
+    }),
+  };
 }
