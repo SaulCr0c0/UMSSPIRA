@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSurveyDraft } from '../hooks/use-survey-draft';
 import { useSurveyUserId } from '../hooks/use-survey-user-id';
 import { SurveyDraftNotice } from './survey-draft-notice';
@@ -12,26 +13,28 @@ export function SurveyContainer() {
   // TODO: reemplazar por use-survey-form (Task 1.2, Anelis)
   const [workCondition, setWorkCondition] = useState<WorkCondition | null>(null);
   const [error, setError] = useState<string | undefined>();
+  const router = useRouter();
   const userId = useSurveyUserId();
   const { draft, status, saveDraft } = useSurveyDraft(userId);
 
   useEffect(() => {
     if (draft) setWorkCondition(draft.workCondition);
-   }, [draft]);
+  }, [draft]);
 
   const handleChange = (value: WorkCondition) => {
     setWorkCondition(value);
     setError(undefined);
-     // TODO (Task 1.2, Natalie): guardar el formulario completo cuando exista use-survey-form 
+    // TODO (Task 1.2): guardar el formulario completo cuando exista use-survey-form
     saveDraft({ workCondition: value });
-  }; 
+  };
 
   const handleNext = () => {
     if (!workCondition) {
       setError('Seleccione su condición laboral actual');
       return;
     }
-    // TODO: avanzar al siguiente paso (HU-002)
+    // TODO (Task 1.2 + HU-002): avanzar al siguiente paso cuando use-survey-form
+    // y los campos laborales estén integrados.
   };
 
   return (
@@ -102,8 +105,9 @@ export function SurveyContainer() {
             </p>
           </div>
         )}
+
         <div className="mt-4 empty:hidden">
-           <SurveyDraftNotice status={status} />
+          <SurveyDraftNotice status={status} />
         </div>
       </section>
 
@@ -112,7 +116,7 @@ export function SurveyContainer() {
       </p>
 
       <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="secondary">
+        <Button type="button" variant="secondary" onClick={() => router.back()}>
           Volver
         </Button>
         <Button type="button" variant="primary" onClick={handleNext}>
