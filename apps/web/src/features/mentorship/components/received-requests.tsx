@@ -39,14 +39,6 @@ const initialSentRequests: SentRequest[] = [
   { id: 'sent-7', mentor: 'Jorge Flores Gutiérrez', role: 'DevOps Engineer', date: '12/10', time: '12:00', reason: 'Consulta sobre pipelines de CI/CD.', status: 'CANCELADA' },
 ];
 
-const initialDemoRequests: RequestItem[] = [
-  { id: 'demo-juan', name: 'Juan Pérez', initials: 'JP', career: 'Ing. de Sistemas', date: '20/10', weekday: 'Martes 20 oct', time: '15:00 – 16:00', message: 'Quisiera orientación para elegir la arquitectura de mi proyecto de grado. Estoy entre monolito modular y microservicios.', status: 'PENDIENTE', sentAt: '18/10/2026', respondedAt: null, requestedArea: 'Arquitectura de software' },
-  { id: 'demo-sofia', name: 'Sofía Gutiérrez Lazo', initials: 'SG', career: 'Ing. Informática', date: '21/10', weekday: 'Miércoles 21 oct', time: '10:00 – 11:00', message: 'Me gustaría recibir consejos para prepararme para mi primera entrevista técnica.', status: 'PENDIENTE', sentAt: '19/10/2026', respondedAt: null, requestedArea: 'Desarrollo de software' },
-  { id: 'demo-diego', name: 'Diego Camacho', initials: 'DC', career: 'Ing. de Sistemas', date: '16/10', weekday: 'Viernes 16 oct', time: '16:00 – 17:00', message: 'Revisión de portafolio antes de postular a pasantías.', status: 'ACEPTADA', sentAt: '12/10/2026', respondedAt: '13/10/2026', requestedArea: 'Empleabilidad' },
-  { id: 'demo-valeria', name: 'Valeria Ortiz', initials: 'VO', career: 'Ing. Electrónica', date: '14/10', weekday: 'Miércoles 14 oct', time: '09:00 – 10:00', message: 'Quisiera conversar sobre mi proyecto de automatización.', status: 'RECHAZADA', sentAt: '10/10/2026', respondedAt: '11/10/2026', requestedArea: 'Automatización' },
-  { id: 'demo-maria', name: 'María Rojas', initials: 'MR', career: 'Ing. Informática', date: '22/10', weekday: 'Jueves 22 oct', time: '17:00 – 18:00', message: 'Tengo dudas sobre certificaciones en la nube.', status: 'CANCELADA', sentAt: '15/10/2026', respondedAt: '16/10/2026', requestedArea: 'Computación en la nube' },
-];
-
 const apiStatus: Record<Exclude<Filter, 'TODAS'>, ReceivedRequest['estado']> = {
   PENDIENTE: 'PENDIENTE', ACEPTADA: 'ACEPTADO', RECHAZADA: 'RECHAZADO', CANCELADA: 'CANCELADO',
 };
@@ -91,8 +83,6 @@ export function ReceivedRequests() {
   const [counts, setCounts] = useState<Record<Filter, number>>({ TODAS: 0, PENDIENTE: 0, ACEPTADA: 0, RECHAZADA: 0, CANCELADA: 0 });
   const [sentRequests, setSentRequests] = useState(initialSentRequests);
   const [screen, setScreen] = useState<'received' | 'sent'>(requestedView === 'sent' ? 'sent' : 'received');
-  const [demoMode, setDemoMode] = useState(false);
-  const [demoRequests, setDemoRequests] = useState(initialDemoRequests);
   const [filter, setFilter] = useState<Filter>('PENDIENTE');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -114,17 +104,6 @@ export function ReceivedRequests() {
 
   useEffect(() => {
     if (screen !== 'received') return;
-    if (demoMode) {
-      const countsFromDemo = demoRequests.reduce((result, request) => ({ ...result, [request.status]: result[request.status] + 1 }), { TODAS: 0, PENDIENTE: 0, ACEPTADA: 0, RECHAZADA: 0, CANCELADA: 0 } as Record<Filter, number>);
-      countsFromDemo.TODAS = demoRequests.length;
-      setCounts(countsFromDemo);
-      const filtered = filter === 'TODAS' ? demoRequests : demoRequests.filter(request => request.status === filter);
-      setRequests(filtered.slice((page - 1) * 20, page * 20));
-      setTotalPages(Math.max(1, Math.ceil(filtered.length / 20)));
-      setLoading(false);
-      setLoadError('');
-      return;
-    }
     let cancelled = false;
     const controller = new AbortController();
     setLoading(true);
@@ -167,7 +146,7 @@ export function ReceivedRequests() {
     };
     void load();
     return () => { cancelled = true; controller.abort(); };
-  }, [demoMode, demoRequests, filter, page, reload, router, screen]);
+  }, [filter, page, reload, router, screen]);
 
   if (screen === 'received' && isActiveMentor !== true) {
     if (isActiveMentor === false) return null;
@@ -181,14 +160,6 @@ export function ReceivedRequests() {
     const current = requests.find(request => request.id === dialog.requestId);
     if (!current || current.status !== 'PENDIENTE') {
       setDialog({ kind: 'processed', requestId: dialog.requestId });
-      return;
-    }
-    if (demoMode) {
-      const nextStatus = dialog.action === 'accept' ? 'ACEPTADA' : 'RECHAZADA';
-      setDemoRequests(items => items.map(request => request.id === current.id ? { ...request, status: nextStatus, respondedAt: 'Hoy' } : request));
-      setFilter(nextStatus);
-      setPage(1);
-      setDialog({ kind: 'success', action: dialog.action, requestId: current.id });
       return;
     }
     setActionError('');
@@ -284,12 +255,6 @@ export function ReceivedRequests() {
         <h1>Solicitudes de mentoría recibidas</h1>
         <p>Consulta y gestiona las solicitudes que otros miembros de la comunidad te enviaron.</p>
       </header>
-      <div className="received-demo-toolbar">
-        <button type="button" className="received-button received-details" onClick={() => { setDemoMode(value => !value); setSelectedId(null); setPage(1); }}>
-          {demoMode ? 'Volver a datos del servidor' : 'Cargar datos de prueba'}
-        </button>
-        {demoMode && <span role="status">Modo de prueba: las acciones son simuladas y no se guardan.</span>}
-      </div>
       <div className="received-tabs" role="tablist" aria-label="Filtrar solicitudes por estado">
         {tabs.map(tab => {
           const count = counts[tab.id];
@@ -324,12 +289,9 @@ export function ReceivedRequests() {
             <button type="button" className="received-button received-details" disabled={loadingDetail} onClick={async () => {
               setLoadingDetail(true);
               try {
-                if (demoMode) setSelectedId(request.id);
-                else {
-                  const full = mapRequest(await getReceivedRequest(request.id));
-                  setRequests(items => items.map(item => item.id === full.id ? full : item));
-                  setSelectedId(full.id);
-                }
+                const full = mapRequest(await getReceivedRequest(request.id));
+                setRequests(items => items.map(item => item.id === full.id ? full : item));
+                setSelectedId(full.id);
               } catch { setActionError('No se pudo cargar el detalle de la solicitud. Intenta nuevamente.'); }
               finally { setLoadingDetail(false); }
             }}><Eye size={16} />Ver detalles</button>

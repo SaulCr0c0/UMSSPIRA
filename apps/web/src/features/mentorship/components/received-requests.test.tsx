@@ -39,30 +39,9 @@ it('muestra la bandeja pendiente con solicitante, fecha de envío y motivo', asy
   expect(await screen.findByText('Juan Pérez')).toBeInTheDocument();
   expect(screen.getByText(/Enviada: 2026-10-20/)).toBeInTheDocument();
   expect(screen.getByText('Necesito orientación para mi proyecto.')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).not.toBeInTheDocument();
+  expect(screen.queryByText(/Modo de prueba/)).not.toBeInTheDocument();
   expect(listReceivedRequests).toHaveBeenCalledWith('PENDIENTE', 1, expect.anything());
-});
-
-it('carga solicitudes de prueba y simula la aceptación sin llamar al servidor', async () => {
-  render(<ReceivedRequests />);
-  await screen.findByText('Juan Pérez');
-  fireEvent.click(screen.getByRole('button', { name: 'Cargar datos de prueba' }));
-  expect(await screen.findByText('Sofía Gutiérrez Lazo')).toBeInTheDocument();
-  expect(screen.getByText('Modo de prueba: las acciones son simuladas y no se guardan.')).toBeInTheDocument();
-  fireEvent.click(screen.getAllByRole('button', { name: 'Aceptar' })[0]);
-  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirmar' }));
-  expect(await screen.findByText('Solicitud aceptada')).toBeInTheDocument();
-  expect(respondToReceivedRequest).not.toHaveBeenCalled();
-});
-
-it('muestra el estado vacío del servidor y permite cargar datos de prueba manualmente', async () => {
-  (listReceivedRequests as jest.Mock).mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 1 });
-  render(<ReceivedRequests />);
-  expect(await screen.findByText('No tienes solicitudes pendientes')).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Aceptar' })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Cargar datos de prueba' }));
-  expect(await screen.findByText('Juan Pérez')).toBeInTheDocument();
-  expect(screen.getByText('Modo de prueba: las acciones son simuladas y no se guardan.')).toBeInTheDocument();
 });
 
 it('filtra por aceptadas desde el servicio', async () => {
