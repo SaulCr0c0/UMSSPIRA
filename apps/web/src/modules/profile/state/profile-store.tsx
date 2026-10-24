@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { CURRENT_GRADUATE_ID, PROFILE_RECORDS_MOCK } from '@/modules/profile/data/profile-records-data';
-import { obtenerPerfil } from '@/modules/profile/services/perfil-api';
+import { obtenerResumenPerfil } from '@/modules/profile/services/perfil-api';
 import type {
   CertificationRecord,
   EducationRecord,
@@ -18,6 +18,11 @@ type NewRecord<T> = Omit<T, 'id' | 'ownerId'> & { id?: string };
 
 type ProfileStore = {
   records: ProfileRecords;
+  // Descripción profesional del egresado; vacía = sin registrar
+  description: string;
+  isLoading: boolean;
+  loadError: string | null;
+  retryLoad: () => void;
   addEducation: (record: NewRecord<EducationRecord>) => void;
   addExperience: (record: NewRecord<ExperienceRecord>) => void;
   addCertification: (record: NewRecord<CertificationRecord>) => void;
@@ -41,28 +46,61 @@ function createId(section: RecordSection): string {
 export function ProfileStoreProvider({
   children,
   initialRecords,
+  initialDescription = '',
 }: {
   children: React.ReactNode;
   initialRecords?: ProfileRecords;
+  initialDescription?: string;
 }) {
   const [records, setRecords] = useState<ProfileRecords>(initialRecords ?? PROFILE_RECORDS_MOCK);
+  const [description, setDescription] = useState(initialDescription);
+  const [isLoading, setIsLoading] = useState(initialRecords === undefined);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
   const cargarDesdeApi = initialRecords === undefined;
 
-  useEffect(() => {
-    if (!cargarDesdeApi) return;
-    let vigente = true;
-    obtenerPerfil()
-      .then((perfil) => {
-        if (vigente) setRecords(perfil);
-      })
-      .catch(() => {
-        // Sin conexión con la API: se mantienen los datos de prueba
-      });
-    return () => {
-      vigente = false;
-    };
-  }, [cargarDesdeApi]);
+useEffect(() => {
+  if (!cargarDesdeApi) {
+    setIsLoading(false);
+    setLoadError(null);
+    return;
+  }
 
+  let vigente = true;
+
+  async function cargarPerfil() {
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const perfil = await obtenerResumenPerfil();
+
+      if (vigente) {
+        setRecords(perfil.records);
+        setDescription(perfil.description);
+      }
+    } catch (error) {
+      if (vigente) {
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'No se pudo cargar tu perfil. Vuelve a intentarlo.',
+        );
+      }
+    } finally {
+      if (vigente) {
+        setIsLoading(false);
+      }
+    }
+  }
+
+  void cargarPerfil();
+
+  return () => {
+    vigente = false;
+  };
+}, [cargarDesdeApi, loadAttempt]);
   const addRecord = useCallback((section: RecordSection, record: NewRecord<ProfileRecord>) => {
     const created = { ...record, id: record.id ?? createId(section), ownerId: CURRENT_GRADUATE_ID } as ProfileRecord;
     setRecords((current) => ({ ...current, [section]: [...current[section], created] }));
@@ -82,16 +120,24 @@ export function ProfileStoreProvider({
     }));
   }, []);
 
+  const retryLoad = useCallback(() => {
+    setLoadAttempt((current) => current + 1);
+  }, []);
+
   const value = useMemo<ProfileStore>(
     () => ({
       records,
+      description,
+      isLoading,
+      loadError,
+      retryLoad,
       addEducation: (record) => addRecord('education', record),
       addExperience: (record) => addRecord('experience', record),
       addCertification: (record) => addRecord('certification', record),
       updateRecord,
       removeRecord,
     }),
-    [records, addRecord, updateRecord, removeRecord],
+    [records, description, isLoading, loadError, retryLoad, addRecord, updateRecord, removeRecord],
   );
 
   return <ProfileStoreContext.Provider value={value}>{children}</ProfileStoreContext.Provider>;

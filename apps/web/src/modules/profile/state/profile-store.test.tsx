@@ -25,7 +25,7 @@ function AddEducationButton() {
 describe('ProfileStoreProvider', () => {
   it('lo agregado en el estado compartido aparece en el resumen del perfil', () => {
     render(
-      <ProfileStoreProvider>
+      <ProfileStoreProvider initialRecords={PROFILE_RECORDS_MOCK}>
         <AddEducationButton />
         <ProfileSummary />
       </ProfileStoreProvider>,
@@ -98,6 +98,24 @@ describe('ProfileStoreProvider · carga desde la API', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(screen.getAllByText('Universidad Mayor de San Simón').length).toBeGreaterThan(0);
+  });
+
+  it('muestra en el resumen la descripción y "Sin registros" en las secciones vacías', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { ...perfil, descripcionProfesional: 'Ingeniero de sistemas.' } }),
+    });
+
+    render(
+      <ProfileStoreProvider>
+        <ProfileSummary />
+      </ProfileStoreProvider>,
+    );
+
+    expect(await screen.findByText('Ingeniero de sistemas.')).toBeInTheDocument();
+    // Experiencia y certificaciones llegan vacías desde la API
+    expect(screen.getAllByText('Sin registros')).toHaveLength(2);
   });
 
   it('no consulta la API si recibe registros iniciales', () => {
