@@ -87,6 +87,8 @@ const extractKeywords = (areas: CandidateArea[]): string[] =>
 
 export const GraduateAffinityView: React.FC = () => {
   const router = useRouter();
+  // CA-HU7-25: los controles de simulación solo se muestran si se habilitan explícitamente
+  const isSimulationEnabled = process.env.NEXT_PUBLIC_ENABLE_SIMULATION_CONTROLS === 'true';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [profileState, setProfileState] = useState<'calculated' | 'customizing'>('calculated');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -398,14 +400,16 @@ export const GraduateAffinityView: React.FC = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
-                    aria-label="Simular actualización del radar"
-                    className="h-11 px-4 rounded-lg border border-oatmeal bg-white text-blue-fantastic text-sm font-semibold hover:bg-palladian transition-colors flex items-center justify-center"
-                  >
-                    Simular Actualización
-                  </button>
+                  {isSimulationEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(true)}
+                      aria-label="Simular actualización del radar"
+                      className="h-11 px-4 rounded-lg border border-oatmeal bg-white text-blue-fantastic text-sm font-semibold hover:bg-palladian transition-colors flex items-center justify-center"
+                    >
+                      Simular Actualización
+                    </button>
+                  )}
 
                   <RecalculateButton
                     hasPendingChanges={hasPendingChanges}
@@ -413,18 +417,20 @@ export const GraduateAffinityView: React.FC = () => {
                     onRecalculate={handleRecalculate}
                   />
 
-                  <button
-                    type="button"
-                    onClick={triggerTimeoutSimulation}
-                    className="min-h-[44px] px-3.5 py-1.5 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer select-none"
-                  >
-                    <span className="text-xs font-bold text-red-600 leading-tight">
-                      Simular Timeout
-                    </span>
-                    <span className="text-[11px] font-medium text-red-500 leading-tight mt-0.5">
-                      (7s) [Demo Sprint 1]
-                    </span>
-                  </button>
+                  {isSimulationEnabled && (
+                    <button
+                      type="button"
+                      onClick={triggerTimeoutSimulation}
+                      className="min-h-[44px] px-3.5 py-1.5 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer select-none"
+                    >
+                      <span className="text-xs font-bold text-red-600 leading-tight">
+                        Simular Timeout
+                      </span>
+                      <span className="text-[11px] font-medium text-red-500 leading-tight mt-0.5">
+                        (7s) [Demo Sprint 1]
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -466,7 +472,7 @@ export const GraduateAffinityView: React.FC = () => {
       />
       <SuccessToast open={isSuccessToastOpen} onClose={handleCloseToast} />
       
-      {isModalOpen && (
+      {isSimulationEnabled && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div
             role="dialog" 
