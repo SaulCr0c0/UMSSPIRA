@@ -11,7 +11,7 @@ export class ReviewApplicationUseCase {
 
   async execute(actor: ActorContext, id: string, input: ReviewInput) {
     const detail = await this.repository.find(actor, id);
-    const code = input.decision === 'APPROVED' ? this.security.code() : null;
+    const code = input.decision === 'APROBADA' ? this.security.code() : null;
     const text = code
       ? 'Tu solicitud fue aprobada. Activa tu cuenta con la solicitud ' +
         id +

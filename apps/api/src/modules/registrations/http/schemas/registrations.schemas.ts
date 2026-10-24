@@ -86,19 +86,19 @@ export const applicationQuerySchema = z.strictObject({
   page: z.coerce.number().int().positive().max(100000).default(1),
   pageSize: z.coerce.number().int().min(1).max(15).default(15),
   career: z.string().trim().max(150).optional(),
-  status: z.enum(['PENDING', 'APPROVED', 'OBSERVED', 'REJECTED']).optional(),
+  status: z.enum(['PENDIENTE', 'APROBADA', 'OBSERVADA', 'RECHAZADA']).optional(),
   search: z.string().trim().max(100).optional(),
   age: z.enum(['within48', 'over48']).optional(),
 });
 export const reviewSchema = z
   .strictObject({
-    decision: z.enum(['APPROVED', 'OBSERVED', 'REJECTED']),
+    decision: z.enum(['APROBADA', 'OBSERVADA', 'RECHAZADA']),
     category: z.string().trim().min(1).max(100).optional(),
     note: z.string().trim().min(10).max(500).optional(),
     notifyDean: z.literal(false).optional(),
   })
   .superRefine((data, context) => {
-    if (data.decision !== 'APPROVED') {
+    if (data.decision !== 'APROBADA') {
       for (const field of ['category', 'note'] as const) {
         if (!data[field]) {
           context.addIssue({
