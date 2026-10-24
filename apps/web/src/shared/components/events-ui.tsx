@@ -237,6 +237,12 @@ export function EventManagementContent({
               <span className="event-capacity">{event.maxCapacity}</span>
               <StatusChip status={event.status} />
               <div className={`event-row-actions ${event.status === EVENT_STATUS.PUBLICADO ? 'is-published' : 'is-draft'}`}>
+                <Link
+                  href={`/events/${encodeURIComponent(event.id)}/participants`}
+                  className="event-button event-button-secondary hu8-participants-link"
+                >
+                  Ver participantes
+                </Link>
                 {event.status === EVENT_STATUS.PUBLICADO ? (
                   <button
                     type="button"

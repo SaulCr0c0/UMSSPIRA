@@ -1,5 +1,6 @@
 import type {
   CreateEventDto,
+  EventParticipantsDto,
   EventRegistrationItem,
   EventItem,
   UpdateDraftEventDto,
@@ -152,6 +153,17 @@ export async function publishDraftEvent(
       method: 'PATCH',
       authenticated: true,
     },
+  )).data;
+}
+
+export async function getEventParticipants(
+  eventId: string,
+  userId?: string,
+): Promise<EventParticipantsDto> {
+  requireUserId(userId, 'consultar los participantes');
+  return (await apiClient<{ data: EventParticipantsDto }>(
+    `/api/v1/events/owned/${encodeURIComponent(eventId)}/participants`,
+    { authenticated: true },
   )).data;
 }
 
