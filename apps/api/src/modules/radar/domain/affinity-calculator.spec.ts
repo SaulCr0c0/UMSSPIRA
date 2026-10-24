@@ -13,13 +13,17 @@ describe('calculateAffinity', () => {
     const result = calculateAffinity([], weights);
 
     expect(result.map(({ area }) => area)).toEqual(RADAR_AREAS);
-    expect(result.every(({ score, percentage }) => score === 0 && percentage === 0)).toBe(true);
+    expect(
+      result.every(
+        ({ score, percentage, weighting }) => score === 0 && percentage === 0 && weighting === null,
+      ),
+    ).toBe(true);
   });
 
   it('multiplica el peso por la frecuencia limitada a tres', () => {
     const [software] = calculateAffinity([{ term: 'typescript', count: 20 }], weights);
 
-    expect(software).toMatchObject({ score: 15, percentage: 15 });
+    expect(software).toMatchObject({ score: 15, percentage: 62.5, weighting: 5 });
   });
 
   it('suma keywords del área y limita el resultado a cien', () => {
@@ -38,14 +42,26 @@ describe('calculateAffinity', () => {
       ],
     );
 
-    expect(result.find(({ area }) => area === 'software-development')?.score).toBe(100);
+    expect(result.find(({ area }) => area === 'software-development')).toMatchObject({
+      score: 100,
+      percentage: 100,
+      weighting: 5,
+    });
   });
 
   it('calcula las áreas de forma independiente aunque una keyword pertenezca a varias', () => {
     const result = calculateAffinity([{ term: 'python', count: 2 }], weights);
 
-    expect(result.find(({ area }) => area === 'software-development')?.score).toBe(6);
-    expect(result.find(({ area }) => area === 'data-ai')?.score).toBe(8);
+    expect(result.find(({ area }) => area === 'software-development')).toMatchObject({
+      score: 6,
+      percentage: 25,
+      weighting: 3,
+    });
+    expect(result.find(({ area }) => area === 'data-ai')).toMatchObject({
+      score: 8,
+      percentage: 66.67,
+      weighting: 4,
+    });
     expect(
       result
         .filter(({ area }) => area !== 'software-development' && area !== 'data-ai')

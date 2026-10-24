@@ -11,6 +11,7 @@ export interface RadarAreaAffinity {
   area: RadarArea;
   score: number;
   percentage: number;
+  weighting: number | null;
   topKeywords: Array<{ term: string; contribution: number }>;
 }
 

@@ -20,7 +20,8 @@ describe('CalculateRadarUseCase', () => {
 
     expect(result.areas.find(({ area }) => area === 'software-development')).toMatchObject({
       score: 10,
-      percentage: 10,
+      percentage: 66.67,
+      weighting: 5,
     });
     expect(result.unmapped).toEqual([{ term: 'desconocido', count: 1 }]);
     expect(save).toHaveBeenCalledWith(result);
