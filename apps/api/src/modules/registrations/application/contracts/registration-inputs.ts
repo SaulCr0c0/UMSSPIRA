@@ -60,3 +60,16 @@ export interface Notification {
   subject: string;
   text: string;
 }
+
+export interface UpdateObservedDataUseCaseInput {
+  expectedVersion: number;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  telefono: string;
+  carreraId: string;
+  anioEgreso: number;
+  deseaMentor?: boolean;
+  fechaTitulacion?: string | null;
+  fechaIngreso?: string | null;
+}

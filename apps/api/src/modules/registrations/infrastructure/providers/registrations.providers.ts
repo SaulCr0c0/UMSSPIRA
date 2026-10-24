@@ -1,3 +1,6 @@
+import { OBSERVED_APPLICATION_PORT } from '../../application/ports/observed-application.port';
+import { PrismaObservedApplicationRepository } from '../repositories/prisma-observed-application.repository';
+import { ObservedApplicationService } from '../../application/services/observed-application.service';
 import { UpdateRegistrationUseCase } from '../../application/use-cases/update-registration.use-case';
 import { GetDraftDocumentUseCase } from '../../application/use-cases/get-draft-document.use-case';
 import type { Provider } from '@nestjs/common';
@@ -58,6 +61,9 @@ export const registrationsProviders: Provider[] = [
   { provide: CORRECTION_TOKEN_PORT, useExisting: PrismaCorrectionTokenRepository },
   CorrectionTokenService,
   RequestCorrectionLinkUseCase,
+  PrismaObservedApplicationRepository,
+  { provide: OBSERVED_APPLICATION_PORT, useExisting: PrismaObservedApplicationRepository },
+  ObservedApplicationService,
   NodeRegistrationSecurity,
   { provide: REGISTRATION_REPOSITORY, useExisting: PrismaRegistrationRepository },
   { provide: APPLICATIONS_REPOSITORY, useExisting: PrismaApplicationsRepository },
