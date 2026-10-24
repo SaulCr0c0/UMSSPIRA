@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "../hooks/use-auth";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,6 +76,14 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [reportsAccessNotice, setReportsAccessNotice] = useState(false);
+
+  useEffect(() => {
+    // El motivo lo añade el middleware tras rechazar una visita a /reports sin sesión.
+    setReportsAccessNotice(
+      new URLSearchParams(window.location.search).get('reportes') === 'requiere-sesion',
+    );
+  }, []);
 
   function validate(): FieldErrors {
     const errors: FieldErrors = {};
@@ -95,6 +103,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      {reportsAccessNotice && (
+        <p role="alert" className="rounded-lg border border-truffle-trouble bg-white px-3 py-2 text-sm text-abyssal-blue">
+          Debe iniciar sesión para acceder a este módulo
+        </p>
+      )}
       {/* Campo de correo electrónico */}
       <div className="space-y-2">
         <label htmlFor="email" className={labelClass}>

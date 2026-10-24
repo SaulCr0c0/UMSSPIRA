@@ -114,7 +114,9 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
               ? admin
               : token === 'unassigned'
                 ? { ...admin, scopes: { ...admin.scopes, careerIds: [] } }
-                : graduate,
+                : token === 'graduate-with-report-permission'
+                  ? { ...graduate, permissions: ['mentores:self:write', 'reportes:read'] }
+                  : graduate,
           sessionId: randomUUID(),
         }),
       })
@@ -246,6 +248,14 @@ describe('Mentorías y reportería: contratos HTTP y autorización', () => {
       .expect(403);
     expect(reports.metrics).not.toHaveBeenCalled();
   });
+  it('HU-004: aun con permiso reportes:read el titulado recibe 403 por su rol', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/reports/metrics')
+      .set('Authorization', 'Bearer graduate-with-report-permission')
+      .expect(403);
+    expect(reports.metrics).not.toHaveBeenCalled();
+  });
+
   it('entrega indicadores reales y limita las consultas a las carreras asignadas', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/reports/metrics')
