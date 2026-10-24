@@ -1,4 +1,5 @@
 import type { AffinityArea } from '@umsspira/shared-types';
+import type { AffinityAreaScore } from '@umsspira/shared-types';
 
 // Define el tipo básico que usarás, basado en el contrato de la API
 
@@ -25,7 +26,7 @@ export const calculateAffinityVariation = (current: number, previous?: number): 
  * Ordena el array de áreas de mayor a menor afinidad.
  * Se usará para el panel "Áreas con mayor afinidad identificadas".
  */
-export const sortAreasByAffinityDesc = (areas: AffinityArea[]): AffinityArea[] => {
+export const sortAreasByAffinityDesc = (areas: AffinityAreaScore[]): AffinityAreaScore[] => {
   // Usamos [...areas] para no mutar el array original (buena práctica en React)
   return [...areas].sort((a, b) => {
     // Si la afinidad es igual, podríamos desempatar por nombre, pero el principal es el porcentaje

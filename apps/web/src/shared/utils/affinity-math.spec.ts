@@ -1,4 +1,5 @@
 import { calculateAffinityVariation, sortAreasByAffinityDesc } from './affinity-math';
+import type { AffinityAreaScore } from '@umsspira/shared-types';
 
 describe('Affinity Math', () => {
   it('calcula la variacion correctamente', () => {
@@ -8,11 +9,11 @@ describe('Affinity Math', () => {
 
 describe('sortAreasByAffinityDesc', () => {
   it('ordena las áreas de mayor a menor afinidad', () => {
-    const areas = [
+    const areas: AffinityAreaScore[] = [
       { area: 'software-development', affinity: 50 },
       { area: 'data-ai', affinity: 80 },
       { area: 'cloud-devops', affinity: 20 }
-    ] as any; // Ajusta el tipo si tu interfaz lo requiere
+    ];
     const sorted = sortAreasByAffinityDesc(areas);
     expect(sorted[0].area).toBe('data-ai');
     expect(sorted[2].area).toBe('cloud-devops');
