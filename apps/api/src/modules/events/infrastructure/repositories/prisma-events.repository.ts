@@ -12,7 +12,7 @@ import {
   inactiveStatus,
   validateEventDates,
 } from '../../domain/policies/event.policy';
-import type { InactiveEvent, RetiredEvent } from '../../domain/entities/event'; 
+import type { InactiveEvent, RetiredEvent } from '../../domain/entities/event';
 import { toEvent } from '../translators/event.translator';
 
 const eventInclude = { usuario: { select: { nombre: true } } };
@@ -174,39 +174,6 @@ export class PrismaEventsRepository implements EventsRepository {
           data: { archivado: true, fecha_archivado: now },
         });
         return { id, ...counts };
-  async cancelPublished(ownerId: string, id: string) {
-    return this.prisma.$transaction(
-      async (tx) => {
-        const row = await this.lockOwned(tx, ownerId, id);
-
-        if (row.estado !== 'PUBLICADO') {
-          throw new BusinessRuleError(
-            'conflict',
-            'EVENT_NOT_PUBLISHED',
-            'El evento debe estar PUBLICADO para poder cancelarlo',
-          );
-        }
-
-        const cancelled = await tx.evento.update({
-          where: {
-            id,
-            id_usuario: ownerId,
-            estado: 'PUBLICADO',
-            archivado: false,
-          },
-          data: { estado: 'CANCELADO' },
-          include: eventInclude,
-        });
-
-        await tx.paseQr.updateMany({
-          where: {
-            estado: 'VIGENTE',
-            inscripcion: { is: { id_evento: id } },
-          },
-          data: { estado: 'INVALIDADO' },
-        });
-
-        return toEvent(cancelled);
       },
       { timeout: 15000 },
     );
@@ -330,8 +297,8 @@ export class PrismaEventsRepository implements EventsRepository {
   }
 
   private async relationCounts(
-    client: Prisma.TransactionClient | PrismaService, 
-    eventId: string
+    client: Prisma.TransactionClient | PrismaService,
+    eventId: string,
   ) {
     const [registrationsCount, passesCount] = await Promise.all([
       client.inscripcionEvento.count({ where: { id_evento: eventId } }),
