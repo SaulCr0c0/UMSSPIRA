@@ -96,6 +96,7 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
     updateDraft: jest.fn(),
     publishDraft: jest.fn(),
     register: jest.fn(),
+    cancelPublished: jest.fn(),
     saveCover: jest.fn(),
     removeCover: jest.fn(),
     readCover: jest.fn(),
@@ -390,6 +391,24 @@ describe('Perfil y eventos con contratos y guards compartidos', () => {
       .expect(200);
     expect(events.updateDraft).toHaveBeenCalledWith(admin.id, eventId, eventInput);
     expect(events.publishDraft).toHaveBeenCalledWith(admin.id, eventId);
+  });
+
+  it('permite al administrador cancelar un evento publicado', async () => {
+    events.cancelPublished.mockResolvedValue({ ...event, status: 'CANCELADO' });
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/events/' + eventId + '/cancel')
+      .set('Authorization', 'Bearer admin')
+      .expect(200);
+
+    expect(events.cancelPublished).toHaveBeenCalledWith(admin.id, eventId);
+  });
+
+  it('rechaza la cancelación si el usuario no tiene permiso', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/events/' + eventId + '/cancel')
+      .set('Authorization', 'Bearer graduate')
+      .expect(403);
   });
 
   it('no hace pública la identidad de cabeceras al leer una portada', async () => {

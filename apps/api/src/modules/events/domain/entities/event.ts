@@ -15,3 +15,17 @@ export interface Event {
   creatorName: string | null;
   createdAt: Date;
 }
+
+export type InactiveEventStatus = 'CANCELADO' | 'FINALIZADO';
+
+export interface RetiredEvent {
+  id: string;
+  registrationsCount: number;
+  passesCount: number;
+}
+
+export interface InactiveEvent extends Event {
+  inactiveStatus: InactiveEventStatus;
+  registrationsCount: number;
+  passesCount: number;
+}
