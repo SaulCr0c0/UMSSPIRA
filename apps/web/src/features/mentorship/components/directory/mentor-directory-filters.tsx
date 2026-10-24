@@ -20,16 +20,39 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
   const activeInterestsSupported = interestsSupported || (!catalog.length && activeCatalog.length > 0);
 
   const dirty = !sameConfiguration(draft, applied);
+
   const toggleArea = (id: string) => {
     setDraft(current => {
-      const areaIds = current.areaIds.includes(id) ? current.areaIds.filter(value => value !== id) : [...current.areaIds, id];
-      const allowed = new Set(activeCatalog.filter(area => !areaIds.length || areaIds.includes(area.id)).flatMap(area => area.topics.map(topic => topic.id)));
-      return { areaIds, topicIds: current.topicIds.filter(value => allowed.has(value)) };
+      const isRemoving = current.areaIds.includes(id);
+      const areaIds = isRemoving ? current.areaIds.filter(value => value !== id) : [...current.areaIds, id];
+
+      // CA-05: Los intereses asociados al área deseleccionada se desmarcan automáticamente
+      const removingAreaTopics = new Set(
+        isRemoving
+          ? activeCatalog.filter(area => area.id === id).flatMap(area => area.topics.map(t => t.id))
+          : [],
+      );
+
+      // CA-03 & CA-05: Si hay áreas seleccionadas, únicamente se conservan los intereses pertenecientes a ellas
+      const allowed = areaIds.length
+        ? new Set(activeCatalog.filter(area => areaIds.includes(area.id)).flatMap(area => area.topics.map(t => t.id)))
+        : null;
+
+      const topicIds = current.topicIds.filter(value => {
+        if (removingAreaTopics.has(value)) return false;
+        if (allowed && !allowed.has(value)) return false;
+        return true;
+      });
+
+      return { areaIds, topicIds };
     });
   };
-  const toggleTopic = (id: string) => setDraft(current => ({ ...current,
+
+  const toggleTopic = (id: string) => setDraft(current => ({
+    ...current,
     topicIds: current.topicIds.includes(id) ? current.topicIds.filter(value => value !== id) : [...current.topicIds, id],
   }));
+
   const clear = () => { const empty = emptyDirectoryFilters(); setDraft(empty); onApply(empty); };
   const groups = activeCatalog.filter(area => !draft.areaIds.length || draft.areaIds.includes(area.id));
   const visibleGroups = expandedInterests || draft.areaIds.length ? groups : groups.slice(0, 3);
@@ -45,7 +68,13 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
         </fieldset>
         <fieldset disabled={disabled || !activeInterestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
           {activeInterestsSupported ? <>
-            <p className="directory-muted">{draft.areaIds.length ? 'Intereses correspondientes a las áreas seleccionadas.' : 'Catálogo general. Elige un área para ver solo sus intereses.'}</p>
+            {/* CA-04: Mensaje contextual dinámico según haya o no áreas seleccionadas */}
+            <p className="directory-muted">
+              {draft.areaIds.length
+                ? 'Intereses correspondientes a las áreas seleccionadas.'
+                : 'Selecciona al menos un área técnica para ver sus intereses correspondientes.'}
+            </p>
+            {/* CA-03: Muestra únicamente los grupos de interés de las áreas seleccionadas */}
             <div id="directory-interest-groups">{visibleGroups.map(area => <div className="directory-topic-group" key={area.id}>
               <h3>{area.name}</h3><div className="directory-topic-options">{area.topics.map(topic => <label key={topic.id} className={`directory-topic ${draft.topicIds.includes(topic.id) ? 'is-selected' : ''}`}>
                 <input type="checkbox" checked={draft.topicIds.includes(topic.id)} onChange={() => toggleTopic(topic.id)} />{topic.name}
