@@ -39,8 +39,8 @@ export const ActivatePasswordStep: React.FC<ActivatePasswordStepProps> = ({
   // Validación de reglas de contraseña (CA-06.3)
   const rules = useMemo(() => {
     const hasMinLength = password.length >= 8 && password.length <= 128;
-    const hasUppercase = /[A-Z]/.test(password) || /\p{Lu}/u.test(password);
-    const hasLowercase = /[a-z]/.test(password) || /\p{Ll}/u.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
     const hasSymbol = /[^A-Za-z0-9]/.test(password);
     const passwordsMatch = password.length > 0 && password === confirmPassword;
