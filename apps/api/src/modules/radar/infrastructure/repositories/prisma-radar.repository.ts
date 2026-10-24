@@ -32,6 +32,14 @@ export class PrismaRadarRepository implements RadarRepositoryPort {
         })),
       });
 
+      const currentUnmappedTerms = calculation.unmapped.map(({ term }) => term);
+      await transaction.palabraClaveNoMapeada.deleteMany({
+        where: {
+          id_titulado: calculation.graduateId,
+          ...(currentUnmappedTerms.length > 0 ? { termino: { notIn: currentUnmappedTerms } } : {}),
+        },
+      });
+
       for (const keyword of calculation.unmapped) {
         await transaction.palabraClaveNoMapeada.upsert({
           where: {

@@ -10,7 +10,10 @@ describe('PrismaRadarRepository', () => {
     const transaction = {
       calculoRadar: { create: jest.fn().mockResolvedValue({ id: 'calculation-id' }) },
       afinidadRadar: { createMany: jest.fn().mockResolvedValue({ count: 6 }) },
-      palabraClaveNoMapeada: { upsert: jest.fn().mockResolvedValue({}) },
+      palabraClaveNoMapeada: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        upsert: jest.fn().mockResolvedValue({}),
+      },
     };
     const prisma = {
       $transaction: jest.fn((callback: (tx: typeof transaction) => Promise<void>) =>
@@ -44,5 +47,41 @@ describe('PrismaRadarRepository', () => {
     });
     expect(transaction.afinidadRadar.createMany.mock.calls[0][0].data).toHaveLength(6);
     expect(transaction.palabraClaveNoMapeada.upsert).toHaveBeenCalledTimes(1);
+    expect(transaction.palabraClaveNoMapeada.deleteMany).toHaveBeenCalledWith({
+      where: {
+        id_titulado: 'graduate-id',
+        termino: { notIn: ['desconocido'] },
+      },
+    });
+  });
+
+  it('elimina todos los no mapeados antiguos cuando el perfil ya no tiene ninguno', async () => {
+    const transaction = {
+      calculoRadar: { create: jest.fn().mockResolvedValue({ id: 'calculation-id' }) },
+      afinidadRadar: { createMany: jest.fn().mockResolvedValue({ count: 6 }) },
+      palabraClaveNoMapeada: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+        upsert: jest.fn(),
+      },
+    };
+    const prisma = {
+      $transaction: jest.fn((callback: (tx: typeof transaction) => Promise<void>) =>
+        callback(transaction),
+      ),
+    };
+    const repository = new PrismaRadarRepository(prisma as unknown as PrismaService);
+
+    await repository.save({
+      graduateId: 'graduate-id',
+      inputHash: 'new-profile-hash',
+      calculatedAt: new Date('2026-10-24T12:00:00.000Z'),
+      areas: calculateAffinity([], []),
+      unmapped: [],
+    });
+
+    expect(transaction.palabraClaveNoMapeada.deleteMany).toHaveBeenCalledWith({
+      where: { id_titulado: 'graduate-id' },
+    });
+    expect(transaction.palabraClaveNoMapeada.upsert).not.toHaveBeenCalled();
   });
 });
