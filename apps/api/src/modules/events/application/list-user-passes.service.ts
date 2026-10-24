@@ -29,15 +29,15 @@ export class ListUserPassesService {
     return pases.map((pase) => {
       const effectiveStatus = EventPassRules.resolveEffectiveStatus(
         pase.estado,
-        pase.inscripcion.estado ?? '',
-        pase.inscripcion.evento.estado ?? '',
-        pase.inscripcion.evento.fecha_fin,
+        pase.inscripcion?.estado ?? '',
+        pase.inscripcion?.evento?.estado ?? '',
+        pase.inscripcion?.evento?.fecha_fin ?? new Date(0),
       );
 
       return {
         id: pase.id,
         registrationId: pase.id_inscripcion,
-        eventId: pase.inscripcion.id_evento,
+        eventId: pase.inscripcion?.id_evento ?? '',
         userId: usuarioTitularId,
         qrToken: pase.token_hash, // El frontend usará este token para dibujar la imagen QR
         status: effectiveStatus.status,
