@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 
-import { obtenerEnlaceRespaldo } from '@/modules/profile/services/perfil-api';
+import { enlaceDeDescarga, obtenerEnlaceRespaldo } from '@/modules/profile/services/perfil-api';
 
 type BackupViewerModalProps = {
   certificationId: string;
@@ -14,6 +14,8 @@ type BackupViewerModalProps = {
 
 const secondaryButtonClassName =
   'rounded-lg border border-truffle-trouble bg-white px-5 py-2.5 text-sm font-bold text-truffle-trouble transition hover:bg-palladian';
+const primaryButtonClassName =
+  'inline-flex items-center justify-center gap-2 rounded-lg bg-truffle-trouble px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-95';
 
 // Visor de la foto JPG real del respaldo (HU-10). Se monta al abrirse, así cada apertura pide un enlace nuevo
 export function BackupViewerModal({ certificationId, certificationName, onClose }: BackupViewerModalProps) {
@@ -67,6 +69,13 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
           <button type="button" onClick={onClose} className={secondaryButtonClassName}>
             Cerrar
           </button>
+          {/* La API responde el JPG original como adjunto con descargar=1 */}
+          {imageUrl && (
+            <a href={enlaceDeDescarga(imageUrl)} download className={primaryButtonClassName}>
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Descargar
+            </a>
+          )}
         </div>
       </div>
     </div>
