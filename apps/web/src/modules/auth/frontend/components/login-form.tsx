@@ -98,7 +98,7 @@ export function LoginForm() {
       {/* Campo de correo electrónico */}
       <div className="space-y-2">
         <label htmlFor="email" className={labelClass}>
-          CORREO ELECTRÓNICO INSTITUCIONAL O PERSONAL
+          Correo electrónico
           <span className="text-truffle-trouble"> *</span>
         </label>
 
@@ -124,7 +124,7 @@ export function LoginForm() {
       {/* Campo de contraseña */}
       <div className="space-y-2">
         <label htmlFor="password" className={labelClass}>
-          CONTRASEÑA
+          Contraseña
           <span className="text-truffle-trouble"> *</span>
         </label>
 
@@ -197,7 +197,7 @@ export function LoginForm() {
 
       {/* Enlace para registro */}
       <p className="pt-2 text-center text-xs text-gray-500">
-        ¿AÚN NO TE HAS REGISTRADO?{" "}
+        ¿Aún no te has registrado?{" "}
         <Link
           href="/register"
           className="font-bold text-abyssal-blue underline underline-offset-4 hover:text-truffle-trouble"
