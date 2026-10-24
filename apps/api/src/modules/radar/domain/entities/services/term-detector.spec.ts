@@ -1,4 +1,5 @@
 import { aggregateRadarScores, KeywordDictionaryMap } from './term-detector';
+// @ts-expect-error: Jest no resuelve el alias del monorepo
 import type { RadarArea } from '@umsspira/shared-types';
 
 describe('Term Detector', () => {
