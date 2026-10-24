@@ -4,6 +4,8 @@ import React from "react";
 import mockData from "../mocks/affinity-vector-mock.json";
 import { AFFINITY_AREA_LABELS } from "@umsspira/shared-types/src/affinity";
 import { formatPercentage } from "@/shared/utils/percentage";
+import { calculateVariation } from "@/shared/utils/affinity-variation";
+import { VariationIndicator } from "./variation-indicator";
 
 // 1. Tipado estricto de la evidencia tal como viene en el JSON
 export interface EvidenceItem {
@@ -15,6 +17,8 @@ export interface EvidenceItem {
 export interface AreaData {
   area: string;
   affinity: number;
+  /** Afinidad del cálculo anterior; null o ausente en el primer cálculo. */
+  previousAffinity?: number | null;
   evidence?: EvidenceItem[];
 }
 
@@ -62,6 +66,12 @@ export default function RadarInspection({
   const certifications = selectedArea?.evidence?.filter((e) => e.type === 'certification') || [];
   const projects = selectedArea?.evidence?.filter((e) => e.type === 'project') || [];
 
+  // Si alguna fila tiene variación, se reserva la columna del chip para que
+  // todos los porcentajes queden alineados aunque el chip cambie de ancho.
+  const hasAnyVariation = areas.some(
+    (item) => calculateVariation(item.affinity, item.previousAffinity) !== null,
+  );
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 p-6 bg-white rounded-xl shadow-md border border-gray-100">
       {/* Panel izquierdo: Resumen de las áreas */}
@@ -96,12 +106,26 @@ export default function RadarInspection({
                   isSelected ? "bg-blue-50 border-blue-200" : "border border-transparent hover:bg-gray-50"
                 }`}
               >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="flex items-center gap-2 font-medium text-gray-700">
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <span className="flex min-w-0 items-center gap-2 font-medium text-gray-700">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${colors.bar}`} />
-                    {displayName}
+                    <span className="min-w-0">{displayName}</span>
                   </span>
-                  <span className={`text-sm font-semibold ${percentageColor}`}>{formatPercentage(item.affinity)}</span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className={`w-12 text-right text-sm font-semibold tabular-nums ${percentageColor}`}>
+                      {formatPercentage(item.affinity)}
+                    </span>
+                    {hasAnyVariation && (
+                      <span className="flex w-[5.5rem] justify-end">
+                        {/* Misma pieza que el radar para conservar un solo estilo de variación */}
+                        <VariationIndicator
+                          current={item.affinity}
+                          previous={item.previousAffinity ?? null}
+                          areaLabel={displayName}
+                        />
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                   <div

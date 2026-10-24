@@ -237,6 +237,7 @@ export const GraduateAffinityView: React.FC = () => {
   const inspectionAreas: InspectionAreas = orderedCandidateAreas.map((item) => ({
     area: item.area,
     affinity: item.affinity,
+    previousAffinity: item.previousAffinity ?? null,
     evidence: item.evidence ?? getAreaEvidence(item, mockAreas),
   }));
 
