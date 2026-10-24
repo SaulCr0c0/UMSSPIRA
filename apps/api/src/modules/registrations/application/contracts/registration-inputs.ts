@@ -37,7 +37,7 @@ export interface UploadedDocument {
 }
 
 export interface ReviewInput {
-  decision: 'APPROVED' | 'OBSERVED' | 'REJECTED';
+  decision: 'APROBADA' | 'OBSERVADA' | 'RECHAZADA';
   category?: string;
   note?: string;
 }
@@ -46,7 +46,7 @@ export interface ApplicationQuery {
   page: number;
   pageSize: number;
   career?: string;
-  status?: 'PENDING' | 'APPROVED' | 'OBSERVED' | 'REJECTED';
+  status?: 'PENDIENTE' | 'APROBADA' | 'OBSERVADA' | 'RECHAZADA';
   search?: string;
   age?: 'within48' | 'over48';
   period?: ApplicationPeriod;

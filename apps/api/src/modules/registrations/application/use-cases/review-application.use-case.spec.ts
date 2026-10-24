@@ -26,7 +26,7 @@ function build() {
 describe('ReviewApplicationUseCase', () => {
   it('encola el correo de aprobación con el código y registra su seguimiento', async () => {
     const { useCase, review } = build();
-    await useCase.execute(actor, id, { decision: 'APPROVED' });
+    await useCase.execute(actor, id, { decision: 'APROBADA' });
     const [, , , hash, sealed, mail] = review.mock.calls[0];
     expect(hash).toBe('activation#' + id + ':123456');
     expect(sealed).toContain('123456');
@@ -39,8 +39,8 @@ describe('ReviewApplicationUseCase', () => {
   });
 
   it.each([
-    ['OBSERVED', 'observacion'],
-    ['REJECTED', 'rechazo'],
+    ['OBSERVADA', 'observacion'],
+    ['RECHAZADA', 'rechazo'],
   ] as const)('encola el correo de %s sin código de activación', async (decision, type) => {
     const { useCase, review } = build();
     await useCase.execute(actor, id, {

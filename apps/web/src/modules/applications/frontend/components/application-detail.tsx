@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 export type ApplicationStatus =
-  | "PENDING"
-  | "APPROVED"
-  | "OBSERVED"
-  | "REJECTED";
+  | "PENDIENTE"
+  | "APROBADA"
+  | "OBSERVADA"
+  | "RECHAZADA";
 
 export type ChecklistItem = { label: string; checked: boolean };
 
@@ -33,7 +33,7 @@ export type Application = {
 export const MOCK_APPLICATION: Application = {
   id: "app-001",
   code: "REG-2024-8841B",
-  status: "PENDING",
+  status: "PENDIENTE",
   firstName: "Juan Carlos",
   lastName: "Pérez Mamani",
   ci: "6842109 CB",
@@ -66,10 +66,10 @@ export const MOCK_APPLICATION: Application = {
 };
 
 export const STATUS_LABEL: Record<ApplicationStatus, string> = {
-  PENDING: "Pendiente de validación",
-  APPROVED: "Aprobado",
-  OBSERVED: "Observado",
-  REJECTED: "Rechazado",
+  PENDIENTE: "Pendiente de validación",
+  APROBADA: "Aprobado",
+  OBSERVADA: "Observado",
+  RECHAZADA: "Rechazado",
 };
 
 export const OVERDUE_HOURS = 48;

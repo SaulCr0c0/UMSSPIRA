@@ -25,7 +25,7 @@ function greeting(fullName: string) {
 // Plantillas del dictamen. Nunca incluyen el código TIT, que es solo para administración.
 export function buildResolutionMail(input: ResolutionMailInput): ResolutionMail {
   const hello = greeting(input.fullName);
-  if (input.decision === 'APPROVED') {
+  if (input.decision === 'APROBADA') {
     if (!input.code) {
       throw new Error('Un dictamen aprobado requiere el código de activación');
     }
@@ -47,7 +47,7 @@ export function buildResolutionMail(input: ResolutionMailInput): ResolutionMail 
       ].join('\n'),
     };
   }
-  if (input.decision === 'OBSERVED') {
+  if (input.decision === 'OBSERVADA') {
     return {
       type: 'observacion',
       subject: 'Tu solicitud en UMSSPIRA fue observada',

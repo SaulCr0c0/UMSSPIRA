@@ -43,7 +43,7 @@ const boardPage = {
     {
       id: 's-1', code: 'EGR-2025-ABCDEF', fullName: 'Alejandro Rojas', email: 'a@x.com',
       ci: '6849201', issuedIn: '', sisCode: '201804921', career: 'Ingeniería de Sistemas',
-      careerId: 'c-1', status: 'PENDING', submittedAt: new Date(Date.now() - 54 * 3_600_000).toISOString(),
+      careerId: 'c-1', status: 'PENDIENTE', submittedAt: new Date(Date.now() - 54 * 3_600_000).toISOString(),
     },
   ],
   total: 1, page: 1, pageSize: 15,
@@ -217,7 +217,7 @@ describe('ApplicationsPage', () => {
       data: {
         id: 's-1', code: 'EGR-2025-ABCDEF', fullName: 'Alejandro Rojas', email: 'a@x.com',
         ci: '6849201', issuedIn: '', sisCode: '201804921', career: 'Ingeniería de Sistemas',
-        careerId: 'c-1', status: 'PENDING', submittedAt: new Date().toISOString(),
+        careerId: 'c-1', status: 'PENDIENTE', submittedAt: new Date().toISOString(),
         firstName: 'Alejandro', lastName: 'Rojas', phone: '', graduationYear: 2020,
         documentName: 'titulo.pdf', documentPath: 'solicitudes/x/y.pdf', documentFormat: 'PDF',
       },

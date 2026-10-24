@@ -7,7 +7,7 @@ const base = {
 
 describe('buildResolutionMail', () => {
   it('informa la activación con el código y sin código TIT', () => {
-    const mail = buildResolutionMail({ ...base, decision: 'APPROVED', code: '123456' });
+    const mail = buildResolutionMail({ ...base, decision: 'APROBADA', code: '123456' });
     expect(mail.type).toBe('aprobacion');
     expect(mail.text).toContain('123456');
     expect(mail.text).toContain(base.applicationId);
@@ -17,13 +17,13 @@ describe('buildResolutionMail', () => {
   });
 
   it('exige el código para un dictamen aprobado', () => {
-    expect(() => buildResolutionMail({ ...base, decision: 'APPROVED' })).toThrow();
+    expect(() => buildResolutionMail({ ...base, decision: 'APROBADA' })).toThrow();
   });
 
   it('muestra categoría y explicación de una observación, y el enlace solo si existe', () => {
     const input = {
       ...base,
-      decision: 'OBSERVED' as const,
+      decision: 'OBSERVADA' as const,
       category: 'Documento ilegible',
       note: 'Sube una copia más nítida del certificado',
     };
@@ -39,7 +39,7 @@ describe('buildResolutionMail', () => {
   it('explica el motivo de un rechazo y la posibilidad de un nuevo registro', () => {
     const mail = buildResolutionMail({
       ...base,
-      decision: 'REJECTED',
+      decision: 'RECHAZADA',
       category: 'Datos no coinciden',
       note: 'El C.I. no corresponde al certificado',
     });

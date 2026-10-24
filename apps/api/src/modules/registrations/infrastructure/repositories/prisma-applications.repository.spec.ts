@@ -15,7 +15,7 @@ const query = (overrides: Partial<ApplicationQuery> = {}) =>
 const rows = (count: number, prefix: string) =>
   Array.from({ length: count }, (_, index) => ({
     id: `${prefix}-${index}`,
-    estado: prefix === 'pendiente' ? 'PENDING' : 'APPROVED',
+    estado: prefix === 'pendiente' ? 'PENDIENTE' : 'APROBADA',
     fecha_creacion: new Date('2026-10-01T10:00:00Z'),
   }));
  
@@ -33,7 +33,7 @@ function createRepository({ pending, others, pendingRows = [], otherRows = [] }:
       // Primero se cuenta el total y luego los pendientes, como en el repositorio.
       count: jest.fn().mockResolvedValueOnce(pending + others).mockResolvedValueOnce(pending),
       findMany: jest.fn(({ where }: { where: { AND: Array<{ estado: unknown }> } }) =>
-        Promise.resolve(where.AND[1].estado === 'PENDING' ? pendingRows : otherRows),
+        Promise.resolve(where.AND[1].estado === 'PENDIENTE' ? pendingRows : otherRows),
       ),
     },
   };
@@ -180,12 +180,12 @@ describe('PrismaApplicationsRepository.list', () => {
   it('combina carrera, estado y búsqueda: deben cumplirse todas las condiciones (CA-08.3)', async () => {
     const { prisma, repository } = createRepository({ pending: 0, others: 0 });
  
-    await repository.list(actor, query({ career: 'sistemas', status: 'PENDING', search: 'rojas' }));
+    await repository.list(actor, query({ career: 'sistemas', status: 'PENDIENTE', search: 'rojas' }));
  
     const { where } = prisma.solicitud.count.mock.calls[0][0];
     expect(where.AND).toEqual(
       expect.arrayContaining([
-        { estado: 'PENDING' },
+        { estado: 'PENDIENTE' },
         {
           detalle_solicitud: {
             is: {
@@ -243,8 +243,8 @@ describe('PrismaApplicationsRepository.metrics', () => {
       lt: new Date('2026-10-22T04:00:00.000Z'),
     };
     expect(received[1]).toEqual({ fecha_creacion: todayRange });
-    expect(pending[1]).toEqual({ estado: 'PENDING' });
-    expect(urgent[1]).toEqual({ estado: 'PENDING', fecha_creacion: { lt: new Date('2026-10-19T15:00:00.000Z') } });
+    expect(pending[1]).toEqual({ estado: 'PENDIENTE' });
+    expect(urgent[1]).toEqual({ estado: 'PENDIENTE', fecha_creacion: { lt: new Date('2026-10-19T15:00:00.000Z') } });
     expect(prisma.dictamen.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ distinct: ['id_solicitud'], where: expect.objectContaining({ fecha_creacion: todayRange }) }),
     );

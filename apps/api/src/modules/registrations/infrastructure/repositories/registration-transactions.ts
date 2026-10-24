@@ -75,7 +75,7 @@ export async function assertNoDuplicate(tx: Prisma.TransactionClient, data: Regi
   const [application, user, graduate] = await Promise.all([
     tx.solicitud.findFirst({
       where: {
-        estado: { notIn: ['REJECTED', 'RECHAZADO', 'RECHAZADA'] },
+        estado: { not: 'RECHAZADA' },
         detalle_solicitud: { is: identity },
       },
       select: { id: true },
