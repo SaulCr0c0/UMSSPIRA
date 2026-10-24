@@ -1,5 +1,6 @@
 import type {
   CreateEventDto,
+  EventParticipantsDto,
   EventRegistrationItem,
   EventItem,
   InactiveEventItem,
@@ -157,37 +158,43 @@ export async function publishDraftEvent(
   )).data;
 }
 
+export async function getEventParticipants(
+  eventId: string,
+  userId?: string,
+): Promise<EventParticipantsDto> {
+  requireUserId(userId, 'consultar los participantes');
+  return (await apiClient<{ data: EventParticipantsDto }>(
+    `/api/v1/events/owned/${encodeURIComponent(eventId)}/participants`,
+    { authenticated: true },
+  )).data;
+}
+
+// --- FUNCIONES RESTAURADAS ---
+
 export async function getInactiveEvents(
   userId?: string,
 ): Promise<InactiveEventItem[]> {
-  requireUserId(
-    userId,
-    'consultar los eventos inactivos',
-  );
-
-  return (await apiClient<{ data: InactiveEventItem[] }>(
-    '/api/v1/events/inactive',
-    { authenticated: true },
-  )).data;
+  requireUserId(userId, 'consultar los eventos inactivos');
+  return (await apiClient<{ data: InactiveEventItem[] }>('/api/v1/events/inactive', {
+    authenticated: true,
+  })).data;
 }
 
 export async function retireEvent(
   eventId: string,
   userId?: string,
 ): Promise<RetiredEventItem> {
-  requireUserId(
-    userId,
-    'retirar el evento',
-  );
-
+  requireUserId(userId, 'retirar el evento');
   return (await apiClient<{ data: RetiredEventItem }>(
-    `/api/v1/events/owned/${encodeURIComponent(eventId)}/retire`,
+    `/api/v1/events/inactive/${encodeURIComponent(eventId)}/retire`,
     {
       method: 'PATCH',
       authenticated: true,
     },
   )).data;
 }
+
+// -----------------------------
 
 function requireUserId(
   userId: string | undefined,

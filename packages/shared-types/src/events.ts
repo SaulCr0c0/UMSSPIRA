@@ -78,3 +78,28 @@ export interface EventFilters {
   status?: EventStatus;
   upcomingOnly?: boolean;
 }
+
+export type EventParticipantPassStatus = 'VIGENTE' | 'INVALIDADO' | 'SIN_PASE';
+
+export interface EventParticipantItem {
+  registrationId: string;
+  name: string;
+  status: EventRegistrationStatus;
+  registeredAt: string;
+  passStatus: EventParticipantPassStatus;
+}
+
+export interface EventOccupationSummary {
+  maxCapacity: number;
+  confirmed: number;
+  cancelled: number;
+  available: number;
+  occupancyPercent: number;
+}
+
+export interface EventParticipantsDto {
+  eventId: string;
+  eventTitle: string;
+  occupation: EventOccupationSummary;
+  participants: EventParticipantItem[];
+}

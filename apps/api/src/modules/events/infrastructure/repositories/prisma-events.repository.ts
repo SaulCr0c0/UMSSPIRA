@@ -14,6 +14,11 @@ import {
 } from '../../domain/policies/event.policy';
 import type { InactiveEvent, RetiredEvent } from '../../domain/entities/event';
 import { toEvent } from '../translators/event.translator';
+import type {
+  EventParticipants,
+  ParticipantPassStatus,
+} from '../../domain/entities/event-participants';
+import { buildOccupation } from '../../domain/policies/event-occupation.policy';
 
 const eventInclude = { usuario: { select: { nombre: true } } };
 
@@ -218,6 +223,42 @@ export class PrismaEventsRepository implements EventsRepository {
       }
       throw error;
     }
+  }
+
+  async participants(ownerId: string, eventId: string): Promise<EventParticipants> {
+    const event = await this.prisma.evento.findFirst({
+      where: { id: eventId, id_usuario: ownerId, archivado: false },
+      select: { id: true, titulo: true, cupo_maximo: true },
+    });
+    if (!event) {
+      return this.missingEvent();
+    }
+    const rows = await this.prisma.inscripcionEvento.findMany({
+      where: { id_evento: eventId, estado: { in: ['CONFIRMADA', 'CANCELADA'] } },
+      include: {
+        usuario: { select: { nombre: true } },
+        pase_qr: { select: { estado: true } },
+      },
+      orderBy: [{ fecha_inscripcion: 'asc' }, { id: 'asc' }],
+    });
+    const participants = rows.map((row) => ({
+      registrationId: row.id,
+      name: row.usuario?.nombre?.trim() || 'Sin nombre',
+      status: row.estado === 'CANCELADA' ? ('CANCELADA' as const) : ('CONFIRMADA' as const),
+      registeredAt: row.fecha_inscripcion ?? new Date(),
+      passStatus: this.passStatus(row.pase_qr?.estado),
+    }));
+    const confirmed = participants.filter((item) => item.status === 'CONFIRMADA').length;
+    return {
+      eventId: event.id,
+      eventTitle: event.titulo ?? '',
+      occupation: buildOccupation(
+        event.cupo_maximo ?? 0,
+        confirmed,
+        participants.length - confirmed,
+      ),
+      participants,
+    };
   }
 
   async inactive(ownerId: string, now: Date): Promise<InactiveEvent[]> {
@@ -436,6 +477,13 @@ export class PrismaEventsRepository implements EventsRepository {
         'La portada ya pertenece a otro evento',
       );
     }
+  }
+
+  private passStatus(estado?: string | null): ParticipantPassStatus {
+    if (!estado) {
+      return 'SIN_PASE';
+    }
+    return estado === 'VIGENTE' ? 'VIGENTE' : 'INVALIDADO';
   }
 
   private missingEvent(): never {
