@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
-import { emptyDirectoryFilters, mergeCatalog, SPRINT1_CATALOG } from '../../model/mentor-directory';
+import { emptyDirectoryFilters } from '../../model/mentor-directory';
 import { sameConfiguration, type InterestArea, type InterestConfiguration } from '../../model/mentor-interests';
 
 export function MentorDirectoryFilters({ catalog, applied, interestsSupported, disabled, onApply }: {
@@ -16,10 +16,6 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
   const [expandedInterests, setExpandedInterests] = useState(false);
   useEffect(() => { setDraft(applied); }, [applied]);
 
-  // Combina el catálogo del backend con el oficial de Sprint 1 para asegurar todas las áreas y tópicos
-  const activeCatalog = catalog.length ? mergeCatalog(catalog) : SPRINT1_CATALOG;
-  const activeInterestsSupported = activeCatalog.some(a => a.topics.length > 0) || interestsSupported;
-
   const dirty = !sameConfiguration(draft, applied);
 
   const toggleArea = (id: string) => {
@@ -30,13 +26,13 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
       // CA-05: Los intereses asociados al área deseleccionada se desmarcan automáticamente
       const removingAreaTopics = new Set(
         isRemoving
-          ? activeCatalog.filter(area => area.id === id).flatMap(area => area.topics.map(t => t.id))
+          ? catalog.filter(area => area.id === id).flatMap(area => area.topics.map(t => t.id))
           : [],
       );
 
       // CA-03 & CA-05: Si hay áreas seleccionadas, únicamente se conservan los intereses pertenecientes a ellas
       const allowed = areaIds.length
-        ? new Set(activeCatalog.filter(area => areaIds.includes(area.id)).flatMap(area => area.topics.map(t => t.id)))
+        ? new Set(catalog.filter(area => areaIds.includes(area.id)).flatMap(area => area.topics.map(t => t.id)))
         : null;
 
       const topicIds = current.topicIds.filter(value => {
@@ -55,20 +51,20 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
   }));
 
   const clear = () => { const empty = emptyDirectoryFilters(); setDraft(empty); onApply(empty); };
-  const groups = activeCatalog.filter(area => !draft.areaIds.length || draft.areaIds.includes(area.id));
+  const groups = catalog.filter(area => !draft.areaIds.length || draft.areaIds.includes(area.id));
   const visibleGroups = expandedInterests || draft.areaIds.length ? groups : groups.slice(0, 3);
 
   return <aside className="directory-filters" aria-label="Filtros de mentores">
     <details open><summary><SlidersHorizontalIcon className="icon" aria-hidden="true" />Filtrar mentores</summary>
       <form onSubmit={event => { event.preventDefault(); if (dirty && !disabled) onApply(draft); }}>
         <fieldset disabled={disabled}><legend>Áreas técnicas <span>· selección múltiple</span></legend>
-          {!activeCatalog.length && <p className="directory-muted">{disabled ? 'Cargando áreas…' : 'Las áreas se mostrarán al cargar el directorio.'}</p>}
-          {activeCatalog.map(area => <label className={`directory-area-option ${draft.areaIds.includes(area.id) ? 'is-selected' : ''}`} key={area.id}>
+          {!catalog.length && <p className="directory-muted">{disabled ? 'Cargando áreas…' : 'Las áreas se mostrarán al cargar el directorio.'}</p>}
+          {catalog.map(area => <label className={`directory-area-option ${draft.areaIds.includes(area.id) ? 'is-selected' : ''}`} key={area.id}>
             <input type="checkbox" checked={draft.areaIds.includes(area.id)} onChange={() => toggleArea(area.id)} />{area.name}
           </label>)}
         </fieldset>
-        <fieldset disabled={disabled || !activeInterestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
-          {activeInterestsSupported ? <>
+        <fieldset disabled={disabled || !interestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
+          {interestsSupported ? <>
             {/* CA-04: Mensaje contextual dinámico según haya o no áreas seleccionadas */}
             <p className="directory-muted">
               {draft.areaIds.length
