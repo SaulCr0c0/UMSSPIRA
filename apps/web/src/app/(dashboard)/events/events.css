@@ -1645,3 +1645,104 @@
   .hu2-search-control,
   .hu2-search-button { grid-column: 1; }
 }
+/* HU-7.11: Consultar mis pases QR */
+
+.qr-passes-page {
+  min-height: 100vh;
+  background: #eee9df;
+  color: #1b2632;
+  padding: 36px 24px 80px;
+}
+
+.qr-passes-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.qr-passes-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 42px;
+}
+
+.qr-passes-tabs a,
+.qr-passes-tabs span {
+  padding: 11px 22px;
+  border: 1px solid #c9c1b1;
+  border-radius: 999px;
+  color: #1b2632;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.qr-passes-tabs .active {
+  background: #1b2632;
+  color: #fff;
+  border-color: #1b2632;
+}
+
+.qr-passes-heading {
+  margin-bottom: 40px;
+}
+
+.qr-passes-heading-icon {
+  color: #d77d26;
+  margin-bottom: 12px;
+}
+
+.qr-passes-heading h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.qr-passes-heading p {
+  color: #59616b;
+  line-height: 1.6;
+}
+
+.qr-passes-empty {
+  min-height: 350px;
+  border: 1px solid #c9c1b1;
+  border-radius: 16px;
+  padding: 55px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.qr-passes-empty > svg {
+  color: #d77d26;
+  margin-bottom: 18px;
+}
+
+.qr-passes-empty h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.qr-passes-empty p {
+  max-width: 440px;
+  color: #59616b;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.qr-passes-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #d77d26;
+  color: white;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.qr-passes-button:hover {
+  background: #b9661c;
+}
