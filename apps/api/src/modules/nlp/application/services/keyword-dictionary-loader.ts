@@ -10,6 +10,7 @@ import {
   type KeywordDictionaryPort,
 } from '../ports/keyword-dictionary.port';
 import { KeywordExtractorService } from './keyword-extractor.service';
+import { mapKeywordsToAreas, type KeywordAreaWeight } from './keyword-area-mapper';
 
 const MAX_LOGGED_IGNORED_KEYS = 10;
 
@@ -75,6 +76,15 @@ export class KeywordDictionaryLoader {
       ...keyword,
       areas: this.getAreasForKeyword(keyword.term),
     }));
+  }
+
+  /**
+   * Convierte las keywords extraídas al formato esperado por el cálculo del radar.
+   * Garantiza que el diccionario esté cargado antes de resolver las asociaciones.
+   */
+  async mapKeywordsToRadarAreas(keywords: ExtractedKeyword[]): Promise<KeywordAreaWeight[]> {
+    await this.ensureLoaded();
+    return mapKeywordsToAreas(keywords, this.areasByKeyword);
   }
 
   private async reload(): Promise<void> {

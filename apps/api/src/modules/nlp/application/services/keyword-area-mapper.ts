@@ -28,7 +28,6 @@ export function mapKeywordsToAreas(
     for (const association of associations) {
       const area = AREA_BY_ID.get(association.id);
 
-      // No asignar áreas desconocidas silenciosamente.
       if (!area) {
         throw new Error(`UUID de área no reconocido: ${association.id}`);
       }
