@@ -1,10 +1,10 @@
-import { RADAR_DICTIONARY } from '../../../../scripts/seed/radar-catalog';
-import { KeywordExtractorService } from '../../nlp/application/services/keyword-extractor.service';
-import type { DictionaryEntry } from '../../nlp/domain/entities/dictionary-entry';
-import { normalizePhrase } from '../../nlp/domain/policies/text-normalizer';
-import { calculateAffinity } from './affinity-calculator';
-import type { KeywordAreaWeight } from './entities/affinity-calculation';
-import type { RadarArea } from './entities/radar-area';
+import { KeywordExtractorService } from '../src/modules/nlp/application/services/keyword-extractor.service';
+import type { DictionaryEntry } from '../src/modules/nlp/domain/entities/dictionary-entry';
+import { normalizePhrase } from '../src/modules/nlp/domain/policies/text-normalizer';
+import { RADAR_DICTIONARY } from '../src/modules/radar/domain/affinity-catalog';
+import { calculateAffinity } from '../src/modules/radar/domain/affinity-calculator';
+import type { KeywordAreaWeight } from '../src/modules/radar/domain/entities/affinity-calculation';
+import type { RadarArea } from '../src/modules/radar/domain/entities/radar-area';
 
 const definitions = new Map<string, Set<string>>();
 const weights: KeywordAreaWeight[] = [];
@@ -94,8 +94,33 @@ describe('criterios de aceptación de perfiles con el diccionario real', () => {
 
     expect(actual).toEqual(expected);
     expect(
-      scores.every(({ score, percentage }) => score >= 0 && score <= 100 && percentage === score),
+      scores.every(
+        ({ score, percentage }) =>
+          score >= 0 &&
+          score <= 100 &&
+          percentage >= 0 &&
+          percentage <= 100 &&
+          Math.round(percentage * 100) / 100 === percentage,
+      ),
     ).toBe(true);
+  });
+
+  it('devuelve porcentaje con precisión de dos decimales y el máximo peso reconocido', () => {
+    const extracted = extractor.extract('JavaScript');
+    const software = calculateAffinity(extracted.keywords, weights).find(
+      ({ area }) => area === 'software-development',
+    );
+
+    expect(software).toMatchObject({ score: 5, percentage: 2.38, weighting: 5 });
+  });
+
+  it('devuelve el mayor peso reconocido por área y null si no hay coincidencias', () => {
+    const extracted = extractor.extract('Python');
+    const scores = calculateAffinity(extracted.keywords, weights);
+
+    expect(scores.find(({ area }) => area === 'software-development')?.weighting).toBe(3);
+    expect(scores.find(({ area }) => area === 'data-ai')?.weighting).toBe(4);
+    expect(scores.find(({ area }) => area === 'quality-assurance')?.weighting).toBeNull();
   });
 
   it('conserva top keywords por aporte y limita la lista a cinco', () => {
