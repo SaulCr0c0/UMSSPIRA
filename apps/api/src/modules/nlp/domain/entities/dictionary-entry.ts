@@ -1,4 +1,3 @@
-
 /** Relación de una palabra clave con un área profesional. */
 export interface DictionaryAreaAssociation {
   id: string;

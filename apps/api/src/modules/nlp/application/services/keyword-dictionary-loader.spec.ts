@@ -5,14 +5,11 @@ import { KeywordDictionaryLoader } from './keyword-dictionary-loader';
 import { NLP_DICTIONARY_UNAVAILABLE } from '../../domain/errors/nlp-dictionary-unavailable-error';
 import { KeywordExtractorService } from './keyword-extractor.service';
 
-
 const ENTRIES: DictionaryEntry[] = [
   {
     canonical: 'node.js',
     aliases: ['nodejs'],
-    areas: [
-      { id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 },
-    ],
+    areas: [{ id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 }],
   },
   {
     canonical: 'javascript',
@@ -25,13 +22,10 @@ const ENTRIES: DictionaryEntry[] = [
   {
     canonical: 'machine learning',
     aliases: ['ml'],
-    areas: [
-      { id: 'area-2', nombre: 'Inteligencia Artificial', peso: 5 },
-    ],
+    areas: [{ id: 'area-2', nombre: 'Inteligencia Artificial', peso: 5 }],
   },
   { canonical: 'gobierno de ti', aliases: [], areas: [] },
 ];
-
 
 class FakeDictionarySource implements KeywordDictionaryPort {
   calls = 0;
@@ -187,9 +181,7 @@ describe('KeywordDictionaryLoader', () => {
       {
         term: 'node.js',
         count: 2,
-        areas: [
-          { id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 },
-        ],
+        areas: [{ id: 'area-1', nombre: 'Desarrollo de Software', peso: 5 }],
       },
       {
         term: 'javascript',
@@ -201,5 +193,4 @@ describe('KeywordDictionaryLoader', () => {
       },
     ]);
   });
-
 });

@@ -1,4 +1,3 @@
-
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NlpDictionaryUnavailableError } from '../../domain/errors/nlp-dictionary-unavailable-error';
 import type {
@@ -71,9 +70,7 @@ export class KeywordDictionaryLoader {
   }
 
   /** Añade las áreas correspondientes a cada keyword extraída. */
-  resolveAreasForKeywords(
-    keywords: ExtractedKeyword[],
-  ): KeywordWithAreas[] {
+  resolveAreasForKeywords(keywords: ExtractedKeyword[]): KeywordWithAreas[] {
     return keywords.map((keyword) => ({
       ...keyword,
       areas: this.getAreasForKeyword(keyword.term),
@@ -101,10 +98,7 @@ export class KeywordDictionaryLoader {
       throw this.unavailable();
     }
 
-    const newAreasByKeyword = new Map<
-      string,
-      DictionaryAreaAssociation[]
-    >();
+    const newAreasByKeyword = new Map<string, DictionaryAreaAssociation[]>();
 
     for (const entry of entries) {
       const areas = (entry.areas ?? []).map((area) => ({ ...area }));
@@ -124,8 +118,7 @@ export class KeywordDictionaryLoader {
         .slice(0, MAX_LOGGED_IGNORED_KEYS)
         .map(({ key, reason }) => `${key || '<vacío>'}:${reason}`)
         .join(', ');
-      const suffix =
-        report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
+      const suffix = report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
 
       this.logger.warn(
         `Diccionario NLP: ${report.ignored.length} claves ignoradas (${detail}${suffix})`,

@@ -1,4 +1,3 @@
-
 import type { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import { PrismaKeywordDictionaryRepository } from './prisma-keyword-dictionary.repository';
 
@@ -7,10 +6,7 @@ describe('PrismaKeywordDictionaryRepository', () => {
     const findMany = jest.fn().mockResolvedValue([
       {
         termino_normalizado: 'node.js',
-        alias_registros: [
-          { alias_normalizado: 'nodejs' },
-          { alias_normalizado: 'node.js' },
-        ],
+        alias_registros: [{ alias_normalizado: 'nodejs' }, { alias_normalizado: 'node.js' }],
         area_registros: [
           {
             peso: 5,

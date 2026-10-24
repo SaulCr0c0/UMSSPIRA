@@ -1,4 +1,3 @@
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
 import type { DictionaryEntry } from '../../domain/entities/dictionary-entry';
