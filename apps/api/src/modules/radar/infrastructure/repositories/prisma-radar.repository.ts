@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/infrastructure/database/prisma.service';
-import { AFFINITY_ALGORITHM_VERSION } from '../../domain/affinity-config';
-import { RADAR_AREA_IDS } from '../../domain/entities/radar-area';
-import type { AffinityCalculation } from '../../domain/entities/affinity-calculation';
 import type { 
   RadarRepositoryPort,
   RadarCalculationSnapshot,
@@ -13,74 +10,75 @@ import type {
 export class PrismaRadarRepository implements RadarRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(calculation: AffinityCalculation): Promise<void> {
-    await this.prisma.$transaction(async (transaction) => {
-      const savedCalculation = await transaction.calculoRadar.create({
-        data: {
-          id_titulado: calculation.graduateId,
-          hash_entrada: calculation.inputHash,
-          version_algoritmo: AFFINITY_ALGORITHM_VERSION,
-          estado: 'COMPLETADO',
-          fecha_calculo: calculation.calculatedAt,
-        },
-        select: { id: true },
-      });
+  async getLatestCalculation(tituladoId: string): Promise<RadarCalculationSnapshot | null> {
+    const calc = await this.prisma.calculoRadar.findFirst({
+      where: { id_titulado: tituladoId },
+      orderBy: { fecha_calculo: 'desc' }
+    });
 
-      await transaction.afinidadRadar.createMany({
-        data: calculation.areas.map((area) => ({
-          id_calculo_radar: savedCalculation.id,
-          id_area: RADAR_AREA_IDS[area.area],
-          puntaje: area.score,
-          porcentaje: area.percentage,
-          palabras_clave_top: area.topKeywords as never,
-        })),
-      });
+    if (!calc) {return null;}
 
-      const currentUnmappedTerms = calculation.unmapped.map(({ term }) => term);
-      await transaction.palabraClaveNoMapeada.deleteMany({
-        where: {
-          id_titulado: calculation.graduateId,
-          ...(currentUnmappedTerms.length > 0 ? { termino: { notIn: currentUnmappedTerms } } : {}),
-        },
-      });
+    const afinidades = await this.prisma.afinidadRadar.findMany({
+      where: { id_calculo_radar: calc.id }
+    });
 
-      for (const keyword of calculation.unmapped) {
-        await transaction.palabraClaveNoMapeada.upsert({
-          where: {
-            id_titulado_termino: {
-              id_titulado: calculation.graduateId,
-              termino: keyword.term,
-            },
-          },
-          create: {
-            id_titulado: calculation.graduateId,
-            termino: keyword.term,
-            frecuencia: keyword.count,
-            fecha_deteccion: calculation.calculatedAt,
-          },
-          update: {
-            frecuencia: keyword.count,
-            fecha_deteccion: calculation.calculatedAt,
-          },
-        });
-      }
+    return {
+      id: calc.id,
+      tituladoId: calc.id_titulado,
+      hashEntrada: calc.hash_entrada,
+      estado: calc.estado as 'COMPLETADO' | 'VACIO',
+      versionAlgoritmo: calc.version_algoritmo,
+      fechaCalculo: calc.fecha_calculo,
+      afinidad: afinidades.map((a) => ({
+        areaId: a.id_area,
+        puntaje: Number(a.puntaje),
+        porcentaje: Number(a.porcentaje),
+        ponderacion: null, // Lo enviamos como null porque no existe en la BD
+        palabrasClaveTop: a.palabras_clave_top as never
+      }))
+    };
+  }
+
+  async getPreviousCalculation(tituladoId: string, currentCalculationId: string): Promise<RadarCalculationSnapshot | null> {
+    const calc = await this.prisma.calculoRadar.findFirst({
+      where: { 
+        id_titulado: tituladoId,
+        id: { not: currentCalculationId } 
+      },
+      orderBy: { fecha_calculo: 'desc' }
+    });
+
+    if (!calc) {return null;}
+
+    const afinidades = await this.prisma.afinidadRadar.findMany({
+      where: { id_calculo_radar: calc.id }
+    });
+
+    return {
+      id: calc.id,
+      tituladoId: calc.id_titulado,
+      hashEntrada: calc.hash_entrada,
+      estado: calc.estado as 'COMPLETADO' | 'VACIO',
+      versionAlgoritmo: calc.version_algoritmo,
+      fechaCalculo: calc.fecha_calculo,
+      afinidad: afinidades.map((a) => ({
+        areaId: a.id_area,
+        puntaje: Number(a.puntaje),
+        porcentaje: Number(a.porcentaje),
+        ponderacion: null, // Lo enviamos como null porque no existe en la BD
+        palabrasClaveTop: a.palabras_clave_top as never
+      }))
+    };
+  }
+
+  async executeWithAdvisoryLock<T>(tituladoId: string, operation: () => Promise<T>): Promise<T> {
+    return await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${tituladoId}))`;
+      return operation();
     });
   }
-  // --- Métodos agregados para T3.1 (A ser implementados en BD por Mirko) ---
 
-  async getLatestCalculation(_tituladoId: string): Promise<RadarCalculationSnapshot | null> {
-    return null;
-  }
-
-  async getPreviousCalculation(_tituladoId: string, _currentCalculationId: string): Promise<RadarCalculationSnapshot | null> {
-    return null;
-  }
-
-  async executeWithAdvisoryLock<T>(_tituladoId: string, operation: () => Promise<T>): Promise<T> {
-    return await operation();
-  }
-
-  async saveCalculation(_params: {
+  async saveCalculation(params: {
     tituladoId: string;
     hashEntrada: string;
     estado: 'COMPLETADO' | 'VACIO';
@@ -88,18 +86,79 @@ export class PrismaRadarRepository implements RadarRepositoryPort {
     areas: AreaScoreRecord[];
     unmapped: Array<{ term: string; count: number }>;
   }): Promise<RadarCalculationSnapshot> {
-    return {
-      id: 'mock-id',
-      tituladoId: _params.tituladoId,
-      hashEntrada: _params.hashEntrada,
-      estado: _params.estado,
-      versionAlgoritmo: _params.versionAlgoritmo,
-      fechaCalculo: new Date(),
-      afinidad: [],
-    };
+    return await this.prisma.$transaction(async (transaction) => {
+      const savedCalculation = await transaction.calculoRadar.create({
+        data: {
+          id_titulado: params.tituladoId,
+          hash_entrada: params.hashEntrada,
+          version_algoritmo: params.versionAlgoritmo,
+          estado: params.estado,
+          fecha_calculo: new Date(),
+        },
+      });
+
+      if (params.areas.length > 0) {
+        await transaction.afinidadRadar.createMany({
+          data: params.areas.map((area) => ({
+            id_calculo_radar: savedCalculation.id,
+            id_area: area.areaId,
+            puntaje: area.puntaje,
+            porcentaje: area.porcentaje,
+            palabras_clave_top: area.palabrasClaveTop as never,
+          })),
+        });
+      }
+
+      const currentUnmappedTerms = params.unmapped.map(({ term }) => term);
+      await transaction.palabraClaveNoMapeada.deleteMany({
+        where: {
+          id_titulado: params.tituladoId,
+          ...(currentUnmappedTerms.length > 0 ? { termino: { notIn: currentUnmappedTerms } } : {}),
+        },
+      });
+
+      for (const keyword of params.unmapped) {
+        await transaction.palabraClaveNoMapeada.upsert({
+          where: {
+            id_titulado_termino: {
+              id_titulado: params.tituladoId,
+              termino: keyword.term,
+            },
+          },
+          create: {
+            id_titulado: params.tituladoId,
+            termino: keyword.term,
+            frecuencia: keyword.count,
+            fecha_deteccion: new Date(),
+          },
+          update: {
+            frecuencia: keyword.count,
+            fecha_deteccion: new Date(),
+          },
+        });
+      }
+
+      return {
+        id: savedCalculation.id,
+        tituladoId: savedCalculation.id_titulado,
+        hashEntrada: savedCalculation.hash_entrada,
+        estado: savedCalculation.estado as 'COMPLETADO' | 'VACIO',
+        versionAlgoritmo: savedCalculation.version_algoritmo,
+        fechaCalculo: savedCalculation.fecha_calculo,
+        afinidad: params.areas,
+      };
+    });
   }
 
   async getAreaWeights(): Promise<Record<string, Array<{ term: string; peso: number }>>> {
-    return {};
+    const weights = await this.prisma.palabraClaveArea.findMany();
+    const result: Record<string, Array<{term: string, peso: number}>> = {};
+    
+    weights.forEach((w) => {
+       if (!result[w.id_area]) {result[w.id_area] = [];}
+       result[w.id_area].push({ term: w.id_palabra_clave, peso: Number(w.peso) });
+    });
+    
+    return result;
   }
 }

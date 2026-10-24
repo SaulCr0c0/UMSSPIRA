@@ -1,5 +1,4 @@
 import { RadarArea } from '../../domain/entities/radar-area';
-
 /**
  * Representa los datos calculados de un área del radar listos para almacenarse
  * en la tabla 'afinidad_radar' de la base de datos.
