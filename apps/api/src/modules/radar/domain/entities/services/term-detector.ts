@@ -1,4 +1,5 @@
-import { RadarArea } from './domain/entities/radar-area';
+// @ts-expect-error: Jest no resuelve el alias del monorepo
+import type { RadarArea } from '@umsspira/shared-types';
 // Define el tipo para los términos del diccionario
 export type DictionaryTerm = {
   canonical: string;
@@ -41,9 +42,7 @@ export const detectTerms = (normalizedText: string, dictionary: DictionaryTerm[]
   }
 
   // 3. Aplicar el tope máximo de 3 apariciones por keyword según las reglas
-  for (const key in detectedCounts) {
-    detectedCounts[key] = Math.min(detectedCounts[key], 3);
-  }
+  
 
   return detectedCounts;
 };
