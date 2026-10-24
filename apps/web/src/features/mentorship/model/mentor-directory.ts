@@ -138,29 +138,32 @@ export function filterDirectory(mentors: DirectoryMentor[], filters: InterestCon
  * Garantiza que las 6 áreas técnicas del Sprint 1 y sus tópicos estén siempre disponibles.
  */
 export function mergeCatalog(backendCatalog: InterestArea[] = [], baseCatalog: InterestArea[] = SPRINT1_CATALOG): InterestArea[] {
-  const map = new Map<string, InterestArea>();
-  for (const area of baseCatalog) {
-    map.set(area.name.trim().toLowerCase(), {
-      ...area,
-      topics: area.topics.map(t => ({ ...t })),
-    });
-  }
+  const result: InterestArea[] = baseCatalog.map(area => ({
+    ...area,
+    topics: area.topics.map(t => ({ ...t })),
+  }));
+
   for (const area of backendCatalog) {
     const key = area.name.trim().toLowerCase();
-    const existing = map.get(key);
+    const existing = result.find(a => a.name.trim().toLowerCase() === key || a.id === area.id);
     if (existing) {
       existing.id = area.id;
       if (area.description) existing.description = area.description;
       for (const topic of area.topics) {
-        if (!existing.topics.some(t => t.id === topic.id || t.name.trim().toLowerCase() === topic.name.trim().toLowerCase())) {
-          existing.topics.push(topic);
+        const found = existing.topics.find(t => t.id === topic.id || t.name.trim().toLowerCase() === topic.name.trim().toLowerCase());
+        if (found) {
+          found.id = topic.id;
+          found.name = topic.name;
+        } else {
+          existing.topics.push({ ...topic });
         }
       }
     } else {
-      map.set(key, { ...area, topics: [...area.topics] });
+      result.push({ ...area, topics: area.topics.map(t => ({ ...t })) });
     }
   }
-  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+  return result;
 }
 
 export function directoryCatalog(mentors: DirectoryMentor[]): InterestArea[] {
