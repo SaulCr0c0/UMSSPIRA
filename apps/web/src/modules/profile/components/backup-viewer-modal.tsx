@@ -81,7 +81,8 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
           )}
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        {/* En celular los botones se reparten el ancho y nunca salen de la pantalla */}
+        <div className="mt-4 grid shrink-0 grid-cols-2 gap-3 sm:mt-6 sm:flex sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryButtonClassName}>
             Cerrar
           </button>
