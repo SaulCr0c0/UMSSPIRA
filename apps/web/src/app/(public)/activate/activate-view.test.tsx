@@ -1,8 +1,9 @@
 /// <reference types="jest" />
+import '@testing-library/jest-dom';
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ActivateView } from './activate-view';
-import { activationService } from '@/modules/activation/frontend/services/activation.service';
+import { activationService } from '@/modules/activation';
 
 const mockSearchParams = new URLSearchParams('applicationId=app-123&email=titulado@umss.edu.bo');
 
