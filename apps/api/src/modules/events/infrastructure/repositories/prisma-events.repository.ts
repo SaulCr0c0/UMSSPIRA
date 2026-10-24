@@ -252,10 +252,22 @@ export class PrismaEventsRepository implements EventsRepository {
         const row = await this.lockOwned(tx, ownerId, id);
         assertRetirable(toEvent(row), now);
         const counts = await this.relationCounts(tx, id);
-        await tx.evento.update({
-          where: { id, id_usuario: ownerId, archivado: false },
-          data: { archivado: true, fecha_archivado: now },
-        });
+        const hasHistory = counts.registrationsCount > 0 || counts.passesCount > 0;
+
+        if (hasHistory) {
+          // Con historial: baja lógica para preservar la trazabilidad.
+          await tx.evento.update({
+            where: { id, id_usuario: ownerId, archivado: false },
+            data: { archivado: true, fecha_archivado: now },
+          });
+        } else {
+          // Sin relaciones: baja física. Se desvincula la portada para no chocar con la FK Restrict.
+          if (row.id_portada) {
+            await tx.evento.update({ where: { id }, data: { id_portada: null } });
+          }
+          await tx.evento.delete({ where: { id, id_usuario: ownerId } });
+        }
+
         return { id, ...counts };
       },
       { timeout: 15000 },
@@ -379,10 +391,7 @@ export class PrismaEventsRepository implements EventsRepository {
     };
   }
 
-  private async relationCounts(
-    client: Prisma.TransactionClient | PrismaService,
-    eventId: string,
-  ) {
+  private async relationCounts(client: Prisma.TransactionClient | PrismaService, eventId: string) {
     const [registrationsCount, passesCount] = await Promise.all([
       client.inscripcionEvento.count({ where: { id_evento: eventId } }),
       client.paseQr.count({ where: { inscripcion: { id_evento: eventId } } }),
