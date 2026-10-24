@@ -6,8 +6,10 @@ import { authStore } from '@/modules/auth/frontend/store';
 import type { NavbarProps } from './types';
 
 const push = jest.fn();
+const replace = jest.fn();
 const refresh = jest.fn();
-jest.mock('next/navigation', () => ({ usePathname: () => '/portal/institucional', useRouter: () => ({ push, refresh }) }));
+let mockPathname = '/portal/institucional';
+jest.mock('next/navigation', () => ({ usePathname: () => mockPathname, useRouter: () => ({ push, replace, refresh }) }));
 jest.mock('@/modules/auth/frontend/services/session', () => ({ getSessionToken: jest.fn(), clearSession: jest.fn() }));
 jest.mock('@/shared/services/auth-session', () => ({
   ...jest.requireActual('@/shared/services/auth-session'),
@@ -21,6 +23,7 @@ jest.mock('./navbar', () => ({ Navbar: ({ session, onLogout }: NavbarProps) => <
 const fetchMock = jest.mocked(authenticatedFetch);
 
 beforeEach(() => {
+  mockPathname = '/portal/institucional';
   jest.clearAllMocks();
   fetchMock.mockReset();
   fetchMock.mockRejectedValue(new SessionError(401, 'Inicia sesión'));
@@ -79,4 +82,34 @@ it('HU-004: un administrador cierra sesión y vuelve a la bienvenida', async () 
   expect(revokeCurrentSession).toHaveBeenCalledTimes(1);
   expect(clearSession).toHaveBeenCalled();
   expect(authStore.reset).toHaveBeenCalled();
+});
+
+it('HU-004 CA-05: HTTP 401 en reportería borra el estado React y devuelve a /login', async () => {
+  mockPathname = '/reports';
+  fetchMock.mockResolvedValue({ ok: false, status: 401 } as Response);
+  render(<ConnectedNavbar />);
+
+  await waitFor(() => expect(clearSession).toHaveBeenCalledTimes(1));
+  expect(authStore.reset).toHaveBeenCalled();
+  expect(replace).toHaveBeenCalledWith('/login');
+  expect(refresh).toHaveBeenCalled();
+});
+
+it('HU-004 CA-05: al fallar la renovación con 401 también limpia la sesión', async () => {
+  mockPathname = '/reports/encuestas';
+  fetchMock.mockRejectedValue(new SessionError(401, 'Sesión expirada'));
+  render(<ConnectedNavbar />);
+
+  await waitFor(() => expect(clearSession).toHaveBeenCalledTimes(1));
+  expect(authStore.reset).toHaveBeenCalled();
+  expect(replace).toHaveBeenCalledWith('/login');
+});
+
+it('HU-004: la página institucional pública no redirige por un 401 sin sesión', async () => {
+  fetchMock.mockRejectedValue(new SessionError(401, 'Sin sesión'));
+  render(<ConnectedNavbar />);
+
+  await waitFor(() => expect(clearSession).toHaveBeenCalledTimes(1));
+  expect(authStore.reset).toHaveBeenCalled();
+  expect(replace).not.toHaveBeenCalled();
 });
