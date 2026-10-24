@@ -1,7 +1,8 @@
-'use client';
 
+'use client';
+ 
 import { useEffect, useRef, useState } from 'react';
-import { Award, Camera, CloudUpload, FileText, Plus } from 'lucide-react';
+import { Award, Camera, Check, CloudUpload, FileText, Plus } from 'lucide-react';
 import { MensajeError, claseCampo } from '@/modules/profile/validation/mensaje-error';
 import {
   type ErroresCertificacion,
@@ -10,7 +11,7 @@ import {
 } from '@/modules/profile/validation/reglas-perfil';
 import { formatearTamanio } from '@/modules/profile/utils/format-file-size';
 import { ApiError } from '@/shared/services/api-client';
-
+ 
 export type Certificacion = {
   nombre: string;
   entidadEmisora: string;
@@ -18,7 +19,7 @@ export type Certificacion = {
   grado: string;
   respaldo: File | null;
 };
-
+ 
 type FormularioCertificacionesProps = {
   certificaciones: Certificacion[];
   // Si la promesa falla con ApiError se muestra su mensaje y se conserva lo escrito
@@ -26,9 +27,9 @@ type FormularioCertificacionesProps = {
   // Avance (0 a 100) de la subida del respaldo mientras se guarda
   progreso?: number;
 };
-
+ 
 const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', grado: '', respaldo: null };
-
+ 
 const subtituloClase = 'text-xs font-bold uppercase tracking-wide text-[#2C3B4D]';
 const labelClase = 'block text-xs font-semibold text-[#2C3B4D]';
 // Asterisco de obligatorio con CSS (::after): no cambia el texto de la etiqueta que leen los lectores de pantalla y los tests
@@ -37,7 +38,7 @@ const inputClase =
   'mt-1.5 h-11 w-full rounded-md border border-[#C9C1B1] bg-white px-3 text-sm text-[#2C3B4D] placeholder:text-[#2C3B4D]/40 focus:border-[#FFB162] focus:outline-none';
 const botonRespaldoClase =
   'inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C9C1B1] bg-white px-3 text-xs font-semibold text-[#2C3B4D] hover:bg-[#FAF8F4]';
-
+ 
 export function FormularioCertificaciones({ certificaciones, onAgregar, progreso }: FormularioCertificacionesProps) {
   const [datos, setDatos] = useState<Certificacion>(VACIO);
   const fotoRef = useRef<HTMLInputElement>(null);
@@ -51,7 +52,9 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
   const [errorGuardar, setErrorGuardar] = useState<string>();
   // Dirección local de la foto elegida para mostrar su miniatura
   const [vistaPrevia, setVistaPrevia] = useState<string>();
-
+  // Aviso «Certificación guardada» tras guardar (T8.5); se quita al empezar a escribir otra
+  const [guardada, setGuardada] = useState(false);
+ 
   // Se crea al elegir la foto y se libera al quitarla, cambiarla o salir (evita fugas de memoria)
   useEffect(() => {
     if (!datos.respaldo || typeof URL.createObjectURL !== 'function') {
@@ -62,23 +65,24 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     setVistaPrevia(url);
     return () => URL.revokeObjectURL(url);
   }, [datos.respaldo]);
-
+ 
   function quitarRespaldo() {
     setDatos({ ...datos, respaldo: null });
     setErrorRespaldo(undefined);
   }
-
+ 
   // Al corregir un campo se quita su mensaje
   function limpiarError(campo: keyof ErroresCertificacion) {
     if (errores[campo]) setErrores({ ...errores, [campo]: undefined });
   }
-
+ 
   function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision', valor: string) {
     setDatos({ ...datos, [campo]: valor });
     limpiarError(campo);
     setErrorGuardar(undefined);
+    setGuardada(false);
   }
-
+ 
   function elegirRespaldo(evento: React.ChangeEvent<HTMLInputElement>) {
     const archivo = evento.target.files?.[0];
     evento.target.value = '';
@@ -91,10 +95,11 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
       limpiarError('respaldo');
     }
   }
-
+ 
   async function guardar() {
     if (guardando) return;
     setErrorGuardar(undefined);
+    setGuardada(false);
     setGuardando(true);
     try {
       await onAgregar({
@@ -104,6 +109,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
       });
       setDatos(VACIO);
       setErrorRespaldo(undefined);
+      setGuardada(true);
     } catch (error) {
       // Se conserva lo escrito y la foto elegida: «Reintentar» vuelve a enviar lo mismo (T8.6)
       if (!(error instanceof ApiError)) throw error;
@@ -112,7 +118,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
       setGuardando(false);
     }
   }
-
+ 
   function agregar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const encontrados = validarCertificacion(datos);
@@ -120,7 +126,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     if (Object.keys(encontrados).length > 0) return;
     void guardar();
   }
-
+ 
   return (
     <div>
       {certificaciones.length > 0 && (
@@ -149,9 +155,9 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           </ul>
         </div>
       )}
-
+ 
       <p className={subtituloClase}>Agregar nueva certificación</p>
-
+ 
       <form onSubmit={agregar} noValidate className="mt-4 space-y-4">
         <div>
           <label htmlFor="nombreCertificacion" className={labelObligatorioClase}>Nombre de certificación</label>
@@ -168,7 +174,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           />
           <MensajeError id="error-nombre" mensaje={errores.nombre} />
         </div>
-
+ 
         <div>
           <label htmlFor="entidadEmisora" className={labelObligatorioClase}>Entidad emisora</label>
           <input
@@ -184,7 +190,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           />
           <MensajeError id="error-entidadEmisora" mensaje={errores.entidadEmisora} />
         </div>
-
+ 
         <div>
           <label htmlFor="anioEmision" className={labelObligatorioClase}>Año</label>
           <input
@@ -205,7 +211,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           />
           <MensajeError id="error-anioEmision" mensaje={errores.anioEmision} />
         </div>
-
+ 
         <div>
           <span className={labelObligatorioClase}>Respaldo de certificación</span>
           <div
@@ -258,7 +264,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             <p className="text-xs text-[#2C3B4D]/70">Solo JPG, máximo 5 MB</p>
           </div>
           <MensajeError id="error-respaldo" mensaje={errorRespaldo ?? errores.respaldo} />
-
+ 
           <input
             ref={fotoRef}
             type="file"
@@ -276,7 +282,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             onChange={elegirRespaldo}
           />
         </div>
-
+ 
         {guardando && (
           <div
             role="progressbar"
@@ -289,6 +295,12 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             <div className="h-full bg-[#A35139] transition-all" style={{ width: `${progreso ?? 0}%` }} />
           </div>
         )}
+        {guardada && (
+          <p role="status" className="flex items-center gap-1.5 text-sm font-semibold text-[#2C3B4D]">
+            <Check className="h-4 w-4 text-[#A35139]" aria-hidden="true" />
+            Certificación guardada
+          </p>
+        )}
         <MensajeError id="error-certificacion-guardar" mensaje={errorGuardar} />
         {errorGuardar && (
           <button
@@ -300,7 +312,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
             Reintentar
           </button>
         )}
-
+ 
         <button
           type="submit"
           disabled={guardando}
@@ -313,3 +325,4 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     </div>
   );
 }
+ 
