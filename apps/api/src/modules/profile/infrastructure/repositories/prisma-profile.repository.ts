@@ -16,6 +16,7 @@ import { assertUniqueEducation } from '../../domain/policies/education.policy';
 import {
   toBackup,
   toCertification,
+  toDescription,
   toEducation,
   toExperience,
 } from '../translators/profile.translator';
@@ -27,6 +28,9 @@ const certificationInclude = {
     take: 1,
   },
 };
+
+// La descripción es una sola fila de perfil_area por titulado; si hubiera más, manda la más antigua
+const descriptionOrder = [{ fecha_creacion: 'asc' as const }, { id: 'asc' as const }];
 
 @Injectable()
 export class PrismaProfileRepository implements ProfileRepository {
@@ -259,7 +263,9 @@ export class PrismaProfileRepository implements ProfileRepository {
           select: { id: true },
         });
         if (!certificate) {
-          await rejectProfileRecord(tx.certificacion.findUnique({ where: { id: certificationId } }));
+          await rejectProfileRecord(
+            tx.certificacion.findUnique({ where: { id: certificationId } }),
+          );
         }
         await tx.certificacionRespaldo.deleteMany({ where: { id_certificacion: certificationId } });
         const row = await tx.certificacionRespaldo.create({
@@ -315,6 +321,46 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async readBackupFile(certificationId: string): Promise<StoredFile> {
     return this.loadBackup({ id_certificacion: certificationId });
+  }
+
+  async findDescription(scope: ProfileScope) {
+    const row = await this.prisma.perfilArea.findFirst({
+      where: { id_titulado: scope.graduateId, titulado: { id_usuario: scope.userId } },
+      orderBy: descriptionOrder,
+    });
+    return toDescription(row);
+  }
+
+  async saveDescription(scope: ProfileScope, text: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        // El bloqueo del titulado evita que dos guardados simultáneos creen dos filas
+        await lockGraduate(tx, scope);
+        const now = new Date();
+        const current = await tx.perfilArea.findFirst({
+          where: { id_titulado: scope.graduateId },
+          orderBy: descriptionOrder,
+          select: { id: true },
+        });
+        // Solo se toca la descripción: el área y el radar quedan a cargo de la Épica 3
+        const row = current
+          ? await tx.perfilArea.update({
+              where: { id: current.id },
+              data: { descripcion_profesional: text, fecha_actualizacion: now },
+            })
+          : await tx.perfilArea.create({
+              data: {
+                id_titulado: scope.graduateId,
+                area_id: null,
+                descripcion_profesional: text,
+                fecha_creacion: now,
+                fecha_actualizacion: now,
+              },
+            });
+        return toDescription(row);
+      },
+      { timeout: 15000 },
+    );
   }
 
   private async loadBackup(where: Prisma.CertificacionRespaldoWhereInput): Promise<StoredFile> {

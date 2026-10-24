@@ -8,6 +8,7 @@ import type {
   ProfileSection,
   ProfileSnapshot,
 } from '../../domain/entities/profile-record';
+import type { ProfessionalDescription } from '../../domain/entities/professional-description';
 import type {
   CertificationInput,
   EducationInput,
@@ -40,4 +41,7 @@ export interface ProfileRepository {
   readBackup(scope: ProfileScope, certificationId: string): Promise<StoredFile>;
   findBackupOwner(certificationId: string): Promise<BackupOwner | null>;
   readBackupFile(certificationId: string): Promise<StoredFile>;
+  findDescription(scope: ProfileScope): Promise<ProfessionalDescription>;
+  // Actualiza la fila de perfil_area del titulado o la crea sin área; no recalcula el radar (Épica 3)
+  saveDescription(scope: ProfileScope, text: string): Promise<ProfessionalDescription>;
 }
