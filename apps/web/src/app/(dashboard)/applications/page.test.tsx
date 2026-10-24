@@ -8,6 +8,28 @@ jest.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/applications',
+  useSearchParams: () => {
+    const React = jest.requireActual<typeof import('react')>('react');
+    const [search, setSearch] = React.useState(() => window.location.search);
+    React.useEffect(() => {
+      const updateSearch = () => setSearch(window.location.search);
+      window.addEventListener('popstate', updateSearch);
+      return () => window.removeEventListener('popstate', updateSearch);
+    }, []);
+    return new URLSearchParams(search);
+  },
+}));
+
+const mockRouter = {
+  replace: (url: string) => {
+    window.history.replaceState({}, '', url);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  },
+};
+
 jest.mock('@/modules/applications/frontend/services/applications-board.service', () => ({
   fetchApplicationsBoard: jest.fn(),
   fetchApplicationDetail: jest.fn(),
@@ -30,6 +52,7 @@ const boardPage = {
 describe('ApplicationsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.history.replaceState({}, '', '/applications');
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) });
   });
 
@@ -83,6 +106,98 @@ describe('ApplicationsPage', () => {
         }),
       ),
     );
+  });
+
+  it('sincroniza página, tamaño y filtros con la URL', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/applications?page=3&size=10&q=ana&career=Sistemas&status=PENDING',
+    );
+    mockedFetchBoard.mockImplementation(async (query: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      career?: string;
+      status?: string;
+    }) => ({
+      ok: true,
+      data: { ...boardPage, total: 100, page: query.page, pageSize: query.pageSize },
+    }));
+    render(<ApplicationsPage />);
+
+    await waitFor(() =>
+      expect(mockedFetchBoard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 3,
+          pageSize: 10,
+          search: 'ana',
+          career: 'Sistemas',
+          status: 'PENDING',
+        }),
+      ),
+    );
+
+    fireEvent.change(await screen.findByLabelText('Filas por página'), {
+      target: { value: '25' },
+    });
+
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+      expect(params.get('page')).toBeNull();
+      expect(params.get('size')).toBe('25');
+      expect(params.get('q')).toBe('ana');
+      expect(params.get('career')).toBe('Sistemas');
+      expect(params.get('status')).toBe('PENDING');
+      expect(mockedFetchBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          pageSize: 25,
+          search: 'ana',
+          career: 'Sistemas',
+          status: 'PENDING',
+        }),
+      );
+    });
+  });
+
+  it('conserva búsqueda, carrera, estado y tamaño al cambiar de página', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/applications?page=2&size=25&q=ana&career=Sistemas&status=PENDING',
+    );
+    mockedFetchBoard.mockImplementation(async (query: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      career?: string;
+      status?: string;
+    }) => ({
+      ok: true,
+      data: { ...boardPage, total: 100, page: query.page, pageSize: query.pageSize },
+    }));
+    render(<ApplicationsPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Página siguiente' }));
+
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+      expect(params.get('page')).toBe('3');
+      expect(params.get('size')).toBe('25');
+      expect(params.get('q')).toBe('ana');
+      expect(params.get('career')).toBe('Sistemas');
+      expect(params.get('status')).toBe('PENDING');
+      expect(mockedFetchBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 3,
+          pageSize: 25,
+          search: 'ana',
+          career: 'Sistemas',
+          status: 'PENDING',
+        }),
+      );
+    });
   });
 
   it('pide iniciar sesión cuando la API responde 401', async () => {
