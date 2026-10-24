@@ -27,6 +27,7 @@ const VACIO: Certificacion = { nombre: '', entidadEmisora: '', anioEmision: '', 
 
 const subtituloClase = 'text-xs font-bold uppercase tracking-wide text-[#2C3B4D]';
 const labelClase = 'block text-xs font-semibold text-[#2C3B4D]';
+const labelObligatorioClase = `${labelClase} after:ml-0.5 after:text-truffle-trouble after:content-['*']`;
 const inputClase =
   'mt-1.5 h-11 w-full rounded-md border border-[#C9C1B1] bg-white px-3 text-sm text-[#2C3B4D] placeholder:text-[#2C3B4D]/40 focus:border-[#FFB162] focus:outline-none';
 const botonRespaldoClase =
@@ -134,7 +135,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
 
       <form onSubmit={agregar} className="mt-4 space-y-4">
         <div>
-          <label htmlFor="nombreCertificacion" className={labelClase}>Nombre de certificación</label>
+          <label htmlFor="nombreCertificacion" className={labelObligatorioClase}>Nombre de certificación</label>
           <input
             id="nombreCertificacion"
             type="text"
@@ -147,7 +148,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
         </div>
 
         <div>
-          <label htmlFor="entidadEmisora" className={labelClase}>Entidad emisora</label>
+          <label htmlFor="entidadEmisora" className={labelObligatorioClase}>Entidad emisora</label>
           <input
             id="entidadEmisora"
             type="text"
@@ -160,7 +161,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
         </div>
 
         <div>
-          <label htmlFor="anioEmision" className={labelClase}>Año</label>
+          <label htmlFor="anioEmision" className={labelObligatorioClase}>Año</label>
           <input
             id="anioEmision"
             type="text"
@@ -178,7 +179,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
         </div>
 
         <div>
-          <span className={labelClase}>Respaldo de certificación</span>
+          <span className={labelObligatorioClase}>Respaldo de certificación</span>
           <div
             className={claseCampo(
               'mt-1.5 flex flex-col items-center gap-3 rounded-md border-2 border-dashed border-[#C9C1B1] bg-[#EEE9DF] px-4 py-6 text-center',
