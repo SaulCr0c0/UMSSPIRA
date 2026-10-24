@@ -109,10 +109,10 @@ export function LoginForm() {
           Debe iniciar sesión para acceder a este módulo
         </p>
       )}
-      {/* Bug 5: etiqueta e icono del correo */}
+      {/* Campo de correo electrónico */}
       <div className="space-y-2">
         <label htmlFor="email" className={labelClass}>
-          CORREO ELECTRÓNICO
+          CORREO ELECTRÓNICO INSTITUCIONAL O PERSONAL
           <span className="text-truffle-trouble"> *</span>
         </label>
 
