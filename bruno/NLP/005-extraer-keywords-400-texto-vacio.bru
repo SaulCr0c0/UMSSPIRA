@@ -1,0 +1,40 @@
+meta {
+  name: Extraer keywords - 400 Texto vacio
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nlp/extract
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "text": ""
+  }
+}
+
+tests {
+  test("Status 400 por texto vacio", function() {
+    expect(res.status).to.equal(400);
+  });
+}
+
+docs {
+  HU-1 · T1.7 — Texto vacío o ausente.
+  Debe responder 400 Bad Request.
+
+  CA-6: texto faltante o vacío → 400.
+
+  Permiso: nlp:extract.
+}

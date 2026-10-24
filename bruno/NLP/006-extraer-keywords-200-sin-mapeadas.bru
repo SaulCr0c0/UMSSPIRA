@@ -40,6 +40,10 @@ tests {
   test("data.unmapped tiene los terminos no mapeados", function() {
     expect(res.body.data).to.have.property("unmapped").that.is.an("array");
   });
+
+  test("Tiempo de respuesta menor a 1 000 ms", function() {
+    expect(res.responseTime).to.be.below(1000);
+  });
 }
 
 docs {
@@ -48,6 +52,4 @@ docs {
 
   CA-HU5-09: diccionario disponible pero sin coincidencias -> 200 con data.keywords vacia.
   CA-HU5-07: los no mapeados pasan el filtro (sin stopwords, >= 3 chars, no numericos).
-
-  Permiso: nlp:extract.
 }
