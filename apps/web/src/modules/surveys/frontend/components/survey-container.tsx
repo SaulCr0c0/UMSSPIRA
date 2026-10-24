@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/shared/components/button';
 import type { WorkCondition } from '../types/survey.types';
 import { SurveyWorkConditionSelector } from './survey-work-condition-selector';
@@ -9,6 +10,7 @@ export function SurveyContainer() {
   // TODO: reemplazar por use-survey-form (Task 1.2, Anelis)
   const [workCondition, setWorkCondition] = useState<WorkCondition | null>(null);
   const [error, setError] = useState<string | undefined>();
+  const router = useRouter();
 
   const handleChange = (value: WorkCondition) => {
     setWorkCondition(value);
@@ -20,7 +22,8 @@ export function SurveyContainer() {
       setError('Seleccione su condición laboral actual');
       return;
     }
-    // TODO: avanzar al siguiente paso (HU-002)
+    // TODO (Task 1.2 + HU-002): avanzar al siguiente paso cuando use-survey-form
+    // y los campos laborales estén integrados.
   };
 
   return (
@@ -98,7 +101,7 @@ export function SurveyContainer() {
       </p>
 
       <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="secondary">
+        <Button type="button" variant="secondary" onClick={() => router.back()}>
           Volver
         </Button>
         <Button type="button" variant="primary" onClick={handleNext}>
