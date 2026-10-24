@@ -197,7 +197,7 @@ export class PrismaEventsRepository implements EventsRepository {
       async (tx) => {
         await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
         const row = await tx.portadaEvento.findFirst({
-                where: { id, id_usuario: ownerId, archivado: false },
+                where: { id, id_usuario: ownerId},
           select: { id: true, evento: { select: { id: true } } },
         });
         if (!row) {
@@ -286,7 +286,7 @@ export class PrismaEventsRepository implements EventsRepository {
     }
     await tx.$queryRaw`SELECT id FROM portada_evento WHERE id = ${id}::uuid FOR UPDATE`;
     const row = await tx.portadaEvento.findFirst({
-      where: { id, id_usuario: ownerId, archivado: false },
+      where: { id, id_usuario: ownerId},
       select: { evento: { select: { id: true } } },
     });
     if (!row) {
