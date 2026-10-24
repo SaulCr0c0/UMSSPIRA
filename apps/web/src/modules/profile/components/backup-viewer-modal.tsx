@@ -46,7 +46,13 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyssal-blue/50 px-4">
+    // Clic en el fondo oscuro cierra; los clics dentro del cuadro no llegan aquí como target
+    <div
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-abyssal-blue/50 px-4"
+    >
       <div
         role="dialog"
         aria-modal="true"
