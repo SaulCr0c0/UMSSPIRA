@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
-import { emptyDirectoryFilters } from '../../model/mentor-directory';
+import { emptyDirectoryFilters, SPRINT1_CATALOG } from '../../model/mentor-directory';
 import { sameConfiguration, type InterestArea, type InterestConfiguration } from '../../model/mentor-interests';
 
 export function MentorDirectoryFilters({ catalog, applied, interestsSupported, disabled, onApply }: {
@@ -15,11 +15,15 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
   const [draft, setDraft] = useState(applied);
   const [expandedInterests, setExpandedInterests] = useState(false);
   useEffect(() => { setDraft(applied); }, [applied]);
+
+  const activeCatalog = catalog.length > 0 ? catalog : SPRINT1_CATALOG;
+  const activeInterestsSupported = interestsSupported || (!catalog.length && activeCatalog.length > 0);
+
   const dirty = !sameConfiguration(draft, applied);
   const toggleArea = (id: string) => {
     setDraft(current => {
       const areaIds = current.areaIds.includes(id) ? current.areaIds.filter(value => value !== id) : [...current.areaIds, id];
-      const allowed = new Set(catalog.filter(area => !areaIds.length || areaIds.includes(area.id)).flatMap(area => area.topics.map(topic => topic.id)));
+      const allowed = new Set(activeCatalog.filter(area => !areaIds.length || areaIds.includes(area.id)).flatMap(area => area.topics.map(topic => topic.id)));
       return { areaIds, topicIds: current.topicIds.filter(value => allowed.has(value)) };
     });
   };
@@ -27,20 +31,20 @@ export function MentorDirectoryFilters({ catalog, applied, interestsSupported, d
     topicIds: current.topicIds.includes(id) ? current.topicIds.filter(value => value !== id) : [...current.topicIds, id],
   }));
   const clear = () => { const empty = emptyDirectoryFilters(); setDraft(empty); onApply(empty); };
-  const groups = catalog.filter(area => !draft.areaIds.length || draft.areaIds.includes(area.id));
+  const groups = activeCatalog.filter(area => !draft.areaIds.length || draft.areaIds.includes(area.id));
   const visibleGroups = expandedInterests || draft.areaIds.length ? groups : groups.slice(0, 3);
 
   return <aside className="directory-filters" aria-label="Filtros de mentores">
     <details open><summary><SlidersHorizontalIcon className="icon" aria-hidden="true" />Filtrar mentores</summary>
       <form onSubmit={event => { event.preventDefault(); if (dirty && !disabled) onApply(draft); }}>
         <fieldset disabled={disabled}><legend>Áreas técnicas <span>· selección múltiple</span></legend>
-          {!catalog.length && <p className="directory-muted">{disabled ? 'Cargando áreas…' : 'Las áreas se mostrarán al cargar el directorio.'}</p>}
-          {catalog.map(area => <label className={`directory-area-option ${draft.areaIds.includes(area.id) ? 'is-selected' : ''}`} key={area.id}>
+          {!activeCatalog.length && <p className="directory-muted">{disabled ? 'Cargando áreas…' : 'Las áreas se mostrarán al cargar el directorio.'}</p>}
+          {activeCatalog.map(area => <label className={`directory-area-option ${draft.areaIds.includes(area.id) ? 'is-selected' : ''}`} key={area.id}>
             <input type="checkbox" checked={draft.areaIds.includes(area.id)} onChange={() => toggleArea(area.id)} />{area.name}
           </label>)}
         </fieldset>
-        <fieldset disabled={disabled || !interestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
-          {interestsSupported ? <>
+        <fieldset disabled={disabled || !activeInterestsSupported} className="directory-topic-fieldset"><legend>Intereses de mentoría <span>· selección múltiple</span></legend>
+          {activeInterestsSupported ? <>
             <p className="directory-muted">{draft.areaIds.length ? 'Intereses correspondientes a las áreas seleccionadas.' : 'Catálogo general. Elige un área para ver solo sus intereses.'}</p>
             <div id="directory-interest-groups">{visibleGroups.map(area => <div className="directory-topic-group" key={area.id}>
               <h3>{area.name}</h3><div className="directory-topic-options">{area.topics.map(topic => <label key={topic.id} className={`directory-topic ${draft.topicIds.includes(topic.id) ? 'is-selected' : ''}`}>

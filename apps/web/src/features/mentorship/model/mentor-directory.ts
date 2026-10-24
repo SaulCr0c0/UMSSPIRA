@@ -29,6 +29,76 @@ export interface DirectoryQuery extends InterestConfiguration {
 export const DIRECTORY_PAGE_SIZE = 6;
 export const emptyDirectoryFilters = (): InterestConfiguration => ({ areaIds: [], topicIds: [] });
 
+/** Catálogo oficial de áreas e intereses del Sprint 1 para el directorio de mentores (CA-01). */
+export const SPRINT1_CATALOG: InterestArea[] = [
+  {
+    id: 'software',
+    name: 'Desarrollo de Software',
+    description: 'Frontend, backend y desarrollo de software.',
+    topics: [
+      { id: 'api', name: 'APIs REST' },
+      { id: 'web', name: 'Desarrollo web' },
+      { id: 'clean-code', name: 'Clean Code y patrones' },
+      { id: 'testing', name: 'Pruebas automatizadas' },
+    ],
+  },
+  {
+    id: 'data',
+    name: 'Bases de Datos',
+    description: 'Diseño, modelado y optimización de bases de datos.',
+    topics: [
+      { id: 'sql', name: 'PostgreSQL y SQL' },
+      { id: 'data-modeling', name: 'Modelado de datos' },
+      { id: 'query-opt', name: 'Optimización de consultas' },
+      { id: 'nosql', name: 'NoSQL' },
+    ],
+  },
+  {
+    id: 'devops',
+    name: 'DevOps',
+    description: 'CI/CD, contenedores e infraestructura en la nube.',
+    topics: [
+      { id: 'docker', name: 'Docker y Contenedores' },
+      { id: 'cicd', name: 'CI/CD Pipelines' },
+      { id: 'cloud', name: 'Cloud Computing' },
+      { id: 'infra', name: 'Infraestructura' },
+    ],
+  },
+  {
+    id: 'security',
+    name: 'Ciberseguridad',
+    description: 'Seguridad en aplicaciones y redes.',
+    topics: [
+      { id: 'sec-web', name: 'Seguridad web (OWASP)' },
+      { id: 'sec-auth', name: 'Autenticación y Autorización' },
+      { id: 'crypto', name: 'Criptografía' },
+      { id: 'sec-audit', name: 'Auditoría de seguridad' },
+    ],
+  },
+  {
+    id: 'mobile',
+    name: 'Desarrollo móvil',
+    description: 'Aplicaciones nativas e híbridas para Android e iOS.',
+    topics: [
+      { id: 'react-native', name: 'React Native' },
+      { id: 'flutter', name: 'Flutter' },
+      { id: 'android', name: 'Android (Kotlin)' },
+      { id: 'ios', name: 'iOS (Swift)' },
+    ],
+  },
+  {
+    id: 'architecture',
+    name: 'Arquitectura y diseño de software',
+    description: 'Patrones arquitectónicos y diseño de sistemas.',
+    topics: [
+      { id: 'microservices', name: 'Microservicios' },
+      { id: 'patterns', name: 'Patrones de arquitectura' },
+      { id: 'system-design', name: 'Diseño de sistemas escalables' },
+      { id: 'ddd', name: 'Domain-Driven Design (DDD)' },
+    ],
+  },
+];
+
 export function mentorInitials(name: string): string {
   const words = name.trim().replace(/^(?:ing|lic|dra|dr|msc)\.?\s+/i, '').split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map(word => Array.from(word)[0]).join('').toLocaleUpperCase('es') || 'M';
@@ -36,7 +106,13 @@ export function mentorInitials(name: string): string {
 
 export function filterDirectory(mentors: DirectoryMentor[], filters: InterestConfiguration) {
   return mentors.filter(mentor =>
-    (!filters.areaIds.length || mentor.areas.some(area => filters.areaIds.includes(area.id)))
+    (!filters.areaIds.length || mentor.areas.some(area =>
+      filters.areaIds.includes(area.id) ||
+      filters.areaIds.some(fId => {
+        const sprintArea = SPRINT1_CATALOG.find(s => s.id === fId);
+        return sprintArea && (sprintArea.name.trim().toLowerCase() === area.name.trim().toLowerCase() || area.id === sprintArea.id);
+      })
+    ))
     && (!filters.topicIds.length || mentor.interests?.some(interest => filters.topicIds.includes(interest.id))),
   );
 }

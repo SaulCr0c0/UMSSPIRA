@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InterestConfiguration } from '../model/mentor-interests';
-import { DIRECTORY_PAGE_SIZE, emptyDirectoryFilters, uniqueMentors, type DirectoryPage } from '../model/mentor-directory';
+import { DIRECTORY_PAGE_SIZE, emptyDirectoryFilters, SPRINT1_CATALOG, uniqueMentors, type DirectoryPage } from '../model/mentor-directory';
 import { getMentorDirectory } from '../services/mentor-directory-api';
 import { SessionError } from '@/shared/services/auth-session';
 
-const emptyPage: DirectoryPage = { mentors: [], total: 0, catalog: [], interestsSupported: false };
+const emptyPage: DirectoryPage = { mentors: [], total: 0, catalog: SPRINT1_CATALOG, interestsSupported: true };
 
 export function useMentorDirectory() {
   const [page, setPage] = useState<DirectoryPage>(emptyPage);
