@@ -7,8 +7,6 @@ import { validarRespaldo } from '@/modules/profile/validation/reglas-perfil';
 import { formatearTamanio } from '@/modules/profile/utils/format-file-size';
 import { ApiError } from '@/shared/services/api-client';
 
-const GRADOS = ['Fundamentos', 'Asociado', 'Profesional', 'Especialista', 'Experto'];
-
 export type Certificacion = {
   nombre: string;
   entidadEmisora: string;
@@ -62,7 +60,7 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
     setErrorRespaldo(undefined);
   }
 
-  function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision' | 'grado', valor: string) {
+  function cambiar(campo: 'nombre' | 'entidadEmisora' | 'anioEmision', valor: string) {
     setDatos({ ...datos, [campo]: valor });
     setErrorGuardar(undefined);
   }
@@ -161,40 +159,22 @@ export function FormularioCertificaciones({ certificaciones, onAgregar, progreso
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label htmlFor="anioEmision" className={labelClase}>Año</label>
-            <input
-              id="anioEmision"
-              type="text"
-              inputMode="numeric"
-              required
-              minLength={4}
-              maxLength={4}
-              pattern="\d{4}"
-              title="Ingresa un año de 4 dígitos"
-              placeholder="Ej. 2023"
-              value={datos.anioEmision}
-              onChange={(e) => cambiar('anioEmision', e.target.value.replace(/\D/g, ''))}
-              className={inputClase}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="gradoCertificacion" className={labelClase}>Grado</label>
-            <select
-              id="gradoCertificacion"
-              required
-              value={datos.grado}
-              onChange={(e) => cambiar('grado', e.target.value)}
-              className={inputClase}
-            >
-              <option value="" disabled>Selecciona un grado</option>
-              {GRADOS.map((grado) => (
-                <option key={grado} value={grado}>{grado}</option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="anioEmision" className={labelClase}>Año</label>
+          <input
+            id="anioEmision"
+            type="text"
+            inputMode="numeric"
+            required
+            minLength={4}
+            maxLength={4}
+            pattern="\d{4}"
+            title="Ingresa un año de 4 dígitos"
+            placeholder="Ej. 2023"
+            value={datos.anioEmision}
+            onChange={(e) => cambiar('anioEmision', e.target.value.replace(/\D/g, ''))}
+            className={inputClase}
+          />
         </div>
 
         <div>
