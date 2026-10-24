@@ -14,7 +14,8 @@ import { PublishEventDraftController } from './http/controllers/publish-event-dr
 import { DeleteEventCoverController } from './http/controllers/delete-event-cover.controller';
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
-
+import { GenerateEventPassService } from './application/generate-event-pass.service';
+import { EventPassesController } from './http/event-passes.controller';
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
@@ -29,7 +30,8 @@ import { UploadEventCoverController } from './http/controllers/upload-event-cove
     ReadEventCoverController,
     UploadEventCoverController,
     GetPublishedEventController,
+    EventPassesController,
   ],
-  providers: [...eventsProviders, OptionalAuthenticationGuard],
+  providers: [...eventsProviders, OptionalAuthenticationGuard , GenerateEventPassService],
 })
 export class EventsModule {}

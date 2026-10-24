@@ -1,12 +1,14 @@
-import { randomUUID } from 'crypto';
+
 import type { EventPassStatus } from '@umsspira/shared-types'; // Ajusta la ruta de importación si es necesario
+import { randomBytes } from 'crypto';
+
 
 export class EventPassRules {
   /**
    * CA 3: Genera el token opaco único que irá dentro de la imagen QR.
    */
   static generateOpaqueToken(): string {
-    return randomUUID();
+    return randomBytes(24).toString('hex');
   }
 
   static buildQrContent(opaqueToken: string): string {
