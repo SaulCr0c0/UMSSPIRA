@@ -1,4 +1,3 @@
-
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NlpDictionaryUnavailableError } from '../../domain/errors/nlp-dictionary-unavailable-error';
 import type {
@@ -11,6 +10,7 @@ import {
   type KeywordDictionaryPort,
 } from '../ports/keyword-dictionary.port';
 import { KeywordExtractorService } from './keyword-extractor.service';
+import { mapKeywordsToAreas, type KeywordAreaWeight } from './keyword-area-mapper';
 
 const MAX_LOGGED_IGNORED_KEYS = 10;
 
@@ -71,13 +71,20 @@ export class KeywordDictionaryLoader {
   }
 
   /** Añade las áreas correspondientes a cada keyword extraída. */
-  resolveAreasForKeywords(
-    keywords: ExtractedKeyword[],
-  ): KeywordWithAreas[] {
+  resolveAreasForKeywords(keywords: ExtractedKeyword[]): KeywordWithAreas[] {
     return keywords.map((keyword) => ({
       ...keyword,
       areas: this.getAreasForKeyword(keyword.term),
     }));
+  }
+
+  /**
+   * Convierte las keywords extraídas al formato esperado por el cálculo del radar.
+   * Garantiza que el diccionario esté cargado antes de resolver las asociaciones.
+   */
+  async mapKeywordsToRadarAreas(keywords: ExtractedKeyword[]): Promise<KeywordAreaWeight[]> {
+    await this.ensureLoaded();
+    return mapKeywordsToAreas(keywords, this.areasByKeyword);
   }
 
   private async reload(): Promise<void> {
@@ -101,10 +108,7 @@ export class KeywordDictionaryLoader {
       throw this.unavailable();
     }
 
-    const newAreasByKeyword = new Map<
-      string,
-      DictionaryAreaAssociation[]
-    >();
+    const newAreasByKeyword = new Map<string, DictionaryAreaAssociation[]>();
 
     for (const entry of entries) {
       const areas = (entry.areas ?? []).map((area) => ({ ...area }));
@@ -124,8 +128,7 @@ export class KeywordDictionaryLoader {
         .slice(0, MAX_LOGGED_IGNORED_KEYS)
         .map(({ key, reason }) => `${key || '<vacío>'}:${reason}`)
         .join(', ');
-      const suffix =
-        report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
+      const suffix = report.ignored.length > MAX_LOGGED_IGNORED_KEYS ? ', ...' : '';
 
       this.logger.warn(
         `Diccionario NLP: ${report.ignored.length} claves ignoradas (${detail}${suffix})`,
