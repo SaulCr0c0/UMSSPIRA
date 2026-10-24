@@ -164,4 +164,35 @@ describe('ProfileRecordsManager', () => {
       }
     });
   });
+
+  describe('aviso de resultado al eliminar (T9.6)', () => {
+    it.each([
+      ['education', 'Educación', PROFILE_RECORDS_MOCK.education[0].id, 'formacion-academica'],
+      ['experience', 'Experiencia', PROFILE_RECORDS_MOCK.experience[0].id, 'experiencia-laboral'],
+      ['certification', 'Certificaciones', PROFILE_RECORDS_MOCK.certification[0].id, 'certificaciones'],
+    ])('en %s muestra "Registro eliminado" y solo llama a nuestro endpoint', async (_section, pestana, id, ruta) => {
+      responder(204);
+      render(<ProfileRecordsManager />);
+      fireEvent.click(screen.getByRole('tab', { name: pestana }));
+      const total = getDesktopRows().length;
+      fireEvent.click(within(getDesktopRows()[0]).getByRole('button', { name: 'Eliminar registro' }));
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirmar' }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent('Registro eliminado');
+      expect(getDesktopRows()).toHaveLength(total - 1);
+      // CA-06: se borra con el endpoint del perfil, sin llamar al motor de afinidad
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toMatch(new RegExp(`/api/v1/perfil/${ruta}/${id}$`));
+    });
+
+    it('no muestra el aviso si la eliminación falla', async () => {
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+      render(<ProfileRecordsManager />);
+      fireEvent.click(within(getDesktopRows()[0]).getByRole('button', { name: 'Eliminar registro' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+      expect(await screen.findByText('No se pudo eliminar el registro')).toBeInTheDocument();
+      expect(screen.queryByText('Registro eliminado')).not.toBeInTheDocument();
+    });
+  });
 });

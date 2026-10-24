@@ -15,7 +15,7 @@ type EditRecordLayoutProps = {
   sectionTitle: string;
   sectionSubtitle: string;
   isSaved: boolean;
-  // Texto del aviso al guardar (por defecto "Guardado")
+  // Texto del aviso al guardar (por defecto "Registro actualizado", igual en las 3 secciones)
   savedLabel?: string;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
@@ -30,7 +30,7 @@ export function EditRecordLayout({
   sectionTitle,
   sectionSubtitle,
   isSaved,
-  savedLabel = 'Guardado',
+  savedLabel = 'Registro actualizado',
   onSubmit,
   onCancel,
   children,
