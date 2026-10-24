@@ -17,7 +17,9 @@ describe('mapKeywordsToAreas', () => {
       ],
     ]);
 
-    expect(mapKeywordsToAreas([{ term: 'javascript', count: 2 }], associations)).toEqual([
+    expect(
+      mapKeywordsToAreas([{ term: 'javascript', count: 2 }], associations),
+    ).toEqual([
       {
         term: 'javascript',
         area: 'software-development',
@@ -26,7 +28,7 @@ describe('mapKeywordsToAreas', () => {
     ]);
   });
 
-  it('conserva el peso completo cuando una keyword pertenece a varias áreas', () => {
+  it('conserva el peso completo en cada área sin dividirlo', () => {
     const associations = new Map<string, DictionaryAreaAssociation[]>([
       [
         'javascript',
@@ -45,7 +47,14 @@ describe('mapKeywordsToAreas', () => {
       ],
     ]);
 
-    expect(mapKeywordsToAreas([{ term: 'javascript', count: 3 }], associations)).toEqual([
+    const result = mapKeywordsToAreas(
+      [{ term: 'javascript', count: 3 }],
+      associations,
+    );
+
+    expect(result).toHaveLength(2);
+
+    expect(result).toEqual([
       {
         term: 'javascript',
         area: 'software-development',
@@ -57,19 +66,33 @@ describe('mapKeywordsToAreas', () => {
         weight: 2,
       },
     ]);
+
+    expect(result.map(({ weight }) => weight)).toEqual([4, 2]);
+    expect(result.every(({ term }) => term === 'javascript')).toBe(true);
   });
 
   it('devuelve una lista vacía si la keyword no tiene asociaciones', () => {
-    expect(mapKeywordsToAreas([{ term: 'desconocida', count: 1 }], new Map())).toEqual([]);
+    expect(
+      mapKeywordsToAreas([{ term: 'desconocida', count: 1 }], new Map()),
+    ).toEqual([]);
   });
 
   it('falla explícitamente si encuentra un identificador de área desconocido', () => {
     const associations = new Map<string, DictionaryAreaAssociation[]>([
-      ['javascript', [{ id: 'uuid-desconocido', nombre: 'Área desconocida', peso: 4 }]],
+      [
+        'javascript',
+        [
+          {
+            id: 'uuid-desconocido',
+            nombre: 'Área desconocida',
+            peso: 4,
+          },
+        ],
+      ],
     ]);
 
-    expect(() => mapKeywordsToAreas([{ term: 'javascript', count: 1 }], associations)).toThrow(
-      'UUID de área no reconocido: uuid-desconocido',
-    );
+    expect(() =>
+      mapKeywordsToAreas([{ term: 'javascript', count: 1 }], associations),
+    ).toThrow('UUID de área no reconocido: uuid-desconocido');
   });
 });
