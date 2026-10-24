@@ -17,6 +17,7 @@ import { DeleteEventCoverController } from './http/controllers/delete-event-cove
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
 import { RegisterEventController } from './http/controllers/register-event.controller';
+import { GetEventParticipantsController } from './http/controllers/get-event-participants.controller';
 import { GenerateEventPassService } from './application/generate-event-pass.service';
 import { EventPassesController } from './http/event-passes.controller';
 import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
@@ -38,6 +39,7 @@ import { CancelPublishedEventController } from './http/controllers/cancel-publis
     UploadEventCoverController,
     GetPublishedEventController,
     RegisterEventController,
+    GetEventParticipantsController,
     EventPassesController,
     CancelPublishedEventController,
 

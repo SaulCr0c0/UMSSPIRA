@@ -3,6 +3,7 @@ import type { StoredFile } from '../../../../shared/files/contracts/uploaded-fil
 import type { Event, InactiveEvent, RetiredEvent } from '../../domain/entities/event';
 import type { EventRegistration } from '../../domain/entities/event-registration';
 import type { CreateEventInput, EventInput } from '../contracts/event-inputs';
+import type { EventParticipants } from '../../domain/entities/event-participants';
 export const EVENTS_REPOSITORY = Symbol('EVENTS_REPOSITORY');
 
 export interface EventsRepository {
@@ -14,6 +15,7 @@ export interface EventsRepository {
   updateDraft(ownerId: string, id: string, input: EventInput): Promise<Event>;
   publishDraft(ownerId: string, id: string): Promise<Event>;
   register(userId: string, eventId: string): Promise<EventRegistration>;
+  participants(ownerId: string, eventId: string): Promise<EventParticipants>;
   inactive(ownerId: string, now: Date): Promise<InactiveEvent[]>;
   retire(ownerId: string, id: string, now: Date): Promise<RetiredEvent>;
   cancelPublished(ownerId: string, id: string): Promise<Event>;
