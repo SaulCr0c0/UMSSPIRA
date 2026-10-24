@@ -57,7 +57,7 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
         role="dialog"
         aria-modal="true"
         aria-labelledby="backup-viewer-title"
-        className="flex w-full max-w-[720px] flex-col rounded-2xl bg-white p-6 shadow-xl"
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[720px] flex-col rounded-2xl bg-white p-6 shadow-xl"
       >
         <div className="flex items-start justify-between gap-4">
           <h2 id="backup-viewer-title" className="text-lg font-bold leading-snug text-blue-fantastic">
@@ -73,10 +73,11 @@ export function BackupViewerModal({ certificationId, certificationName, onClose 
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-center rounded-lg bg-palladian">
+        {/* La foto ocupa el espacio que sobra y se encoge para que los botones sigan a la vista */}
+        <div className="mt-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-palladian">
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- el enlace firmado vence, no se optimiza con next/image
-            <img src={imageUrl} alt={`Respaldo de ${certificationName}`} className="rounded-lg" />
+            <img src={imageUrl} alt={`Respaldo de ${certificationName}`} className="max-h-full w-full rounded-lg object-contain" />
           )}
         </div>
 
