@@ -1,3 +1,4 @@
+import { ObservedApplicationController } from './http/controllers/observed-application.controller';
 import { ObservedApplicationService } from './application/services/observed-application.service';
 import { CorrectionTokenService } from './application/services/correction-token.service';
 import { CorrectionTokenGuard } from './http/guards/correction-token.guard';
@@ -52,6 +53,7 @@ import { GetApplicationMetricsController } from './http/controllers/get-applicat
     GetApplicationDocumentController,
     ValidateCorrectionAccessController,
     RequestCorrectionLinkController,
+    ObservedApplicationController,
   ],
   providers: [
     ...registrationsProviders,
