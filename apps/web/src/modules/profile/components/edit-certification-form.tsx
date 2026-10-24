@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { BackupViewerModal } from '@/modules/profile/components/backup-viewer-modal';
 import {
   BackupField,
   EditRecordLayout,
@@ -105,6 +106,7 @@ function EditCertificationFields({ certification }: { certification: Certificati
   // Mensaje del backend (400, 403, 404) o de conexión, tal como lo envía apiFetch
   const [saveError, setSaveError] = useState<string>();
   const [isSaving, setIsSaving] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = event.target;
@@ -227,10 +229,21 @@ function EditCertificationFields({ certification }: { certification: Certificati
         documentUrl={documentUrl}
         isVerified={Boolean(documentName) && !isNewDocument && Boolean(certification.backupVerified)}
         onDocumentChange={handleDocumentChange}
+        // Un archivo recién elegido aún no está en la API: se sigue abriendo con su enlace local
+        onViewBackup={certification.backupFile && !isNewDocument ? () => setIsViewerOpen(true) : undefined}
       />
       <MensajeError id="error-certification-backup" mensaje={documentError} />
 
       <MensajeError id="error-certification-save" mensaje={saveError} />
+
+      {/* El visor se abre encima del formulario: los campos no se desmontan y conservan lo escrito */}
+      {isViewerOpen && (
+        <BackupViewerModal
+          certificationId={certification.id}
+          certificationName={certification.name}
+          onClose={() => setIsViewerOpen(false)}
+        />
+      )}
     </EditRecordLayout>
   );
 }

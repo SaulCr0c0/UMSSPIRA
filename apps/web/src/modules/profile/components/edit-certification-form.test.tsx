@@ -23,6 +23,9 @@ jest.mock('@/modules/profile/services/perfil-api', () => ({
   actualizarCertificacion: jest.fn(),
   subirRespaldo: jest.fn(),
   obtenerPerfil: jest.fn(() => new Promise(() => {})),
+  // El visor (HU-10) pide un enlace firmado; se responde con uno fijo
+  obtenerEnlaceRespaldo: jest.fn().mockResolvedValue({ url: '/api/v1/perfil/respaldos/cert-1/archivo', expiraEn: '' }),
+  enlaceDeDescarga: jest.requireActual('@/modules/profile/services/perfil-api').enlaceDeDescarga,
 }));
 const obtenerCertificacionMock = obtenerCertificacion as jest.MockedFunction<typeof obtenerCertificacion>;
 const actualizarCertificacionMock = actualizarCertificacion as jest.MockedFunction<typeof actualizarCertificacion>;
@@ -37,6 +40,14 @@ const GUARDADA: CertificationRecord = {
   issueYear: '2022',
   backupFile: 'respaldo.jpg',
   backupVerified: false,
+};
+
+const SIN_RESPALDO: CertificationRecord = {
+  ...GUARDADA,
+  id: 'cert-3',
+  name: 'Google Cloud Engineer',
+  issuer: 'Google',
+  backupFile: undefined,
 };
 
 function CertificationName({ id }: { id: string }) {
@@ -127,6 +138,39 @@ describe('EditCertificationForm', () => {
     expect(screen.queryByText('Registro actualizado')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Nombre de la certificación')).toHaveValue('Otro nombre');
     expect(screen.getByTestId('nombre-guardado')).toHaveTextContent('AWS Solutions Architect');
+  });
+
+  it('abre el visor del respaldo y al cerrarlo conserva lo escrito', async () => {
+    renderForm();
+    fireEvent.change(await screen.findByLabelText('Nombre de la certificación'), { target: { value: 'Nombre sin guardar' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver respaldo' }));
+    expect(await screen.findByRole('img', { name: 'Respaldo de AWS Solutions Architect' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nombre de la certificación')).toHaveValue('Nombre sin guardar');
+  });
+
+  it('sin respaldo no ofrece «Ver respaldo»', async () => {
+    obtenerCertificacionMock.mockResolvedValue(SIN_RESPALDO);
+    routeId = 'cert-3';
+    renderForm();
+
+    expect(await screen.findByLabelText('Nombre de la certificación')).toHaveValue('Google Cloud Engineer');
+    expect(screen.queryByRole('button', { name: 'Ver respaldo' })).not.toBeInTheDocument();
+  });
+
+  it('un archivo recién elegido no abre el visor hasta guardarse', async () => {
+    obtenerCertificacionMock.mockResolvedValue(SIN_RESPALDO);
+    routeId = 'cert-3';
+    renderForm();
+    await screen.findByLabelText('Nombre de la certificación');
+
+    elegirFoto(jpg('google.jpg'));
+
+    expect(screen.getByText('google.jpg')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver respaldo' })).not.toBeInTheDocument();
   });
 
   it('Cancelar vuelve a Gestionar registros sin guardar nada', async () => {

@@ -18,6 +18,12 @@ import type {
 
 export const PROFILE_REPOSITORY = Symbol('PROFILE_REPOSITORY');
 
+export interface BackupOwner {
+  graduateId: string;
+  userId: string | null;
+  hasBackup: boolean;
+}
+
 export interface ProfileRepository {
   summary(scope: ProfileScope): Promise<ProfileSnapshot>;
   createEducation(scope: ProfileScope, input: EducationInput): Promise<EducationRecord>;
@@ -32,4 +38,6 @@ export interface ProfileRepository {
     file: StoredFile,
   ): Promise<CertificationBackup>;
   readBackup(scope: ProfileScope, certificationId: string): Promise<StoredFile>;
+  findBackupOwner(certificationId: string): Promise<BackupOwner | null>;
+  readBackupFile(certificationId: string): Promise<StoredFile>;
 }

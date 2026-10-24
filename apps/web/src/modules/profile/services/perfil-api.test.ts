@@ -7,6 +7,7 @@ import {
   crearCertificacion,
   crearExperiencia,
   crearFormacion,
+  enlaceDeDescarga,
   obtenerPerfil,
   obtenerResumenPerfil,
   subirRespaldo,
@@ -349,5 +350,14 @@ describe('subirRespaldo', () => {
     XhrFalso.instancia.onerror?.();
 
     await expect(promesa).rejects.toMatchObject({ status: 0 });
+  });
+});
+
+describe('enlaceDeDescarga', () => {
+  it('agrega descargar=1 respetando los parámetros del enlace firmado', () => {
+    expect(enlaceDeDescarga('/api/v1/perfil/respaldos/c-1/archivo?expira=1&firma=x')).toBe(
+      '/api/v1/perfil/respaldos/c-1/archivo?expira=1&firma=x&descargar=1',
+    );
+    expect(enlaceDeDescarga('/archivo')).toBe('/archivo?descargar=1');
   });
 });

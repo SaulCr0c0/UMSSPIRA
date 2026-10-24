@@ -86,24 +86,25 @@ export default function CertificationItem({
           </span>
         ))}
 
+      {/* Visor de la foto real (HU-10): solo si el registro existe en la API y tiene respaldo */}
       {item.document && item.id && (
-          <button
-            type="button"
-            onClick={() => setIsViewerOpen(true)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-abyssal-blue px-2 py-1.5 text-[11px] font-semibold text-white transition hover:brightness-110"
-          >
-            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            Ver respaldo
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setIsViewerOpen(true)}
+          className="inline-flex w-fit items-center gap-1.5 rounded-md bg-abyssal-blue px-2 py-1.5 text-[11px] font-semibold text-white transition hover:brightness-110"
+        >
+          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+          Ver respaldo
+        </button>
+      )}
 
-{isViewerOpen && item.id && (
-  <BackupViewerModal
-    certificationId={item.id}
-    certificationName={item.title}
-    onClose={() => setIsViewerOpen(false)}
-  />
-)}
+      {isViewerOpen && item.id && (
+        <BackupViewerModal
+          certificationId={item.id}
+          certificationName={item.title}
+          onClose={() => setIsViewerOpen(false)}
+        />
+      )}
 
       {isOpen && (
         <div id={detailId} className="space-y-3 rounded-[10px] bg-palladian px-[14px] py-3">
