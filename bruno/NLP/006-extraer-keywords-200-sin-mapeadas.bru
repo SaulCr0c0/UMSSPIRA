@@ -29,21 +29,25 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("keywords es lista vacia cuando no hay coincidencias", function() {
-    expect(res.body.keywords).to.be.an("array").that.is.empty;
+  test("Respuesta envuelta en data", function() {
+    expect(res.body).to.have.property("data").that.is.an("object");
   });
 
-  test("Esquema tiene unmapped", function() {
-    expect(res.body).to.have.property("unmapped").that.is.an("array");
+  test("data.keywords es lista vacia cuando no hay coincidencias", function() {
+    expect(res.body.data.keywords).to.be.an("array").that.is.empty;
+  });
+
+  test("data.unmapped tiene los terminos no mapeados", function() {
+    expect(res.body.data).to.have.property("unmapped").that.is.an("array");
   });
 }
 
 docs {
-  HU-1 · T1.7 — Texto sin palabras que coincidan con el diccionario.
-  keywords debe ser [] y unmapped puede tener candidatos.
+  HU-5 · T1.7 — Texto sin palabras que coincidan con el diccionario.
+  data.keywords debe ser [] y data.unmapped puede tener candidatos.
 
-  CA-7: perfil sin keywords mapeadas → keywords es lista vacía
-  (este estado dispara el radar vacío en HU-3).
+  CA-HU5-09: diccionario disponible pero sin coincidencias -> 200 con data.keywords vacia.
+  CA-HU5-07: los no mapeados pasan el filtro (sin stopwords, >= 3 chars, no numericos).
 
   Permiso: nlp:extract.
 }

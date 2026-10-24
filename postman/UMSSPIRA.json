@@ -2735,8 +2735,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -2801,8 +2808,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -2854,8 +2868,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -2907,8 +2928,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -2976,8 +3004,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -3029,8 +3064,15 @@
             "url": {
               "raw": "{{baseUrl}}/api/v1/nlp/extract",
               "protocol": "",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "nlp", "extract"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
               "query": [],
               "variable": []
             },
@@ -3062,6 +3104,544 @@
               }
             }
           ]
+        },
+        {
+          "name": "008 - Extraer keywords - 200 Solo espacios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 con texto de solo espacios', function () { pm.response.to.have.status(200); });",
+                  "pm.test('data.keywords es lista vacia', function () { pm.expect(pm.response.json().data.keywords).to.be.an('array').that.is.empty; });",
+                  "pm.test('data.unmapped es lista vacia', function () { pm.expect(pm.response.json().data.unmapped).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Texto compuesto solo por espacios.\n\nCA-HU5-10: texto vacio o solo espacios -> HTTP 200 con listas vacias.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"     \"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "009 - Extraer keywords - 200 Normalizacion mayusculas tildes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('node.js reconocido con count 2', function () { var kws = pm.response.json().data.keywords; var n = kws.find(function(k){return k.term==='node.js';}); pm.expect(n, 'Debe encontrar node.js').to.exist; pm.expect(n.count).to.equal(2); });",
+                  "pm.test('typescript reconocido con count 2', function () { var kws = pm.response.json().data.keywords; var t = kws.find(function(k){return k.term==='typescript';}); pm.expect(t, 'Debe encontrar typescript').to.exist; pm.expect(t.count).to.equal(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Normalizacion de mayusculas, minusculas y tildes.\n\nCA-HU5-02: variantes -> termino canonico unificado con count sumado.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"Node.JS nodejs TypeScript TYPESCRIPT\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "010 - Extraer keywords - 200 Simbolos tecnicos C++ C# Node.js",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('c++ se conserva como termino', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='c++';}), 'Debe encontrar c++').to.exist; });",
+                  "pm.test('c# se conserva como termino', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='c#';}), 'Debe encontrar c#').to.exist; });",
+                  "pm.test('node.js se conserva', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='node.js';}), 'Debe encontrar node.js').to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Tratamiento de simbolos tecnicos.\n\nCA-HU5-03: + y # finales se conservan; punto interno en node.js se conserva.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"Experiencia en C++ y C#. Desarrollo con Node.js en entornos CI/CD.\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "011 - Extraer keywords - 200 Alias cortos y terminos compuestos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('gobierno de ti reconocido', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='gobierno de ti';}), 'Debe encontrar gobierno de ti').to.exist; });",
+                  "pm.test('ml -> machine learning', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='machine learning';}), 'ml debe resolverse a machine learning').to.exist; });",
+                  "pm.test('js -> javascript', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='javascript';}), 'js debe resolverse a javascript').to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Alias cortos ml->machine learning, js->javascript y termino compuesto 'gobierno de ti'.\n\nCA-HU5-05: terminos compuestos con alias cortos y stopwords internas.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"Gobierno de TI con ML y JS\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "012 - Extraer keywords - 200 Sin cruce entre segmentos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('gobierno de ti NO aparece (no hay cruce de segmento)', function () { var kws = pm.response.json().data.keywords; pm.expect(kws.find(function(k){return k.term==='gobierno de ti';})).to.be.undefined; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Los n-gramas no cruzan el limite de segmento (salto de linea).\n\nCA-HU5-11: 'gobierno de\\nti' no debe reconocerse como 'gobierno de ti'.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"gobierno de\\nti\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "013 - Extraer keywords - 400 Tipo de campo incorrecto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 cuando text es numero', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Formato { error: { code, message } }', function () { var json = pm.response.json(); pm.expect(json).to.have.property('error').that.is.an('object'); pm.expect(json.error).to.have.property('message'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - text con tipo numerico -> 400.\n\nCA-HU5-19: el endpoint acepta UNICAMENTE text de tipo texto.\nCA-HU5-20: formato de error { error: { code, message } }.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": 12345}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "014 - Extraer keywords - 400 Campo text ausente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 cuando falta el campo text', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Formato { error: { code, message } }', function () { var json = pm.response.json(); pm.expect(json).to.have.property('error').that.is.an('object'); pm.expect(json.error).to.have.property('message'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Cuerpo sin el campo text -> 400.\n\nCA-HU5-19: campo text requerido.\nCA-HU5-20: formato de error { error: { code, message } }.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "015 - Extraer keywords - 400 Campos extra en el cuerpo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 cuando hay campos extra', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Formato { error: { code, message } }', function () { var json = pm.response.json(); pm.expect(json).to.have.property('error').that.is.an('object'); pm.expect(json.error).to.have.property('message'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Cuerpo con campos extra -> 400 (schema Zod estricto).\n\nCA-HU5-19: el endpoint acepta UNICAMENTE el campo text.\nCA-HU5-20: formato de error { error: { code, message } }.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"Node.js\", \"campoExtra\": \"valor no permitido\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "016 - Extraer keywords - 200 Orden y limite unmapped",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('data.unmapped no supera 50 terminos', function () { pm.expect(pm.response.json().data.unmapped.length).to.be.at.most(50); });",
+                  "pm.test('data.keywords ordenada de mayor a menor count', function () { var kws = pm.response.json().data.keywords; for(var i=0;i<kws.length-1;i++){pm.expect(kws[i].count).to.be.at.least(kws[i+1].count);} });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+              }
+            },
+            "description": "HU-5 T1.7 - Orden descendente por count y limite de 50 en unmapped.\n\nCA-HU5-08: keywords y unmapped ordenados de mayor a menor count; empate -> alfabetico; unmapped max 50.\n\nPermiso: nlp:extract.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nlp/extract",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nlp",
+                "extract"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"alpha beta gamma alpha beta alpha delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega foo bar baz qux quux quuz corge grault garply waldo fred plugh xyzzy thud slug flux knob blip drip drum frog toad crow hawk dove rook wren lark swift finch hawk dove rook wren lark swift\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     }

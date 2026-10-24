@@ -29,16 +29,18 @@ tests {
     expect(res.status).to.equal(400);
   });
 
-  test("Respuesta contiene mensaje de error", function() {
-    expect(res.body).to.have.property("message");
+  test("Respuesta usa formato de error { error: { code, message } }", function() {
+    expect(res.body).to.have.property("error").that.is.an("object");
+    expect(res.body.error).to.have.property("message");
   });
 }
 
 docs {
-  HU-1 · T1.7 — Texto de 5 001 caracteres.
+  HU-1 · T1.7 — Texto de 5 001 caracteres (supera el límite).
   Debe responder 400 Bad Request con mensaje de validación.
 
-  CA-6: texto > 5 000 caracteres → 400.
+  CA-HU5-19: texto > 5 000 caracteres → 400 Bad Request.
+  Ver también test 007 que prueba exactamente 5 000 chars → 200 (límite inclusivo).
 
   Permiso: nlp:extract.
 }

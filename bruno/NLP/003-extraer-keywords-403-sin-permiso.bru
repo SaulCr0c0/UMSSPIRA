@@ -35,8 +35,13 @@ docs {
   (p.ej. rol empresa o titulado sin el permiso asignado).
   Debe responder 403 Forbidden.
 
-  CA-10: con token sin permiso nlp:extract → 403.
+  CA-HU5-06: con token sin permiso nlp:extract → 403 Forbidden.
 
-  Variable: accessTokenSinPermiso — marcada como variable secreta en folder.bru.
-  Reemplazar con un token real sin el permiso nlp:extract para ejecutar.
+  ⚠ CONFIGURACIÓN MANUAL REQUERIDA:
+  La variable {{accessTokenSinPermiso}} debe ser configurada manualmente
+  antes de ejecutar este test. Pasos:
+    1. Iniciar sesión con un usuario que NO tenga el permiso nlp:extract.
+    2. Copiar el accessToken obtenido.
+    3. Pegarlo en la variable de entorno/colección "accessTokenSinPermiso".
+  Si la variable está vacía, este test fallará con 401, no con 403.
 }
