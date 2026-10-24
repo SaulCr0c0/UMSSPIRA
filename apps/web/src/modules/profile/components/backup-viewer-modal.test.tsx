@@ -73,4 +73,14 @@ describe('BackupViewerModal', () => {
     fireEvent.click(dialog.parentElement as HTMLElement);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('en celular la foto se ajusta sin deformarse y los botones quedan fijos abajo', async () => {
+    render(<BackupViewerModal certificationId="cert-1" certificationName="AWS" onClose={jest.fn()} />);
+
+    const image = await screen.findByRole('img');
+    expect(image).toHaveClass('w-full', 'object-contain');
+    // Los botones no se encogen aunque la foto sea muy alta
+    expect(screen.getByRole('button', { name: 'Cerrar' }).parentElement).toHaveClass('shrink-0');
+    expect(screen.getByRole('dialog')).toHaveClass('max-h-[calc(100dvh-2rem)]');
+  });
 });
