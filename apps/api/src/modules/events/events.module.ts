@@ -13,10 +13,10 @@ import { UpdateEventDraftController } from './http/controllers/update-event-draf
 import { PublishEventDraftController } from './http/controllers/publish-event-draft.controller';
 import { ListInactiveEventsController } from './http/controllers/list-inactive-events.controller';
 import { RetireEventController } from './http/controllers/retire-event.controller';
-import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
 import { DeleteEventCoverController } from './http/controllers/delete-event-cover.controller';
 import { ReadEventCoverController } from './http/controllers/read-event-cover.controller';
 import { UploadEventCoverController } from './http/controllers/upload-event-cover.controller';
+import { CancelPublishedEventController } from './http/controllers/cancel-published-event.controller';
 
 @Module({
   imports: [PrismaModule, AuthModule],
@@ -30,11 +30,12 @@ import { UploadEventCoverController } from './http/controllers/upload-event-cove
     PublishEventDraftController,
     ListInactiveEventsController,
     RetireEventController,
-    CancelPublishedEventController,
     DeleteEventCoverController,
     ReadEventCoverController,
     UploadEventCoverController,
     GetPublishedEventController,
+    CancelPublishedEventController,
+
   ],
   providers: [...eventsProviders, OptionalAuthenticationGuard],
 })
