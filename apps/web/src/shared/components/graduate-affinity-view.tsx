@@ -9,12 +9,17 @@ import { PendingChangesDialog } from './pending-changes-dialog';
 import { RadarErrorState } from './radar-error-state';
 import { SuccessToast } from './success-toast';
 import { AffinitySkeleton } from './affinity-skeleton';
-import RadarInspection, { AREA_NAMES_MAP } from './radar-inspection';
-import { formatPercentage } from '../utils/percentage';
+import RadarInspection from './radar-inspection';
+import { VariationIndicator } from './variation-indicator';
+import { clampPercentage, formatPercentage } from '../utils/percentage';
 import affinityVectorMock from '../mocks/affinity-vector-mock.json';
 import { useRecalculateState } from '../hooks/use-recalculate-state';
 import { recalculateAffinity, getAffinityVector } from '../services/affinity-service';
-import { AFFINITY_AREAS, type AffinityAreaScore } from '@umsspira/shared-types/src/affinity';
+import {
+  AFFINITY_AREAS,
+  AFFINITY_AREA_LABELS,
+  type AffinityAreaScore,
+} from '@umsspira/shared-types/src/affinity';
 import { ArrowLeft, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -66,6 +71,8 @@ const processVectorAreas = (
       area: a.area,
       // Regla de negocio: áreas sin evidencias deben tener afinidad cero
       affinity: hasEvidence ? (a.affinity ?? 0) : 0,
+      // La referencia anterior se conserva para calcular la variación mostrada
+      previousAffinity: a.previousAffinity ?? null,
       evidence,
       keywords: a.keywords ?? [],
     };
@@ -146,6 +153,17 @@ export const GraduateAffinityView: React.FC = () => {
     try {
       const previousAreas = [...candidateAreas];
       const result = await recalculateAffinity();
+
+      // CA-HU8-11: sin recálculo real se conserva la variación y la referencia anterior
+      if (result.recalculated === false) {
+        if (changeVersionRef.current === versionAtStart) {
+          clearPendingChanges();
+        }
+        setHasRadarError(false);
+        setIsSuccessToastOpen(true);
+        return;
+      }
+
       setLastCalculatedDate(formatCalculatedDate(result.calculatedAt));
       const processed = processVectorAreas(result.areas as any, mockAreas);
 
@@ -153,8 +171,9 @@ export const GraduateAffinityView: React.FC = () => {
       processed.forEach((newAreaItem) => {
         const technicalKey = newAreaItem.area;
         const oldItem = previousAreas.find((p) => p.area === technicalKey);
-        
-        if (!oldItem || oldItem.affinity !== newAreaItem.affinity) {
+
+        // Solo resaltan los ejes cuyo porcentaje entero mostrado cambió
+        if (!oldItem || clampPercentage(oldItem.affinity) !== clampPercentage(newAreaItem.affinity)) {
           modifiedIds.push(technicalKey);
         }
       });
@@ -225,12 +244,13 @@ export const GraduateAffinityView: React.FC = () => {
       const ev = item.evidence ?? getAreaEvidence(item, mockAreas);
       return ev.length > 0 && item.affinity > 0;
     })
-    .sort((a, b) => b.affinity - a.affinity)
+    .sort((a, b) => clampPercentage(b.affinity) - clampPercentage(a.affinity))
     .slice(0, 3)
     .map((item) => ({
       id: item.area,
-      label: AREA_NAMES_MAP[item.area] ?? item.area,
+      label: AFFINITY_AREA_LABELS[item.area] ?? item.area,
       score: item.affinity,
+      previousAffinity: item.previousAffinity ?? null,
     }));
 
   // Palabras clave consolidadas
@@ -333,7 +353,7 @@ export const GraduateAffinityView: React.FC = () => {
                       {topAffinityAreas.map((area, index) => (
                         <div
                           key={area.id}
-                          className={`px-3 py-1 text-sm rounded-md font-medium ${
+                          className={`flex items-center gap-2 px-3 py-1 text-sm rounded-md font-medium ${
                             index === 0
                               ? 'bg-[#FDBA74] text-gray-900'
                               : index === 1
@@ -341,7 +361,14 @@ export const GraduateAffinityView: React.FC = () => {
                                 : 'bg-white border border-gray-300 text-gray-900'
                           }`}
                         >
-                          {index + 1}. {area.label} ({formatPercentage(area.score)})
+                          <span>
+                            {index + 1}. {area.label} ({formatPercentage(area.score)})
+                          </span>
+                          <VariationIndicator
+                            current={area.score}
+                            previous={area.previousAffinity}
+                            areaLabel={area.label}
+                          />
                         </div>
                       ))}
                     </div>

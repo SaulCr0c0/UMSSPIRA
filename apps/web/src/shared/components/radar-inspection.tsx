@@ -2,6 +2,7 @@
 
 import React from "react";
 import mockData from "../mocks/affinity-vector-mock.json";
+import { AFFINITY_AREA_LABELS } from "@umsspira/shared-types/src/affinity";
 import { formatPercentage } from "@/shared/utils/percentage";
 
 // 1. Tipado estricto de la evidencia tal como viene en el JSON
@@ -23,15 +24,8 @@ interface RadarInspectionProps {
   areas?: AreaData[];
 }
 
-// 2. Diccionario estricto de ids a los nombres largos del mockup de HU-3
-export const AREA_NAMES_MAP: Record<string, string> = {
-  "software-development": "Desarrollo de Software",
-  "cloud-devops": "Cloud, DevOps & Infraestructura",
-  "data-ai": "Ciencia de Datos & IA",
-  "quality-assurance": "Aseguramiento de Calidad (QA)",
-  "cybersecurity-networks": "Ciberseguridad & Redes",
-  "it-management": "Gestión de TI & Gobernanza",
-};
+// 2. Diccionario de ids a los nombres oficiales de shared-types (CA-HU7-22)
+export const AREA_NAMES_MAP: Record<string, string> = AFFINITY_AREA_LABELS;
 
 // Colores del mockup por área, asociados al id técnico (no a la posición en la lista)
 const AREA_COLORS_MAP: Record<string, { bar: string; text: string }> = {
