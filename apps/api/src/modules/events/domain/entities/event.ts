@@ -8,6 +8,7 @@ export interface Event {
   startDate: Date;
   endDate: Date;
   maxCapacity: number;
+  currentCapacity?: number;
   location: string | null;
   coverId: string | null;
   status: EventStatus;

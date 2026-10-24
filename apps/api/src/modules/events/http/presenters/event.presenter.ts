@@ -8,6 +8,7 @@ export function presentEvent(event: Event) {
     startDate: event.startDate.toISOString(),
     endDate: event.endDate.toISOString(),
     maxCapacity: event.maxCapacity,
+    ...(event.currentCapacity === undefined ? {} : { currentCapacity: event.currentCapacity }),
     location: event.location,
     imageUrl: event.coverId ? '/api/v1/events/covers/' + event.coverId : null,
     status: event.status,

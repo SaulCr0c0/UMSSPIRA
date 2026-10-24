@@ -7,9 +7,7 @@ import type { ActorContext } from '../../../../shared/security/contexts/actor-co
 import type { EventsRepository } from '../../application/ports/events-repository.port';
 import type { CreateEventInput, EventInput } from '../../application/contracts/event-inputs';
 import { assertDraft, validateEventDates } from '../../domain/policies/event.policy';
-import { toEvent } from '../translators/event.translator';
-
-const eventInclude = { usuario: { select: { nombre: true } } };
+import { eventInclude, toEvent } from '../translators/event.translator';
 
 @Injectable()
 export class PrismaEventsRepository implements EventsRepository {
