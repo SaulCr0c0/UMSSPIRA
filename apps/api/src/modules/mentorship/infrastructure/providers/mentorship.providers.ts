@@ -17,6 +17,7 @@ import { PrismaMentorAvailabilityRepository } from '../repositories/prisma-mento
 import { ListMentorProfilesUseCase } from '../../application/use-cases/list-mentor-profiles.use-case';
 import { FilterMentorProfilesUseCase } from '../../application/use-cases/filter-mentor-profiles.use-case';
 import { GetMentorFilterOptionsUseCase } from '../../application/use-cases/get-mentor-filter-options.use-case';
+import { GetMentorDetailUseCase } from '../../application/use-cases/get-mentor-detail.use-case';
 import { GetMentorEligibilityUseCase } from '../../application/use-cases/get-mentor-eligibility.use-case';
 import { GetMyMentorProfileUseCase } from '../../application/use-cases/get-my-mentor-profile.use-case';
 import { GetMentorInformationUseCase } from '../../application/use-cases/get-mentor-information.use-case';
@@ -32,6 +33,7 @@ import { AddMentorInterestsUseCase } from '../../application/use-cases/add-mento
 import { RemoveMentorInterestUseCase } from '../../application/use-cases/remove-mentor-interest.use-case';
 import { GetMentorAvailabilityUseCase } from '../../application/use-cases/get-mentor-availability.use-case';
 import { SetMentorAvailabilityUseCase } from '../../application/use-cases/set-mentor-availability.use-case';
+
 export const mentorshipProviders: Provider[] = [
   PrismaMentorRepository,
   { provide: MENTOR_REPOSITORY, useExisting: PrismaMentorRepository },
@@ -53,6 +55,11 @@ export const mentorshipProviders: Provider[] = [
     provide: GetMentorFilterOptionsUseCase,
     inject: [MENTOR_REPOSITORY],
     useFactory: (repository: MentorRepository) => new GetMentorFilterOptionsUseCase(repository),
+  },
+  {
+    provide: GetMentorDetailUseCase,
+    inject: [MENTOR_REPOSITORY],
+    useFactory: (repository: MentorRepository) => new GetMentorDetailUseCase(repository),
   },
   {
     provide: GetMentorEligibilityUseCase,

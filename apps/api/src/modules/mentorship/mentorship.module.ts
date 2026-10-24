@@ -5,6 +5,7 @@ import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-avail
 import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
 import { FilterMentorProfilesController } from './http/controllers/filter-mentor-profiles.controller';
 import { GetMentorFilterOptionsController } from './http/controllers/get-mentor-filter-options.controller';
+import { GetMentorDetailController } from './http/controllers/get-mentor-detail.controller';
 import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
 import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
 import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
@@ -20,12 +21,14 @@ import { AddMentorInterestsController } from './http/controllers/add-mentor-inte
 import { RemoveMentorInterestController } from './http/controllers/remove-mentor-interest.controller';
 import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
 import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
+
 @Module({
   imports: [PrismaModule],
   controllers: [
     ListMentorProfilesController,
     FilterMentorProfilesController,
     GetMentorFilterOptionsController,
+    GetMentorDetailController,
     GetMentorEligibilityController,
     GetMyMentorProfileController,
     GetMentorInformationController,

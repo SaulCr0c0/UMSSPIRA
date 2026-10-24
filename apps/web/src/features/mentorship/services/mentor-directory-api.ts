@@ -1,18 +1,17 @@
 import { z } from 'zod';
+import type { MentorDirectoryResponse } from '@umsspira/shared-types';
 import { apiUrl } from '@/shared/services/api-contract';
 import { authenticatedFetch, SessionError } from '@/shared/services/auth-session';
 import { mentorAvailabilityStatuses } from './mentor-availability-api';
 import {
-  directoryCatalog, filterDirectory, uniqueMentors,
+  filterDirectory, uniqueMentors,
   type DirectoryMentor, type DirectoryPage, type DirectoryQuery,
 } from '../model/mentor-directory';
 
 const areaReference = z.object({ id: z.string().min(1), nombre: z.string() });
 const interestReference = areaReference.extend({ area: areaReference });
 
-// Optional extensions let the frontend consume the backend branch once merged,
-// while still reading the current array response without inventing profile data.
-const directoryResponse = z.object({ data: z.array(z.object({
+const directoryResponse: z.ZodType<MentorDirectoryResponse> = z.object({ data: z.array(z.object({
   id: z.string().min(1),
   nombre: z.string(),
   descripcion: z.string().nullable(),
@@ -20,10 +19,11 @@ const directoryResponse = z.object({ data: z.array(z.object({
   esta_activo: z.boolean().nullable(),
   areas: z.array(areaReference),
   availabilityStatus: z.enum(mentorAvailabilityStatuses).nullable(),
-  cargo: z.string().nullable().optional(),
-  empresa: z.string().nullable().optional(),
-  intereses: z.array(interestReference).optional(),
-})), catalog: z.array(z.object({ area: areaReference, intereses: z.array(areaReference) })).optional() });
+  cargo: z.string().nullable(),
+  empresa: z.string().nullable(),
+  intereses: z.array(interestReference),
+})), total: z.number().int().nonnegative(),
+catalog: z.array(z.object({ area: areaReference, intereses: z.array(areaReference) })) });
 
 function publicPhoto(value: string | null): string | null {
   if (!value) return null;
@@ -34,8 +34,13 @@ function publicPhoto(value: string | null): string | null {
 }
 
 export async function getMentorDirectory(query: DirectoryQuery, signal?: AbortSignal): Promise<DirectoryPage> {
+  const filtered = query.areaIds.length > 0 || query.topicIds.length > 0;
+  // La API admite offset/limit. Los filtros por áreas e intereses se aplican
+  // sobre la colección completa porque todavía no acepta esos parámetros.
+  const params = new URLSearchParams({ offset: String(query.offset), limit: String(query.limit) });
+  const endpoint = apiUrl('/api/v1/mentorship/profiles') + (filtered ? '' : `?${params}`);
   // Use the existing session client. No reads from other mentors' private endpoints.
-  const response = await authenticatedFetch(apiUrl('/api/v1/mentorship/profiles'), {
+  const response = await authenticatedFetch(endpoint, {
     method: 'GET', cache: 'no-store', credentials: 'omit', signal,
     headers: { Accept: 'application/json' },
   });
@@ -51,15 +56,15 @@ export async function getMentorDirectory(query: DirectoryQuery, signal?: AbortSi
       photoUrl: publicPhoto(item.foto_perfil), areas: item.areas.map(area => ({ id: area.id, name: area.nombre })),
       availability: item.availabilityStatus,
       profession: [item.cargo, item.empresa].filter(value => value?.trim()).join(' | ') || undefined,
-      interests: item.intereses?.map(interest => ({ id: interest.id, name: interest.nombre, areaId: interest.area.id })),
+      interests: item.intereses.map(interest => ({ id: interest.id, name: interest.nombre, areaId: interest.area.id })),
     })));
-  const matches = filterDirectory(mentors, query);
-  // Existing API returns a complete array; no invented pagination/filter parameters.
+  const matches = filtered ? filterDirectory(mentors, query) : mentors;
   return {
-    mentors: matches.slice(query.offset, query.offset + query.limit), total: matches.length,
-    catalog: parsed.data.catalog?.map(group => ({ id: group.area.id, name: group.area.nombre,
+    mentors: filtered ? matches.slice(query.offset, query.offset + query.limit) : matches,
+    total: filtered ? matches.length : parsed.data.total,
+    catalog: parsed.data.catalog.map(group => ({ id: group.area.id, name: group.area.nombre,
       description: '', topics: group.intereses.map(interest => ({ id: interest.id, name: interest.nombre })),
-    })) ?? directoryCatalog(mentors),
-    interestsSupported: parsed.data.catalog !== undefined || parsed.data.data.some(mentor => mentor.intereses !== undefined),
+    })),
+    interestsSupported: true,
   };
 }

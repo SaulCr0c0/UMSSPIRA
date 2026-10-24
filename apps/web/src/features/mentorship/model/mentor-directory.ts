@@ -148,6 +148,7 @@ export function mergeCatalog(backendCatalog: InterestArea[] = [], baseCatalog: I
     const existing = result.find(a => a.name.trim().toLowerCase() === key || a.id === area.id);
     if (existing) {
       existing.id = area.id;
+      if (area.name) existing.name = area.name;
       if (area.description) existing.description = area.description;
       for (const topic of area.topics) {
         const found = existing.topics.find(t => t.id === topic.id || t.name.trim().toLowerCase() === topic.name.trim().toLowerCase());
