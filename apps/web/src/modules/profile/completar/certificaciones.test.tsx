@@ -234,4 +234,32 @@ describe('FormularioCertificaciones · reintentar (T8.6)', () => {
     expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
   });
 });
+describe('FormularioCertificaciones · registros guardados (T8.1)', () => {
+  // Las 3 certificaciones del perfil demo de Carlos Mendoza
+  const GUARDADAS = [
+    { nombre: 'AWS Solutions Architect', entidadEmisora: 'Amazon Web Services', anioEmision: '2022', grado: 'Profesional', respaldo: null },
+    { nombre: 'Scrum Master PSM I', entidadEmisora: 'Scrum.org', anioEmision: '2021', grado: 'Asociado', respaldo: null },
+    { nombre: 'Google Cloud Engineer', entidadEmisora: 'Google', anioEmision: '2023', grado: 'Profesional', respaldo: null },
+  ];
+
+  it('lista las certificaciones guardadas junto al formulario vacío', () => {
+    render(<FormularioCertificaciones certificaciones={GUARDADAS} onAgregar={jest.fn()} />);
+
+    expect(screen.getByText('Certificaciones registradas')).toBeInTheDocument();
+    for (const { nombre } of GUARDADAS) {
+      expect(screen.getByText(nombre)).toBeInTheDocument();
+    }
+    expect(screen.getByLabelText('Nombre de certificación')).toHaveValue('');
+    expect(screen.getByLabelText('Entidad emisora')).toHaveValue('');
+    expect(screen.getByLabelText('Año')).toHaveValue('');
+    expect(screen.getByText('Respaldo de certificación')).toBeInTheDocument();
+  });
+
+  it('sin certificaciones guardadas solo muestra el formulario', () => {
+    render(<FormularioCertificaciones certificaciones={[]} onAgregar={jest.fn()} />);
+
+    expect(screen.queryByText('Certificaciones registradas')).not.toBeInTheDocument();
+    expect(screen.getByText('Agregar nueva certificación')).toBeInTheDocument();
+  });
+});
  
