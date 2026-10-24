@@ -65,11 +65,16 @@ export const MOCK_APPLICATION: Application = {
   ],
 };
 
-export const STATUS_LABEL: Record<ApplicationStatus, string> = {
+
+export const STATUS_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente de validación",
+  PENDING: "Pendiente de validación",
   APROBADA: "Aprobado",
+  APPROVED: "Aprobado",
   OBSERVADA: "Observado",
+  OBSERVED: "Observado",
   RECHAZADA: "Rechazado",
+  REJECTED: "Rechazado",
 };
 
 export const OVERDUE_HOURS = 48;
