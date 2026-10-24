@@ -179,6 +179,18 @@ const clickSimulateProfileChange = async () => {
   });
 };
 
+// Panel que contiene las seis barras de "Resumen de tu afinidad"
+const getSummaryPanel = async (): Promise<HTMLElement> => {
+  const heading = await screen.findByText('Resumen de tu afinidad');
+  const panel = heading.closest('.flex-col');
+
+  if (!panel) {
+    throw new Error('No se encontró el panel de resumen de afinidad');
+  }
+
+  return panel as HTMLElement;
+};
+
 describe('GraduateAffinityView', () => {
   const mockGetAffinityConfig =
     affinityService.getAffinityConfig as jest.Mock;
@@ -619,7 +631,7 @@ describe('GraduateAffinityView', () => {
     expect(link).toHaveAttribute('href', '/profile');
   });
 
-  it('muestra +8 % y \u22123 % en la barra del resumen con afinidad previa', async () => {
+  it('muestra +8 % y \u22123 % en las barras del resumen con afinidad previa', async () => {
     const areas = recalculatedAreas.map((area) => {
       if (area.area === 'software-development') {
         return { ...area, affinity: 83, previousAffinity: 75 };
@@ -634,8 +646,23 @@ describe('GraduateAffinityView', () => {
 
     render(<GraduateAffinityView />);
 
-    expect(await screen.findByText('+8 %')).toBeInTheDocument();
-    expect(screen.getByText('\u22123 %')).toBeInTheDocument();
+    const summary = await getSummaryPanel();
+
+    expect(within(summary).getByText('83%')).toBeInTheDocument();
+    expect(within(summary).getByText('+8 %')).toBeInTheDocument();
+    expect(
+      within(summary).getByRole('img', {
+        name: 'Desarrollo de Software: subió 8 puntos porcentuales respecto al cálculo anterior',
+      }),
+    ).toBeInTheDocument();
+
+    expect(within(summary).getByText('61%')).toBeInTheDocument();
+    expect(within(summary).getByText('\u22123 %')).toBeInTheDocument();
+    expect(
+      within(summary).getByRole('img', {
+        name: 'Cloud, DevOps & Infraestructura: bajó 3 puntos porcentuales respecto al cálculo anterior',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('no muestra indicadores de variación en el primer cálculo', async () => {
@@ -643,12 +670,13 @@ describe('GraduateAffinityView', () => {
 
     render(<GraduateAffinityView />);
 
-    await screen.findByText('Resumen de tu afinidad');
+    const summary = await getSummaryPanel();
 
+    expect(within(summary).queryByRole('img')).not.toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
-  it('conserva la variación cuando el servidor devuelve recalculated false', async () => {
+  it('conserva la variación de las barras cuando el servidor devuelve recalculated false', async () => {
     const initialAreas = recalculatedAreas.map((area) => {
       if (area.area === 'software-development') {
         return { ...area, affinity: 83, previousAffinity: 75 };
@@ -670,7 +698,8 @@ describe('GraduateAffinityView', () => {
 
     render(<GraduateAffinityView />);
 
-    expect(await screen.findByText('+8 %')).toBeInTheDocument();
+    const summary = await getSummaryPanel();
+    expect(within(summary).getByText('+8 %')).toBeInTheDocument();
 
     await clickSimulateProfileChange();
 
@@ -678,8 +707,10 @@ describe('GraduateAffinityView', () => {
       expect(mockRecalculateAffinity).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText('+8 %')).toBeInTheDocument();
-    expect(screen.queryByText('90%')).not.toBeInTheDocument();
+    // Se conserva la referencia anterior: 83% con +8 % y no el 90% del servidor
+    expect(within(summary).getByText('83%')).toBeInTheDocument();
+    expect(within(summary).getByText('+8 %')).toBeInTheDocument();
+    expect(within(summary).queryByText('90%')).not.toBeInTheDocument();
   });
 
   it('resalta solo los ejes cuyo porcentaje entero cambió tras recalcular', async () => {
