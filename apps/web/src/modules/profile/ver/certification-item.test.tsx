@@ -124,6 +124,15 @@ describe('CertificationItem', () => {
     expect(await screen.findByRole('img', { name: 'Respaldo de AWS Solutions Architect' })).toBeInTheDocument();
   });
 
+  it('sin respaldo no ofrece «Ver respaldo» aunque el registro exista', () => {
+    render(<Harness item={{ ...withoutBackup, id: 'cert-3' }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Google Cloud Engineer/ }));
+
+    expect(screen.queryByRole('button', { name: 'Ver respaldo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('sin id del registro no ofrece «Ver respaldo»', () => {
     render(<Harness item={withBackup} />);
 
