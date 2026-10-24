@@ -17,13 +17,13 @@ describe('estado de paginación en la URL', () => {
 
   it('lee página, tamaño y filtros de la URL', () => {
     expect(parseApplicationsUrl(
-      new URLSearchParams('page=3&size=25&q=ana&career=Sistemas&status=PENDING'),
+      new URLSearchParams('page=3&size=25&q=ana&career=Sistemas&status=PENDIENTE'),
     )).toEqual({
       page: 3,
       pageSize: 25,
       search: 'ana',
       career: 'Sistemas',
-      status: 'PENDING',
+      status: 'PENDIENTE',
     });
   });
 
@@ -44,7 +44,7 @@ describe('estado de paginación en la URL', () => {
       pageSize: 50,
       search: 'ana',
       career: 'Sistemas',
-      status: 'APPROVED' as const,
+      status: 'APROBADA' as const,
     };
     const params = toApplicationsParams(state);
     expect(params.get('page')).toBe('2');
@@ -58,13 +58,13 @@ describe('estado de paginación en la URL', () => {
       page: 3,
       search: 'ana',
       career: 'Sistemas',
-      status: 'PENDING' as const,
+      status: 'PENDIENTE' as const,
     };
     expect(changePageSize(state, 25)).toEqual({ ...state, page: 1, pageSize: 25 });
-    expect(changeFilters(state, { status: 'APPROVED' })).toEqual({
+    expect(changeFilters(state, { status: 'APROBADA' })).toEqual({
       ...state,
       page: 1,
-      status: 'APPROVED',
+      status: 'APROBADA',
     });
   });
 

@@ -3,8 +3,7 @@ import type { BoardStatus } from './applications-board.service';
 export const PAGE_SIZE_OPTIONS = [10, 15, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 15;
 
-const STATUS_VALUES: readonly BoardStatus[] = ['PENDING', 'OBSERVED', 'APPROVED', 'REJECTED'];
-
+const STATUS_VALUES: readonly BoardStatus[] = ['PENDIENTE', 'OBSERVADA', 'APROBADA', 'RECHAZADA'];
 export interface ApplicationsUrlState {
   page: number;
   pageSize: number;
