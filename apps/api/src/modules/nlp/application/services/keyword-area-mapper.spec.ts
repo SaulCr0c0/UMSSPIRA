@@ -17,9 +17,7 @@ describe('mapKeywordsToAreas', () => {
       ],
     ]);
 
-    expect(
-      mapKeywordsToAreas([{ term: 'javascript', count: 2 }], associations),
-    ).toEqual([
+    expect(mapKeywordsToAreas([{ term: 'javascript', count: 2 }], associations)).toEqual([
       {
         term: 'javascript',
         area: 'software-development',
@@ -47,10 +45,7 @@ describe('mapKeywordsToAreas', () => {
       ],
     ]);
 
-    const result = mapKeywordsToAreas(
-      [{ term: 'javascript', count: 3 }],
-      associations,
-    );
+    const result = mapKeywordsToAreas([{ term: 'javascript', count: 3 }], associations);
 
     expect(result).toHaveLength(2);
 
@@ -72,9 +67,7 @@ describe('mapKeywordsToAreas', () => {
   });
 
   it('devuelve una lista vacía si la keyword no tiene asociaciones', () => {
-    expect(
-      mapKeywordsToAreas([{ term: 'desconocida', count: 1 }], new Map()),
-    ).toEqual([]);
+    expect(mapKeywordsToAreas([{ term: 'desconocida', count: 1 }], new Map())).toEqual([]);
   });
 
   it('falla explícitamente si encuentra un identificador de área desconocido', () => {
@@ -91,8 +84,8 @@ describe('mapKeywordsToAreas', () => {
       ],
     ]);
 
-    expect(() =>
-      mapKeywordsToAreas([{ term: 'javascript', count: 1 }], associations),
-    ).toThrow('UUID de área no reconocido: uuid-desconocido');
+    expect(() => mapKeywordsToAreas([{ term: 'javascript', count: 1 }], associations)).toThrow(
+      'UUID de área no reconocido: uuid-desconocido',
+    );
   });
 });
