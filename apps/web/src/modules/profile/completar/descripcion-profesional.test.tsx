@@ -13,6 +13,23 @@ describe('FormularioDescripcion (T6.2)', () => {
     expect(screen.getByText('22/5000 caracteres')).toBeInTheDocument();
   });
 
+  it('muestra la descripción que llega de la API después de montarse', () => {
+    const { rerender } = render(<FormularioDescripcion descripcion="" onGuardar={jest.fn()} />);
+
+    rerender(<FormularioDescripcion descripcion="Llegó del backend" onGuardar={jest.fn()} />);
+
+    expect(screen.getByLabelText('Descripción profesional')).toHaveValue('Llegó del backend');
+  });
+
+  it('no pisa lo que el egresado ya escribió', () => {
+    const { rerender } = render(<FormularioDescripcion descripcion="" onGuardar={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText('Descripción profesional'), { target: { value: 'Mi texto' } });
+
+    rerender(<FormularioDescripcion descripcion="Llegó del backend" onGuardar={jest.fn()} />);
+
+    expect(screen.getByLabelText('Descripción profesional')).toHaveValue('Mi texto');
+  });
+
   it('actualiza el contador al escribir y no deja pasar de 5000 caracteres', () => {
     render(<FormularioDescripcion descripcion="" onGuardar={jest.fn()} />);
     const cuadro = screen.getByLabelText('Descripción profesional');

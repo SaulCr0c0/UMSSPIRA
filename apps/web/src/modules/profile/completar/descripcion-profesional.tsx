@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 
 import { MensajeError } from '@/modules/profile/validation/mensaje-error';
@@ -18,7 +18,13 @@ type FormularioDescripcionProps = {
 // Sección "Descripción profesional" de Completar perfil (HU-06): cuadro de texto, contador y Guardar
 export function FormularioDescripcion({ descripcion, onGuardar }: FormularioDescripcionProps) {
   const [texto, setTexto] = useState(descripcion);
+  // El perfil llega de la API después de montarse: se copia mientras el egresado no haya escrito
+  const [editado, setEditado] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    if (!editado) setTexto(descripcion);
+  }, [descripcion, editado]);
   const [guardada, setGuardada] = useState(false);
   // Mensaje del backend (400) o de conexión, tal como lo envía apiFetch
   const [errorGuardar, setErrorGuardar] = useState<string>();
@@ -48,6 +54,7 @@ export function FormularioDescripcion({ descripcion, onGuardar }: FormularioDesc
           value={texto}
           onChange={(evento) => {
             setTexto(evento.target.value);
+            setEditado(true);
             setGuardada(false);
             setErrorGuardar(undefined);
           }}
