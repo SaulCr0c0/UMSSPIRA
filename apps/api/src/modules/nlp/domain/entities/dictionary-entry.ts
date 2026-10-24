@@ -6,7 +6,7 @@ export interface DictionaryAreaAssociation {
   peso: number;
 }
 
-/** Una entrada del diccionario, normalizada y asociada a sus áreas. */
+/** Una entrada del diccionario, normalizada. `areas` es opcional: si falta o está vacía, la keyword no aporta a ninguna área. */
 export interface DictionaryEntry {
   canonical: string;
   aliases: string[];
