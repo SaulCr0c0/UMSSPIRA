@@ -84,7 +84,7 @@ export function ApplicationDrawer({
 
   if (!open || !applicationId) return null;
 
-  const canReview = application?.status === "PENDIENTE";
+  const canReview = application?.status === "PENDIENTE" || (application?.status as string)?.toUpperCase() === "PENDING"; 
   const overdue = application ? hoursSince(application.submittedAt) > OVERDUE_HOURS : false;
   const applicantName = application ? `${application.firstName} ${application.lastName}` : "";
 

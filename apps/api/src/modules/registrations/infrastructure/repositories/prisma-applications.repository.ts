@@ -230,12 +230,18 @@ export class PrismaApplicationsRepository implements ApplicationsRepository {
             'La solicitud no existe o no está a tu cargo',
           );
         }
-        if (row.estado !== 'PENDIENTE') {
+        const isPending =
+          row.estado === 'PENDIENTE' ||
+          row.estado === 'PENDING' ||
+          row.estado?.toUpperCase() === 'PENDIENTE' ||
+          row.estado?.toUpperCase() === 'PENDING';
+
+        if (!isPending) {
           throw new BusinessRuleError(
             'conflict',
             'APPLICATION_ALREADY_REVIEWED',
-            'La solicitud ya fue dictaminada',
-          );
+             'La solicitud ya fue dictaminada',
+  )       ;
         }
         const approved = input.decision === 'APROBADA';
         const now = new Date();
