@@ -608,6 +608,45 @@
   .draft-actions { gap: 8px; }
 }
 
+/* HU7: eventos inactivos (cancelados o finalizados) */
+.event-inactive-page .events-title-row { margin-bottom: 26px; }
+.event-inactive-panel {
+  border: 1px solid #c9c1b1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 5px 18px rgba(27, 38, 50, .08);
+}
+.event-inactive-panel h2 { margin-top: 0; }
+.event-inactive-list { display: flex; flex-direction: column; }
+.event-inactive-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 200px 116px 160px;
+  min-height: 104px;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid #c9c1b1;
+  padding: 12px;
+}
+.event-inactive-row:last-child { border-bottom: 0; }
+.event-inactive-main { display: flex; align-items: center; gap: 14px; }
+.event-inactive-main > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.event-inactive-main strong { overflow-wrap: anywhere; color: #1b2632; font-size: 15px; }
+.event-inactive-main small { color: #2c3b4d; font-size: 11px; }
+.event-inactive-relations { color: #2c3b4d; font-size: 12px; }
+.event-inactive-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.event-inactive-actions .event-button { white-space: nowrap; }
+.event-inactive-actions .event-action-retire { width: 138px; }
+.event-status.is-finished { border: 1px solid #c9c1b1; background: #eee9df; color: #2c3b4d; }
+.event-status.is-cancelled { border: 1px solid #a35139; background: #eee9df; color: #a35139; }
+.event-retire-note {
+  margin: 14px 0 0;
+  color: #2c3b4d;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
 /* Dialogs */
 .event-modal-layer {
   position: fixed;

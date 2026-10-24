@@ -1,6 +1,8 @@
 import type {
   CreateEventDto,
   EventItem,
+  InactiveEventItem,
+  RetiredEventItem,
   UpdateDraftEventDto,
 } from '@umsspira/shared-types';
 
@@ -140,6 +142,38 @@ export async function publishDraftEvent(
 
   return (await apiClient<{ data: EventItem }>(
     `/api/v1/events/drafts/${encodeURIComponent(eventId)}/publish`,
+    {
+      method: 'PATCH',
+      authenticated: true,
+    },
+  )).data;
+}
+
+export async function getInactiveEvents(
+  userId?: string,
+): Promise<InactiveEventItem[]> {
+  requireUserId(
+    userId,
+    'consultar los eventos inactivos',
+  );
+
+  return (await apiClient<{ data: InactiveEventItem[] }>(
+    '/api/v1/events/inactive',
+    { authenticated: true },
+  )).data;
+}
+
+export async function retireEvent(
+  eventId: string,
+  userId?: string,
+): Promise<RetiredEventItem> {
+  requireUserId(
+    userId,
+    'retirar el evento',
+  );
+
+  return (await apiClient<{ data: RetiredEventItem }>(
+    `/api/v1/events/owned/${encodeURIComponent(eventId)}/retire`,
     {
       method: 'PATCH',
       authenticated: true,
