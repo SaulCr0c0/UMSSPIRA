@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RenewActivationController } from './http/controllers/renew-activation.controller';
 import { PrismaModule } from '../../shared/infrastructure/database/prisma.module';
+import { REGISTRATION_SECURITY } from './application/ports/registration-security.port';
 import { AuthModule } from '../auth/auth.module';
 import { registrationsProviders } from './infrastructure/providers/registrations.providers';
 import { SmtpOutboxWorker } from './infrastructure/notifications/smtp-outbox.worker';
@@ -44,5 +45,6 @@ import { GetApplicationDocumentController } from './http/controllers/get-applica
     RegistrationTrafficGuard,
     TrustedOriginGuard,
   ],
+  exports: [REGISTRATION_SECURITY],
 })
 export class RegistrationsModule {}

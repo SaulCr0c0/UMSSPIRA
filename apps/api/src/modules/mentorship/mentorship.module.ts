@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/database/prisma.module';
+import { RegistrationsModule } from '../registrations/registrations.module';
 import { mentorshipProviders } from './infrastructure/providers/mentorship.providers';
 import { MENTOR_AVAILABILITY_REPOSITORY } from './application/ports/mentor-availability-repository.port';
 import { ListMentorProfilesController } from './http/controllers/list-mentor-profiles.controller';
+import { GetMentorDetailController } from './http/controllers/get-mentor-detail.controller';
 import { GetMentorEligibilityController } from './http/controllers/get-mentor-eligibility.controller';
 import { GetMyMentorProfileController } from './http/controllers/get-my-mentor-profile.controller';
 import { GetMentorInformationController } from './http/controllers/get-mentor-information.controller';
@@ -19,11 +21,16 @@ import { RemoveMentorInterestController } from './http/controllers/remove-mentor
 import { GetMentorAvailabilityController } from './http/controllers/get-mentor-availability.controller';
 import { SetMentorAvailabilityController } from './http/controllers/set-mentor-availability.controller';
 import { CreateMentorshipRequestController } from './http/controllers/create-mentorship-request.controller';
+import { ListReceivedMentorshipRequestsController } from './http/controllers/list-received-mentorship-requests.controller';
+import { GetReceivedMentorshipRequestController } from './http/controllers/get-received-mentorship-request.controller';
+import { AcceptMentorshipRequestController } from './http/controllers/accept-mentorship-request.controller';
+import { RejectMentorshipRequestController } from './http/controllers/reject-mentorship-request.controller';
 import { GetMentorSlotsController } from './http/controllers/get-mentor-slots.controller';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RegistrationsModule],
   controllers: [
     ListMentorProfilesController,
+    GetMentorDetailController,
     GetMentorEligibilityController,
     GetMyMentorProfileController,
     GetMentorInformationController,
@@ -40,6 +47,10 @@ import { GetMentorSlotsController } from './http/controllers/get-mentor-slots.co
     GetMentorAvailabilityController,
     SetMentorAvailabilityController,
     CreateMentorshipRequestController,
+    ListReceivedMentorshipRequestsController,
+    GetReceivedMentorshipRequestController,
+    AcceptMentorshipRequestController,
+    RejectMentorshipRequestController,
     GetMentorSlotsController,
   ],
   providers: mentorshipProviders,

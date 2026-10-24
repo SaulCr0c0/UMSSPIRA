@@ -15,6 +15,7 @@ import {
 } from '../../application/ports/mentor-availability-repository.port';
 import { PrismaMentorAvailabilityRepository } from '../repositories/prisma-mentor-availability.repository';
 import { ListMentorProfilesUseCase } from '../../application/use-cases/list-mentor-profiles.use-case';
+import { GetMentorDetailUseCase } from '../../application/use-cases/get-mentor-detail.use-case';
 import { GetMentorEligibilityUseCase } from '../../application/use-cases/get-mentor-eligibility.use-case';
 import { GetMyMentorProfileUseCase } from '../../application/use-cases/get-my-mentor-profile.use-case';
 import { GetMentorInformationUseCase } from '../../application/use-cases/get-mentor-information.use-case';
@@ -36,6 +37,9 @@ import {
 } from '../../application/ports/mentorship-request-repository.port';
 import { PrismaMentorshipRequestRepository } from '../repositories/prisma-mentorship-request.repository';
 import { CreateMentorshipRequestUseCase } from '../../application/use-cases/create-mentorship-request.use-case';
+import { ListReceivedMentorshipRequestsUseCase } from '../../application/use-cases/list-received-mentorship-requests.use-case';
+import { GetReceivedMentorshipRequestUseCase } from '../../application/use-cases/get-received-mentorship-request.use-case';
+import { RespondToMentorshipRequestUseCase } from '../../application/use-cases/respond-to-mentorship-request.use-case';
 import { GetMentorSlotsUseCase } from '../../application/use-cases/get-mentor-slots.use-case';
 
 export const mentorshipProviders: Provider[] = [
@@ -51,6 +55,29 @@ export const mentorshipProviders: Provider[] = [
     provide: ListMentorProfilesUseCase,
     inject: [MENTOR_REPOSITORY],
     useFactory: (repository: MentorRepository) => new ListMentorProfilesUseCase(repository),
+  },
+  {
+    provide: GetMentorDetailUseCase,
+    inject: [MENTOR_REPOSITORY],
+    useFactory: (repository: MentorRepository) => new GetMentorDetailUseCase(repository),
+  },
+  {
+    provide: ListReceivedMentorshipRequestsUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new ListReceivedMentorshipRequestsUseCase(repository),
+  },
+  {
+    provide: GetReceivedMentorshipRequestUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new GetReceivedMentorshipRequestUseCase(repository),
+  },
+  {
+    provide: RespondToMentorshipRequestUseCase,
+    inject: [MENTORSHIP_REQUEST_REPOSITORY],
+    useFactory: (repository: MentorshipRequestRepository) =>
+      new RespondToMentorshipRequestUseCase(repository),
   },
   {
     provide: GetMentorEligibilityUseCase,

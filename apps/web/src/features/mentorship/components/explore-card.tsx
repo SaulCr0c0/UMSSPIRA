@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export function ExploreCard({ icon: Icon }: { icon: ComponentType<{ className?: string }> }) {
   return (
@@ -20,7 +21,6 @@ export function ExploreCard({ icon: Icon }: { icon: ComponentType<{ className?: 
           Explorar mentores
           <ArrowRightIcon className="icon" aria-hidden="true" />
         </Link>
-        <p aria-hidden="true" className="mentor-card-notice" />
       </div>
     </article>
   );

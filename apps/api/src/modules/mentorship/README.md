@@ -1,6 +1,6 @@
 # Directorio y perfil de mentores
 
-Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. `POST /api/v1/mentorship/requests` crea solicitudes pendientes y valida que el titulado, el mentor y el horario cumplan las reglas. No requiere cambios de tablas ni migraciones.
+Migra participación, información profesional, áreas, intereses, disponibilidad y desactivación administrativa. `POST /api/v1/mentorship/requests` crea solicitudes pendientes y valida que el titulado, el mentor y el horario cumplan las reglas. `GET /api/v1/mentorship/requests` lista solicitudes recibidas del mentor autenticado (página máxima de 20); `GET /api/v1/mentorship/requests/:id` consulta el detalle. `PATCH /api/v1/mentorship/requests/:id/accept` y `PATCH /api/v1/mentorship/requests/:id/reject` responden solicitudes pendientes. La aceptación crea una conexión en la misma transacción y las respuestas encolan correo usando el worker SMTP existente. No requieren cambios de tablas ni migraciones.
 
 ## Rutas y acceso
 
@@ -18,7 +18,7 @@ La información profesional usa columnas explícitas. La migración convierte el
 
 ## Disponibilidad
 
-AVAILABLE acepta solicitudes, PAUSED conserva la visibilidad sin aceptarlas y UNAVAILABLE oculta el perfil del directorio. Sin estado registrado también permanece visible, pero no recibe solicitudes. Consultar no crea registros.
+El directorio de la HU-6.7 muestra únicamente mentores cuyo último estado es AVAILABLE. PAUSED, UNAVAILABLE y la ausencia de disponibilidad los excluyen. Consultar no crea registros. La política `canReceiveMentorship` sigue determinando quién puede recibir solicitudes en otros flujos. El perfil detallado de la HU-6.9 muestra mentores activos AVAILABLE, PAUSED o sin estado (estos dos sin poder solicitar) y responde 404 si el último estado es UNAVAILABLE.
 
 El módulo exporta MENTOR_AVAILABILITY_REPOSITORY mediante un port. Otros módulos pueden consultar canReceiveRequests sin importar Prisma ni consultar directamente estas tablas.
 
