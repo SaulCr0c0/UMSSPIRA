@@ -40,8 +40,7 @@ import { CancelPublishedEventController } from './http/controllers/cancel-publis
     RegisterEventController,
     EventPassesController,
     CancelPublishedEventController,
-
   ],
-  providers: [...eventsProviders, OptionalAuthenticationGuard , GenerateEventPassService],
+  providers: [...eventsProviders, OptionalAuthenticationGuard, GenerateEventPassService],
 })
 export class EventsModule {}

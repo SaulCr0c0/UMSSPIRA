@@ -44,6 +44,23 @@ export interface EventItem {
   createdAt: string;
 }
 
+export type InactiveEventStatus = Extract<
+  EventStatus,
+  'CANCELADO' | 'FINALIZADO'
+>;
+
+export interface InactiveEventItem extends EventItem {
+  inactiveStatus: InactiveEventStatus;
+  registrationsCount: number;
+  passesCount: number;
+}
+
+export interface RetiredEventItem {
+  id: string;
+  registrationsCount: number;
+  passesCount: number;
+}
+
 export interface CreateEventDto {
   title: string;
   description?: string;
